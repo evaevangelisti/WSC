@@ -73,7 +73,7 @@ wsc parse
 Reads the senses out of those entries and writes them where you asked. The suffix of the file picks the format.
 
 ```sh
-wsc collect <output>
+wsc collect senses.jsonl
 ```
 
 | Option | Default | |
