@@ -1,0 +1,105 @@
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13"]
+build-backend = "uv_build"
+
+[project]
+name = "wsc"
+version = "0.1.0"
+description = "Wiktionary Sense Collector"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Eva", email = "eva.evangelisti03@gmail.com" }]
+dependencies = [
+    "platformdirs>=4.11.2",
+    "requests>=2.34.2",
+    "tqdm>=4.70.0",
+    "typer>=0.27.1",
+    "wiktextract",
+]
+
+[project.scripts]
+wsc = "wsc.cli:app"
+
+[dependency-groups]
+docs = ["furo>=2025.12.19", "myst-parser>=5.1.0", "sphinx>=9.1.0"]
+lint = ["ruff>=0.16.2"]
+test = ["pytest>=9.1.1", "pytest-cov>=7.1.0", "responses>=0.26.2"]
+typing = ["basedpyright>=1.39.9", "types-requests>=2.32.4", "types-tqdm>=4.70.0"]
+
+[tool.uv.sources]
+wiktextract = { git = "https://github.com/tatuylonen/wiktextract.git" }
+
+[tool.ruff]
+line-length = 88
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "A",     # flake8-builtins
+    "ANN",   # flake8-annotations
+    "ARG",   # flake8-unused-arguments
+    "ASYNC", # flake8-async
+    "B",     # flake8-bugbear
+    "BLE",   # flake8-blind-except
+    "C4",    # flake8-comprehensions
+    "C90",   # mccabe
+    "D",     # pydocstyle
+    "DTZ",   # flake8-datetimez
+    "E",     # pycodestyle, errors
+    "ERA",   # eradicate
+    "EXE",   # flake8-executable
+    "F",     # Pyflakes
+    "FBT",   # flake8-boolean-trap
+    "FLY",   # flynt
+    "FURB",  # refurb
+    "G",     # flake8-logging-format
+    "I",     # isort
+    "LOG",   # flake8-logging
+    "N",     # pep8-naming
+    "PERF",  # Perflint
+    "PGH",   # pygrep-hooks
+    "PIE",   # flake8-pie
+    "PLC",   # Pylint, conventions
+    "PLE",   # Pylint, errors
+    "PLW",   # Pylint, warnings
+    "PT",    # flake8-pytest-style
+    "PTH",   # flake8-use-pathlib
+    "PYI",   # flake8-pyi
+    "RET",   # flake8-return
+    "RSE",   # flake8-raise
+    "RUF",   # Ruff-specific rules
+    "SIM",   # flake8-simplify
+    "SLOT",  # flake8-slots
+    "T20",   # flake8-print
+    "UP",    # pyupgrade
+    "W",     # pycodestyle, warnings
+    "YTT",   # flake8-2020
+]
+
+ignore = [
+    "D200",    # A docstring is written across three lines, however short.
+    "D212",    # Its summary opens on the line below the quotes.
+    "PLC0415", # A format is imported where it is built, not before.
+]
+
+# Wiktionary writes a date range with an en dash.
+allowed-confusables = ["–"]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.basedpyright]
+typeCheckingMode = "recommended"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib", "--strict-markers"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true

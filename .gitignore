@@ -1,0 +1,18 @@
+# Built documentation
+docs/build/
+
+# Coverage reports
+.coverage
+
+# Virtual environments
+.venv/
+
+# Packaging artifacts
+build/
+*.egg-info/
+
+# Python cache files
+__pycache__/
+
+# macOS-specific files
+.DS_Store
