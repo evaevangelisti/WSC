@@ -1,4 +1,4 @@
-# WSC
+# Wiktionary Sense Collector
 
 Collects the senses of every Wiktionary lemma into one file, each with its glosses, its labels and the sentences that illustrate it.
 
