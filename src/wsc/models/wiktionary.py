@@ -19,6 +19,10 @@ class POS(StrEnum):
     ADVERB = "adv"
 
 
+type WordOffset = tuple[int, int]
+"""Half-open range of code points, as Python slices them."""
+
+
 @dataclass(frozen=True, slots=True)
 class Attestation:
     """
@@ -26,9 +30,11 @@ class Attestation:
 
     Attributes:
         text: The sentence.
+        word_offsets: Where the lemma occurs in it, leftmost first.
     """
 
     text: str
+    word_offsets: tuple[WordOffset, ...] = field(default=(), kw_only=True)
 
 
 @dataclass(frozen=True, slots=True)

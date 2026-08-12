@@ -67,13 +67,20 @@ def illustrate(
         make_sense: Builds the sense the examples hang off.
 
     Returns:
-        A builder taking raw examples and handing back entries to extract.
+        A builder taking raw examples and the forms of the headword, and
+        handing back entries to extract.
     """
 
     def build(
         *examples: RawJson,
+        forms: list[RawJson] | None = None,
     ) -> list[RawJson]:
-        return [make_entry(senses=[make_sense(examples=list(examples))])]
+        return [
+            make_entry(
+                forms=forms,
+                senses=[make_sense(examples=list(examples))],
+            )
+        ]
 
     return build
 
@@ -91,17 +98,18 @@ def sentences(
         illustrate: Builds the entry the examples hang off.
 
     Returns:
-        A runner taking raw examples and the year bounds, and handing back
-        the sentences that survive them.
+        A runner taking raw examples, the forms of the headword and the year
+        bounds, and handing back the sentences that survive them.
     """
 
     def run(
         *examples: RawJson,
+        forms: list[RawJson] | None = None,
         minimum_year: int | None = None,
         maximum_year: int | None = None,
     ) -> list[Sentence]:
         lemmas = extract(
-            illustrate(*examples),
+            illustrate(*examples, forms=forms),
             minimum_year=minimum_year,
             maximum_year=maximum_year,
         )
@@ -551,3 +559,84 @@ class TestYears:
         lemmas = extract(entries, minimum_year=1900)
 
         assert [sense.gloss for sense in lemmas[0].senses] == ["A meaning."]
+
+
+class TestWordOffsets:
+    """
+    Where the lemma occurs in the sentences attesting it.
+    """
+
+    def test_an_example_carries_where_the_lemma_occurs(
+        self,
+        sentences: Callable[..., list[Sentence]],
+        make_example: Callable[..., RawJson],
+    ) -> None:
+        """The headword is a form of itself, so it is looked for like the rest."""
+        found = sentences(make_example("He robbed a bank."))
+
+        assert found[0].word_offsets == ((12, 16),)
+
+    def test_a_quotation_carries_them_too(
+        self,
+        sentences: Callable[..., list[Sentence]],
+        make_example: Callable[..., RawJson],
+    ) -> None:
+        """Both kinds of sentence are evidence, and both are read the same way."""
+        found = sentences(make_example("A bank stood there.", ref="1999, A Book"))
+
+        assert found[0].word_offsets == ((2, 6),)
+
+    def test_locates_an_inflection_wiktextract_listed(
+        self,
+        sentences: Callable[..., list[Sentence]],
+        make_example: Callable[..., RawJson],
+        make_form: Callable[..., RawJson],
+    ) -> None:
+        """A sentence attests the lemma in whatever form it needs."""
+        found = sentences(
+            make_example("Two banks closed."),
+            forms=[make_form("banks", tags=["plural"])],
+        )
+
+        assert found[0].word_offsets == ((4, 9),)
+
+    @pytest.mark.parametrize(
+        "tag",
+        ["inflection-template", "romanization", "table-tags"],
+    )
+    def test_skips_what_is_listed_among_the_forms_without_being_one(
+        self,
+        sentences: Callable[..., list[Sentence]],
+        make_example: Callable[..., RawJson],
+        make_form: Callable[..., RawJson],
+        tag: str,
+    ) -> None:
+        """An inflection table names itself, its template and its transliterations."""
+        found = sentences(
+            make_example("The plural of bank."),
+            forms=[make_form("plural", tags=[tag])],
+        )
+
+        assert found[0].word_offsets == ((14, 18),)
+
+    def test_skips_a_cell_the_inflection_table_left_empty(
+        self,
+        sentences: Callable[..., list[Sentence]],
+        make_example: Callable[..., RawJson],
+        make_form: Callable[..., RawJson],
+    ) -> None:
+        """A dash stands for a form that does not exist, so it is not one."""
+        found = sentences(
+            make_example("A bank - a slope."),
+            forms=[make_form("-", tags=["plural"])],
+        )
+
+        assert found[0].word_offsets == ((2, 6),)
+
+    def test_a_sentence_the_lemma_is_absent_from_carries_none(
+        self,
+        sentences: Callable[..., list[Sentence]],
+        make_example: Callable[..., RawJson],
+    ) -> None:
+        """A sentence illustrating a sense need not spell the lemma out."""
+        assert sentences(make_example("She went there."))[0].word_offsets == ()

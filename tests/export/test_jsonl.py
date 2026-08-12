@@ -104,8 +104,13 @@ class TestJsonlWriter:
                     ("business",),
                     ("countable",),
                     [
-                        Example("He went to the bank."),
-                        Quotation("A bank stood there.", "1999, A Book", 1999),
+                        Example("He went to the bank.", word_offsets=((15, 19),)),
+                        Quotation(
+                            "A bank stood there.",
+                            "1999, A Book",
+                            1999,
+                            word_offsets=((2, 6),),
+                        ),
                     ],
                 )
             ],
@@ -123,9 +128,13 @@ class TestJsonlWriter:
                         "topics": ["business"],
                         "tags": ["countable"],
                         "sentences": [
-                            {"text": "He went to the bank."},
+                            {
+                                "text": "He went to the bank.",
+                                "word_offsets": [[15, 19]],
+                            },
                             {
                                 "text": "A bank stood there.",
+                                "word_offsets": [[2, 6]],
                                 "reference": "1999, A Book",
                                 "year": 1999,
                             },

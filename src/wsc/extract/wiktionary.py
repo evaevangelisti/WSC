@@ -13,13 +13,21 @@ from typing import IO, TypedDict, cast
 from tqdm import tqdm
 
 from ..models import POS, Example, Lemma, Quotation, Sense, Sentence
+from .offsets import find_word_offsets
 
 # A year of its own, from the first century of printing up to this one, or
 # the decade it opens.
 _YEAR_PATTERN = re.compile(r"\b(1[0-9]{3}|20[0-9]{2})s?\b")
 
+# Rows describing an inflection table rather than the lemma, and the
+# transliterations that stand beside a form rather than for it.
+_SERVICE_TAGS = frozenset({"inflection-template", "romanization", "table-tags"})
 
-# The three classes below name the slice of the wiktextract schema this
+# What an inflection table writes for a cell it leaves empty.
+_EMPTY_CELL = "-"
+
+
+# The four classes below name the slice of the wiktextract schema this
 # module reads. Every key is optional, since it describes someone else's JSON.
 
 
@@ -53,6 +61,19 @@ class _RawSense(TypedDict, total=False):
     examples: list[_RawExample]
 
 
+class _RawForm(TypedDict, total=False):
+    """
+    One written form of an entry, inflected or otherwise.
+
+    Attributes:
+        form: The form itself.
+        tags: What it is a form of, and how it was arrived at.
+    """
+
+    form: str
+    tags: list[str]
+
+
 class _RawEntry(TypedDict, total=False):
     """
     One dictionary entry.
@@ -61,12 +82,14 @@ class _RawEntry(TypedDict, total=False):
         word: The headword.
         pos: Its part of speech.
         lang_code: The language the headword belongs to.
+        forms: The shapes the headword takes.
         senses: Its meanings.
     """
 
     word: str
     pos: str
     lang_code: str
+    forms: list[_RawForm]
     senses: list[_RawSense]
 
 
@@ -141,9 +164,39 @@ class WiktionaryExtractor:
 
         return int(match.group(1)) if match else None
 
+    @staticmethod
+    def _parse_forms(
+        raw_forms: list[_RawForm],
+        lemma: str,
+    ) -> frozenset[str]:
+        """
+        Collect the shapes an occurrence of the lemma may take.
+
+        Args:
+            raw_forms: What wiktextract listed under the entry.
+            lemma: The headword, which is a form of itself.
+
+        Returns:
+            The headword and every inflection worth looking for.
+        """
+        forms = {lemma}
+
+        for raw_form in raw_forms:
+            form = raw_form.get("form", "").strip()
+            if not form or form == _EMPTY_CELL:
+                continue
+
+            if not _SERVICE_TAGS.isdisjoint(raw_form.get("tags", [])):
+                continue
+
+            forms.add(form)
+
+        return frozenset(forms)
+
     def _parse_sentences(
         self,
         raw_examples: list[_RawExample],
+        forms: frozenset[str],
     ) -> list[Sentence]:
         """
         Collect the sentences illustrating one sense.
@@ -153,6 +206,7 @@ class WiktionaryExtractor:
 
         Args:
             raw_examples: What wiktextract listed under the sense.
+            forms: The shapes the lemma takes, to be located in each sentence.
 
         Returns:
             The sentences that survive it, in the order they were listed.
@@ -164,9 +218,17 @@ class WiktionaryExtractor:
             if not text:
                 continue
 
+            word_offsets = find_word_offsets(text, forms)
+
             reference = raw_example.get("ref", "").strip()
             if not reference:
-                sentences.append(Example(text))
+                sentences.append(
+                    Example(
+                        text,
+                        word_offsets=word_offsets,
+                    )
+                )
+
                 continue
 
             year = self._parse_year(reference)
@@ -182,7 +244,14 @@ class WiktionaryExtractor:
                 if self._maximum_year is not None and year > self._maximum_year:
                     continue
 
-            sentences.append(Quotation(text, reference, year))
+            sentences.append(
+                Quotation(
+                    text,
+                    reference,
+                    year,
+                    word_offsets=word_offsets,
+                )
+            )
 
         return sentences
 
@@ -190,6 +259,7 @@ class WiktionaryExtractor:
         self,
         raw_senses: list[_RawSense],
         lemma_id: str,
+        forms: frozenset[str],
     ) -> list[Sense]:
         """
         Collect the senses of one entry.
@@ -200,6 +270,7 @@ class WiktionaryExtractor:
         Args:
             raw_senses: What wiktextract listed under the entry.
             lemma_id: Identifies the entry, and opens each sense identifier.
+            forms: The shapes the lemma takes, to be located in each sentence.
 
         Returns:
             The senses that carry at least one gloss.
@@ -219,7 +290,7 @@ class WiktionaryExtractor:
                     glosses,
                     tuple(raw_sense.get("topics", [])),
                     tuple(raw_sense.get("tags", [])),
-                    self._parse_sentences(raw_sense.get("examples", [])),
+                    self._parse_sentences(raw_sense.get("examples", []), forms),
                 )
             )
 
@@ -280,7 +351,9 @@ class WiktionaryExtractor:
 
                 lemma_id = f"{key}.{ordinal}"
 
-                senses = self._parse_senses(entry.get("senses", []), lemma_id)
+                forms = self._parse_forms(entry.get("forms", []), lemma)
+
+                senses = self._parse_senses(entry.get("senses", []), lemma_id, forms)
                 if not senses:
                     continue
 

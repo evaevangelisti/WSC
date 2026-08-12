@@ -10,6 +10,7 @@ from .wiktionary import (
     Quotation,
     Sense,
     Sentence,
+    WordOffset,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "Quotation",
     "Sense",
     "Sentence",
+    "WordOffset",
 ]

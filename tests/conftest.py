@@ -78,6 +78,24 @@ def make_sense() -> Callable[..., RawJson]:
 
 
 @pytest.fixture
+def make_form() -> Callable[..., RawJson]:
+    """
+    Build one raw form of an entry.
+
+    Returns:
+        A builder taking the form and the labels wiktextract gave it.
+    """
+
+    def build(
+        form: str = "banks",
+        tags: list[str] | None = None,
+    ) -> RawJson:
+        return {"form": form, "tags": tags or []}
+
+    return build
+
+
+@pytest.fixture
 def make_entry(
     make_sense: Callable[..., RawJson],
 ) -> Callable[..., RawJson]:
@@ -88,19 +106,22 @@ def make_entry(
         make_sense: Builds the sense an entry falls back on.
 
     Returns:
-        A builder taking the headword, its part of speech and its senses.
+        A builder taking the headword, its part of speech, its forms and its
+        senses.
     """
 
     def build(
         word: str = "bank",
         pos: str = "noun",
         lang_code: str = "en",
+        forms: list[RawJson] | None = None,
         senses: list[RawJson] | None = None,
     ) -> RawJson:
         return {
             "word": word,
             "pos": pos,
             "lang_code": lang_code,
+            "forms": forms or [],
             "senses": [make_sense()] if senses is None else senses,
         }
 

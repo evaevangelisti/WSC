@@ -54,6 +54,12 @@ class TestAttestation:
         """A reference the year could not be read off is still a quotation."""
         assert Quotation("A sentence.", "A Book").year is None
 
+    def test_a_sentence_locates_nothing_until_it_is_told_where(
+        self,
+    ) -> None:
+        """The ranges are named, not positional, so a sentence reads as it did."""
+        assert Quotation("A sentence.", "1999, A Book", 1999).word_offsets == ()
+
 
 class TestSense:
     """
