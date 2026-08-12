@@ -30,6 +30,11 @@ extensions = [
 
 exclude_patterns = []
 
+# A page cut out of the README opens on the heading it was cut at, which is a
+# second-level one. Docutils makes a title of it all the same, so the page
+# comes out right and only the source looks headless.
+suppress_warnings = ["myst.header"]
+
 # -- Docstrings --------------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
@@ -50,5 +55,12 @@ autodoc_typehints = "description"
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "furo"
-html_title = f"{project} {release}"
+html_theme = "shibuya"
+
+html_static_path = ["_static"]
+html_favicon = "_static/favicon.svg"
+html_theme_options = {
+    "light_logo": "_static/logo-light.svg",
+    "dark_logo": "_static/logo-dark.svg",
+    "github_url": "https://github.com/evaevangelisti/WSC",
+}

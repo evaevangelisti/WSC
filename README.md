@@ -2,6 +2,8 @@
 
 Collects the senses of every Wiktionary lemma into one file, each with its glosses, its labels and the sentences that illustrate it.
 
+<!-- installation -->
+
 ## Installation
 
 ### Requirements
@@ -30,6 +32,8 @@ With [uv](https://docs.astral.sh/uv/), one command does all three:
 ```sh
 uv tool install .
 ```
+
+<!-- usage -->
 
 ## Usage
 

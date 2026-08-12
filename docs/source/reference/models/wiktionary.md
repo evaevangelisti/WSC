@@ -1,4 +1,4 @@
-# Models
+# Wiktionary
 
 ```{eval-rst}
 .. automodule:: wsc.models.wiktionary
