@@ -1,5 +1,5 @@
 """
-Tests for src/wsc/cache.py.
+Tests for src/wsc/dumps/cache.py.
 """
 
 from collections.abc import Callable
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from wsc import cache
+from wsc.dumps import cache
 
 
 class TestDumpDir:

@@ -1,5 +1,5 @@
 """
-Tests for src/wsc/download.py.
+Tests for src/wsc/dumps/download.py.
 """
 
 from pathlib import Path
@@ -8,7 +8,7 @@ import pytest
 import requests
 import responses
 
-from wsc.download import download
+from wsc.dumps.download import download
 
 URL = "https://dumps.example.invalid/dump.xml.bz2"
 TIMEOUT = (1, 1)

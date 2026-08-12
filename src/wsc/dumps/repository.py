@@ -7,7 +7,7 @@ from typing import TypedDict, cast
 
 import requests
 
-from .constants import DUMP_INDEX_URL, DUMP_STATUS_URL, DUMP_URL
+from ..constants import DUMP_INDEX_URL, DUMP_STATUS_URL, DUMP_URL
 
 # The index lists one directory per dump, named after the day it began.
 _DATE_PATTERN = re.compile(r'href="(\d{8})/"')

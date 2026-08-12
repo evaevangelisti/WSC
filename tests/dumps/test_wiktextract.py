@@ -1,5 +1,5 @@
 """
-Tests for src/wsc/wiktwords.py.
+Tests for src/wsc/dumps/wiktextract.py.
 
 Wiktextract itself is never run: it needs a real dump and the better part of a
 day. What is tested is the plumbing around it, and a stand-in subprocess is
@@ -16,7 +16,7 @@ from typing import IO, Self
 
 import pytest
 
-from wsc import wiktwords
+from wsc.dumps import wiktextract
 
 
 class _MutePopen:
@@ -145,7 +145,7 @@ class TestParse:
         _ = stub_wiktextract(['{"word": "bank"}', '{"word": "run"}'])
 
         output_path = tmp_path / "wiktextract.jsonl.zst"
-        _ = wiktwords.parse(dump_path, output_path, "en", 1)
+        _ = wiktextract.parse(dump_path, output_path, "en", 1)
 
         assert read(output_path) == ['{"word": "bank"}', '{"word": "run"}']
 
@@ -161,7 +161,7 @@ class TestParse:
         )
 
         output_path = tmp_path / "wiktextract.jsonl.zst"
-        skipped_lines = wiktwords.parse(dump_path, output_path, "en", 1)
+        skipped_lines = wiktextract.parse(dump_path, output_path, "en", 1)
 
         assert skipped_lines == 2
         assert read(output_path) == ['{"word": "bank"}']
@@ -180,7 +180,7 @@ class TestParse:
         """
         commands = stub_wiktextract([])
 
-        _ = wiktwords.parse(dump_path, tmp_path / "out.jsonl.zst", "it", 4)
+        _ = wiktextract.parse(dump_path, tmp_path / "out.jsonl.zst", "it", 4)
 
         assert commands == [
             [
@@ -208,7 +208,7 @@ class TestParse:
         _ = stub_wiktextract(['{"word": "bank"}'])
 
         output_path = tmp_path / "deep" / "wiktextract.jsonl.zst"
-        _ = wiktwords.parse(dump_path, output_path, "en", 1)
+        _ = wiktextract.parse(dump_path, output_path, "en", 1)
 
         assert output_path.exists()
 
@@ -222,7 +222,7 @@ class TestParse:
         _ = stub_wiktextract(['{"word": "bank"}'])
 
         output_path = tmp_path / "out" / "wiktextract.jsonl.zst"
-        _ = wiktwords.parse(dump_path, output_path, "en", 1)
+        _ = wiktextract.parse(dump_path, output_path, "en", 1)
 
         assert list(output_path.parent.iterdir()) == [output_path]
 
@@ -245,7 +245,7 @@ class TestParse:
         output_path = tmp_path / "out" / "wiktextract.jsonl.zst"
 
         with pytest.raises(RuntimeError, match="no output to read"):
-            _ = wiktwords.parse(dump_path, output_path, "en", 1)
+            _ = wiktextract.parse(dump_path, output_path, "en", 1)
 
         assert list(output_path.parent.iterdir()) == []
 
@@ -261,7 +261,7 @@ class TestParse:
         output_path = tmp_path / "wiktextract.jsonl.zst"
 
         with pytest.raises(subprocess.CalledProcessError):
-            _ = wiktwords.parse(dump_path, output_path, "en", 1)
+            _ = wiktextract.parse(dump_path, output_path, "en", 1)
 
     def test_writes_nothing_when_wiktextract_fails(
         self,
@@ -275,6 +275,6 @@ class TestParse:
         output_path = tmp_path / "out" / "wiktextract.jsonl.zst"
 
         with pytest.raises(subprocess.CalledProcessError):
-            _ = wiktwords.parse(dump_path, output_path, "en", 1)
+            _ = wiktextract.parse(dump_path, output_path, "en", 1)
 
         assert list(output_path.parent.iterdir()) == []

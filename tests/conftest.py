@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from wsc import cache
+from wsc.dumps import cache
 
 type RawJson = dict[str, object]
 """One decoded JSON object, as wiktextract writes them."""

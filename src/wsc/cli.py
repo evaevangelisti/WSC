@@ -8,9 +8,8 @@ from typing import Annotated
 
 import typer
 
-from . import cache, dumps, wiktwords
 from .constants import CHUNK_SIZE, TIMEOUT, USER_AGENT
-from .download import download
+from .dumps import cache, download, repository, wiktextract
 from .export import open_writer
 from .extract import WiktionaryExtractor
 from .models import POS
@@ -63,7 +62,7 @@ def fetch(
 
     date = dump_date
     if date == cache.LATEST:
-        date = dumps.latest_date(language, user_agent, TIMEOUT)
+        date = repository.latest_date(language, user_agent, TIMEOUT)
         typer.echo(f"Resolved latest to {date}")
 
     dump_path = cache.dump_dir(cache_dir, language, date) / cache.DUMP_NAME
@@ -72,7 +71,7 @@ def fetch(
         return
 
     download(
-        dumps.url(language, date),
+        repository.url(language, date),
         dump_path,
         user_agent,
         TIMEOUT,
@@ -113,7 +112,7 @@ def parse(
     if not dump_path.exists():
         raise typer.BadParameter(f"No dump at {dump_path}; fetch it first")
 
-    skipped_lines = wiktwords.parse(dump_path, output_path, language, processes)
+    skipped_lines = wiktextract.parse(dump_path, output_path, language, processes)
 
     if skipped_lines:
         typer.echo(f"Set aside {skipped_lines} lines of wiktextract's own reporting")

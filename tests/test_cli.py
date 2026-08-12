@@ -15,9 +15,9 @@ import pytest
 import responses
 from typer.testing import CliRunner, Result
 
-from wsc import cache, wiktwords
 from wsc.cli import app
 from wsc.constants import DUMP_INDEX_URL, DUMP_STATUS_URL, DUMP_URL, USER_AGENT
+from wsc.dumps import cache, wiktextract
 
 type RawJson = dict[str, object]
 """One decoded JSON object, as wiktextract writes them."""
@@ -57,7 +57,7 @@ def stub_parse(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Callable[..., list[tuple[Path, Path, str, int]]]:
     """
-    Answer in wiktextract's place, which src/wsc/wiktwords.py is tested on.
+    Answer in wiktextract's place, which src/wsc/dumps/wiktextract.py is tested on.
 
     Args:
         monkeypatch: Puts the stand-in in place, and takes it away after.
@@ -81,7 +81,7 @@ def stub_parse(
 
             return skipped_lines
 
-        monkeypatch.setattr(wiktwords, "parse", parse)
+        monkeypatch.setattr(wiktextract, "parse", parse)
 
         return calls
 

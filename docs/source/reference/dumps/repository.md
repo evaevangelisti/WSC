@@ -1,6 +1,6 @@
 # Repository
 
 ```{eval-rst}
-.. automodule:: wsc.dumps
+.. automodule:: wsc.dumps.repository
    :members:
 ```

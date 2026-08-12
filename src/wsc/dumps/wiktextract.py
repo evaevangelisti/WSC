@@ -9,7 +9,7 @@ from typing import IO
 
 from tqdm import tqdm
 
-from .constants import COMPRESSION_LEVEL
+from ..constants import COMPRESSION_LEVEL
 
 
 def parse(

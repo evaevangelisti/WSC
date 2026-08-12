@@ -1,6 +1,6 @@
 # Cache
 
 ```{eval-rst}
-.. automodule:: wsc.cache
+.. automodule:: wsc.dumps.cache
    :members:
 ```

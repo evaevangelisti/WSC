@@ -1,5 +1,5 @@
 """
-Tests for src/wsc/dumps.py.
+Tests for src/wsc/dumps/repository.py.
 """
 
 import json
@@ -8,8 +8,8 @@ import pytest
 import requests
 import responses
 
-from wsc import dumps
 from wsc.constants import DUMP_INDEX_URL, DUMP_STATUS_URL
+from wsc.dumps import repository
 
 TIMEOUT = (1, 1)
 USER_AGENT = "wsc/0.1.0 (https://example.invalid)"
@@ -56,7 +56,7 @@ class TestUrl:
         self,
     ) -> None:
         """The address is built rather than discovered, so it is built here in full."""
-        assert dumps.url("en", "20260801") == (
+        assert repository.url("en", "20260801") == (
             "https://dumps.wikimedia.org/enwiktionary/20260801/"
             "enwiktionary-20260801-pages-articles.xml.bz2"
         )
@@ -81,7 +81,7 @@ class TestLatestDate:
             body=status("done"),
         )
 
-        assert dumps.latest_date("en", USER_AGENT, TIMEOUT) == "20260801"
+        assert repository.latest_date("en", USER_AGENT, TIMEOUT) == "20260801"
 
     @responses.activate
     def test_passes_over_a_dump_still_under_way(
@@ -101,7 +101,7 @@ class TestLatestDate:
             body=status("done"),
         )
 
-        assert dumps.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
+        assert repository.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
 
     @responses.activate
     def test_passes_over_a_dump_reporting_nothing(
@@ -121,7 +121,7 @@ class TestLatestDate:
             body=status("done"),
         )
 
-        assert dumps.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
+        assert repository.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
 
     @responses.activate
     def test_passes_over_a_dump_reporting_something_other_than_json(
@@ -141,7 +141,7 @@ class TestLatestDate:
             body=status("done"),
         )
 
-        assert dumps.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
+        assert repository.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
 
     @responses.activate
     def test_refuses_when_no_dump_reports_readably(
@@ -155,7 +155,7 @@ class TestLatestDate:
         )
 
         with pytest.raises(RuntimeError, match="No finished enwiktionary dump"):
-            _ = dumps.latest_date("en", USER_AGENT, TIMEOUT)
+            _ = repository.latest_date("en", USER_AGENT, TIMEOUT)
 
     @responses.activate
     def test_asks_about_a_date_once_however_often_it_is_listed(
@@ -175,7 +175,7 @@ class TestLatestDate:
             body=status("done"),
         )
 
-        assert dumps.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
+        assert repository.latest_date("en", USER_AGENT, TIMEOUT) == "20260701"
         assert len(responses.calls) == 3
 
     @responses.activate
@@ -189,7 +189,7 @@ class TestLatestDate:
             body=status("done"),
         )
 
-        _ = dumps.latest_date("en", USER_AGENT, TIMEOUT)
+        _ = repository.latest_date("en", USER_AGENT, TIMEOUT)
 
         assert responses.calls
         assert all(
@@ -208,7 +208,7 @@ class TestLatestDate:
         )
 
         with pytest.raises(RuntimeError, match="No finished enwiktionary dump"):
-            _ = dumps.latest_date("en", USER_AGENT, TIMEOUT)
+            _ = repository.latest_date("en", USER_AGENT, TIMEOUT)
 
     @responses.activate
     def test_refuses_when_the_index_lists_no_dump(
@@ -218,7 +218,7 @@ class TestLatestDate:
         _ = responses.get(DUMP_INDEX_URL.format(language="xx"), body=index())
 
         with pytest.raises(RuntimeError):
-            _ = dumps.latest_date("xx", USER_AGENT, TIMEOUT)
+            _ = repository.latest_date("xx", USER_AGENT, TIMEOUT)
 
     @responses.activate
     def test_raises_when_the_index_cannot_be_read(
@@ -228,4 +228,4 @@ class TestLatestDate:
         _ = responses.get(DUMP_INDEX_URL.format(language="en"), status=503)
 
         with pytest.raises(requests.HTTPError):
-            _ = dumps.latest_date("en", USER_AGENT, TIMEOUT)
+            _ = repository.latest_date("en", USER_AGENT, TIMEOUT)

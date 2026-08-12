@@ -1,6 +1,6 @@
 # Wiktextract
 
 ```{eval-rst}
-.. automodule:: wsc.wiktwords
+.. automodule:: wsc.dumps.wiktextract
    :members:
 ```

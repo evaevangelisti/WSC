@@ -1,6 +1,6 @@
 # Download
 
 ```{eval-rst}
-.. automodule:: wsc.download
+.. automodule:: wsc.dumps.download
    :members:
 ```
