@@ -48,16 +48,8 @@ class TestOpenWriter:
         self,
         tmp_path: Path,
     ) -> None:
-        """An unknown format is refused before any work is done."""
-        with pytest.raises(ValueError, match="Unknown format"):
-            _ = open_writer(tmp_path / "senses.parquet")
-
-    def test_names_what_it_does_know(
-        self,
-        tmp_path: Path,
-    ) -> None:
         """The refusal names the formats there are, since one of them is the answer."""
-        with pytest.raises(ValueError, match=r"\.jsonl"):
+        with pytest.raises(ValueError, match=r"Unknown format '\.parquet'.+\.jsonl"):
             _ = open_writer(tmp_path / "senses.parquet")
 
     def test_refuses_a_path_with_no_suffix_at_all(

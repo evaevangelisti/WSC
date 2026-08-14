@@ -1,21 +1,19 @@
 """
-Data structures passed around the pipeline.
+What each source is read into, one module apiece.
 """
 
-from .pos import POS
-from .resources import (
+from .wiktionary import (
     Attestation,
     Example,
     Lemma,
     Quotation,
     Sense,
     Sentence,
-    Synset,
     WordOffset,
 )
+from .wordnet import Synset
 
 __all__ = [
-    "POS",
     "Attestation",
     "Example",
     "Lemma",

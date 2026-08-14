@@ -1,0 +1,129 @@
+"""
+Where the sources and what is made of them are kept.
+"""
+
+from pathlib import Path
+
+from platformdirs import user_cache_dir
+
+LATEST = "latest"
+
+DUMP_NAME = "dump.xml.bz2"
+WIKTEXTRACT_NAME = "wiktextract.jsonl.zst"
+WORDNET_NAME = "wordnet-{version}.xml.gz"
+
+# One directory per source: a dump belongs to an edition and a day, while the
+# wordnet is the same English one whatever is collected.
+_WIKTIONARY = "wiktionary"
+_WORDNET = "wordnet"
+
+
+def _root(
+    cache_dir: Path | None,
+) -> Path:
+    """
+    Settle where the cache is, falling back to the usual place.
+
+    Args:
+        cache_dir: Where the sources are kept, or None for the usual place.
+
+    Returns:
+        The directory to work under.
+    """
+    return cache_dir or Path(user_cache_dir("wsc"))
+
+
+def _edition_dir(
+    cache_dir: Path | None,
+    language: str,
+) -> Path:
+    """
+    Name the directory holding every dump of one Wiktionary edition.
+
+    Args:
+        cache_dir: Where the sources are kept, or None for the usual place.
+        language: Wiktionary's code for the edition.
+
+    Returns:
+        The directory, whether or not it exists yet.
+    """
+    return _root(cache_dir) / _WIKTIONARY / language
+
+
+def dump_dir(
+    cache_dir: Path | None,
+    language: str,
+    date: str,
+) -> Path:
+    """
+    Name the directory holding one dump and everything derived from it.
+
+    Args:
+        cache_dir: Where the sources are kept, or None for the usual place.
+        language: Wiktionary's code for the edition.
+        date: The day that dump began.
+
+    Returns:
+        The directory, whether or not it exists yet.
+    """
+    return _edition_dir(cache_dir, language) / date
+
+
+def wordnet_path(
+    cache_dir: Path | None,
+    version: str,
+) -> Path:
+    """
+    Name the file one edition of the wordnet is kept in.
+
+    Args:
+        cache_dir: Where the sources are kept, or None for the usual place.
+        version: The edition of the wordnet, as 2025.
+
+    Returns:
+        The file, whether or not it exists yet.
+    """
+    return _root(cache_dir) / _WORDNET / WORDNET_NAME.format(version=version)
+
+
+def fetched_date(
+    cache_dir: Path | None,
+    language: str,
+    dump_date: str,
+) -> str:
+    """
+    Settle which fetched dump to work on, without asking Wikimedia.
+
+    A dump is known by the directory it sits in, so "latest" is answered from
+    the cache alone, and a machine without a network runs all the same.
+
+    Args:
+        cache_dir: Where the sources are kept, or None for the usual place.
+        language: Wiktionary's code for the edition.
+        dump_date: The day a dump began, or "latest" for the newest fetched.
+
+    Returns:
+        The day the chosen dump began.
+
+    Raises:
+        FileNotFoundError: If no such dump has been fetched.
+    """
+    edition_dir = _edition_dir(cache_dir, language)
+
+    if dump_date != LATEST:
+        if (edition_dir / dump_date).is_dir():
+            return dump_date
+
+        raise FileNotFoundError(
+            f"No dump of {dump_date} in {edition_dir}; fetch it first"
+        )
+
+    dates = sorted(
+        (path.name for path in edition_dir.glob("*") if path.is_dir()),
+        reverse=True,
+    )
+
+    if not dates:
+        raise FileNotFoundError(f"No dump in {edition_dir}; fetch one first")
+
+    return dates[0]

@@ -9,5 +9,5 @@
 :hidden:
 
 writers
-jsonl
+formats/index
 ```

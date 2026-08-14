@@ -13,8 +13,8 @@ class Writer[T](ABC):
     A sink for items of one kind, writing atomically.
 
     Output goes to a sibling .part file, moved into place only once writing
-    finishes. A run that fails leaves neither behind, since a half-written
-    export cannot be resumed.
+    finishes. A run that fails leaves neither behind, a half-written export
+    being of no use.
     """
 
     def __init__(
@@ -52,11 +52,6 @@ class Writer[T](ABC):
     ) -> None:
         """
         Move the .part file into place, or remove it if anything went wrong.
-
-        Args:
-            exc_type: Class of the exception leaving the block, if any.
-            exc_value: The exception itself, if any.
-            traceback: Its traceback, if any.
         """
         succeeded = exc_type is None
 

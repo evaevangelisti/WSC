@@ -1,10 +1,12 @@
 """
 Fixtures the whole suite shares.
 
-The test tree mirrors the package: tests/extract/test_wiktionary.py covers
-src/wsc/extract/wiktionary.py, and a module at the top of the tree covers one
-of the same name in src/wsc. A new source or format is a new file in the
-matching directory, never an addition to an existing one.
+The test tree mirrors the package: tests/extract/resources/test_wiktionary.py
+covers src/wsc/extract/resources/wiktionary.py, and a module at the top of the
+tree covers one of the same name in src/wsc. A new source or format is a new
+file in the matching directory, never an addition to an existing one. Within a
+file, the classes follow the order of the module they cover, and a refusal is
+tested after what it refuses.
 
 What every directory reads lives here; what one directory alone needs belongs
 in a conftest.py of its own, next to the tests that ask for it.
@@ -21,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from wsc.dumps import cache
+from wsc.upstream import cache
 
 type RawJson = dict[str, object]
 """One decoded JSON object, as wiktextract writes them."""
@@ -187,7 +189,7 @@ def fetch_dump(
     Stand in for a finished fetch, without the network.
 
     Args:
-        cache_dir: Where dumps are kept.
+        cache_dir: Where the sources are kept.
 
     Returns:
         A builder placing a dump where the fetch command would have.
@@ -207,6 +209,32 @@ def fetch_dump(
 
 
 @pytest.fixture
+def fetch_wordnet(
+    cache_dir: Path,
+) -> Callable[..., Path]:
+    """
+    Stand in for a finished fetch of the wordnet, without the network.
+
+    Args:
+        cache_dir: Where the sources are kept.
+
+    Returns:
+        A builder placing the wordnet where the wordnet command would have.
+    """
+
+    def build(
+        version: str = "2025",
+    ) -> Path:
+        path = cache.wordnet_path(cache_dir, version)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _ = path.write_bytes(b"a wordnet")
+
+        return path
+
+    return build
+
+
+@pytest.fixture
 def parse_dump(
     cache_dir: Path,
     fetch_dump: Callable[..., Path],
@@ -216,7 +244,7 @@ def parse_dump(
     Stand in for a finished fetch and parse, without wiktextract.
 
     Args:
-        cache_dir: Where dumps are kept.
+        cache_dir: Where the sources are kept.
         fetch_dump: Places the dump the parse would have read.
         write_entries: Writes the entries the parse would have produced.
 

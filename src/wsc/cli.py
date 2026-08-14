@@ -9,13 +9,13 @@ from typing import Annotated
 import typer
 
 from .constants import CHUNK_SIZE, TIMEOUT, USER_AGENT
-from .dumps import cache, download, repository, wiktextract
 from .export import open_writer
 from .extract import WiktionaryExtractor
 from .models import POS
+from .upstream import cache, download, repositories, wiktextract
 
 # Named apart from the signatures, so that the commands asking for the same
-# option say so by sharing one.
+# option share one.
 
 Language = Annotated[
     str,
@@ -33,12 +33,11 @@ DumpDate = Annotated[
     ),
 ]
 
-# None stands for the platform's own cache directory.
 CacheDir = Annotated[
     Path | None,
     typer.Option(
         envvar="WSC_CACHE_DIR",
-        help="Where dumps and what is made of them are kept.",
+        help="Where the sources and what is made of them are kept.",
         show_default="your platform's cache directory",
     ),
 ]
@@ -62,7 +61,7 @@ def fetch(
 
     date = dump_date
     if date == cache.LATEST:
-        date = repository.latest_date(language, user_agent, TIMEOUT)
+        date = repositories.wiktionary.latest_date(language, user_agent, TIMEOUT)
         typer.echo(f"Resolved latest to {date}")
 
     dump_path = cache.dump_dir(cache_dir, language, date) / cache.DUMP_NAME
@@ -71,7 +70,7 @@ def fetch(
         return
 
     download(
-        repository.url(language, date),
+        repositories.wiktionary.url(language, date),
         dump_path,
         user_agent,
         TIMEOUT,
@@ -181,3 +180,40 @@ def collect(
             writer.write(lemma)
 
     typer.echo(f"Collected {output_path}")
+
+
+@app.command()
+def wordnet(
+    wordnet_version: Annotated[
+        str,
+        typer.Option(
+            envvar="WSC_WORDNET_VERSION",
+            help="Wordnet edition to use, as 2025, or latest.",
+        ),
+    ] = cache.LATEST,
+    cache_dir: CacheDir = None,
+) -> None:
+    """
+    Download the wordnet the senses are aligned with. Needs the network.
+    """
+    user_agent = USER_AGENT.format(version=version("wsc"))
+
+    edition = wordnet_version
+    if edition == cache.LATEST:
+        edition = repositories.wordnet.latest_version(user_agent, TIMEOUT)
+        typer.echo(f"Resolved latest to {edition}")
+
+    wordnet_path = cache.wordnet_path(cache_dir, edition)
+    if wordnet_path.exists():
+        typer.echo(f"Already fetched {wordnet_path}")
+        return
+
+    download(
+        repositories.wordnet.url(edition),
+        wordnet_path,
+        user_agent,
+        TIMEOUT,
+        CHUNK_SIZE,
+    )
+
+    typer.echo(f"Fetched {wordnet_path}")

@@ -7,6 +7,6 @@
 ```{toctree}
 :hidden:
 
-wiktionary
 offsets
+resources/index
 ```

@@ -21,7 +21,7 @@ def _jsonl(
     Returns:
         A writer for that path, not yet open.
     """
-    from .jsonl import JsonlWriter
+    from .formats.jsonl import JsonlWriter
 
     return JsonlWriter(output_path)
 

@@ -7,5 +7,6 @@
 ```{toctree}
 :hidden:
 
-wiktionary
+pos
+resources/index
 ```

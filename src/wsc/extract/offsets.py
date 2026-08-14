@@ -19,7 +19,7 @@ def _compile_forms(
     """
     Compile the forms of one lemma into the pattern they are read by.
 
-    Entries are read one at a time, and every sentence of one against the same
+    Entries are read one at a time, every sentence of one against the same
     forms, so holding the last pattern alone compiles once per entry.
 
     Args:

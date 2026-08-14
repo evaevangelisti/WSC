@@ -55,7 +55,7 @@ wsc fetch
 | --- | --- | --- |
 | `--language` | `en` | Wiktionary edition to read, by language code |
 | `--dump-date` | `latest` | Dump to use, as `20260801` |
-| `--cache-dir` | your platform's cache directory | Where dumps and what is made of them are kept |
+| `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
 
 ### parse
 
@@ -70,7 +70,7 @@ wsc parse
 | `--language` | `en` | Wiktionary edition to read, by language code |
 | `--dump-date` | `latest` | Dump to use, as `20260801` |
 | `--processes` | `1` | Processes wiktextract may run, at 4 GB each |
-| `--cache-dir` | your platform's cache directory | Where dumps and what is made of them are kept |
+| `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
 
 ### collect
 
@@ -87,4 +87,17 @@ wsc collect senses.jsonl
 | `--pos` | every part of speech | Parts of speech to keep; repeat to name several |
 | `--min-year` | no limit | Oldest quotation to keep |
 | `--max-year` | no limit | Newest quotation to keep |
-| `--cache-dir` | your platform's cache directory | Where dumps and what is made of them are kept |
+| `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
+
+### wordnet
+
+Downloads [Open English WordNet](https://en-word.net), which the senses are aligned with. It stands apart from the three steps above, and is only worth running if you mean to align.
+
+```sh
+wsc wordnet
+```
+
+| Option | Default | |
+| --- | --- | --- |
+| `--wordnet-version` | `latest` | Wordnet edition to use, as `2025` |
+| `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |

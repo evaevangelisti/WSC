@@ -15,7 +15,7 @@ usage
 :caption: Reference
 
 reference/models/index
-reference/dumps/index
+reference/upstream/index
 reference/extract/index
 reference/export/index
 reference/constants
