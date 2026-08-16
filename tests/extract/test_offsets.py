@@ -2,7 +2,49 @@
 Tests for src/wsc/extract/offsets.py.
 """
 
+import string
+from itertools import pairwise
+
+from hypothesis import given
+from hypothesis import strategies as st
+from strategies import words
+
 from wsc.extract import find_word_offsets
+
+_TEXTS = st.text(max_size=60)
+
+_FORMS = st.lists(words, min_size=1, max_size=4)
+
+# ASCII alone, since a text is compared with itself in another case and only
+# there does raising a letter leave its length alone.
+_ASCII_WORDS = st.text(alphabet=string.ascii_letters, min_size=1, max_size=6)
+
+_ASCII_TEXTS = st.text(alphabet=f"{string.ascii_letters} ", max_size=40)
+
+# A form holding what a pattern would read, and nothing a pattern reads as a
+# word, so that the padding around it cannot match.
+_METACHARACTERS = st.text(alphabet="ab.*+?[](){}|^$\\", min_size=1, max_size=5)
+
+
+def _stands_alone(
+    text: str,
+    start: int,
+    end: int,
+) -> bool:
+    """
+    Say whether a range has no word character on either side of it.
+
+    Args:
+        text: The sentence the range was read out of.
+        start: Where the range opens.
+        end: Where it closes, the way Python slices.
+
+    Returns:
+        Whether the occurrence is a word of its own.
+    """
+    neighbours = (text[start - 1] if start else "", text[end : end + 1])
+
+    return not any(character.isalnum() or character == "_" for character in neighbours)
 
 
 class TestOccurrences:
@@ -10,36 +52,79 @@ class TestOccurrences:
     What is handed back for one sentence.
     """
 
-    def test_locates_the_lemma(
-        self,
-    ) -> None:
-        """The range is where the lemma sits, and nothing else is."""
-        offsets = find_word_offsets("He robbed a bank.", frozenset({"bank"}))
-
-        assert offsets == ((12, 16),)
-
+    @given(_TEXTS, _FORMS)
     def test_a_range_slices_the_form_back_out(
         self,
+        text: str,
+        forms: list[str],
     ) -> None:
         """Half-open and in code points, so the text is indexed as Python does."""
-        text = "Città and bank."
-        start, end = find_word_offsets(text, frozenset({"bank"}))[0]
+        folded = {form.casefold() for form in forms}
 
-        assert text[start:end] == "bank"
+        assert all(
+            text[start:end].casefold() in folded
+            for start, end in find_word_offsets(text, frozenset(forms))
+        )
 
-    def test_locates_every_occurrence_leftmost_first(
+    @given(_TEXTS, _FORMS)
+    def test_reads_leftmost_first_and_never_twice_over(
         self,
+        text: str,
+        forms: list[str],
     ) -> None:
-        """A sentence may attest the lemma more than once."""
-        offsets = find_word_offsets("A bank beside a bank.", frozenset({"bank"}))
+        """A sentence may attest the lemma more than once, and each occurrence once."""
+        found = find_word_offsets(text, frozenset(forms))
 
-        assert offsets == ((2, 6), (16, 20))
+        assert all(start < end for start, end in found)
+        assert all(before[1] <= after[0] for before, after in pairwise(found))
 
+    @given(_TEXTS, _FORMS)
+    def test_leaves_a_form_inside_a_longer_word_alone(
+        self,
+        text: str,
+        forms: list[str],
+    ) -> None:
+        """A banker is not a bank, however the letters run."""
+        assert all(
+            _stands_alone(text, start, end)
+            for start, end in find_word_offsets(text, frozenset(forms))
+        )
+
+    @given(st.data())
+    def test_locates_every_occurrence_there_is(
+        self,
+        data: st.DataObject,
+    ) -> None:
+        """A sentence attesting the lemma five times is evidence five times over."""
+        form = data.draw(words)
+        others = words.filter(lambda word: word.casefold() != form.casefold())
+
+        tokens = data.draw(st.lists(st.just(form) | others, max_size=6))
+        text = " ".join(tokens)
+
+        expected: list[tuple[int, int]] = []
+        start = 0
+
+        for token in tokens:
+            if token == form:
+                expected.append((start, start + len(token)))
+
+            start += len(token) + 1
+
+        assert find_word_offsets(text, frozenset({form})) == tuple(expected)
+
+    @given(st.data())
     def test_hands_back_nothing_when_the_lemma_is_absent(
         self,
+        data: st.DataObject,
     ) -> None:
         """A sentence illustrating a sense need not spell the lemma out."""
-        assert find_word_offsets("She went there.", frozenset({"bank"})) == ()
+        text = data.draw(_TEXTS)
+        form = data.draw(
+            words.filter(lambda form: form.casefold() not in text.casefold())
+        )
+
+        assert find_word_offsets(text, frozenset({form})) == ()
 
 
 class TestForms:
@@ -47,55 +132,65 @@ class TestForms:
     Which shapes of the lemma are looked for, and how.
     """
 
-    def test_locates_an_inflection(
-        self,
-    ) -> None:
-        """A lemma is attested in whatever form the sentence needs."""
-        offsets = find_word_offsets("Two banks closed.", frozenset({"bank", "banks"}))
-
-        assert offsets == ((4, 9),)
-
+    @given(_ASCII_TEXTS, st.lists(_ASCII_WORDS, min_size=1, max_size=3))
     def test_reads_the_lemma_whatever_the_case(
         self,
+        text: str,
+        forms: list[str],
     ) -> None:
-        """A sentence opening on the lemma capitalises it."""
-        assert find_word_offsets("Banks closed.", frozenset({"banks"})) == ((0, 5),)
+        """A sentence opening on the lemma capitalises it, and it is the lemma."""
+        looked_for = frozenset(forms)
+        found = find_word_offsets(text, looked_for)
 
-    def test_leaves_a_form_inside_a_longer_word_alone(
-        self,
-    ) -> None:
-        """A banker is not a bank, however the letters run."""
-        assert find_word_offsets("The banker left.", frozenset({"bank"})) == ()
+        assert find_word_offsets(text.upper(), looked_for) == found
+        assert find_word_offsets(text.lower(), looked_for) == found
 
+    @given(words, words)
     def test_takes_the_longest_form_that_fits(
         self,
+        head: str,
+        tail: str,
     ) -> None:
         """A phrasal verb is what it is, not the verb that opens it."""
-        offsets = find_word_offsets("They give up.", frozenset({"give", "give up"}))
+        phrase = f"{head} {tail}"
 
-        assert offsets == ((5, 12),)
+        assert find_word_offsets(phrase, frozenset({head, phrase})) == (
+            (0, len(phrase)),
+        )
 
+    @given(words)
     def test_locates_a_form_closing_on_an_apostrophe(
         self,
+        word: str,
     ) -> None:
         """A word boundary would fall on the wrong side of the apostrophe."""
-        offsets = find_word_offsets("He is runnin' fast.", frozenset({"runnin'"}))
+        form = f"{word}'"
+        text = f"He is {form} fast."
 
-        assert offsets == ((6, 13),)
+        assert find_word_offsets(text, frozenset({form})) == ((6, 6 + len(form)),)
 
+    @given(_METACHARACTERS)
     def test_reads_a_form_as_text_rather_than_as_a_pattern(
         self,
+        form: str,
     ) -> None:
         """A form holding what a regex would read is matched letter for letter."""
-        offsets = find_word_offsets("It is 5 a.m. now.", frozenset({"a.m."}))
+        text = f"! {form} !"
 
-        assert offsets == ((8, 12),)
+        assert find_word_offsets(text, frozenset({form})) == ((2, 2 + len(form)),)
 
+    @given(words, words)
     def test_reads_one_lemma_after_another(
         self,
+        first: str,
+        second: str,
     ) -> None:
         """Only the last pattern is held on to, so forms must not outlive them."""
-        _ = find_word_offsets("A bank.", frozenset({"bank"}))
-        _ = find_word_offsets("He ran.", frozenset({"run", "ran"}))
+        text = f"{first} {second}"
 
-        assert find_word_offsets("A bank.", frozenset({"bank"})) == ((2, 6),)
+        opening = find_word_offsets(text, frozenset({first}))
+        closing = find_word_offsets(text, frozenset({second}))
+
+        assert opening[0] == (0, len(first))
+        assert closing[-1] == (len(first) + 1, len(text))
+        assert find_word_offsets(text, frozenset({first})) == opening

@@ -3,6 +3,8 @@ Tests for src/wsc/export/formats/jsonl.py.
 
 What was written is compared whole rather than reached into, so a key that
 appears where none was expected is caught along with one that went missing.
+The record a lemma is expected to read as is spelled out below: it is the
+schema a reader will be handed, and stating it twice is the point.
 """
 
 import json
@@ -10,70 +12,115 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from strategies import RawJson, lemmas, words
 
-from wsc.export.formats.jsonl import JsonlWriter
-from wsc.models import POS, Example, Lemma, Quotation, Sense
+from wsc.export import open_writer
+from wsc.models import POS, Lemma, Quotation, Sense, Sentence
+
+_WRITTEN = st.lists(lemmas, max_size=3)
+
+
+def _record_of_sentence(
+    sentence: Sentence,
+) -> RawJson:
+    """
+    Spell out what one sentence is expected to read as.
+
+    Args:
+        sentence: The example or quotation written.
+
+    Returns:
+        The JSON object it becomes, without the keys holding nothing.
+    """
+    record: RawJson = {"text": sentence.text}
+
+    if sentence.word_offsets:
+        record["word_offsets"] = [list(offsets) for offsets in sentence.word_offsets]
+
+    if isinstance(sentence, Quotation):
+        record["reference"] = sentence.reference
+
+        if sentence.year is not None:
+            record["year"] = sentence.year
+
+    return record
+
+
+def _record_of_sense(
+    sense: Sense,
+) -> RawJson:
+    """
+    Spell out what one sense is expected to read as.
+
+    Args:
+        sense: The meaning written.
+
+    Returns:
+        The JSON object it becomes, without the keys holding nothing.
+    """
+    record: RawJson = {"id": sense.id, "glosses": list(sense.glosses)}
+
+    for key, held in (
+        ("topics", sense.topics),
+        ("tags", sense.tags),
+        ("sentences", tuple(map(_record_of_sentence, sense.sentences))),
+        ("synset_ids", sense.synset_ids),
+    ):
+        if held:
+            record[key] = list(held)
+
+    return record
+
+
+def _record_of_lemma(
+    lemma: Lemma,
+) -> RawJson:
+    """
+    Spell out what one lemma is expected to read as.
+
+    Args:
+        lemma: The lemma written.
+
+    Returns:
+        The JSON object it becomes, without the keys holding nothing.
+    """
+    record: RawJson = {"id": lemma.id, "lemma": lemma.lemma, "pos": lemma.pos.value}
+
+    if lemma.senses:
+        record["senses"] = [_record_of_sense(sense) for sense in lemma.senses]
+
+    return record
 
 
 @pytest.fixture
-def written(
-    tmp_path: Path,
-) -> Callable[..., list[object]]:
+def write(
+    workspace: Callable[[], Path],
+) -> Callable[..., str]:
     """
-    Write lemmas and read back what landed on disk.
+    Write lemmas and hand back the file as it stands on disk.
 
     Args:
-        tmp_path: The directory pytest set aside for this test.
+        workspace: Sets aside a directory for the file being written.
 
     Returns:
-        A runner handing back one decoded object per line written.
+        A writer handing back the text that landed, newlines and all, since
+        the format is as much about the lines as about what is on them.
     """
 
     def run(
-        *lemmas: Lemma,
-    ) -> list[object]:
-        output_path = tmp_path / "senses.jsonl"
+        *written: Lemma,
+    ) -> str:
+        output_path = workspace() / "senses.jsonl"
 
-        with JsonlWriter(output_path) as writer:
-            for lemma in lemmas:
+        with open_writer(output_path) as writer:
+            for lemma in written:
                 writer.write(lemma)
 
-        return [
-            json.loads(line)
-            for line in output_path.read_text(encoding="utf-8").splitlines()
-        ]
+        return output_path.read_text(encoding="utf-8")
 
     return run
-
-
-def sense(
-    *sentences: Example | Quotation,
-) -> Sense:
-    """
-    Build the plainest sense there could be, carrying the sentences given.
-
-    Args:
-        sentences: What illustrates it.
-
-    Returns:
-        A sense with one gloss and no labels.
-    """
-    return Sense("bank.noun.1.01", ("A meaning.",), sentences=list(sentences))
-
-
-def lemma_of(
-    *senses: Sense,
-) -> Lemma:
-    """
-    Build a lemma around senses a test spells out.
-
-    Args:
-        senses: Its meanings.
-
-    Returns:
-        The lemma to write.
-    """
-    return Lemma("bank.noun.1", "bank", POS.NOUN, list(senses))
 
 
 class TestJsonlWriter:
@@ -81,164 +128,60 @@ class TestJsonlWriter:
     One JSON object per line.
     """
 
+    @given(_WRITTEN)
     def test_writes_one_line_per_lemma(
         self,
-        written: Callable[..., list[object]],
+        write: Callable[..., str],
+        written: list[Lemma],
     ) -> None:
         """A line at a time is what lets a reader stream the file back."""
-        assert len(written(lemma_of(sense()), lemma_of(sense()))) == 2
+        text = write(*written)
 
-    def test_writes_the_whole_lemma(
+        assert text.count("\n") == len(written)
+        assert not text or text.endswith("\n")
+
+    @given(_WRITTEN)
+    def test_writes_the_whole_lemma_and_nothing_besides(
         self,
-        written: Callable[..., list[object]],
+        write: Callable[..., str],
+        written: list[Lemma],
     ) -> None:
-        """Nothing the extractor gathered is dropped on the way out."""
-        lemma = Lemma(
-            "bank.noun.1",
-            "bank",
-            POS.NOUN,
-            [
-                Sense(
-                    "bank.noun.1.01",
-                    ("A financial institution.",),
-                    ("business",),
-                    ("countable",),
-                    [
-                        Example("He went to the bank.", word_offsets=((15, 19),)),
-                        Quotation(
-                            "A bank stood there.",
-                            "1999, A Book",
-                            1999,
-                            word_offsets=((2, 6),),
-                        ),
-                    ],
-                    ("oewn-08420278-n",),
-                )
-            ],
-        )
+        """Nothing the extractor gathered is dropped, and nothing empty is kept."""
+        lines = [line for line in write(*written).split("\n") if line]
 
-        assert written(lemma) == [
-            {
-                "id": "bank.noun.1",
-                "lemma": "bank",
-                "pos": "noun",
-                "senses": [
-                    {
-                        "id": "bank.noun.1.01",
-                        "glosses": ["A financial institution."],
-                        "topics": ["business"],
-                        "tags": ["countable"],
-                        "sentences": [
-                            {
-                                "text": "He went to the bank.",
-                                "word_offsets": [[15, 19]],
-                            },
-                            {
-                                "text": "A bank stood there.",
-                                "word_offsets": [[2, 6]],
-                                "reference": "1999, A Book",
-                                "year": 1999,
-                            },
-                        ],
-                        "synset_ids": ["oewn-08420278-n"],
-                    }
-                ],
-            }
+        assert [json.loads(line) for line in lines] == [
+            _record_of_lemma(lemma) for lemma in written
         ]
 
-    def test_drops_what_holds_nothing(
-        self,
-        written: Callable[..., list[object]],
-    ) -> None:
-        """A key holding nothing is left out, an empty table and an empty list alike."""
-        assert written(lemma_of(sense())) == [
-            {
-                "id": "bank.noun.1",
-                "lemma": "bank",
-                "pos": "noun",
-                "senses": [{"id": "bank.noun.1.01", "glosses": ["A meaning."]}],
-            }
-        ]
-
-    def test_an_example_reads_back_as_one(
-        self,
-        written: Callable[..., list[object]],
-    ) -> None:
-        """An example carries its text alone, so it reads back as an example."""
-        lemma = lemma_of(sense(Example("He ran.")))
-
-        assert written(lemma) == [
-            {
-                "id": "bank.noun.1",
-                "lemma": "bank",
-                "pos": "noun",
-                "senses": [
-                    {
-                        "id": "bank.noun.1.01",
-                        "glosses": ["A meaning."],
-                        "sentences": [{"text": "He ran."}],
-                    }
-                ],
-            }
-        ]
-
-    def test_keeps_an_undated_quotation_a_quotation(
-        self,
-        written: Callable[..., list[object]],
-    ) -> None:
-        """
-        A year that could not be read is dropped, but the reference is not.
-
-        The reference alone is what tells the two kinds apart on the way back.
-        """
-        lemma = lemma_of(sense(Quotation("He ran.", "A Book", None)))
-
-        assert written(lemma) == [
-            {
-                "id": "bank.noun.1",
-                "lemma": "bank",
-                "pos": "noun",
-                "senses": [
-                    {
-                        "id": "bank.noun.1.01",
-                        "glosses": ["A meaning."],
-                        "sentences": [{"text": "He ran.", "reference": "A Book"}],
-                    }
-                ],
-            }
-        ]
-
+    @given(words)
     def test_writes_text_as_it_stands(
         self,
-        tmp_path: Path,
+        write: Callable[..., str],
+        headword: str,
     ) -> None:
         """Text is written as it stands, rather than escaped."""
-        output_path = tmp_path / "senses.jsonl"
-
-        with JsonlWriter(output_path) as writer:
-            writer.write(Lemma("città.noun.1", "città", POS.NOUN))
-
-        assert "città" in output_path.read_text(encoding="utf-8")
+        assert headword in write(Lemma(f"{headword}.noun.1", headword, POS.NOUN))
 
     def test_refuses_to_write_before_it_is_entered(
         self,
-        tmp_path: Path,
+        workspace: Callable[[], Path],
     ) -> None:
         """The file is opened on entry, so there is nowhere to write before it."""
-        writer = JsonlWriter(tmp_path / "senses.jsonl")
+        writer = open_writer(workspace() / "senses.jsonl")
 
         with pytest.raises(RuntimeError, match="context manager"):
-            writer.write(lemma_of(sense()))
+            writer.write(Lemma("bank.noun.1", "bank", POS.NOUN))
 
     def test_refuses_to_write_once_the_block_is_left(
         self,
-        tmp_path: Path,
+        workspace: Callable[[], Path],
     ) -> None:
         """Closing lets go of the file, rather than leaving a closed one behind."""
-        writer = JsonlWriter(tmp_path / "senses.jsonl")
+        writer = open_writer(workspace() / "senses.jsonl")
+        lemma = Lemma("bank.noun.1", "bank", POS.NOUN)
 
         with writer:
-            writer.write(lemma_of(sense()))
+            writer.write(lemma)
 
         with pytest.raises(RuntimeError, match="context manager"):
-            writer.write(lemma_of(sense()))
+            writer.write(lemma)

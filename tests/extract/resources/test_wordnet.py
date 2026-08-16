@@ -3,112 +3,93 @@ Tests for src/wsc/extract/resources/wordnet.py.
 """
 
 import gzip
+import string
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import pytest
+from documents import lexical_entry, lexicon, synset
+from hypothesis import given
+from hypothesis import strategies as st
+from strategies import parts_of_speech
 
 from wsc.extract import WordNetExtractor
 from wsc.models import POS, Synset
 
-# The slice of WN-LMF the extractor reads, laid out as the release lays it.
+# WordNet's own codes. A satellite adjective is an adjective all the same.
+_POS_CODES = st.sampled_from(["n", "v", "a", "s", "r"])
 
-_WORDNET = """<?xml version="1.0" encoding="UTF-8"?>
-<LexicalResource>
-  <Lexicon id="oewn" language="en" version="2025">{body}
-  </Lexicon>
-</LexicalResource>
-"""
+# A code some other wordnet writes, which this one does not.
+_UNKNOWN_POS_CODES = st.text(alphabet=string.ascii_lowercase, max_size=3).filter(
+    lambda code: code not in ("n", "v", "a", "s", "r")
+)
 
-_ENTRY = """
-    <LexicalEntry id="{id}">
-      <Lemma writtenForm="{written_form}" partOfSpeech="{pos}"/>
-    </LexicalEntry>"""
+# What names an entry, a synset or the meaning behind one, spelled the way a
+# release spells it.
+_IDENTIFIERS = st.text(
+    alphabet=f"{string.ascii_lowercase}{string.digits}-_",
+    min_size=1,
+    max_size=12,
+)
 
-_SYNSET = """
-    <Synset id="{id}" ili="{ili}" partOfSpeech="{pos}" members="{members}">
-      <Definition>{definition}</Definition>{body}
-    </Synset>"""
+# XML holds no control character, and normalises the ends of the lines it
+# does hold, so a definition carrying one is not a definition WordNet wrote.
+_TEXTS = st.text(
+    alphabet=st.characters(
+        codec="utf-8",
+        exclude_categories=("Cc", "Cs", "Zl", "Zp"),
+    ),
+    max_size=40,
+)
 
-_EXAMPLE = """
-      <Example>{text}</Example>"""
+# WN-LMF writes a score of relations, and an alignment reads the one.
+_RELATION_TYPES = st.sampled_from(
+    ["hypernym", "hyponym", "mero_part", "similar", "also"]
+)
 
-_RELATION = """
-      <SynsetRelation relType="{rel_type}" target="{target}"/>"""
+# A synset stands on its own unless a test spells out the entries naming it.
+_NO_MEMBERS: st.SearchStrategy[tuple[str, ...]] = st.just(())
 
 
-def entry(
-    identifier: str = "oewn-bank-n",
-    written_form: str = "bank",
-    pos: str = "n",
+@st.composite
+def _synsets(
+    draw: st.DrawFn,
+    pos_codes: st.SearchStrategy[str] = _POS_CODES,
+    members: st.SearchStrategy[tuple[str, ...]] = _NO_MEMBERS,
 ) -> str:
     """
-    Write one lexical entry, which is where a written form is spelled out.
+    Draw one synset, written as a release writes it.
 
     Args:
-        identifier: What the synsets naming it as a member will refer to.
-        written_form: The word itself.
-        pos: WordNet's code for its part of speech.
+        draw: Turns a strategy into one of its values.
+        pos_codes: WordNet's codes for a part of speech.
+        members: The lexical entries expressing it, by identifier.
 
     Returns:
-        The element, to be placed before the synsets.
+        The element, to be placed after the entries it names.
     """
-    return _ENTRY.format(id=identifier, written_form=written_form, pos=pos)
-
-
-def synset(
-    identifier: str = "oewn-08420278-n",
-    pos: str = "n",
-    members: str = "oewn-bank-n",
-    definition: str = "a financial institution.",
-    ili: str = "i54321",
-    examples: Iterable[str] = (),
-    relations: Iterable[tuple[str, str]] = (),
-) -> str:
-    """
-    Write one synset.
-
-    Args:
-        identifier: What an alignment will record.
-        pos: WordNet's code for its part of speech.
-        members: The lexical entries expressing it, separated by spaces.
-        definition: The gloss WordNet writes for it.
-        ili: The interlingual index naming the same meaning elsewhere.
-        examples: The sentences to hang off it.
-        relations: The relations to hang off it, each a type and a target.
-
-    Returns:
-        The element, to be placed after the entries.
-    """
-    body = "".join(
-        [
-            *(
-                _RELATION.format(rel_type=rel_type, target=target)
-                for rel_type, target in relations
-            ),
-            *(_EXAMPLE.format(text=text) for text in examples),
-        ]
-    )
-
-    return _SYNSET.format(
-        id=identifier,
-        ili=ili,
-        pos=pos,
-        members=members,
-        definition=definition,
-        body=body,
+    return synset(
+        identifier=draw(_IDENTIFIERS),
+        pos=draw(pos_codes),
+        members=draw(members),
+        definition=draw(_TEXTS),
+        ili=draw(_IDENTIFIERS),
+        examples=draw(st.lists(_TEXTS, max_size=3)),
+        relations=draw(
+            st.lists(st.tuples(_RELATION_TYPES, _IDENTIFIERS), max_size=3),
+        ),
     )
 
 
 @pytest.fixture
 def extract(
-    tmp_path: Path,
+    workspace: Callable[[], Path],
 ) -> Callable[..., list[Synset]]:
     """
-    Run an extraction over a wordnet a test spells out.
+    Run an extraction over a wordnet a property drew.
 
     Args:
-        tmp_path: The directory pytest set aside for this test.
+        workspace: Sets aside a directory for the file being read.
 
     Returns:
         A runner taking the elements and the filter, and handing back the
@@ -120,8 +101,8 @@ def extract(
         allowed_pos: frozenset[POS] | None = None,
         name: str = "wordnet.xml",
     ) -> list[Synset]:
-        path = tmp_path / name
-        text = _WORDNET.format(body="".join(elements))
+        path = workspace() / name
+        text = lexicon(*elements)
 
         if path.suffix == ".gz":
             _ = path.write_bytes(gzip.compress(text.encode()))
@@ -138,14 +119,17 @@ class TestOpening:
     Reading the file however it was compressed.
     """
 
-    @pytest.mark.parametrize("name", ["wordnet.xml", "wordnet.xml.gz"])
-    def test_reads_what_the_suffix_names(
+    @given(st.lists(_synsets(), max_size=3))
+    def test_reads_the_same_wordnet_whatever_the_suffix_names(
         self,
         extract: Callable[..., list[Synset]],
-        name: str,
+        elements: list[str],
     ) -> None:
         """The release is gzipped, but a file found elsewhere may be plain."""
-        assert extract([entry(), synset()], name=name)
+        assert extract(elements, name="wordnet.xml.gz") == extract(
+            elements,
+            name="wordnet.xml",
+        )
 
 
 class TestSynsets:
@@ -159,7 +143,7 @@ class TestSynsets:
     ) -> None:
         """A synset is a meaning, the words expressing it, and what it hangs under."""
         elements = [
-            entry(),
+            lexical_entry(),
             synset(
                 examples=["He went to the bank."],
                 relations=[("hypernym", "oewn-08419984-n")],
@@ -178,34 +162,42 @@ class TestSynsets:
             )
         ]
 
+    @given(st.data())
     def test_spells_out_the_members_of_a_synset(
         self,
         extract: Callable[..., list[Synset]],
+        data: st.DataObject,
     ) -> None:
         """A synset names its members by entry, and an entry holds the word."""
+        written_forms = data.draw(
+            st.dictionaries(_IDENTIFIERS, _TEXTS, min_size=1, max_size=4)
+        )
+        members = data.draw(
+            st.lists(st.sampled_from(sorted(written_forms)), max_size=4)
+        )
+
         elements = [
-            entry("oewn-bank-n", "bank"),
-            entry("oewn-savings_bank-n", "savings bank"),
-            synset(members="oewn-bank-n oewn-savings_bank-n"),
+            *(
+                lexical_entry(identifier, written_form)
+                for identifier, written_form in written_forms.items()
+            ),
+            data.draw(_synsets(members=st.just(tuple(members)))),
         ]
 
-        assert extract(elements)[0].members == ("bank", "savings bank")
+        assert extract(elements)[0].members == tuple(
+            written_forms[member] for member in members
+        )
 
-    def test_a_synset_may_have_no_members(
-        self,
-        extract: Callable[..., list[Synset]],
-    ) -> None:
-        """Members are read off an attribute, which need not be there."""
-        assert extract([synset(members="")])[0].members == ()
-
+    @given(_TEXTS)
     def test_strips_a_definition(
         self,
         extract: Callable[..., list[Synset]],
+        definition: str,
     ) -> None:
         """The element is written across lines, and the whitespace is not the gloss."""
-        elements = [entry(), synset(definition="\n        a financial institution.\n")]
+        elements = [synset(members=(), definition=f"\n  {definition}\n  ")]
 
-        assert extract(elements)[0].definition == "a financial institution."
+        assert extract(elements)[0].definition == definition.strip()
 
 
 class TestExamples:
@@ -213,27 +205,18 @@ class TestExamples:
     The sentences a synset is given, which read alongside its definition.
     """
 
+    @given(st.lists(_TEXTS, max_size=4))
     def test_keeps_them_in_the_order_they_were_written(
         self,
         extract: Callable[..., list[Synset]],
+        examples: list[str],
     ) -> None:
         """The order is WordNet's, and nothing here has a reason to better it."""
-        elements = [
-            entry(),
-            synset(examples=["He went to the bank.", "The bank closed."]),
-        ]
+        elements = [synset(members=(), examples=examples)]
 
-        assert extract(elements)[0].examples == (
-            "He went to the bank.",
-            "The bank closed.",
+        assert extract(elements)[0].examples == tuple(
+            example.strip() for example in examples
         )
-
-    def test_a_synset_may_have_none(
-        self,
-        extract: Callable[..., list[Synset]],
-    ) -> None:
-        """Under half of the synsets are illustrated at all."""
-        assert extract([entry(), synset()])[0].examples == ()
 
 
 class TestHypernyms:
@@ -241,55 +224,18 @@ class TestHypernyms:
     What a synset hangs under, which is how far apart two of them are.
     """
 
-    def test_keeps_every_synset_it_is_a_kind_of(
+    @given(st.lists(st.tuples(_RELATION_TYPES, _IDENTIFIERS), max_size=5))
+    def test_keeps_every_synset_it_is_a_kind_of_and_nothing_else(
         self,
         extract: Callable[..., list[Synset]],
+        relations: list[tuple[str, str]],
     ) -> None:
         """A meaning may sit under more than one, WordNet being a lattice."""
-        elements = [
-            entry(),
-            synset(
-                relations=[
-                    ("hypernym", "oewn-08419984-n"),
-                    ("hypernym", "oewn-08061042-n"),
-                ]
-            ),
-        ]
+        elements = [synset(members=(), relations=relations)]
 
-        assert extract(elements)[0].hypernyms == (
-            "oewn-08419984-n",
-            "oewn-08061042-n",
+        assert extract(elements)[0].hypernyms == tuple(
+            target for rel_type, target in relations if rel_type == "hypernym"
         )
-
-    def test_leaves_every_other_relation_alone(
-        self,
-        extract: Callable[..., list[Synset]],
-    ) -> None:
-        """WN-LMF writes a score of relations, and an alignment reads the one."""
-        elements = [
-            entry(),
-            synset(
-                relations=[
-                    ("hyponym", "oewn-08420746-n"),
-                    ("hypernym", "oewn-08419984-n"),
-                    ("mero_part", "oewn-08420246-n"),
-                ]
-            ),
-        ]
-
-        assert extract(elements)[0].hypernyms == ("oewn-08419984-n",)
-
-    def test_an_adjective_carries_none(
-        self,
-        extract: Callable[..., list[Synset]],
-    ) -> None:
-        """Nouns and verbs alone are arranged that way, so none is all there is."""
-        elements = [
-            entry("oewn-solvent-a", "solvent", "a"),
-            synset("oewn-01234567-a", "a", members="oewn-solvent-a"),
-        ]
-
-        assert extract(elements)[0].hypernyms == ()
 
 
 class TestPartsOfSpeech:
@@ -314,25 +260,28 @@ class TestPartsOfSpeech:
         expected: POS,
     ) -> None:
         """A satellite adjective is an adjective all the same."""
-        assert extract([synset(pos=code, members="")])[0].pos is expected
+        assert extract([synset(pos=code, members=())])[0].pos is expected
 
-    def test_skips_a_code_it_does_not_know(
-        self,
-        extract: Callable[..., list[Synset]],
-    ) -> None:
-        """A wordnet of another language may cut its parts of speech elsewhere."""
-        assert extract([synset(pos="x")]) == []
-
+    @given(st.lists(_synsets(), max_size=4), st.data())
     def test_keeps_only_the_parts_of_speech_asked_for(
         self,
         extract: Callable[..., list[Synset]],
+        elements: list[str],
+        data: st.DataObject,
     ) -> None:
         """The filter narrows the candidates the way it narrows the senses."""
-        elements = [
-            synset("oewn-08420278-n", "n", members=""),
-            synset("oewn-02306462-v", "v", members=""),
+        allowed = data.draw(st.sets(parts_of_speech, min_size=1))
+
+        assert extract(elements, allowed_pos=frozenset(allowed)) == [
+            found for found in extract(elements) if found.pos in allowed
         ]
 
-        synsets = extract(elements, allowed_pos=frozenset({POS.VERB}))
-
-        assert [found.id for found in synsets] == ["oewn-02306462-v"]
+    @given(st.lists(_synsets(), max_size=4), _synsets(pos_codes=_UNKNOWN_POS_CODES))
+    def test_reads_past_a_code_it_does_not_know(
+        self,
+        extract: Callable[..., list[Synset]],
+        elements: list[str],
+        unknown: str,
+    ) -> None:
+        """A wordnet of another language may cut its parts of speech elsewhere."""
+        assert extract([*elements, unknown]) == extract(elements)

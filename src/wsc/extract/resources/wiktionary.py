@@ -327,10 +327,14 @@ class WiktionaryExtractor:
 
         with self._open(input_path) as file:
             for line in tqdm(file, desc=input_path.name, unit=" entry"):
+                # wiktextract carries its reporting among the entries.
+                if not line.startswith("{"):
+                    continue
+
                 try:
                     entry = cast(_RawEntry, json.loads(line))
                 except json.JSONDecodeError:
-                    # wiktextract carries its reporting among the entries.
+                    # A dump cut short leaves an entry that opens and no more.
                     continue
 
                 # A dump holds every language Wiktionary describes.

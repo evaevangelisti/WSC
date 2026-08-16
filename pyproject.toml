@@ -24,9 +24,9 @@ wsc = "wsc.cli:app"
 
 [dependency-groups]
 docs = [
- "myst-parser>=5.1.0",
- "shibuya>=2026.7.12",
- "sphinx>=9.1.0",
+    "myst-parser>=5.1.0",
+    "shibuya>=2026.7.12",
+    "sphinx>=9.1.0",
 ]
 
 lint = [
@@ -34,9 +34,10 @@ lint = [
 ]
 
 test = [
+    "hypothesis>=6.165.9",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "responses>=0.26.2"
+    "responses>=0.26.2",
 ]
 
 typing = [
@@ -113,9 +114,16 @@ convention = "google"
 [tool.basedpyright]
 typeCheckingMode = "recommended"
 
+# Where the suite keeps what it shares, which pytest puts on the path too.
+extraPaths = ["tests"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["--import-mode=importlib", "--strict-markers"]
+
+# The generators and the documents the suite shares are written once, beside
+# the tests drawing from them.
+pythonpath = ["tests"]
 
 [tool.coverage.run]
 source = ["src"]

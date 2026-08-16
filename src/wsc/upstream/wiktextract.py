@@ -36,7 +36,7 @@ def parse(
 
     Raises:
         subprocess.CalledProcessError: If wiktextract answers with an error.
-        RuntimeError: If its output cannot be read.
+        RuntimeError: If its output cannot be read, or holds no entry.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     partial_path = output_path.with_name(f"{output_path.name}.part")
@@ -56,6 +56,7 @@ def parse(
     ]
 
     skipped_lines = 0
+    written_entries = 0
 
     try:
         with (
@@ -77,11 +78,16 @@ def parse(
                         continue
 
                     _ = file.write(line)
+                    written_entries += 1
+
                     _ = pbar.update(1)
 
             return_code = process.wait()
             if return_code != 0:
                 raise subprocess.CalledProcessError(return_code, command)
+
+            if not written_entries:
+                raise RuntimeError("wiktextract wrote no entry")
     except BaseException:
         partial_path.unlink(missing_ok=True)
         raise

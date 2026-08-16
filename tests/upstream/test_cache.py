@@ -6,8 +6,14 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from platformdirs import user_cache_dir
+from strategies import dump_dates, languages, wordnet_versions
 
 from wsc.upstream import cache
+
+_FETCHED = st.lists(dump_dates, min_size=1, max_size=4, unique=True)
 
 
 class TestDumpDir:
@@ -15,42 +21,44 @@ class TestDumpDir:
     Naming the directory one dump sits in.
     """
 
+    @given(languages, dump_dates)
     def test_names_the_directory_after_the_edition_and_the_date(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
+        language: str,
+        date: str,
     ) -> None:
         """One directory per source, then per edition, then per dump."""
-        assert (
-            cache.dump_dir(cache_dir, "en", "20260801")
-            == cache_dir / "wiktionary" / "en" / "20260801"
+        cache_dir = workspace()
+
+        assert cache.dump_dir(cache_dir, language, date) == (
+            cache_dir / "wiktionary" / language / date
         )
 
-    def test_creates_nothing(
-        self,
-        cache_dir: Path,
-    ) -> None:
-        """Naming a dump is not fetching one, so the disk is left alone."""
-        _ = cache.dump_dir(cache_dir, "en", "20260801")
-
-        assert not cache_dir.exists()
-
+    @given(languages, dump_dates)
     def test_falls_back_to_the_platform_cache(
         self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
+        language: str,
+        date: str,
     ) -> None:
         """None is what the command line passes when no cache was named."""
-
-        def user_cache_dir(
-            appname: str,
-        ) -> str:
-            return str(tmp_path / appname)
-
-        monkeypatch.setattr(cache, "user_cache_dir", user_cache_dir)
-
-        assert cache.dump_dir(None, "en", "20260801") == (
-            tmp_path / "wsc" / "wiktionary" / "en" / "20260801"
+        assert cache.dump_dir(None, language, date) == (
+            Path(user_cache_dir("wsc")) / "wiktionary" / language / date
         )
+
+    @given(languages, dump_dates)
+    def test_creates_nothing(
+        self,
+        workspace: Callable[[], Path],
+        language: str,
+        date: str,
+    ) -> None:
+        """Naming a dump is not fetching one, so the disk is left alone."""
+        directory = workspace()
+
+        _ = cache.dump_dir(directory / "cache", language, date)
+
+        assert list(directory.iterdir()) == []
 
 
 class TestWordNetPath:
@@ -58,24 +66,41 @@ class TestWordNetPath:
     Naming the file the wordnet is kept in.
     """
 
+    @given(wordnet_versions)
     def test_names_the_file_after_the_edition(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
+        version: str,
     ) -> None:
         """One wordnet is shared by every Wiktionary edition, so it sits apart."""
-        assert (
-            cache.wordnet_path(cache_dir, "2025")
-            == cache_dir / "wordnet" / "wordnet-2025.xml.gz"
+        cache_dir = workspace()
+
+        assert cache.wordnet_path(cache_dir, version) == (
+            cache_dir / "wordnet" / f"wordnet-{version}.xml.gz"
         )
 
+    @given(wordnet_versions)
+    def test_falls_back_to_the_platform_cache(
+        self,
+        version: str,
+    ) -> None:
+        """None is what the command line passes when no cache was named."""
+        assert cache.wordnet_path(None, version) == (
+            Path(user_cache_dir("wsc")) / "wordnet" / f"wordnet-{version}.xml.gz"
+        )
+
+    @given(wordnet_versions)
     def test_creates_nothing(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
+        version: str,
     ) -> None:
         """Naming the wordnet is not fetching it, so the disk is left alone."""
-        _ = cache.wordnet_path(cache_dir, "2025")
+        directory = workspace()
 
-        assert not cache_dir.exists()
+        _ = cache.wordnet_path(directory / "cache", version)
+
+        assert list(directory.iterdir()) == []
 
 
 class TestFetchedDate:
@@ -83,72 +108,110 @@ class TestFetchedDate:
     Settling which fetched dump to work on.
     """
 
-    def test_accepts_a_date_that_was_fetched(
+    @given(_FETCHED)
+    def test_accepts_every_date_that_was_fetched(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
+        dates: list[str],
     ) -> None:
-        """A dump is known by the directory it sits in, and that one is there."""
-        _ = fetch_dump("en", "20260801")
+        """A dump is known by the directory it sits in, and those are there."""
+        cache_dir = workspace()
 
-        assert cache.fetched_date(cache_dir, "en", "20260801") == "20260801"
+        for date in dates:
+            _ = fetch_dump(cache_dir, "en", date)
 
-    def test_refuses_a_date_that_was_not_fetched(
-        self,
-        cache_dir: Path,
-        fetch_dump: Callable[..., Path],
-    ) -> None:
-        """The date asked for is named in the refusal, since it is the one to fetch."""
-        _ = fetch_dump("en", "20260801")
+        assert [cache.fetched_date(cache_dir, "en", date) for date in dates] == dates
 
-        with pytest.raises(FileNotFoundError, match="20260701"):
-            _ = cache.fetched_date(cache_dir, "en", "20260701")
-
+    @given(_FETCHED)
     def test_latest_takes_the_newest_dump_fetched(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
+        dates: list[str],
     ) -> None:
         """Latest is answered from the cache, so a machine offline runs the same."""
-        for date in ("20260601", "20260801", "20260701"):
-            _ = fetch_dump("en", date)
+        cache_dir = workspace()
 
-        assert cache.fetched_date(cache_dir, "en", cache.LATEST) == "20260801"
+        for date in dates:
+            _ = fetch_dump(cache_dir, "en", date)
 
+        assert cache.fetched_date(cache_dir, "en", cache.LATEST) == max(dates)
+
+    @given(_FETCHED, st.data())
     def test_latest_reads_the_edition_asked_for_alone(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
+        dates: list[str],
+        data: st.DataObject,
     ) -> None:
         """One cache holds every edition, and each is fetched on its own."""
-        _ = fetch_dump("it", "20260901")
-        _ = fetch_dump("en", "20260801")
+        cache_dir = workspace()
 
-        assert cache.fetched_date(cache_dir, "en", cache.LATEST) == "20260801"
+        editions = data.draw(st.lists(languages, min_size=2, max_size=2, unique=True))
+        for date in dates:
+            _ = fetch_dump(cache_dir, editions[0], date)
 
+        elsewhere = data.draw(dump_dates.filter(lambda date: date > max(dates)))
+        _ = fetch_dump(cache_dir, editions[1], elsewhere)
+
+        assert cache.fetched_date(cache_dir, editions[0], cache.LATEST) == max(dates)
+
+    @given(_FETCHED, st.data())
     def test_latest_passes_over_a_file_named_like_a_dump(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
+        dates: list[str],
+        data: st.DataObject,
     ) -> None:
         """A dump is a directory, so whatever else lands there is not one."""
-        _ = fetch_dump("en", "20260801")
-        _ = (cache_dir / "wiktionary" / "en" / "20260901").write_text("not a dump")
+        cache_dir = workspace()
 
-        assert cache.fetched_date(cache_dir, "en", cache.LATEST) == "20260801"
+        for date in dates:
+            _ = fetch_dump(cache_dir, "en", date)
 
+        newer = data.draw(dump_dates.filter(lambda date: date > max(dates)))
+        _ = (cache_dir / "wiktionary" / "en" / newer).write_text("not a dump")
+
+        assert cache.fetched_date(cache_dir, "en", cache.LATEST) == max(dates)
+
+    @given(_FETCHED, st.data())
+    def test_refuses_a_date_that_was_not_fetched(
+        self,
+        workspace: Callable[[], Path],
+        fetch_dump: Callable[..., Path],
+        dates: list[str],
+        data: st.DataObject,
+    ) -> None:
+        """The date asked for is named in the refusal, since it is the one to fetch."""
+        cache_dir = workspace()
+
+        for date in dates:
+            _ = fetch_dump(cache_dir, "en", date)
+
+        missing = data.draw(dump_dates.filter(lambda date: date not in dates))
+
+        with pytest.raises(FileNotFoundError, match=missing):
+            _ = cache.fetched_date(cache_dir, "en", missing)
+
+    @given(languages)
     def test_refuses_latest_when_nothing_was_fetched(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
+        language: str,
     ) -> None:
         """An empty cache is reported, and the report says what to do about it."""
         with pytest.raises(FileNotFoundError, match="fetch one first"):
-            _ = cache.fetched_date(cache_dir, "en", cache.LATEST)
+            _ = cache.fetched_date(workspace(), language, cache.LATEST)
 
+    @given(languages)
     def test_refuses_latest_when_the_cache_does_not_exist(
         self,
-        cache_dir: Path,
+        workspace: Callable[[], Path],
+        language: str,
     ) -> None:
         """A cache nobody has written to yet reads as an empty one."""
         with pytest.raises(FileNotFoundError):
-            _ = cache.fetched_date(cache_dir / "missing", "en", cache.LATEST)
+            _ = cache.fetched_date(workspace() / "missing", language, cache.LATEST)

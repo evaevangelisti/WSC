@@ -1,6 +1,16 @@
 """
 Fixtures the whole suite shares.
 
+A test states a property: whatever a generator draws, this holds of it. The
+generators live in strategies.py and the pages each source serves in
+documents.py, so that a test file holds properties and little else. An
+example is spelled out where one input is the whole point of the test, such
+as an address that is published rather than derived.
+
+A feature is exercised from outside, through the public API: the commands
+through the command line, and what lies under them through what the package
+exports. A test reaching for anything else is the exception, and says why.
+
 The test tree mirrors the package: tests/extract/resources/test_wiktionary.py
 covers src/wsc/extract/resources/wiktionary.py, and a module at the top of the
 tree covers one of the same name in src/wsc. A new source or format is a new
@@ -19,113 +29,48 @@ import gzip
 import json
 from collections.abc import Callable, Iterable
 from compression import zstd
+from itertools import count
 from pathlib import Path
 
 import pytest
+from hypothesis import HealthCheck, settings
+from strategies import RawJson
 
 from wsc.upstream import cache
 
-type RawJson = dict[str, object]
-"""One decoded JSON object, as wiktextract writes them."""
-
-
-# The builders below spell out only what a test cares about.
-
-
-@pytest.fixture
-def make_example() -> Callable[..., RawJson]:
-    """
-    Build one raw example, quoted from a source or not.
-
-    Returns:
-        A builder taking the sentence and, optionally, its reference.
-    """
-
-    def build(
-        text: str = "A sentence.",
-        ref: str | None = None,
-    ) -> RawJson:
-        raw: RawJson = {"text": text}
-        if ref is not None:
-            raw["ref"] = ref
-
-        return raw
-
-    return build
+# A property that reaches the disk or spawns a process is timed by the machine
+# it runs on, and how long one example took says nothing about the code. The
+# fixtures below hand out a directory per call rather than per test, so an
+# example never reads what another one wrote.
+settings.register_profile(
+    "wsc",
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+settings.load_profile("wsc")
 
 
 @pytest.fixture
-def make_sense() -> Callable[..., RawJson]:
+def workspace(
+    tmp_path: Path,
+) -> Callable[[], Path]:
     """
-    Build one raw sense.
-
-    Returns:
-        A builder taking the gloss chain, its labels and its examples.
-    """
-
-    def build(
-        glosses: list[str] | None = None,
-        tags: list[str] | None = None,
-        topics: list[str] | None = None,
-        examples: list[RawJson] | None = None,
-    ) -> RawJson:
-        return {
-            "glosses": ["A meaning."] if glosses is None else glosses,
-            "tags": tags or [],
-            "topics": topics or [],
-            "examples": examples or [],
-        }
-
-    return build
-
-
-@pytest.fixture
-def make_form() -> Callable[..., RawJson]:
-    """
-    Build one raw form of an entry.
-
-    Returns:
-        A builder taking the form and the labels wiktextract gave it.
-    """
-
-    def build(
-        form: str = "banks",
-        tags: list[str] | None = None,
-    ) -> RawJson:
-        return {"form": form, "tags": tags or []}
-
-    return build
-
-
-@pytest.fixture
-def make_entry(
-    make_sense: Callable[..., RawJson],
-) -> Callable[..., RawJson]:
-    """
-    Build one raw entry, with a single plain sense unless told otherwise.
+    Set aside a directory of one's own, as often as one is asked for.
 
     Args:
-        make_sense: Builds the sense an entry falls back on.
+        tmp_path: The directory pytest set aside for this test.
 
     Returns:
-        A builder taking the headword, its part of speech, its forms and its
-        senses.
+        A builder handing back an empty directory, so that a property drawing
+        a hundred examples writes each of them somewhere else.
     """
+    directories = count()
 
-    def build(
-        word: str = "bank",
-        pos: str = "noun",
-        lang_code: str = "en",
-        forms: list[RawJson] | None = None,
-        senses: list[RawJson] | None = None,
-    ) -> RawJson:
-        return {
-            "word": word,
-            "pos": pos,
-            "lang_code": lang_code,
-            "forms": forms or [],
-            "senses": [make_sense()] if senses is None else senses,
-        }
+    def build() -> Path:
+        path = tmp_path / f"{next(directories):03d}"
+        path.mkdir()
+
+        return path
 
     return build
 
@@ -166,36 +111,16 @@ def write_entries() -> Callable[[Path, Iterable[RawJson]], Path]:
 
 
 @pytest.fixture
-def cache_dir(
-    tmp_path: Path,
-) -> Path:
-    """
-    Give each test a cache of its own, so none inherits another's dumps.
-
-    Args:
-        tmp_path: The directory pytest set aside for this test.
-
-    Returns:
-        The directory to pass wherever a cache is asked for.
-    """
-    return tmp_path / "cache"
-
-
-@pytest.fixture
-def fetch_dump(
-    cache_dir: Path,
-) -> Callable[..., Path]:
+def fetch_dump() -> Callable[..., Path]:
     """
     Stand in for a finished fetch, without the network.
-
-    Args:
-        cache_dir: Where the sources are kept.
 
     Returns:
         A builder placing a dump where the fetch command would have.
     """
 
     def build(
+        cache_dir: Path,
         language: str = "en",
         date: str = "20260801",
     ) -> Path:
@@ -209,20 +134,16 @@ def fetch_dump(
 
 
 @pytest.fixture
-def fetch_wordnet(
-    cache_dir: Path,
-) -> Callable[..., Path]:
+def fetch_wordnet() -> Callable[..., Path]:
     """
     Stand in for a finished fetch of the wordnet, without the network.
-
-    Args:
-        cache_dir: Where the sources are kept.
 
     Returns:
         A builder placing the wordnet where the wordnet command would have.
     """
 
     def build(
+        cache_dir: Path,
         version: str = "2025",
     ) -> Path:
         path = cache.wordnet_path(cache_dir, version)
@@ -236,7 +157,6 @@ def fetch_wordnet(
 
 @pytest.fixture
 def parse_dump(
-    cache_dir: Path,
     fetch_dump: Callable[..., Path],
     write_entries: Callable[[Path, Iterable[RawJson]], Path],
 ) -> Callable[..., Path]:
@@ -244,7 +164,6 @@ def parse_dump(
     Stand in for a finished fetch and parse, without wiktextract.
 
     Args:
-        cache_dir: Where the sources are kept.
         fetch_dump: Places the dump the parse would have read.
         write_entries: Writes the entries the parse would have produced.
 
@@ -253,11 +172,12 @@ def parse_dump(
     """
 
     def build(
+        cache_dir: Path,
         entries: Iterable[RawJson],
         language: str = "en",
         date: str = "20260801",
     ) -> Path:
-        _ = fetch_dump(language, date)
+        _ = fetch_dump(cache_dir, language, date)
 
         path = cache.dump_dir(cache_dir, language, date) / cache.WIKTEXTRACT_NAME
 

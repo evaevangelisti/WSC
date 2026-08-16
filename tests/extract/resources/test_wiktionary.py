@@ -3,28 +3,134 @@ Tests for src/wsc/extract/resources/wiktionary.py.
 """
 
 import json
+from collections import Counter
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from strategies import (
+    RawJson,
+    blanks,
+    glosses,
+    languages,
+    parts_of_speech,
+    raw_entries,
+    raw_examples,
+    raw_forms,
+    raw_senses,
+    references,
+    texts,
+    undated_references,
+    unknown_pos_codes,
+    words,
+    years,
+)
 
 from wsc.extract import WiktionaryExtractor
 from wsc.models import POS, Example, Lemma, Quotation, Sentence
 
-type RawJson = dict[str, object]
-"""One decoded JSON object, as wiktextract writes them."""
+# json.loads is typed loosely; whether a line decodes at all is the whole of
+# what is asked of it here.
+_loads: Callable[[str], object] = json.loads
+
+
+def _reads_as_an_entry(
+    line: str,
+) -> bool:
+    """
+    Say whether a line is an entry, which is a JSON object written whole.
+
+    Args:
+        line: One line of a wiktextract file.
+
+    Returns:
+        Whether it opens an object, and whether that object is finished.
+    """
+    if not line.startswith("{"):
+        return False
+
+    try:
+        _ = _loads(line)
+    except ValueError:
+        return False
+
+    return True
+
+
+def _padded(
+    word: str,
+) -> st.SearchStrategy[str]:
+    """
+    Draw a word as an editor may have left it, with whitespace around it.
+
+    Args:
+        word: The word itself.
+
+    Returns:
+        A strategy over the ways it may have been written down.
+    """
+    return st.tuples(_PADDING, st.just(word), _PADDING).map("".join)
+
+
+_PADDED_HEADWORDS = words.flatmap(_padded)
+
+
+# The three ways an entry may fail to be one: a headword that is whitespace,
+# a part of speech the collector does not keep, and senses defining nothing.
+_UNREADABLE = st.one_of(
+    raw_entries(headwords=st.just("") | blanks),
+    raw_entries(pos_codes=unknown_pos_codes),
+    raw_entries(
+        senses=st.lists(raw_senses(glosses=st.lists(blanks, max_size=2)), max_size=2)
+    ),
+)
+
+# What a wiktextract file holds beside the entries: the prose wiktextract
+# writes about itself, JSON that decodes into anything but an entry, and an
+# entry a dump cut short left unfinished.
+_REPORTS = st.one_of(
+    st.text(
+        alphabet=st.characters(codec="utf-8", exclude_characters="\n\r"),
+        max_size=30,
+    ),
+    st.sampled_from(
+        [
+            "0",
+            "123",
+            '"parsing pages"',
+            "null",
+            "true",
+            "[]",
+            '[{"word": "bank"}]',
+            "{",
+            '{"word": "bank"',
+            '{"word": }',
+        ]
+    ),
+).filter(lambda line: not _reads_as_an_entry(line))
+
+# Rows describing an inflection table rather than the lemma, and the
+# transliterations standing beside a form rather than for it.
+_SERVICE_TAGS = st.sampled_from(["inflection-template", "romanization", "table-tags"])
+
+# What an inflection table writes for a cell it leaves empty.
+_EMPTY_CELLS = st.sampled_from(["-", ""]) | blanks
+
+_PADDING = blanks | st.just("")
 
 
 @pytest.fixture
 def extract(
-    tmp_path: Path,
+    workspace: Callable[[], Path],
     write_entries: Callable[[Path, Iterable[RawJson]], Path],
 ) -> Callable[..., list[Lemma]]:
     """
-    Run an extraction over entries a test spells out.
+    Run an extraction over entries a property drew.
 
     Args:
-        tmp_path: The directory pytest set aside for this test.
+        workspace: Sets aside a directory for the file being read.
         write_entries: Writes the entries where the extractor will read them.
 
     Returns:
@@ -40,7 +146,7 @@ def extract(
         maximum_year: int | None = None,
         name: str = "wiktextract.jsonl",
     ) -> list[Lemma]:
-        path = write_entries(tmp_path / name, entries)
+        path = write_entries(workspace() / name, entries)
 
         extractor = WiktionaryExtractor(
             language,
@@ -55,61 +161,64 @@ def extract(
 
 
 @pytest.fixture
-def illustrate(
-    make_entry: Callable[..., RawJson],
-    make_sense: Callable[..., RawJson],
-) -> Callable[..., list[RawJson]]:
+def extract_lines(
+    workspace: Callable[[], Path],
+) -> Callable[[Iterable[str]], list[Lemma]]:
     """
-    Build one entry whose single sense carries the examples given.
+    Run an extraction over the lines of a file, entries or otherwise.
 
     Args:
-        make_entry: Builds the entry the sense hangs off.
-        make_sense: Builds the sense the examples hang off.
+        workspace: Sets aside a directory for the file being read.
 
     Returns:
-        A builder taking raw examples and the forms of the headword, and
-        handing back entries to extract.
+        A runner taking the lines and handing back the lemmas read out of
+        those that were entries.
     """
 
-    def build(
-        *examples: RawJson,
-        forms: list[RawJson] | None = None,
-    ) -> list[RawJson]:
-        return [
-            make_entry(
-                forms=forms,
-                senses=[make_sense(examples=list(examples))],
-            )
-        ]
+    def run(
+        lines: Iterable[str],
+    ) -> list[Lemma]:
+        path = workspace() / "wiktextract.jsonl"
+        _ = path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
 
-    return build
+        return list(WiktionaryExtractor("en", None, None, None).extract(path))
+
+    return run
 
 
 @pytest.fixture
-def sentences(
+def attest(
     extract: Callable[..., list[Lemma]],
-    illustrate: Callable[..., list[RawJson]],
 ) -> Callable[..., list[Sentence]]:
     """
     Read back the sentences of a single sense, once the filters have run.
 
     Args:
         extract: Runs the extraction.
-        illustrate: Builds the entry the examples hang off.
 
     Returns:
-        A runner taking raw examples, the forms of the headword and the year
-        bounds, and handing back the sentences that survive them.
+        A runner taking raw examples, the headword they attest, its forms and
+        the year bounds, and handing back the sentences that survive them.
     """
 
     def run(
         *examples: RawJson,
-        forms: list[RawJson] | None = None,
+        headword: str = "bank",
+        forms: Iterable[RawJson] = (),
         minimum_year: int | None = None,
         maximum_year: int | None = None,
     ) -> list[Sentence]:
+        sense: RawJson = {"glosses": ["A meaning."], "examples": list(examples)}
+        entry: RawJson = {
+            "word": headword,
+            "pos": "noun",
+            "lang_code": "en",
+            "forms": list(forms),
+            "senses": [sense],
+        }
+
         lemmas = extract(
-            illustrate(*examples, forms=forms),
+            [entry],
             minimum_year=minimum_year,
             maximum_year=maximum_year,
         )
@@ -124,22 +233,17 @@ class TestOpening:
     Reading the file however it was compressed.
     """
 
-    @pytest.mark.parametrize(
-        "name",
-        [
-            "wiktextract.jsonl",
-            "wiktextract.jsonl.zst",
-            "wiktextract.jsonl.gz",
-        ],
-    )
-    def test_reads_what_the_suffix_names(
+    @given(st.lists(raw_entries(), max_size=3))
+    def test_reads_the_same_entries_whatever_the_suffix_names(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        name: str,
+        entries: list[RawJson],
     ) -> None:
         """A parse writes zstd, but a file found elsewhere may be plain or gzipped."""
-        assert extract([make_entry()], name=name)
+        plain = extract(entries, name="wiktextract.jsonl")
+
+        assert extract(entries, name="wiktextract.jsonl.zst") == plain
+        assert extract(entries, name="wiktextract.jsonl.gz") == plain
 
 
 class TestEntries:
@@ -147,87 +251,92 @@ class TestEntries:
     Which entries are read at all.
     """
 
+    @given(st.data())
     def test_keeps_the_language_asked_for(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
+        data: st.DataObject,
     ) -> None:
         """A dump holds every language Wiktionary describes, not the one alone."""
-        entries = [
-            make_entry(word="bank", lang_code="en"),
-            make_entry(word="banca", lang_code="it"),
-        ]
+        editions = data.draw(st.lists(languages, min_size=1, max_size=3, unique=True))
+        entries = data.draw(
+            st.lists(raw_entries(languages=st.sampled_from(editions)), max_size=5)
+        )
 
-        assert [lemma.lemma for lemma in extract(entries, language="en")] == ["bank"]
+        language = data.draw(st.sampled_from(editions))
+        spoken = [entry for entry in entries if entry["lang_code"] == language]
 
-    def test_reads_another_edition_the_same_way(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-    ) -> None:
-        """Nothing in the reading is English; the language is only asked for."""
-        entries = [make_entry(word="banca", lang_code="it")]
+        assert extract(entries, language=language) == extract(
+            spoken,
+            language=language,
+        )
 
-        assert [lemma.lemma for lemma in extract(entries, language="it")] == ["banca"]
-
-    def test_skips_a_part_of_speech_it_does_not_keep(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-    ) -> None:
-        """Wiktionary knows far more parts of speech than the collector keeps."""
-        entries = [make_entry(pos="noun"), make_entry(word="ouch", pos="intj")]
-
-        assert [lemma.pos for lemma in extract(entries)] == [POS.NOUN]
-
+    @given(st.lists(raw_entries(), max_size=5), st.data())
     def test_keeps_only_the_parts_of_speech_asked_for(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
+        entries: list[RawJson],
+        data: st.DataObject,
     ) -> None:
         """The filter narrows what is kept, and never widens it."""
-        entries = [make_entry(pos="noun"), make_entry(word="run", pos="verb")]
+        allowed = data.draw(st.sets(parts_of_speech, min_size=1))
 
-        lemmas = extract(entries, allowed_pos=frozenset({POS.VERB}))
+        assert extract(entries, allowed_pos=frozenset(allowed)) == [
+            lemma for lemma in extract(entries) if lemma.pos in allowed
+        ]
 
-        assert [lemma.lemma for lemma in lemmas] == ["run"]
-
-    @pytest.mark.parametrize("word", ["", "   "])
-    def test_skips_an_entry_with_no_headword(
+    @given(st.lists(raw_entries(), max_size=4), _UNREADABLE, st.data())
+    def test_reads_past_an_entry_it_cannot_collect(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        word: str,
+        entries: list[RawJson],
+        unreadable: RawJson,
+        data: st.DataObject,
     ) -> None:
-        """A lemma is its headword, so without one there is nothing to collect."""
-        assert extract([make_entry(word=word)]) == []
+        """An entry with no headword, no part of speech kept or no gloss is skipped."""
+        position = data.draw(st.integers(min_value=0, max_value=len(entries)))
+        mixed = [*entries[:position], unreadable, *entries[position:]]
 
-    def test_skips_an_entry_whose_senses_carry_no_gloss(
+        assert extract(mixed) == extract(entries)
+
+    @given(st.lists(raw_entries(), max_size=4), _REPORTS, st.data())
+    def test_reads_past_a_line_that_is_not_an_entry(
         self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
-    ) -> None:
-        """An entry that defines nothing has nothing to collect either."""
-        entries = [make_entry(senses=[make_sense(glosses=[])])]
-
-        assert extract(entries) == []
-
-    def test_skips_a_line_that_is_not_an_entry(
-        self,
-        tmp_path: Path,
-        make_entry: Callable[..., RawJson],
+        extract_lines: Callable[[Iterable[str]], list[Lemma]],
+        entries: list[RawJson],
+        report: str,
+        data: st.DataObject,
     ) -> None:
         """Wiktextract reports itself among the entries, so not every line is one."""
-        path = tmp_path / "wiktextract.jsonl"
-        _ = path.write_text(
-            f"wiktextract is working\n{json.dumps(make_entry())}\nnot json either\n",
-            encoding="utf-8",
+        position = data.draw(st.integers(min_value=0, max_value=len(entries)))
+        lines = [json.dumps(entry) for entry in entries]
+
+        assert extract_lines([*lines[:position], report, *lines[position:]]) == (
+            extract_lines(lines)
         )
 
-        extractor = WiktionaryExtractor("en", None, None, None)
+    @given(st.lists(raw_entries(headwords=_PADDED_HEADWORDS), max_size=4))
+    def test_strips_the_headword_it_reads(
+        self,
+        extract: Callable[..., list[Lemma]],
+        entries: list[RawJson],
+    ) -> None:
+        """The whitespace an editor left around a headword is not part of it."""
+        assert [lemma.lemma for lemma in extract(entries)] == [
+            str(entry["word"]).strip() for entry in entries
+        ]
 
-        assert len(list(extractor.extract(path))) == 1
+    @given(parts_of_speech, st.data())
+    def test_reads_the_part_of_speech_off_the_code_wiktextract_writes(
+        self,
+        extract: Callable[..., list[Lemma]],
+        pos: POS,
+        data: st.DataObject,
+    ) -> None:
+        """The values are wiktextract's own codes, so a code converts directly."""
+        entry = data.draw(raw_entries(pos_codes=st.just(pos.value)))
+
+        assert extract([entry])[0].pos is pos
 
 
 class TestIdentifiers:
@@ -235,105 +344,33 @@ class TestIdentifiers:
     How a lemma and its senses are named.
     """
 
+    @given(st.lists(raw_entries(), max_size=5))
     def test_names_a_lemma_after_its_headword_and_part_of_speech(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
+        entries: list[RawJson],
     ) -> None:
-        """An identifier reads as bank.noun.1, the ordinal opening at one."""
-        assert extract([make_entry()])[0].id == "bank.noun.1"
+        """An identifier reads as bank.noun.2, the ordinal counting what is kept."""
+        ordinals: Counter[str] = Counter()
 
-    def test_tells_apart_entries_sharing_a_lemma_and_a_part_of_speech(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-    ) -> None:
-        """Wiktionary separates them for a reason: different etymologies."""
-        entries = [make_entry(), make_entry()]
+        for lemma in extract(entries):
+            key = f"{lemma.lemma}.{lemma.pos}"
+            ordinals[key] += 1
 
-        assert [lemma.id for lemma in extract(entries)] == [
-            "bank.noun.1",
-            "bank.noun.2",
-        ]
+            assert lemma.id == f"{key}.{ordinals[key]}"
 
-    def test_counts_entries_however_the_file_is_ordered(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-    ) -> None:
-        """Entries sharing a lemma need not sit next to one another."""
-        entries = [make_entry(), make_entry(word="run", pos="verb"), make_entry()]
-
-        assert [lemma.id for lemma in extract(entries)] == [
-            "bank.noun.1",
-            "run.verb.1",
-            "bank.noun.2",
-        ]
-
-    def test_counts_each_part_of_speech_on_its_own(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-    ) -> None:
-        """The count is per lemma and part of speech, not per lemma."""
-        entries = [make_entry(word="bank"), make_entry(word="bank", pos="verb")]
-
-        assert [lemma.id for lemma in extract(entries)] == [
-            "bank.noun.1",
-            "bank.verb.1",
-        ]
-
-    def test_an_entry_that_is_dropped_spends_no_ordinal(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
-    ) -> None:
-        """Ordinals number the entries kept, so they run one after another."""
-        entries = [make_entry(senses=[make_sense(glosses=[])]), make_entry()]
-
-        assert [lemma.id for lemma in extract(entries)] == ["bank.noun.1"]
-
+    @given(st.lists(raw_entries(), max_size=5))
     def test_names_a_sense_after_its_lemma_and_its_position(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
+        entries: list[RawJson],
     ) -> None:
         """A sense identifier reads as bank.noun.1.03, padded so that it sorts."""
-        entries = [
-            make_entry(
-                senses=[make_sense(glosses=[f"Meaning {n}."]) for n in range(1, 4)]
-            )
-        ]
-
-        assert [sense.id for sense in extract(entries)[0].senses] == [
-            "bank.noun.1.01",
-            "bank.noun.1.02",
-            "bank.noun.1.03",
-        ]
-
-    def test_a_sense_that_is_dropped_leaves_no_gap(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
-    ) -> None:
-        """Senses are numbered as they are kept, so the count never skips."""
-        entries = [
-            make_entry(
-                senses=[
-                    make_sense(glosses=["First."]),
-                    make_sense(glosses=[]),
-                    make_sense(glosses=["Second."]),
-                ]
-            )
-        ]
-
-        assert [sense.id for sense in extract(entries)[0].senses] == [
-            "bank.noun.1.01",
-            "bank.noun.1.02",
-        ]
+        for lemma in extract(entries):
+            assert [sense.id for sense in lemma.senses] == [
+                f"{lemma.id}.{position:02d}"
+                for position in range(1, len(lemma.senses) + 1)
+            ]
 
 
 class TestSenses:
@@ -341,69 +378,66 @@ class TestSenses:
     What a sense carries over.
     """
 
+    @given(st.lists(st.one_of(glosses, blanks), min_size=1, max_size=4), st.data())
     def test_keeps_the_gloss_chain_outermost_first(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
+        chain: list[str],
+        data: st.DataObject,
     ) -> None:
-        """The chain is what lets a sub-sense be read on its own."""
-        chain = ["A financial institution.", "Its building."]
-        entries = [make_entry(senses=[make_sense(glosses=chain)])]
+        """The chain is what lets a sub-sense be read on its own, whitespace aside."""
+        senses: list[RawJson] = [{"glosses": chain}]
+        entry = data.draw(raw_entries(senses=st.just(senses)))
 
-        assert extract(entries)[0].senses[0].glosses == tuple(chain)
+        kept = tuple(gloss.strip() for gloss in chain if gloss.strip())
 
+        assert [
+            sense.glosses for lemma in extract([entry]) for sense in lemma.senses
+        ] == ([kept] if kept else [])
+
+    @given(
+        st.lists(st.lists(glosses, min_size=1, max_size=3), min_size=1, max_size=4),
+        st.data(),
+    )
     def test_keeps_a_sub_sense_alongside_its_parent(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
+        chains: list[list[str]],
+        data: st.DataObject,
     ) -> None:
         """A parent is not replaced by what nests under it: it has examples too."""
-        entries = [
-            make_entry(
-                senses=[
-                    make_sense(glosses=["A financial institution."]),
-                    make_sense(glosses=["A financial institution.", "Its building."]),
-                ]
-            )
+        senses: list[RawJson] = [{"glosses": chain} for chain in chains]
+        entry = data.draw(raw_entries(senses=st.just(senses)))
+
+        kept = extract([entry])[0].senses
+
+        assert [sense.depth for sense in kept] == [len(chain) for chain in chains]
+        assert [sense.gloss for sense in kept] == [
+            chain[-1].strip() for chain in chains
         ]
 
-        senses = extract(entries)[0].senses
-
-        assert [sense.depth for sense in senses] == [1, 2]
-        assert [sense.gloss for sense in senses] == [
-            "A financial institution.",
-            "Its building.",
-        ]
-
-    def test_strips_a_gloss_and_drops_a_blank_one(
-        self,
-        extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
-    ) -> None:
-        """Whitespace is not a level of nesting."""
-        entries = [
-            make_entry(senses=[make_sense(glosses=["  A meaning.  ", "   ", "More."])])
-        ]
-
-        assert extract(entries)[0].senses[0].glosses == ("A meaning.", "More.")
-
+    @given(st.lists(words, max_size=3), st.lists(words, max_size=3), st.data())
     def test_keeps_tags_and_topics_apart(
         self,
         extract: Callable[..., list[Lemma]],
-        make_entry: Callable[..., RawJson],
-        make_sense: Callable[..., RawJson],
+        tags: list[str],
+        topics: list[str],
+        data: st.DataObject,
     ) -> None:
         """Labels of grammar are not subject fields, and neither takes the other."""
-        entries = [
-            make_entry(senses=[make_sense(tags=["figurative"], topics=["mathematics"])])
-        ]
+        entry = data.draw(
+            raw_entries(
+                senses=st.lists(
+                    raw_senses(tags=st.just(tags), topics=st.just(topics)),
+                    min_size=1,
+                    max_size=1,
+                )
+            )
+        )
 
-        sense = extract(entries)[0].senses[0]
+        sense = extract([entry])[0].senses[0]
 
-        assert (sense.tags, sense.topics) == (("figurative",), ("mathematics",))
+        assert (sense.tags, sense.topics) == (tuple(tags), tuple(topics))
 
 
 class TestSentences:
@@ -411,51 +445,73 @@ class TestSentences:
     The sentences illustrating a sense.
     """
 
+    @given(st.lists(raw_examples(), max_size=4))
     def test_a_sentence_with_no_reference_is_an_example(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        examples: list[RawJson],
     ) -> None:
         """An editor wrote it, so there is no source to name."""
-        assert sentences(make_example("He runs.")) == [Example("He runs.")]
+        found = attest(*examples)
 
-    def test_a_sentence_with_a_reference_is_a_quotation(
-        self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
-    ) -> None:
-        """A reference is what makes a sentence evidence from somewhere."""
-        example = make_example("He runs.", ref="1999, A Book, page 1")
-
-        assert sentences(example) == [
-            Quotation("He runs.", "1999, A Book, page 1", 1999)
+        assert all(isinstance(sentence, Example) for sentence in found)
+        assert [sentence.text for sentence in found] == [
+            str(example["text"]).strip() for example in examples
         ]
 
+    @given(st.data())
+    def test_a_sentence_with_a_reference_is_a_quotation(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """A reference is what makes a sentence evidence from somewhere."""
+        year = data.draw(years)
+        reference = data.draw(references(year))
+        example = data.draw(raw_examples(references=st.just(reference)))
+
+        quotation = attest(example)[0]
+
+        assert isinstance(quotation, Quotation)
+        assert (quotation.text, quotation.reference) == (
+            str(example["text"]).strip(),
+            reference,
+        )
+
+    @given(st.lists(st.one_of(texts, blanks), max_size=4), st.data())
     def test_strips_a_sentence_and_drops_a_blank_one(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        written: list[str],
+        data: st.DataObject,
     ) -> None:
         """A sentence of whitespace illustrates nothing."""
-        kept = make_example("  He runs.  ")
+        examples = [data.draw(raw_examples(texts=st.just(text))) for text in written]
 
-        assert sentences(kept, make_example("   ")) == [Example("He runs.")]
-
-    def test_keeps_the_order_they_were_listed_in(
-        self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
-    ) -> None:
-        """Wiktionary lists the plainest first, and that ordering is worth keeping."""
-        listed = sentences(make_example("First."), make_example("Second."))
-
-        assert [sentence.text for sentence in listed] == ["First.", "Second."]
+        assert [sentence.text for sentence in attest(*examples)] == [
+            text.strip() for text in written if text.strip()
+        ]
 
 
 class TestYears:
     """
     Reading a year off a reference, and filtering on it.
     """
+
+    @given(st.data())
+    def test_reads_the_year_the_reference_names(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """A reference is prose, so the year is taken where it is recognised."""
+        year = data.draw(years)
+        example = data.draw(raw_examples(references=references(year)))
+
+        quotation = attest(example)[0]
+
+        assert isinstance(quotation, Quotation)
+        assert quotation.year == year
 
     @pytest.mark.parametrize(
         ("reference", "expected"),
@@ -469,96 +525,127 @@ class TestYears:
             ("A Book, ISBN 1234567", None),
         ],
     )
-    def test_reads_the_first_year_the_reference_names(
+    def test_reads_the_dates_wiktionary_writes(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
         reference: str,
         expected: int | None,
     ) -> None:
-        """A reference is prose, so the year is taken where it is recognised."""
-        quotation = sentences(make_example("He runs.", ref=reference))[0]
+        """The shapes are Wiktionary's own, and the year opens each of them."""
+        quotation = attest({"text": "He runs.", "ref": reference})[0]
 
         assert isinstance(quotation, Quotation)
         assert quotation.year == expected
 
-    @pytest.mark.parametrize(
-        ("minimum_year", "maximum_year", "expected"),
-        [
-            (None, None, [1800, 1900, 2000]),
-            (1900, None, [1900, 2000]),
-            (None, 1900, [1800, 1900]),
-            (1900, 1900, [1900]),
-            (2100, None, []),
-        ],
-    )
+    @given(st.lists(years, max_size=4), st.none() | years, st.none() | years, st.data())
     def test_keeps_the_quotations_inside_the_bounds(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        dated: list[int],
         minimum_year: int | None,
         maximum_year: int | None,
-        expected: list[int],
+        data: st.DataObject,
     ) -> None:
         """Both bounds are inclusive, and either stands on its own."""
-        dated = [
-            make_example("He runs.", ref=f"{year}, A Book")
-            for year in (1800, 1900, 2000)
+        examples = [
+            data.draw(raw_examples(references=references(year))) for year in dated
         ]
 
-        kept = sentences(
-            *dated,
+        kept = attest(
+            *examples,
             minimum_year=minimum_year,
             maximum_year=maximum_year,
         )
 
         assert [
             sentence.year for sentence in kept if isinstance(sentence, Quotation)
-        ] == expected
+        ] == [
+            year
+            for year in dated
+            if (minimum_year is None or year >= minimum_year)
+            and (maximum_year is None or year <= maximum_year)
+        ]
 
+    @given(st.lists(raw_examples(), max_size=4), st.none() | years, st.data())
+    def test_a_bound_never_widens_what_is_kept(
+        self,
+        attest: Callable[..., list[Sentence]],
+        examples: list[RawJson],
+        minimum_year: int | None,
+        data: st.DataObject,
+    ) -> None:
+        """A bound is asked for to leave something out, never to let something in."""
+        dated = [
+            data.draw(raw_examples(references=references(data.draw(years))))
+            for _ in examples
+        ]
+
+        every = attest(*examples, *dated)
+        bounded = attest(*examples, *dated, minimum_year=minimum_year)
+
+        assert set(bounded) <= set(every)
+
+    @given(st.data())
     def test_drops_an_undated_quotation_once_a_bound_is_set(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
     ) -> None:
-        """A quotation that cannot be dated cannot be shown to be inside a bound."""
-        undated = make_example("He runs.", ref="A Book")
+        """A quotation nothing can date cannot be shown to be inside a bound."""
+        undated = data.draw(raw_examples(references=undated_references))
 
-        assert sentences(undated, minimum_year=1900) == []
+        assert attest(undated, minimum_year=data.draw(years)) == []
 
+    @given(st.data())
     def test_keeps_an_undated_quotation_when_no_bound_is_set(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
     ) -> None:
         """An undated quotation only stands in the way once a bound is set."""
-        undated = make_example("He runs.", ref="A Book")
+        reference = data.draw(undated_references)
+        undated = data.draw(raw_examples(references=st.just(reference)))
 
-        assert sentences(undated) == [Quotation("He runs.", "A Book", None)]
+        quotation = attest(undated)[0]
 
+        assert isinstance(quotation, Quotation)
+        assert (quotation.reference, quotation.year) == (reference.strip(), None)
+
+    @given(st.lists(raw_examples(), max_size=3), st.data())
     def test_leaves_examples_alone(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        examples: list[RawJson],
+        data: st.DataObject,
     ) -> None:
         """The bounds reach quotations alone, an example carrying no date."""
-        example = make_example("He runs.")
-        quotation = make_example("She ran.", ref="1800, A Book")
+        year = data.draw(years)
+        outside = data.draw(raw_examples(references=references(year)))
 
-        assert sentences(example, quotation, minimum_year=1900) == [Example("He runs.")]
+        assert attest(*examples, outside, minimum_year=year + 1) == attest(*examples)
 
+    @given(st.data())
     def test_a_sense_the_bounds_emptied_is_kept_all_the_same(
         self,
         extract: Callable[..., list[Lemma]],
-        illustrate: Callable[..., list[RawJson]],
-        make_example: Callable[..., RawJson],
+        data: st.DataObject,
     ) -> None:
         """A sense is what its gloss says, whatever evidence the bounds leave it."""
-        entries = illustrate(make_example("He ran.", ref="1800, A Book"))
+        year = data.draw(years)
+        example = data.draw(raw_examples(references=references(year)))
+        entry = data.draw(
+            raw_entries(
+                senses=st.lists(
+                    raw_senses(examples=st.just([example])),
+                    min_size=1,
+                    max_size=1,
+                )
+            )
+        )
 
-        lemmas = extract(entries, minimum_year=1900)
+        lemmas = extract([entry], minimum_year=year + 1)
 
-        assert [sense.gloss for sense in lemmas[0].senses] == ["A meaning."]
+        assert [sense.sentences for sense in lemmas[0].senses] == [[]]
 
 
 class TestWordOffsets:
@@ -566,71 +653,68 @@ class TestWordOffsets:
     Where the lemma occurs in the sentences attesting it.
     """
 
-    def test_an_example_carries_where_the_lemma_occurs(
+    @given(words, st.data())
+    def test_a_sentence_carries_where_the_lemma_occurs(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        headword: str,
+        data: st.DataObject,
     ) -> None:
         """The headword is a form of itself, so it is looked for like the rest."""
-        found = sentences(make_example("He robbed a bank."))
+        example = data.draw(raw_examples(texts=st.just(f"1 {headword} 2")))
 
-        assert found[0].word_offsets == ((12, 16),)
+        assert attest(example, headword=headword)[0].word_offsets == (
+            (2, 2 + len(headword)),
+        )
 
-    def test_a_quotation_carries_them_too(
-        self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
-    ) -> None:
-        """Both kinds of sentence are evidence, and both are read the same way."""
-        found = sentences(make_example("A bank stood there.", ref="1999, A Book"))
-
-        assert found[0].word_offsets == ((2, 6),)
-
+    @given(words, words, st.data())
     def test_locates_an_inflection_wiktextract_listed(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
-        make_form: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        headword: str,
+        inflection: str,
+        data: st.DataObject,
     ) -> None:
         """A sentence attests the lemma in whatever form it needs."""
-        found = sentences(
-            make_example("Two banks closed."),
-            forms=[make_form("banks", tags=["plural"])],
-        )
+        form = data.draw(raw_forms(forms=_padded(inflection)))
+        example = data.draw(raw_examples(texts=st.just(f"1 {inflection} 2")))
 
-        assert found[0].word_offsets == ((4, 9),)
+        found = attest(example, headword=headword, forms=[form])
 
-    @pytest.mark.parametrize(
-        "tag",
-        ["inflection-template", "romanization", "table-tags"],
-    )
+        assert (2, 2 + len(inflection)) in found[0].word_offsets
+
+    @given(words, _SERVICE_TAGS, st.data())
     def test_skips_what_is_listed_among_the_forms_without_being_one(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
-        make_form: Callable[..., RawJson],
+        attest: Callable[..., list[Sentence]],
+        headword: str,
         tag: str,
+        data: st.DataObject,
     ) -> None:
         """An inflection table names itself, its template and its transliterations."""
-        found = sentences(
-            make_example("The plural of bank."),
-            forms=[make_form("plural", tags=[tag])],
+        listed = data.draw(
+            words.filter(lambda form: form.casefold() != headword.casefold())
         )
 
-        assert found[0].word_offsets == ((14, 18),)
+        form = data.draw(raw_forms(forms=st.just(listed), tags=st.just([tag])))
+        example = data.draw(raw_examples(texts=st.just(f"1 {listed} 2")))
 
-    @pytest.mark.parametrize("form", ["-", "", "   "])
+        found = attest(example, headword=headword, forms=[form])
+
+        assert (2, 2 + len(listed)) not in found[0].word_offsets
+
+    @given(words, _EMPTY_CELLS, st.data())
     def test_skips_a_form_the_inflection_table_left_empty(
         self,
-        sentences: Callable[..., list[Sentence]],
-        make_example: Callable[..., RawJson],
-        make_form: Callable[..., RawJson],
-        form: str,
+        attest: Callable[..., list[Sentence]],
+        headword: str,
+        cell: str,
+        data: st.DataObject,
     ) -> None:
         """A dash stands for a form that does not exist, and blank for none at all."""
-        found = sentences(
-            make_example("A bank - a slope."),
-            forms=[make_form(form, tags=["plural"])],
-        )
+        form = data.draw(raw_forms(forms=st.just(cell)))
+        example = data.draw(raw_examples(texts=st.just(f"1 {headword} - 2")))
 
-        assert found[0].word_offsets == ((2, 6),)
+        found = attest(example, headword=headword, forms=[form])
+
+        assert found[0].word_offsets == ((2, 2 + len(headword)),)

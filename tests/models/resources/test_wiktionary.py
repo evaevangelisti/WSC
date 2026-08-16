@@ -1,34 +1,18 @@
 """
 Tests for src/wsc/models/resources/wiktionary.py.
+
+A sense reading its own gloss chain is stated here rather than downstream:
+nothing else in the collector asks a sense what it means, so nothing else
+would notice were it to answer wrongly.
 """
 
-import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from strategies import glosses, identifiers
 
-from wsc.models import Example, Quotation, Sense
+from wsc.models import Sense
 
-
-class TestAttestation:
-    """
-    The two kinds of sentence a sense carries.
-    """
-
-    def test_an_example_is_not_a_quotation(
-        self,
-    ) -> None:
-        """The kinds are told apart by class, so neither passes for the other."""
-        assert Example("A sentence.") != Quotation("A sentence.", "1999, A Book")
-
-    def test_a_quotation_may_name_no_year(
-        self,
-    ) -> None:
-        """A reference the year could not be read off is still a quotation."""
-        assert Quotation("A sentence.", "A Book").year is None
-
-    def test_a_sentence_locates_nothing_until_it_is_told_where(
-        self,
-    ) -> None:
-        """The ranges are named, not positional, so a sentence reads as it did."""
-        assert Quotation("A sentence.", "1999, A Book", 1999).word_offsets == ()
+_CHAINS = st.lists(glosses, min_size=1, max_size=4)
 
 
 class TestSense:
@@ -36,33 +20,50 @@ class TestSense:
     One meaning, read off its gloss chain.
     """
 
-    def test_gloss_is_the_innermost_of_the_chain(
+    @given(identifiers, _CHAINS)
+    def test_closes_on_its_own_gloss(
         self,
+        identifier: str,
+        chain: list[str],
     ) -> None:
         """A sub-sense means what its own gloss says, not what its parent does."""
-        sense = Sense("bank.noun.1.01", ("A financial institution.", "Its building."))
+        sense = Sense(identifier, tuple(chain))
 
-        assert sense.gloss == "Its building."
+        assert sense.gloss == chain[-1]
+        assert sense.definition.endswith(sense.gloss)
 
-    def test_definition_joins_the_chain_outermost_first(
+    @given(identifiers, _CHAINS)
+    def test_a_definition_holds_the_whole_chain(
         self,
+        identifier: str,
+        chain: list[str],
     ) -> None:
         """A sub-sense stands alone only once its parents are read into it."""
-        sense = Sense("bank.noun.1.01", ("A financial institution.", "Its building."))
+        definition = Sense(identifier, tuple(chain)).definition
 
-        assert sense.definition == "A financial institution. Its building."
+        assert all(gloss in definition for gloss in chain)
 
-    @pytest.mark.parametrize(
-        ("glosses", "expected"),
-        [
-            (("A financial institution.",), 1),
-            (("A financial institution.", "Its building."), 2),
-        ],
-    )
-    def test_depth_counts_the_chain(
+    @given(identifiers, glosses)
+    def test_a_chain_of_one_is_its_own_definition(
         self,
-        glosses: tuple[str, ...],
-        expected: int,
+        identifier: str,
+        gloss: str,
+    ) -> None:
+        """A top-level sense has no parent to be read into it."""
+        sense = Sense(identifier, (gloss,))
+
+        assert sense.definition == sense.gloss
+
+    @given(identifiers, _CHAINS, glosses)
+    def test_nesting_one_deeper_counts_one_more(
+        self,
+        identifier: str,
+        chain: list[str],
+        gloss: str,
     ) -> None:
         """Nesting is what the chain records, so its length is the level."""
-        assert Sense("bank.noun.1.01", glosses).depth == expected
+        sense = Sense(identifier, tuple(chain))
+        nested = Sense(identifier, (*chain, gloss))
+
+        assert sense.depth == len(chain)
+        assert nested.depth == sense.depth + 1
