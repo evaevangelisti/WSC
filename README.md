@@ -70,6 +70,7 @@ wsc parse
 | `--language` | `en` | Wiktionary edition to read, by language code |
 | `--dump-date` | `latest` | Dump to use, as `20260801` |
 | `--processes` | `1` | Processes wiktextract may run, at 4 GB each |
+| `--db-path` | a temporary file | Where the pages extracted from the dump are kept |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
 
 ### collect

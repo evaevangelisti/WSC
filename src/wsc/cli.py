@@ -90,6 +90,14 @@ def parse(
             help="Processes wiktextract may run, at 4 GB each.",
         ),
     ] = 1,
+    database_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--db-path",
+            help="Where the pages extracted from the dump are kept.",
+            show_default="a temporary file",
+        ),
+    ] = None,
     cache_dir: CacheDir = None,
 ) -> None:
     """
@@ -111,7 +119,13 @@ def parse(
     if not dump_path.exists():
         raise typer.BadParameter(f"No dump at {dump_path}; fetch it first")
 
-    skipped_lines = wiktextract.parse(dump_path, output_path, language, processes)
+    skipped_lines = wiktextract.parse(
+        dump_path,
+        output_path,
+        language,
+        processes,
+        database_path,
+    )
 
     if skipped_lines:
         typer.echo(f"Set aside {skipped_lines} lines of wiktextract's own reporting")

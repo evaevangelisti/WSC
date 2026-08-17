@@ -172,7 +172,7 @@ def cli() -> Callable[..., Result]:
 @pytest.fixture
 def stub_parse(
     monkeypatch: pytest.MonkeyPatch,
-) -> Callable[..., list[tuple[Path, Path, str, int]]]:
+) -> Callable[..., list[tuple[Path, Path, str, int, Path | None]]]:
     """
     Answer in wiktextract's place, which its own module is tested on.
 
@@ -186,16 +186,17 @@ def stub_parse(
 
     def build(
         skipped_lines: int = 0,
-    ) -> list[tuple[Path, Path, str, int]]:
-        calls: list[tuple[Path, Path, str, int]] = []
+    ) -> list[tuple[Path, Path, str, int, Path | None]]:
+        calls: list[tuple[Path, Path, str, int, Path | None]] = []
 
         def parse(
             dump_path: Path,
             output_path: Path,
             language: str,
             processes: int,
+            database_path: Path | None,
         ) -> int:
-            calls.append((dump_path, output_path, language, processes))
+            calls.append((dump_path, output_path, language, processes, database_path))
 
             return skipped_lines
 
@@ -338,7 +339,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
         language: str,
         date: str,
         processes: int,
@@ -367,9 +368,37 @@ class TestParse:
                 dump_dir / cache.WIKTEXTRACT_NAME,
                 language,
                 processes,
+                None,
             )
         ]
         assert "Parsed" in _said(result)
+
+    @given(st.text(alphabet=string.ascii_letters, min_size=1, max_size=8))
+    def test_hands_over_the_database_it_was_told_to_keep(
+        self,
+        workspace: Callable[[], Path],
+        cli: Callable[..., Result],
+        fetch_dump: Callable[..., Path],
+        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
+        name: str,
+    ) -> None:
+        """A database of one's own is what a run without the network needs."""
+        directory = workspace()
+        cache_dir = directory / "cache"
+
+        calls = stub_parse()
+        _ = fetch_dump(cache_dir)
+
+        database_path = directory / f"{name}.db"
+        result = cli(
+            "parse",
+            "--db-path",
+            str(database_path),
+            cache_dir=cache_dir,
+        )
+
+        assert result.exit_code == 0
+        assert calls[0][4] == database_path
 
     @given(st.lists(dump_dates, min_size=2, max_size=4, unique=True), st.data())
     def test_parses_the_dump_asked_for(
@@ -377,7 +406,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
         dates: list[str],
         data: st.DataObject,
     ) -> None:
@@ -399,7 +428,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
         skipped_lines: int,
     ) -> None:
         """Far more than a few hundred means something went wrong, so it is said."""
@@ -417,7 +446,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
     ) -> None:
         """A parse with nothing to report reports nothing."""
         cache_dir = workspace() / "cache"

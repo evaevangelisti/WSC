@@ -17,6 +17,7 @@ def parse(
     output_path: Path,
     language: str,
     processes: int,
+    database_path: Path | None = None,
 ) -> int:
     """
     Turn a Wiktionary dump into the compressed JSONL wiktextract makes of it.
@@ -29,6 +30,9 @@ def parse(
         output_path: Where the compressed JSONL is placed.
         language: Wiktionary's code for the edition and the language to keep.
         processes: How many processes wiktextract may run, at 4 GB each.
+        database_path: Where the pages extracted from the dump are kept, or
+        None for a temporary file. One already holding the interwiki map
+        spares the run its only request, and so lets it work offline.
 
     Returns:
         How many lines of wiktextract's own reporting were set aside. Far
@@ -52,8 +56,12 @@ def parse(
         "--examples",
         "--num-processes",
         str(processes),
-        str(dump_path),
     ]
+
+    if database_path is not None:
+        command += ["--db-path", str(database_path)]
+
+    command.append(str(dump_path))
 
     skipped_lines = 0
     written_entries = 0

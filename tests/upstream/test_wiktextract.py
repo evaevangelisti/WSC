@@ -218,6 +218,36 @@ class TestParse:
 
     @_SPAWNS
     @given(st.lists(st.sampled_from(["cache", "en", "20260801"]), min_size=1))
+    def test_tells_wiktextract_where_to_keep_its_pages(
+        self,
+        workspace: Callable[[], Path],
+        dump_path: Path,
+        stub_wiktextract: Callable[..., list[list[str]]],
+        directories: list[str],
+    ) -> None:
+        """
+        The tail of the command is what is read, the head being settled above.
+
+        A database is asked for by option, so it goes before the dump, which
+        wiktextract takes as the one argument that stands on its own.
+        """
+        commands = stub_wiktextract(['{"word": "bank"}'])
+
+        directory = workspace()
+        database_path = directory.joinpath(*directories) / "pages.db"
+
+        _ = wiktextract.parse(
+            dump_path,
+            directory / "wiktextract.jsonl.zst",
+            "en",
+            1,
+            database_path,
+        )
+
+        assert commands[0][-3:] == ["--db-path", str(database_path), str(dump_path)]
+
+    @_SPAWNS
+    @given(st.lists(st.sampled_from(["cache", "en", "20260801"]), min_size=1))
     def test_creates_the_parent_directory(
         self,
         workspace: Callable[[], Path],
