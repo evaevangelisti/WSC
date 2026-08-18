@@ -16,7 +16,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from strategies import RawJson, lemmas, words
 
-from wsc.export import open_writer
+from wsc.export import Writer, open_writer
 from wsc.models import POS, Lemma, Quotation, Sense, Sentence
 
 _WRITTEN = st.lists(lemmas, max_size=3)
@@ -114,7 +114,9 @@ def write(
     ) -> str:
         output_path = workspace() / "senses.jsonl"
 
-        with open_writer(output_path) as writer:
+        writer: Writer[Lemma] = open_writer(output_path)
+
+        with writer:
             for lemma in written:
                 writer.write(lemma)
 
@@ -167,7 +169,7 @@ class TestJsonlWriter:
         workspace: Callable[[], Path],
     ) -> None:
         """The file is opened on entry, so there is nowhere to write before it."""
-        writer = open_writer(workspace() / "senses.jsonl")
+        writer: Writer[Lemma] = open_writer(workspace() / "senses.jsonl")
 
         with pytest.raises(RuntimeError, match="context manager"):
             writer.write(Lemma("bank.noun.1", "bank", POS.NOUN))
@@ -177,7 +179,7 @@ class TestJsonlWriter:
         workspace: Callable[[], Path],
     ) -> None:
         """Closing lets go of the file, rather than leaving a closed one behind."""
-        writer = open_writer(workspace() / "senses.jsonl")
+        writer: Writer[Lemma] = open_writer(workspace() / "senses.jsonl")
         lemma = Lemma("bank.noun.1", "bank", POS.NOUN)
 
         with writer:

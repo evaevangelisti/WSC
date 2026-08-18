@@ -29,7 +29,25 @@ _DIRECTORIES = st.lists(
 )
 
 
-class _UnclosableWriter(JsonlWriter):
+def _open(
+    output_path: Path,
+) -> Writer[Lemma]:
+    """
+    Open the writer these properties are stated through.
+
+    Atomicity is not generic the way the writer is, so lemmas are named here
+    once rather than by every property.
+
+    Args:
+        output_path: Where the finished file is placed.
+
+    Returns:
+        A writer for that path, not yet open.
+    """
+    return open_writer(output_path)
+
+
+class _UnclosableWriter(JsonlWriter[Lemma]):
     """
     A writer that cannot be closed, however well the writing itself went.
     """
@@ -101,7 +119,7 @@ class TestWriter:
         """An export may be the first thing written where it is going."""
         output_path = workspace().joinpath(*directories) / "senses.jsonl"
 
-        with open_writer(output_path) as writer:
+        with _open(output_path) as writer:
             for lemma in written:
                 writer.write(lemma)
 
@@ -116,7 +134,7 @@ class TestWriter:
         """Output appears whole, or not at all: a file that is there is finished."""
         output_path = workspace() / "senses.jsonl"
 
-        with open_writer(output_path) as writer:
+        with _open(output_path) as writer:
             for lemma in written:
                 writer.write(lemma)
 
@@ -134,7 +152,7 @@ class TestWriter:
         directory = workspace()
         output_path = directory / "senses.jsonl"
 
-        with open_writer(output_path) as writer:
+        with _open(output_path) as writer:
             for lemma in written:
                 writer.write(lemma)
 
@@ -150,7 +168,7 @@ class TestWriter:
         directory = workspace()
 
         with pytest.raises(RuntimeError, match="something went wrong"):
-            _write_then_fail(open_writer(directory / "senses.jsonl"), written)
+            _write_then_fail(_open(directory / "senses.jsonl"), written)
 
         assert list(directory.iterdir()) == []
 
@@ -161,7 +179,7 @@ class TestWriter:
         written: list[Lemma],
     ) -> None:
         """Whatever the format acquired is released, a block that failed included."""
-        writer = open_writer(workspace() / "senses.jsonl")
+        writer = _open(workspace() / "senses.jsonl")
 
         with pytest.raises(RuntimeError, match="something went wrong"):
             _write_then_fail(writer, written)

@@ -189,7 +189,9 @@ def collect(
         maximum_year,
     )
 
-    with open_writer(output_path) as writer:
+    writer: Writer[Lemma] = open_writer(output_path)
+
+    with writer:
         for lemma in extractor.extract(input_path):
             writer.write(lemma)
 

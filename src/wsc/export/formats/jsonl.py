@@ -5,19 +5,25 @@ JSONL output, one JSON object per line.
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import IO, override
+from typing import IO, TYPE_CHECKING, override
 
-from ...models import Lemma
 from ..base import Writer
+
+if TYPE_CHECKING:
+    # Typeshed alone declares what a dataclass is known by.
+    from _typeshed import DataclassInstance
 
 type Json = (
     str | int | float | bool | list[Json] | tuple[Json, ...] | dict[str, Json] | None
 )
 
 
-class JsonlWriter(Writer[Lemma]):
+class JsonlWriter[T: "DataclassInstance"](Writer[T]):
     """
-    Write lemmas as JSON objects, one per line.
+    Write dataclasses as JSON objects, one per line.
+
+    Any dataclass will do: a lemma is what the collector writes, a synset
+    what the wordnet is read into.
     """
 
     def __init__(
@@ -89,13 +95,13 @@ class JsonlWriter(Writer[Lemma]):
     @override
     def write(
         self,
-        item: Lemma,
+        item: T,
     ) -> None:
         """
-        Append one lemma as a line of JSON.
+        Append one item as a line of JSON.
 
         Args:
-            item: The lemma to write.
+            item: The dataclass to write.
 
         Raises:
             RuntimeError: If the writer has not been entered.

@@ -2,16 +2,30 @@
 Writing of extracted data to disk.
 """
 
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING, Protocol
 
-from ..models import Lemma
 from .base import Writer
 
+if TYPE_CHECKING:
+    # Typeshed alone declares what a dataclass is known by.
+    from _typeshed import DataclassInstance
 
-def _jsonl(
+
+class _Factory(Protocol):
+    """
+    Builds the writer of one format, generic where a plain callable is not.
+    """
+
+    def __call__[T: "DataclassInstance"](
+        self,
+        output_path: Path,
+    ) -> Writer[T]: ...
+
+
+def _jsonl[T: "DataclassInstance"](
     output_path: Path,
-) -> Writer[Lemma]:
+) -> Writer[T]:
     """
     Build the JSONL writer.
 
@@ -23,21 +37,23 @@ def _jsonl(
     """
     from .formats.jsonl import JsonlWriter
 
-    return JsonlWriter(output_path)
+    return JsonlWriter[T](output_path)
 
 
-_WRITERS: dict[str, Callable[[Path], Writer[Lemma]]] = {
+_WRITERS: dict[str, _Factory] = {
     ".jsonl": _jsonl,
 }
 
 
-def open_writer(
+def open_writer[T: "DataclassInstance"](
     output_path: Path,
-) -> Writer[Lemma]:
+) -> Writer[T]:
     """
     Open a writer for the format the file extension names.
 
-    The file itself is opened when the writer is entered, not here.
+    The file itself is opened when the writer is entered, not here. What is
+    written is the caller's to say, no format depending on which dataclass
+    reaches it.
 
     Args:
         output_path: Where to write; its suffix selects the format.
