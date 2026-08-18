@@ -61,13 +61,13 @@ class TestDumpDir:
         assert list(directory.iterdir()) == []
 
 
-class TestWordNetPath:
+class TestWordNetDir:
     """
-    Naming the file the wordnet is kept in.
+    Naming the directory one wordnet sits in.
     """
 
     @given(wordnet_versions)
-    def test_names_the_file_after_the_edition(
+    def test_names_the_directory_after_the_edition(
         self,
         workspace: Callable[[], Path],
         version: str,
@@ -75,8 +75,8 @@ class TestWordNetPath:
         """One wordnet is shared by every Wiktionary edition, so it sits apart."""
         cache_dir = workspace()
 
-        assert cache.wordnet_path(cache_dir, version) == (
-            cache_dir / "wordnet" / f"wordnet-{version}.xml.gz"
+        assert cache.wordnet_dir(cache_dir, version) == (
+            cache_dir / "wordnet" / version
         )
 
     @given(wordnet_versions)
@@ -85,8 +85,8 @@ class TestWordNetPath:
         version: str,
     ) -> None:
         """None is what the command line passes when no cache was named."""
-        assert cache.wordnet_path(None, version) == (
-            Path(user_cache_dir("wsc")) / "wordnet" / f"wordnet-{version}.xml.gz"
+        assert cache.wordnet_dir(None, version) == (
+            Path(user_cache_dir("wsc")) / "wordnet" / version
         )
 
     @given(wordnet_versions)
@@ -98,7 +98,7 @@ class TestWordNetPath:
         """Naming the wordnet is not fetching it, so the disk is left alone."""
         directory = workspace()
 
-        _ = cache.wordnet_path(directory / "cache", version)
+        _ = cache.wordnet_dir(directory / "cache", version)
 
         assert list(directory.iterdir()) == []
 

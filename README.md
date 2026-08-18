@@ -92,13 +92,15 @@ wsc collect senses.jsonl
 
 ### wordnet
 
-Downloads [Open English WordNet](https://en-word.net), which the senses are aligned with. It stands apart from the three steps above, and is only worth running if you mean to align.
+Downloads [Open English WordNet](https://en-word.net), which the senses are aligned with, and reads its synsets into the cache beside it. It stands apart from the three steps above, and is only worth running if you mean to align.
 
 ```sh
 wsc wordnet
 ```
 
+Every part of speech is kept, whatever `collect` was told to keep: a cache answering to a filter is one the next run cannot trust.
+
 | Option | Default | |
 | --- | --- | --- |
-| `--wordnet-version` | `latest` | Wordnet edition to use, as `2025` |
+| `--edition` | `latest` | Wordnet edition to use, as `2025` |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |

@@ -8,6 +8,7 @@ collect is run end to end, since it is the one command that reaches the disk
 without reaching the network.
 """
 
+import gzip
 import json
 import string
 from collections.abc import Callable, Generator
@@ -18,7 +19,7 @@ from typing import cast
 
 import pytest
 import responses
-from documents import dump_index, dump_status, wordnet_index
+from documents import WORDNET, dump_index, dump_status, lexicon, wordnet_index
 from hypothesis import given
 from hypothesis import strategies as st
 from strategies import (
@@ -45,6 +46,14 @@ from wsc.constants import (
     WORDNET_URL,
 )
 from wsc.upstream import cache, wiktextract
+
+_SYNSET_RECORD = {
+    "id": "oewn-08420278-n",
+    "ili": "i54321",
+    "pos": "noun",
+    "definition": "a financial institution.",
+    "members": ["bank"],
+}
 
 # A suffix naming no format the collector writes.
 _SUFFIXES = st.text(
@@ -140,7 +149,10 @@ def _en_word_net(
     """
     with responses.RequestsMock(assert_all_requests_are_fired=False) as server:
         _ = server.get(WORDNET_INDEX_URL, body=wordnet_index(version))
-        _ = server.get(WORDNET_URL.format(version=version), body=b"a wordnet")
+        _ = server.get(
+            WORDNET_URL.format(version=version),
+            body=gzip.compress(lexicon(*WORDNET).encode()),
+        )
 
         yield server
 
@@ -729,7 +741,7 @@ class TestCollect:
 
 class TestWordNet:
     """
-    Downloading the wordnet, and settling which edition that is.
+    Downloading the wordnet, reading it, and settling which edition that is.
     """
 
     @given(wordnet_versions)
@@ -747,7 +759,7 @@ class TestWordNet:
 
         assert result.exit_code == 0
         assert f"Resolved latest to {edition}" in _said(result)
-        assert cache.wordnet_path(cache_dir, edition).read_bytes() == b"a wordnet"
+        assert (cache.wordnet_dir(cache_dir, edition) / cache.WORDNET_NAME).exists()
 
     @given(wordnet_versions)
     def test_fetches_the_edition_asked_for(
@@ -762,7 +774,7 @@ class TestWordNet:
         with _en_word_net(edition) as server:
             result = cli(
                 "wordnet",
-                "--wordnet-version",
+                "--edition",
                 edition,
                 cache_dir=cache_dir,
             )
@@ -773,7 +785,54 @@ class TestWordNet:
 
         assert result.exit_code == 0
         assert "Resolved latest" not in _said(result)
-        assert cache.wordnet_path(cache_dir, edition).read_bytes() == b"a wordnet"
+        assert (cache.wordnet_dir(cache_dir, edition) / cache.WORDNET_NAME).exists()
+
+    @given(wordnet_versions)
+    def test_reads_the_synsets_off_what_it_fetched(
+        self,
+        workspace: Callable[[], Path],
+        cli: Callable[..., Result],
+        edition: str,
+    ) -> None:
+        """The archive is of no use to an alignment; the synsets in it are."""
+        cache_dir = workspace() / "cache"
+
+        with _en_word_net(edition):
+            result = cli("wordnet", "--edition", edition, cache_dir=cache_dir)
+
+        synsets_path = cache.wordnet_dir(cache_dir, edition) / cache.SYNSETS_NAME
+
+        assert result.exit_code == 0
+        assert [
+            json.loads(line)
+            for line in synsets_path.read_text(encoding="utf-8").splitlines()
+        ] == [_SYNSET_RECORD]
+
+    @given(wordnet_versions)
+    def test_reads_a_wordnet_fetched_before(
+        self,
+        workspace: Callable[[], Path],
+        cli: Callable[..., Result],
+        fetch_wordnet: Callable[..., Path],
+        edition: str,
+    ) -> None:
+        """A fetch cut short before the read leaves the read still to do."""
+        cache_dir = workspace() / "cache"
+        _ = fetch_wordnet(cache_dir, edition)
+
+        with responses.RequestsMock() as server:
+            result = cli("wordnet", "--edition", edition, cache_dir=cache_dir)
+
+            assert not server.calls
+
+        synsets_path = cache.wordnet_dir(cache_dir, edition) / cache.SYNSETS_NAME
+
+        assert result.exit_code == 0
+        assert "Already fetched" in _said(result)
+        assert [
+            json.loads(line)
+            for line in synsets_path.read_text(encoding="utf-8").splitlines()
+        ] == [_SYNSET_RECORD]
 
     @given(wordnet_versions)
     def test_names_the_collector_and_its_version(
@@ -795,29 +854,25 @@ class TestWordNet:
             )
 
     @given(wordnet_versions)
-    def test_stops_when_what_it_would_fetch_is_already_there(
+    def test_stops_when_what_it_would_make_is_already_there(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
-        fetch_wordnet: Callable[..., Path],
+        read_wordnet: Callable[..., Path],
         edition: str,
     ) -> None:
         """An edition never changes, so once it is here there is nothing to do."""
         cache_dir = workspace() / "cache"
-        _ = fetch_wordnet(cache_dir, edition)
+        synsets_path = read_wordnet(cache_dir, edition, ["{}"])
 
         with responses.RequestsMock() as server:
-            result = cli(
-                "wordnet",
-                "--wordnet-version",
-                edition,
-                cache_dir=cache_dir,
-            )
+            result = cli("wordnet", "--edition", edition, cache_dir=cache_dir)
 
             assert not server.calls
 
         assert result.exit_code == 0
-        assert "Already fetched" in _said(result)
+        assert "Already read" in _said(result)
+        assert synsets_path.read_text(encoding="utf-8") == "{}\n"
 
 
 class TestHelp:

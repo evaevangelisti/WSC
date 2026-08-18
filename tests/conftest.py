@@ -33,6 +33,7 @@ from itertools import count
 from pathlib import Path
 
 import pytest
+from documents import WORDNET, lexicon
 from hypothesis import HealthCheck, settings
 from strategies import RawJson
 
@@ -140,15 +141,47 @@ def fetch_wordnet() -> Callable[..., Path]:
 
     Returns:
         A builder placing the wordnet where the wordnet command would have.
+        It holds a whole one, gzipped as the release publishes it, since the
+        command goes on to read what it fetched.
     """
 
     def build(
         cache_dir: Path,
         version: str = "2025",
+        elements: Iterable[str] = WORDNET,
     ) -> Path:
-        path = cache.wordnet_path(cache_dir, version)
+        path = cache.wordnet_dir(cache_dir, version) / cache.WORDNET_NAME
         path.parent.mkdir(parents=True, exist_ok=True)
-        _ = path.write_bytes(b"a wordnet")
+        _ = path.write_bytes(gzip.compress(lexicon(*elements).encode()))
+
+        return path
+
+    return build
+
+
+@pytest.fixture
+def read_wordnet(
+    fetch_wordnet: Callable[..., Path],
+) -> Callable[..., Path]:
+    """
+    Stand in for a finished fetch and read of the wordnet.
+
+    Args:
+        fetch_wordnet: Places the wordnet the read would have read.
+
+    Returns:
+        A builder placing the synsets where the wordnet command would have.
+    """
+
+    def build(
+        cache_dir: Path,
+        version: str = "2025",
+        lines: Iterable[str] = (),
+    ) -> Path:
+        _ = fetch_wordnet(cache_dir, version)
+
+        path = cache.wordnet_dir(cache_dir, version) / cache.SYNSETS_NAME
+        _ = path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
 
         return path
 

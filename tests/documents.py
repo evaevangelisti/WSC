@@ -204,3 +204,11 @@ def lexicon(
         The document, as the release publishes it.
     """
     return _LEXICON.format(body="".join(elements))
+
+
+WORDNET = (lexical_entry(), synset())
+"""
+The least a wordnet can hold and still be read. What a command is served and
+what it is expected to have read are stated against this one, so they cannot
+drift apart.
+"""

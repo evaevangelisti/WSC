@@ -9,9 +9,9 @@ from typing import Annotated
 import typer
 
 from .constants import CHUNK_SIZE, TIMEOUT, USER_AGENT
-from .export import open_writer
-from .extract import WiktionaryExtractor
-from .models import POS
+from .export import Writer, open_writer
+from .extract import WiktionaryExtractor, WordNetExtractor
+from .models import POS, Lemma, Synset
 from .upstream import cache, download, repositories, wiktextract
 
 # Named apart from the signatures, so that the commands asking for the same
@@ -200,36 +200,54 @@ def collect(
 
 @app.command()
 def wordnet(
-    wordnet_version: Annotated[
+    edition: Annotated[
         str,
         typer.Option(
-            envvar="WSC_WORDNET_VERSION",
+            envvar="WSC_WORDNET_EDITION",
             help="Wordnet edition to use, as 2025, or latest.",
         ),
     ] = cache.LATEST,
     cache_dir: CacheDir = None,
 ) -> None:
     """
-    Download the wordnet the senses are aligned with. Needs the network.
+    Download the wordnet the senses are aligned with, and read its synsets.
+
+    Needs the network, unless the edition asked for is already here.
     """
     user_agent = USER_AGENT.format(version=version("wsc"))
 
-    edition = wordnet_version
     if edition == cache.LATEST:
         edition = repositories.wordnet.latest_version(user_agent, TIMEOUT)
         typer.echo(f"Resolved latest to {edition}")
 
-    wordnet_path = cache.wordnet_path(cache_dir, edition)
+    wordnet_dir = cache.wordnet_dir(cache_dir, edition)
+
+    wordnet_path = wordnet_dir / cache.WORDNET_NAME
     if wordnet_path.exists():
         typer.echo(f"Already fetched {wordnet_path}")
+    else:
+        download(
+            repositories.wordnet.url(edition),
+            wordnet_path,
+            user_agent,
+            TIMEOUT,
+            CHUNK_SIZE,
+        )
+
+        typer.echo(f"Fetched {wordnet_path}")
+
+    output_path = wordnet_dir / cache.SYNSETS_NAME
+    if output_path.exists():
+        typer.echo(f"Already read {output_path}")
         return
 
-    download(
-        repositories.wordnet.url(edition),
-        wordnet_path,
-        user_agent,
-        TIMEOUT,
-        CHUNK_SIZE,
-    )
+    # A cache answering to a filter is one the next run cannot trust.
+    extractor = WordNetExtractor(None)
 
-    typer.echo(f"Fetched {wordnet_path}")
+    writer: Writer[Synset] = open_writer(output_path)
+
+    with writer:
+        for synset in extractor.extract(wordnet_path):
+            writer.write(synset)
+
+    typer.echo(f"Read {output_path}")
