@@ -3,9 +3,10 @@ JSONL output, one JSON object per line.
 """
 
 import json
-from dataclasses import asdict
+from collections.abc import Sequence
+from dataclasses import fields, is_dataclass
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, override
+from typing import IO, TYPE_CHECKING, cast, override
 
 from ..base import Writer
 
@@ -62,35 +63,41 @@ class JsonlWriter[T: "DataclassInstance"](Writer[T]):
             self._file = None
 
     @classmethod
-    def _prune(
+    def _record(
         cls,
-        value: Json,
+        value: object,
     ) -> Json:
         """
-        Drop keys holding nothing, recursively.
+        Read one value into what is written, dropping what holds nothing.
 
         Absence says as much as emptiness, and in fewer bytes: a sentence
-        with no reference reads back as an Example.
+        with no reference reads back as an Example. A dataclass is read field
+        by field rather than dumped and then pruned, so the empty keys are
+        never built in the first place.
 
         Args:
-            value: A value taken from a dataclass dump.
+            value: An item to write, or a part of one.
 
         Returns:
-            The same value, with every empty key gone.
+            The same value, as JSON holds it.
         """
         match value:
-            case dict():
-                return {
-                    k: cls._prune(v)
-                    for k, v in value.items()
-                    if v not in (None, (), [], {})
-                }
-
             case list() | tuple():
-                return [cls._prune(item) for item in value]
+                return [cls._record(item) for item in cast(Sequence[object], value)]
+
+            case _ if is_dataclass(value) and not isinstance(value, type):
+                record: dict[str, Json] = {}
+
+                for field in fields(value):
+                    held = cast(object, getattr(value, field.name))
+
+                    if held not in (None, (), [], {}):
+                        record[field.name] = cls._record(held)
+
+                return record
 
             case _:
-                return value
+                return cast(Json, value)
 
     @override
     def write(
@@ -109,5 +116,5 @@ class JsonlWriter[T: "DataclassInstance"](Writer[T]):
         if self._file is None:
             raise RuntimeError("Writer is not open; use it as a context manager")
 
-        record = self._prune(asdict(item))
+        record = self._record(item)
         _ = self._file.write(f"{json.dumps(record, ensure_ascii=False)}\n")
