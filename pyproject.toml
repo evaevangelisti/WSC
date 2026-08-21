@@ -33,6 +33,10 @@ lint = [
     "ruff>=0.16.2"
 ]
 
+research = [
+    "rich>=15.0.0",
+]
+
 test = [
     "hypothesis>=6.165.9",
     "pytest>=9.1.1",
@@ -102,8 +106,9 @@ ignore = [
     "PLC0415", # A format is imported where it is built, not before.
 ]
 
-# Wiktionary writes a date range with an en dash.
-allowed-confusables = ["–"]
+# Wiktionary writes a date range with an en dash, and sets its apostrophes and
+# hyphens typographically, which is what the report unifies before it reads.
+allowed-confusables = ["–", "’", "‘", "‐", "‑"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 88
@@ -114,8 +119,9 @@ convention = "google"
 [tool.basedpyright]
 typeCheckingMode = "recommended"
 
-# Where the suite keeps what it shares, which pytest puts on the path too.
-extraPaths = ["tests"]
+# Where the suite and the studies keep what they share, which pytest and the
+# scripts put on the path too.
+extraPaths = ["tests", "research"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

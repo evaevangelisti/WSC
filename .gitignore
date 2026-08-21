@@ -1,3 +1,9 @@
+# Exports the studies draw from
+data/
+
+# Annotation tasks, rebuilt from the sample and the seed
+research/annotation/tasks/
+
 # Built documentation
 docs/build/
 
