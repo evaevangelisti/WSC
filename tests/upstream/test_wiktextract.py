@@ -192,8 +192,9 @@ class TestParse:
         """
         The command is compared whole, since it settles what the data is.
 
-        The edition to read and the language to keep are the same one, and
-        --examples is what puts the sentences in the output at all.
+        The edition to read and the language to keep are the same one,
+        --examples is what puts the sentences in the output at all, and
+        --quiet leaves the progress to the bar this module draws.
         """
         commands = stub_wiktextract(['{"word": "bank"}'])
 
@@ -210,6 +211,7 @@ class TestParse:
                 "--language-code",
                 language,
                 "--examples",
+                "--quiet",
                 "--num-processes",
                 str(processes),
                 str(dump_path),

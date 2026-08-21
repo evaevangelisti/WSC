@@ -11,6 +11,9 @@ from tqdm import tqdm
 
 from ..constants import COMPRESSION_LEVEL
 
+# What the bar says while wiktextract is still reading pages out of the dump.
+_READING = "Reading the dump"
+
 
 def parse(
     dump_path: Path,
@@ -54,6 +57,7 @@ def parse(
         "--language-code",
         language,
         "--examples",
+        "--quiet",
         "--num-processes",
         str(processes),
     ]
@@ -77,13 +81,18 @@ def parse(
             # Popen carries bytes; typeshed types its streams loosely.
             stdout: IO[bytes] = process.stdout
 
-            with tqdm(desc=dump_path.name, unit=" entry") as pbar:
+            # Pages are read out of the dump before the first entry comes
+            # back, which is the longer half and counts nothing.
+            with tqdm(desc=_READING, unit=" entry") as pbar:
                 for line in stdout:
                     # wiktextract reports itself down the same stream as the
                     # entries, so what does not open an object is not one.
                     if not line.startswith(b"{"):
                         skipped_lines += 1
                         continue
+
+                    if not written_entries:
+                        pbar.set_description_str(dump_path.name)
 
                     _ = file.write(line)
                     written_entries += 1
