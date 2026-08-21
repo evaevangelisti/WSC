@@ -43,8 +43,19 @@ words = st.text(alphabet=_LETTERS, min_size=1, max_size=8)
 glosses = st.text(min_size=1, max_size=40).filter(lambda gloss: bool(gloss.strip()))
 """What a sense says it means, in whatever an editor wrote it."""
 
-texts = st.text(min_size=1, max_size=60).filter(lambda text: bool(text.strip()))
-"""The sentence an example or a quotation carries."""
+texts = st.text(
+    alphabet=st.characters(codec="utf-8", exclude_characters="\n"),
+    min_size=1,
+    max_size=60,
+).filter(lambda text: bool(text.strip()))
+"""The sentence an example or a quotation carries, on one line: a break is
+where a quotation carrying its own source divides the two."""
+
+sentence_kinds = st.sampled_from(["example", "quotation"])
+"""What wiktextract calls a sentence, where it says which kind it read."""
+
+form_tags = st.sampled_from(["form-of", "alt-of"])
+"""A tag marking a sense that inflects a headword rather than defining it."""
 
 blanks = st.text(alphabet=" \t\n", min_size=1, max_size=3)
 """What reads as nothing at all once it has been stripped."""
@@ -91,6 +102,8 @@ _OFFSETS = st.integers(min_value=0, max_value=60)
 _WORD_OFFSETS = st.lists(st.tuples(_OFFSETS, _OFFSETS), max_size=3).map(tuple)
 
 _UNQUOTED: st.SearchStrategy[str | None] = st.none()
+
+_UNTYPED: st.SearchStrategy[str | None] = st.none()
 
 _GLOSS_CHAINS = st.lists(glosses, min_size=1, max_size=3)
 
@@ -145,6 +158,7 @@ def raw_examples(
     draw: st.DrawFn,
     texts: st.SearchStrategy[str] = texts,
     references: st.SearchStrategy[str | None] = _UNQUOTED,
+    kinds: st.SearchStrategy[str | None] = _UNTYPED,
 ) -> RawJson:
     """
     Draw one sentence illustrating a sense, quoted from a source or not.
@@ -153,15 +167,16 @@ def raw_examples(
         draw: Turns a strategy into one of its values.
         texts: The sentences to draw from.
         references: The sources to draw from, None writing no reference.
+        kinds: What wiktextract read it as, None writing no kind at all.
 
     Returns:
         The example, as wiktextract writes one.
     """
     raw: RawJson = {"text": draw(texts)}
 
-    reference = draw(references)
-    if reference is not None:
-        raw["ref"] = reference
+    for key, drawn in (("ref", draw(references)), ("type", draw(kinds))):
+        if drawn is not None:
+            raw[key] = drawn
 
     return raw
 

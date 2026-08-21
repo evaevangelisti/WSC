@@ -33,6 +33,18 @@ _SERVICE_TAGS = frozenset({"inflection-template", "romanization", "table-tags"})
 # What an inflection table writes for a cell it leaves empty.
 _EMPTY_CELL = "-"
 
+# What wiktextract calls each kind of sentence, where it names one.
+_EXAMPLE = "example"
+_QUOTATION = "quotation"
+
+# Tags marking a sense that states a form rather than a meaning, which is a
+# third of what Wiktionary writes.
+_FORM_TAGS = frozenset({"form-of", "alt-of"})
+
+# What the seeCites template leaves in place of a sentence, pointing at a
+# page of quotations rather than attesting anything.
+_POINTER_PATTERN = re.compile(r"^For quotations using this term, see Citations:")
+
 
 # The four classes below name the slice of the wiktextract schema this
 # module reads. Every key is optional, since it describes someone else's JSON.
@@ -45,10 +57,12 @@ class _RawExample(TypedDict, total=False):
     Attributes:
         text: The sentence.
         ref: The source, when the sentence is quoted from one.
+        type: Which kind wiktextract read it as, where it read one.
     """
 
     text: str
     ref: str
+    type: str
 
 
 class _RawSense(TypedDict, total=False):
@@ -200,6 +214,45 @@ class WiktionaryExtractor:
 
         return frozenset(forms)
 
+    @classmethod
+    def _read_source(
+        cls,
+        text: str,
+        raw_example: _RawExample,
+    ) -> tuple[str, str]:
+        """
+        Tell a sentence apart from the source it was taken from.
+
+        Where wiktextract hands no source over, a quotation carries it on the
+        first line of its own text, and splitting it off keeps the offsets
+        inside the sentence rather than inside a book title. A quotation left
+        with no source is kept as an example, since the reference is all that
+        tells the two apart once written.
+
+        Args:
+            text: The sentence, as wiktextract wrote it.
+            raw_example: What it listed beside it.
+
+        Returns:
+            The sentence, and the source naming it, empty where there is none.
+        """
+        reference = raw_example.get("ref", "").strip()
+        if reference:
+            return text, reference
+
+        kind = raw_example.get("type", "")
+        if kind == _EXAMPLE:
+            return text, ""
+
+        head, separator, tail = text.partition("\n")
+        if not separator or not tail.strip():
+            return text, ""
+
+        if kind == _QUOTATION or cls._parse_year(head) is not None:
+            return tail.strip(), head.strip()
+
+        return text, ""
+
     def _parse_sentences(
         self,
         raw_examples: list[_RawExample],
@@ -225,14 +278,17 @@ class WiktionaryExtractor:
             if not text:
                 continue
 
-            word_offsets = find_word_offsets(text, forms)
+            text, reference = self._read_source(text, raw_example)
 
-            reference = raw_example.get("ref", "").strip()
             if not reference:
+                # A pointer is only ever left where no kind was read.
+                if "type" not in raw_example and _POINTER_PATTERN.match(text):
+                    continue
+
                 sentences.append(
                     Example(
                         text,
-                        word_offsets=word_offsets,
+                        word_offsets=find_word_offsets(text, forms),
                     )
                 )
 
@@ -256,7 +312,7 @@ class WiktionaryExtractor:
                     text,
                     reference,
                     year,
-                    word_offsets=word_offsets,
+                    word_offsets=find_word_offsets(text, forms),
                 )
             )
 
@@ -274,17 +330,24 @@ class WiktionaryExtractor:
         A nested sense is kept alongside its parent rather than in its place,
         since a parent often carries examples of its own.
 
+        A sense stating a form is left out, "plural of bank" naming no meaning
+        of its own.
+
         Args:
             raw_senses: What wiktextract listed under the entry.
             lemma_id: Identifies the entry, and opens each sense identifier.
             forms: The shapes the lemma takes, to be located in each sentence.
 
         Returns:
-            The senses that carry at least one gloss.
+            The senses that carry at least one gloss and define something.
         """
         senses: list[Sense] = []
 
         for raw_sense in raw_senses:
+            tags = tuple(raw_sense.get("tags", []))
+            if not _FORM_TAGS.isdisjoint(tags):
+                continue
+
             glosses = tuple(
                 gloss.strip() for gloss in raw_sense.get("glosses", []) if gloss.strip()
             )
@@ -296,7 +359,7 @@ class WiktionaryExtractor:
                     f"{lemma_id}.{len(senses) + 1:02d}",
                     glosses,
                     tuple(raw_sense.get("topics", [])),
-                    tuple(raw_sense.get("tags", [])),
+                    tags,
                     self._parse_sentences(raw_sense.get("examples", []), forms),
                 )
             )

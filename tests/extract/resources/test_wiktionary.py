@@ -13,6 +13,7 @@ from hypothesis import strategies as st
 from strategies import (
     RawJson,
     blanks,
+    form_tags,
     glosses,
     languages,
     parts_of_speech,
@@ -21,6 +22,7 @@ from strategies import (
     raw_forms,
     raw_senses,
     references,
+    sentence_kinds,
     texts,
     undated_references,
     unknown_pos_codes,
@@ -119,6 +121,21 @@ _SERVICE_TAGS = st.sampled_from(["inflection-template", "romanization", "table-t
 _EMPTY_CELLS = st.sampled_from(["-", ""]) | blanks
 
 _PADDING = blanks | st.just("")
+
+
+def _pointer(
+    headword: str,
+) -> str:
+    """
+    Write what Wiktionary's seeCites template leaves in place of a sentence.
+
+    Args:
+        headword: The word whose citations page is pointed at.
+
+    Returns:
+        The line, as wiktextract passes it on.
+    """
+    return f"For quotations using this term, see Citations:{headword}."
 
 
 @pytest.fixture
@@ -440,6 +457,89 @@ class TestSenses:
         assert (sense.tags, sense.topics) == (tuple(tags), tuple(topics))
 
 
+class TestPseudoSenses:
+    """
+    Leaving out the senses that inflect a headword rather than define it.
+    """
+
+    @given(form_tags, st.data())
+    def test_drops_a_sense_that_only_inflects_the_headword(
+        self,
+        extract: Callable[..., list[Lemma]],
+        tag: str,
+        data: st.DataObject,
+    ) -> None:
+        """A form is stated, not a meaning, and the meanings sit elsewhere."""
+        senses: list[RawJson] = [{"glosses": ["Plural of bank."], "tags": [tag]}]
+        entry = data.draw(raw_entries(senses=st.just(senses)))
+
+        assert extract([entry]) == []
+
+    @given(form_tags, st.lists(st.booleans(), min_size=1, max_size=6), st.data())
+    def test_numbers_what_is_kept_without_counting_what_is_not(
+        self,
+        extract: Callable[..., list[Lemma]],
+        tag: str,
+        inflecting: list[bool],
+        data: st.DataObject,
+    ) -> None:
+        """An identifier counts senses, and a form was never one of them."""
+        senses: list[RawJson] = [
+            {"glosses": [f"Sense {position}."], **({"tags": [tag]} if drop else {})}
+            for position, drop in enumerate(inflecting)
+        ]
+        entry = data.draw(raw_entries(senses=st.just(senses)))
+
+        lemmas = extract([entry])
+        kept = lemmas[0].senses if lemmas else []
+
+        assert [sense.gloss for sense in kept] == [
+            f"Sense {position}." for position, drop in enumerate(inflecting) if not drop
+        ]
+        assert [sense.id for sense in kept] == [
+            f"{lemmas[0].id}.{position + 1:02d}" for position in range(len(kept))
+        ]
+
+    @given(form_tags, st.data())
+    def test_an_entry_of_forms_alone_spends_no_ordinal(
+        self,
+        extract: Callable[..., list[Lemma]],
+        tag: str,
+        data: st.DataObject,
+    ) -> None:
+        """The next entry sharing the headword is the first one there is."""
+        headword = data.draw(words)
+        inflected: RawJson = {
+            "word": headword,
+            "pos": "noun",
+            "lang_code": "en",
+            "senses": [{"glosses": ["Plural of bank."], "tags": [tag]}],
+        }
+        defined: RawJson = {
+            "word": headword,
+            "pos": "noun",
+            "lang_code": "en",
+            "senses": [{"glosses": ["A meaning."]}],
+        }
+
+        lemmas = extract([inflected, defined])
+
+        assert [lemma.id for lemma in lemmas] == [f"{headword}.noun.1"]
+
+    @given(st.lists(words, max_size=3), st.data())
+    def test_keeps_a_sense_whose_tags_say_nothing_about_forms(
+        self,
+        extract: Callable[..., list[Lemma]],
+        tags: list[str],
+        data: st.DataObject,
+    ) -> None:
+        """Only the two tags rule a sense out, not every label it carries."""
+        senses: list[RawJson] = [{"glosses": ["A meaning."], "tags": tags}]
+        entry = data.draw(raw_entries(senses=st.just(senses)))
+
+        assert [sense.tags for sense in extract([entry])[0].senses] == [tuple(tags)]
+
+
 class TestSentences:
     """
     The sentences illustrating a sense.
@@ -491,6 +591,176 @@ class TestSentences:
         assert [sentence.text for sentence in attest(*examples)] == [
             text.strip() for text in written if text.strip()
         ]
+
+
+class TestKinds:
+    """
+    Reading a sentence as the kind wiktextract says it is.
+    """
+
+    @given(st.data())
+    def test_wiktextract_settles_the_kind_over_a_reference_it_withheld(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """It read the markup; a reference is only what it left behind."""
+        year = data.draw(years)
+        reference = data.draw(references(year))
+        text = data.draw(texts)
+
+        quoted = attest({"text": f"{reference}\n{text}", "type": "quotation"})[0]
+        plain = attest({"text": f"{reference}\n{text}", "type": "example"})[0]
+
+        assert isinstance(quoted, Quotation)
+        assert isinstance(plain, Example)
+
+    @given(texts)
+    def test_a_quotation_with_no_source_to_tell_apart_is_kept_as_an_example(
+        self,
+        attest: Callable[..., list[Sentence]],
+        written: str,
+    ) -> None:
+        """An export tells the two apart by the reference, and it has none."""
+        found = attest({"text": written, "type": "quotation"})[0]
+
+        assert isinstance(found, Example)
+        assert found.text == written.strip()
+
+    @given(st.data())
+    def test_a_quotation_naming_no_source_is_still_a_quotation(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """The source is in the text, which is why no reference came with it."""
+        year = data.draw(years)
+        reference = data.draw(references(year))
+        text = data.draw(texts)
+
+        found = attest(
+            {"text": f"{reference}\n{text}", "type": "quotation"},
+        )[0]
+
+        assert isinstance(found, Quotation)
+        assert (found.text, found.reference, found.year) == (
+            text.strip(),
+            reference,
+            year,
+        )
+
+    @given(st.data())
+    def test_an_undated_first_line_is_a_source_only_where_it_says_so(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """A break alone proves nothing: prose runs over lines too."""
+        head = data.draw(undated_references)
+        tail = data.draw(texts)
+        written = f"{head}\n{tail}"
+
+        untyped = attest({"text": written})[0]
+
+        assert isinstance(untyped, Example)
+        assert untyped.text == written.strip()
+
+        quoted = attest({"text": written, "type": "quotation"})[0]
+
+        assert isinstance(quoted, Quotation)
+        assert (quoted.text, quoted.reference) == (tail.strip(), head.strip())
+
+    @given(st.data())
+    def test_a_sentence_read_as_an_example_is_never_split(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """Its own word comes first, whatever its opening line looks like."""
+        year = data.draw(years)
+        written = f"{data.draw(references(year))}\n{data.draw(texts)}"
+
+        found = attest({"text": written, "type": "example"})[0]
+
+        assert isinstance(found, Example)
+        assert found.text == written.strip()
+
+    @given(st.data())
+    def test_a_break_with_nothing_after_it_names_no_source(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """Splitting there would leave a quotation with no sentence at all."""
+        year = data.draw(years)
+        written = f"{data.draw(references(year))}\n{data.draw(blanks)}"
+
+        found = attest({"text": written, "type": "quotation"})[0]
+
+        assert isinstance(found, Example)
+        assert found.text == written.strip()
+
+    @given(st.data())
+    def test_a_source_split_off_is_left_out_of_the_offsets(
+        self,
+        attest: Callable[..., list[Sentence]],
+        data: st.DataObject,
+    ) -> None:
+        """A headword named in a book title is not an occurrence of it."""
+        headword = data.draw(words)
+        year = data.draw(years)
+        reference = f"{year}, {headword}, A Book"
+
+        found = attest(
+            {"text": f"{reference}\n{headword}", "type": "quotation"},
+            headword=headword,
+        )[0]
+
+        assert found.text == headword
+        assert found.word_offsets == ((0, len(headword)),)
+
+
+class TestPointers:
+    """
+    Passing over what stands in for a sentence without being one.
+    """
+
+    @given(words)
+    def test_drops_a_pointer_to_the_citations_page(
+        self,
+        attest: Callable[..., list[Sentence]],
+        headword: str,
+    ) -> None:
+        """It navigates somewhere; it attests nothing."""
+        assert attest({"text": _pointer(headword)}, headword=headword) == []
+
+    @given(words, sentence_kinds)
+    def test_keeps_a_sentence_wiktextract_read_as_one(
+        self,
+        attest: Callable[..., list[Sentence]],
+        headword: str,
+        kind: str,
+    ) -> None:
+        """A pointer is left where no kind was read, so a kind rules it out."""
+        written = _pointer(headword)
+
+        found = attest({"text": written, "type": kind}, headword=headword)
+
+        assert [sentence.text for sentence in found] == [written]
+
+    @given(words, st.data())
+    def test_keeps_a_sentence_that_merely_opens_the_same_way(
+        self,
+        attest: Callable[..., list[Sentence]],
+        headword: str,
+        data: st.DataObject,
+    ) -> None:
+        """The template is matched whole, not guessed at from its first words."""
+        written = f"For quotations {data.draw(texts)}"
+
+        found = attest({"text": written}, headword=headword)
+
+        assert [sentence.text for sentence in found] == [written.strip()]
 
 
 class TestYears:
