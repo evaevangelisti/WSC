@@ -1,8 +1,8 @@
 # Exports the studies draw from
 data/
 
-# Annotation tasks, rebuilt from the sample and the seed
-research/annotation/tasks/
+# Reports, one file per pass over an export
+research/report/reports/
 
 # Built documentation
 docs/build/
