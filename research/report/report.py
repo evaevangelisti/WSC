@@ -6,9 +6,10 @@ says how much of each thing there is, and where the offsets fall short of
 what the extractor promises. Whether a record is faithful is a question for
 the annotation study.
 
-The figures are gathered into sections, which are what the renderers take.
-One writes them to a terminal and one to Markdown, so the same pass feeds a
-reading and a document.
+The figures are gathered into sections of tables, one section per subject,
+so that figures read against one another sit together. The renderer takes
+them to Markdown, and the document is kept rather than read once, one file
+per pass named for the moment it was written.
 """
 
 import argparse
@@ -17,12 +18,17 @@ import unicodedata
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
 
 from corpus import Entry, read
-from rich.console import Console
-from rich.table import Table
+
+REPORTS = Path(__file__).resolve().parent / "reports"
+"""Where the written reports are kept, one file per pass."""
+
+STAMP = "%Y%m%dT%H%M%SZ"
+"""How a report names itself, the moment being what tells two of them apart."""
 
 MARKS = str.maketrans({"’": "'", "‘": "'", "‐": "-", "‑": "-", "–": "-"})
 """Punctuation Wiktionary sets typographically, unified before a near miss is
@@ -33,6 +39,15 @@ one."""
 WORD = re.compile(r"\w", re.UNICODE)
 """One word character, which is what an offset may not be flanked by."""
 
+PARTS_OF_SPEECH = {
+    "noun": "Noun",
+    "verb": "Verb",
+    "adj": "Adjective",
+    "adv": "Adverb",
+}
+"""What the collector keeps, written out and in the order a grammar names
+them, rather than by how much of the export each one carries."""
+
 LABELS = 10
 """How many of the most common tags and topics the report names."""
 
@@ -41,19 +56,37 @@ EVERY = 1
 
 
 @dataclass(frozen=True, slots=True)
-class Section:
+class Table:
     """
-    One table of the report.
+    One table of a section.
 
     Attributes:
-        title: What the table is about.
+        caption: What the table is about, within what the section is about.
         columns: The heading of each column, the first being the row's name.
         rows: The rows, already written out.
     """
 
-    title: str
+    caption: str
     columns: tuple[str, ...]
     rows: tuple[tuple[str, ...], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Section:
+    """
+    One part of the report, holding the tables that speak to one thing.
+
+    Figures on the same subject are read against one another, so they are
+    kept together: how many quotations name a year belongs beside the years
+    they name, and where the headword was found beside what was found there.
+
+    Attributes:
+        title: What the tables have in common.
+        tables: The tables, in reading order.
+    """
+
+    title: str
+    tables: tuple[Table, ...]
 
 
 @dataclass(slots=True)
@@ -119,18 +152,18 @@ def shape_of(
         The class it falls in.
     """
     if " " in lemma:
-        return "multiword"
+        return "Multiword"
 
     if "'" in lemma or "’" in lemma:
-        return "apostrophe"
+        return "Apostrophe"
 
     if "-" in lemma:
-        return "hyphenated"
+        return "Hyphenated"
 
     if not lemma.isascii():
-        return "non-ascii"
+        return "Non-ASCII"
 
-    return "plain"
+    return "Plain"
 
 
 def spelled_in(
@@ -186,20 +219,20 @@ def check(
         start, end = offset
 
         if not 0 <= start < end <= len(text):
-            broken["out of range"] += 1
+            broken["Out of range"] += 1
             continue
 
         if start < read_up_to:
-            broken["overlapping or unordered"] += 1
+            broken["Overlapping or unordered"] += 1
 
         if text[start:end] != text[start:end].strip():
-            broken["padded with space"] += 1
+            broken["Padded with space"] += 1
 
         before = text[start - 1] if start else ""
         after = text[end] if end < len(text) else ""
 
         if WORD.match(before) or WORD.match(after):
-            broken["inside a longer word"] += 1
+            broken["Inside a longer word"] += 1
 
         read_up_to = end
 
@@ -245,7 +278,7 @@ def tally(
                 quoted = "reference" in sentence
 
                 figures.attested[pos] += 1
-                figures.sentences["quotation" if quoted else "example"] += 1
+                figures.sentences["Quotation" if quoted else "Example"] += 1
 
                 if quoted:
                     if "year" in sentence:
@@ -300,43 +333,43 @@ def share(
     return f"{part / whole:.1%}" if whole else ""
 
 
-def _records(
+def _totals(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out how much of each thing the export holds."""
     per_entry = figures.senses_per_entry or [0]
     senses = sum(figures.senses.values())
 
-    return Section(
-        "Records",
+    return Table(
+        "Totals",
         ("Figure", "Count", "Share"),
         (
-            ("entries", count(sum(figures.entries.values())), ""),
-            ("senses", count(senses), ""),
-            ("sentences", count(sum(figures.sentences.values())), ""),
+            ("Entries", count(sum(figures.entries.values())), ""),
+            ("Senses", count(senses), ""),
+            ("Sentences", count(sum(figures.sentences.values())), ""),
             (
-                "senses with no sentence",
+                "Senses with no sentence",
                 count(figures.barren),
                 share(figures.barren, senses),
             ),
             (
-                "senses per entry",
+                "Senses per entry",
                 f"median {median(per_entry):.0f}, most {max(per_entry)}",
                 "",
             ),
-            ("distinct tags", count(len(figures.tags)), ""),
-            ("distinct topics", count(len(figures.topics)), ""),
+            ("Distinct tags", count(len(figures.tags)), ""),
+            ("Distinct topics", count(len(figures.topics)), ""),
         ),
     )
 
 
 def _depths(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out how deep the gloss chains nest, one row per level."""
     senses = sum(figures.senses.values())
 
-    return Section(
+    return Table(
         "Gloss chain depth",
         ("Depth", "Senses", "Share"),
         tuple(
@@ -348,34 +381,33 @@ def _depths(
 
 def _by_pos(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out what each part of speech contributes."""
-    order = sorted(figures.entries, key=lambda pos: -figures.senses[pos])
-
-    return Section(
+    return Table(
         "By part of speech",
         ("Part of speech", "Entries", "Senses", "Sentences", "Unlocated"),
         tuple(
             (
-                pos,
+                name,
                 count(figures.entries[pos]),
                 count(figures.senses[pos]),
                 count(figures.attested[pos]),
                 count(figures.unlocated[pos]),
             )
-            for pos in order
+            for pos, name in PARTS_OF_SPEECH.items()
+            if pos in figures.entries
         ),
     )
 
 
-def _sentences(
+def _kinds(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out what kind of sentence the export holds."""
     sentences = sum(figures.sentences.values())
 
-    return Section(
-        "Sentences",
+    return Table(
+        "By kind",
         ("Kind", "Count", "Share"),
         tuple(
             (kind, count(held), share(held, sentences))
@@ -384,51 +416,71 @@ def _sentences(
     )
 
 
-def _quotations(
+def _dated(
     figures: Figures,
-) -> Section:
-    """Lay out what the quotations say about themselves."""
-    quotations = figures.sentences["quotation"]
+) -> Table:
+    """
+    Lay out how many quotations name the year they were written in.
 
-    rows = [
-        ("undated", count(figures.undated), share(figures.undated, quotations)),
-    ]
+    A quotation either names a year, and so is counted among the years, or
+    names none, which is what the two rows divide.
+    """
+    dated = len(figures.years)
+    quotations = dated + figures.undated
 
-    if figures.years:
-        rows += [
-            ("earliest year", str(min(figures.years)), ""),
-            ("latest year", str(max(figures.years)), ""),
-            ("median year", f"{median(figures.years):.0f}", ""),
-        ]
+    return Table(
+        "By date",
+        ("Figure", "Count", "Share"),
+        (
+            ("Dated", count(dated), share(dated, quotations)),
+            ("Undated", count(figures.undated), share(figures.undated, quotations)),
+        ),
+    )
 
-    return Section("Quotations", ("Figure", "Count", "Share"), tuple(rows))
 
-
-def _offsets(
+def _years(
     figures: Figures,
-) -> Section:
+) -> Table | None:
+    """Lay out the span the dated quotations cover, where any names a year."""
+    if not figures.years:
+        return None
+
+    return Table(
+        "Years",
+        ("Figure", "Year"),
+        (
+            ("Earliest", str(min(figures.years))),
+            ("Latest", str(max(figures.years))),
+            ("Median", f"{median(figures.years):.0f}"),
+        ),
+    )
+
+
+def _found(
+    figures: Figures,
+) -> Table:
     """Lay out how many sentences the headword was found in."""
     sentences = sum(figures.sentences.values())
     unlocated = sum(figures.unlocated.values())
     located = sentences - unlocated
 
-    return Section(
-        "Word offsets",
+    return Table(
+        "By sentence",
         ("Figure", "Sentences", "Share"),
         (
-            ("headword found", count(located), share(located, sentences)),
-            ("headword not found", count(unlocated), share(unlocated, sentences)),
+            ("Headword found", count(located), share(located, sentences)),
+            ("Headword not found", count(unlocated), share(unlocated, sentences)),
         ),
     )
 
 
 def _occurrences(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out how many times over the headword was found in one sentence."""
     sentences = sum(figures.sentences.values())
 
-    return Section(
+    return Table(
         "Occurrences per sentence",
         ("Occurrences", "Sentences", "Share"),
         tuple(
@@ -444,21 +496,21 @@ def _occurrences(
 
 def _landed(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out which form of the headword the offsets fall on."""
     written = figures.offsets - figures.inflected
 
-    return Section(
+    return Table(
         "What the offsets landed on",
         ("Form", "Offsets", "Share"),
         (
             (
-                "the headword as written",
+                "The headword as written",
                 count(written),
                 share(written, figures.offsets),
             ),
             (
-                "an inflection of it",
+                "An inflection of it",
                 count(figures.inflected),
                 share(figures.inflected, figures.offsets),
             ),
@@ -468,11 +520,11 @@ def _landed(
 
 def _unlocated(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out what the headwords look like where none was found."""
     unlocated = sum(figures.unlocated.values())
 
-    return Section(
+    return Table(
         "Headwords not found",
         ("Shape", "Sentences", "Share"),
         (
@@ -481,7 +533,7 @@ def _unlocated(
                 for shape, held in figures.shapes.most_common()
             ),
             (
-                "spelled in after all",
+                "Spelled in after all",
                 count(figures.near_misses),
                 share(figures.near_misses, unlocated),
             ),
@@ -491,12 +543,12 @@ def _unlocated(
 
 def _broken(
     figures: Figures,
-) -> Section | None:
+) -> Table | None:
     """Lay out the promises the extractor broke, if it broke any."""
     if not figures.broken:
         return None
 
-    return Section(
+    return Table(
         "Promises broken",
         ("Promise", "Offsets"),
         tuple((promise, count(held)) for promise, held in figures.broken.most_common()),
@@ -505,9 +557,9 @@ def _broken(
 
 def _tags(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out the most common tags."""
-    return Section(
+    return Table(
         "Most common tags",
         ("Tag", "Uses"),
         tuple((tag, count(held)) for tag, held in figures.tags.most_common(LABELS)),
@@ -516,9 +568,9 @@ def _tags(
 
 def _topics(
     figures: Figures,
-) -> Section:
+) -> Table:
     """Lay out the most common topics."""
-    return Section(
+    return Table(
         "Most common topics",
         ("Topic", "Uses"),
         tuple(
@@ -527,14 +579,29 @@ def _topics(
     )
 
 
+def _section(
+    title: str,
+    *tables: Table | None,
+) -> Section:
+    """
+    Gather tables under one title, dropping those with nothing to show.
+
+    Args:
+        title: What the tables have in common.
+        tables: The tables, a missing one standing for a figure this export
+            gave no occasion to write, such as a promise broken.
+
+    Returns:
+        The section.
+    """
+    return Section(title, tuple(table for table in tables if table is not None))
+
+
 def compose(
     figures: Figures,
 ) -> list[Section]:
     """
-    Gather the figures into the tables the report is made of.
-
-    A broken promise is a defect rather than a figure, so its table is left
-    out of a report that has none to show.
+    Gather the figures into the sections the report is made of.
 
     Args:
         figures: What one pass added up to.
@@ -542,50 +609,20 @@ def compose(
     Returns:
         The sections, in reading order.
     """
-    sections = [
-        _records(figures),
-        _by_pos(figures),
-        _depths(figures),
-        _sentences(figures),
-        _quotations(figures),
-        _offsets(figures),
-        _occurrences(figures),
-        _landed(figures),
-        _unlocated(figures),
-        _broken(figures),
-        _tags(figures),
-        _topics(figures),
+    return [
+        _section("Records", _totals(figures), _by_pos(figures), _depths(figures)),
+        _section("Sentences", _kinds(figures)),
+        _section("Quotations", _dated(figures), _years(figures)),
+        _section(
+            "Word offsets",
+            _found(figures),
+            _occurrences(figures),
+            _landed(figures),
+            _unlocated(figures),
+            _broken(figures),
+        ),
+        _section("Tags and topics", _tags(figures), _topics(figures)),
     ]
-
-    return [section for section in sections if section is not None]
-
-
-def to_console(
-    sections: Iterable[Section],
-    note: str,
-) -> None:
-    """
-    Write the report to the terminal.
-
-    Args:
-        sections: The tables to write.
-        note: What to say before them, or nothing.
-    """
-    console = Console()
-
-    if note:
-        console.print(note, style="yellow")
-
-    for section in sections:
-        table = Table(title=section.title, title_justify="left", title_style="bold")
-
-        for position, column in enumerate(section.columns):
-            table.add_column(column, justify="left" if position == 0 else "right")
-
-        for row in section.rows:
-            table.add_row(*row)
-
-        console.print(table)
 
 
 def to_markdown(
@@ -596,28 +633,55 @@ def to_markdown(
     Write the report as Markdown, for a document to take as it stands.
 
     Args:
-        sections: The tables to write.
+        sections: The sections to write.
         note: What to say before them, or nothing.
 
     Returns:
         The document.
     """
-    lines = ["# Figures", ""]
+    lines = ["# Report", ""]
 
     if note:
         lines += [note, ""]
 
     for section in sections:
-        lines += [
-            f"## {section.title}",
-            "",
-            f"| {' | '.join(section.columns)} |",
-            f"|{'|'.join(' --- ' for _ in section.columns)}|",
-        ]
-        lines += [f"| {' | '.join(row)} |" for row in section.rows]
-        lines.append("")
+        lines += [f"## {section.title}", ""]
+
+        for table in section.tables:
+            lines += [
+                f"### {table.caption}",
+                "",
+                f"| {' | '.join(table.columns)} |",
+                f"|{'|'.join(' --- ' for _ in table.columns)}|",
+            ]
+            lines += [f"| {' | '.join(row)} |" for row in table.rows]
+            lines.append("")
 
     return "\n".join(lines)
+
+
+def write(
+    sections: Iterable[Section],
+    note: str,
+    directory: Path,
+) -> Path:
+    """
+    Write the report to a directory, under the moment it was written.
+
+    Args:
+        sections: The sections to write.
+        note: What to say before them, or nothing.
+        directory: Where the report goes.
+
+    Returns:
+        The document written.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+
+    path = directory / f"{datetime.now(UTC):{STAMP}}.md"
+    _ = path.write_text(to_markdown(sections, note), encoding="utf-8")
+
+    return path
 
 
 class Arguments(argparse.Namespace):
@@ -626,11 +690,11 @@ class Arguments(argparse.Namespace):
 
     Attributes:
         every: How much of the export to read, one entry in this many.
-        to: Where to write the report, or None for the terminal.
+        to: Which directory the report is written to.
     """
 
     every: int = EVERY
-    to: Path | None = None
+    to: Path = REPORTS
 
 
 def read_arguments() -> Arguments:
@@ -653,10 +717,34 @@ def read_arguments() -> Arguments:
     _ = parser.add_argument(
         "--to",
         type=Path,
-        help="write the report to this file as Markdown, rather than to the terminal",
+        help=f"write the report to this directory (default: {REPORTS})",
     )
 
     return parser.parse_args(namespace=Arguments())
+
+
+def sampling_note(
+    every: int,
+) -> str:
+    """
+    Say what part of the export a pass read, where it read only part of it.
+
+    A sampled report holds the same figures as a whole one, and nothing on
+    its face says how much of the export they came from, which is what the
+    note supplies.
+
+    Args:
+        every: How much was read, one entry in this many.
+
+    Returns:
+        The note, or nothing where the whole export was read.
+    """
+    if every == 1:
+        return ""
+
+    sampled = count(every)
+
+    return f"One entry in every {sampled} was read"
 
 
 def main() -> None:
@@ -667,21 +755,9 @@ def main() -> None:
 
     figures = tally(read(), arguments.every)
     sections = compose(figures)
+    note = sampling_note(arguments.every)
 
-    note = (
-        f"One entry in {arguments.every}; scale the counts."
-        if arguments.every > 1
-        else ""
-    )
-
-    if arguments.to is None:
-        to_console(sections, note)
-        return
-
-    arguments.to.parent.mkdir(parents=True, exist_ok=True)
-    _ = arguments.to.write_text(to_markdown(sections, note), encoding="utf-8")
-
-    print(f"Wrote {arguments.to}")  # noqa: T201
+    print(f"Wrote {write(sections, note, arguments.to)}")  # noqa: T201
 
 
 if __name__ == "__main__":

@@ -4,8 +4,4 @@ default:
 
 # Report the figures of the collected export.
 report *options:
-    @uv run python -m report {{ options }}
-
-# Build the Label Studio tasks for the annotation study.
-sample *options:
-    @uv run python -m annotation.build_tasks {{ options }}
+    @uv run python -m report.report {{ options }}
