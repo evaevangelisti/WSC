@@ -648,14 +648,14 @@ wheels = [
 
 [[package]]
 name = "kwic"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "spacy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/64/4346ca71d9941d230dc214b3762e0a6a797bc90cf6ce7745c3bb34039ed5/kwic-0.2.0.tar.gz", hash = "sha256:7a6ef77e4d491c130cd52a02cee64c9588c66381b9b60f18928a78a18307af50", size = 15033, upload-time = "2026-09-02T13:47:21.929Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/c9/1ed9ee6e1667ace322cea80f381874bf92100e5ec6f00295fcc4673a4e8d/kwic-0.2.1.tar.gz", hash = "sha256:84f36f20e283c02e940e4961fe9f465ce6737c8fd9dcee42fa8f956ed51e0165", size = 15274, upload-time = "2026-09-02T19:10:47.099Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/71/052c9636ab03945826896d8746d619f1a1ebd9416aaf0c29c42c6b599168/kwic-0.2.0-py3-none-any.whl", hash = "sha256:d886976a3796c9b886956ae99c1d0ccb70adb0d75fd5f212a8054c99336d18fb", size = 21045, upload-time = "2026-09-02T13:47:20.828Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/06/662ce35319da7d90fc534830f0b5b7f2570b50a9f686b32f8cabeffb31b8/kwic-0.2.1-py3-none-any.whl", hash = "sha256:4cffa7317cc4b96ad203eb4f851b00b2dffe2346f73a17e444db9790aace1d0d", size = 21297, upload-time = "2026-09-02T19:10:45.966Z" },
 ]
 
 [package.optional-dependencies]
@@ -2194,7 +2194,7 @@ typing = [
 requires-dist = [
     { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "en-core-web-trf", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.8.0/en_core_web_trf-3.8.0-py3-none-any.whl" },
-    { name = "kwic", extras = ["lemminflect", "stanza"], specifier = ">=0.2.0" },
+    { name = "kwic", extras = ["lemminflect", "stanza"], specifier = ">=0.2.1" },
     { name = "platformdirs", specifier = ">=4.11.2" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "tqdm", specifier = ">=4.70.0" },
