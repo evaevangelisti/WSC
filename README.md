@@ -79,6 +79,8 @@ Reads the senses out of those entries and writes them where you asked. The suffi
 
 [kwic](https://github.com/evaevangelisti/kwic) reads each sentence to place the lemma; where the reading finds nothing, the listed forms are matched.
 
+`--gpu` needs CuPy, which kwic offers as an extra named after your CUDA release: `pip install "kwic[cuda13x]"`.
+
 ```sh
 wsc collect senses.jsonl
 ```
