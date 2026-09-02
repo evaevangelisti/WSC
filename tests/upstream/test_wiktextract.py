@@ -1,10 +1,8 @@
 """
 Tests for src/wsc/upstream/wiktextract.py.
 
-Wiktextract itself is never run: it needs a real dump and the better part of a
-day. What is tested is the plumbing around it, and a stand-in subprocess is
-enough for that, while keeping real streams and real exit codes. A property
-here is drawn fewer times than elsewhere, every example running a process.
+Wiktextract itself is never run: what is tested is the plumbing around it,
+a stand-in subprocess keeping real streams and real exit codes.
 """
 
 import json
@@ -192,9 +190,8 @@ class TestParse:
         """
         The command is compared whole, since it settles what the data is.
 
-        The edition to read and the language to keep are the same one,
-        --examples is what puts the sentences in the output at all, and
-        --quiet leaves the progress to the bar this module draws.
+        The edition and the language to keep are the same one, and --examples
+        and --translations are what put those in the output at all.
         """
         commands = stub_wiktextract(['{"word": "bank"}'])
 
@@ -211,6 +208,7 @@ class TestParse:
                 "--language-code",
                 language,
                 "--examples",
+                "--translations",
                 "--quiet",
                 "--num-processes",
                 str(processes),

@@ -51,9 +51,8 @@ def open_writer[T: "DataclassInstance"](
     """
     Open a writer for the format the file extension names.
 
-    The file itself is opened when the writer is entered, not here. What is
-    written is the caller's to say, no format depending on which dataclass
-    reaches it.
+    The file itself is opened when the writer is entered, not here, and no
+    format depends on which dataclass reaches it.
 
     Args:
         output_path: Where to write; its suffix selects the format.

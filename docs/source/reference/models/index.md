@@ -8,5 +8,6 @@
 :hidden:
 
 pos
-resources/index
+engine
+wiktionary
 ```

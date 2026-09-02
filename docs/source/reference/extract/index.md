@@ -7,6 +7,9 @@
 ```{toctree}
 :hidden:
 
+extractor
+schema
+identifiers
+parts/index
 offsets
-resources/index
 ```

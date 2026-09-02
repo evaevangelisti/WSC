@@ -2,9 +2,7 @@
 Tests for src/wsc/export/base.py.
 
 The atomicity every format inherits is tested through the writer open_writer
-hands back, so that no format written only for a test has to exist. The one
-exception is below: nothing a test can do to a file makes closing it fail, so
-a writer that cannot be closed is written here rather than arranged for.
+hands back, so no format written only for a test has to exist.
 """
 
 from collections.abc import Callable, Iterable

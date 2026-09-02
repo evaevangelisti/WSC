@@ -1,9 +1,8 @@
 """
 Reading the export the studies draw from.
 
-The schema below is the one the JSONL writer produces, declared here once so
-that the report and the annotation study read it the same way. Every key the
-writer prunes when it holds nothing is optional.
+The schema below is the one the JSONL writer produces, declared once so that
+every study reads it the same way. A key the writer prunes is optional.
 """
 
 import json
@@ -49,13 +48,14 @@ class Sense(TypedDict):
 
 class Entry(TypedDict):
     """
-    One lemma, holding every sense it carries.
+    One lemma, holding every sense it carries and what it is called elsewhere.
     """
 
     id: str
     lemma: str
     pos: str
     senses: NotRequired[list[Sense]]
+    translations: NotRequired[dict[str, dict[str, list[str]]]]
 
 
 def read(

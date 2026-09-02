@@ -9,7 +9,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from platformdirs import user_cache_dir
-from strategies import dump_dates, languages, wordnet_versions
+from strategies import dump_dates, languages
 
 from wsc.upstream import cache
 
@@ -32,7 +32,7 @@ class TestDumpDir:
         cache_dir = workspace()
 
         assert cache.dump_dir(cache_dir, language, date) == (
-            cache_dir / "wiktionary" / language / date
+            cache_dir / language / date
         )
 
     @given(languages, dump_dates)
@@ -43,7 +43,7 @@ class TestDumpDir:
     ) -> None:
         """None is what the command line passes when no cache was named."""
         assert cache.dump_dir(None, language, date) == (
-            Path(user_cache_dir("wsc")) / "wiktionary" / language / date
+            Path(user_cache_dir("wsc")) / language / date
         )
 
     @given(languages, dump_dates)
@@ -57,48 +57,6 @@ class TestDumpDir:
         directory = workspace()
 
         _ = cache.dump_dir(directory / "cache", language, date)
-
-        assert list(directory.iterdir()) == []
-
-
-class TestWordNetDir:
-    """
-    Naming the directory one wordnet sits in.
-    """
-
-    @given(wordnet_versions)
-    def test_names_the_directory_after_the_edition(
-        self,
-        workspace: Callable[[], Path],
-        version: str,
-    ) -> None:
-        """One wordnet is shared by every Wiktionary edition, so it sits apart."""
-        cache_dir = workspace()
-
-        assert cache.wordnet_dir(cache_dir, version) == (
-            cache_dir / "wordnet" / version
-        )
-
-    @given(wordnet_versions)
-    def test_falls_back_to_the_platform_cache(
-        self,
-        version: str,
-    ) -> None:
-        """None is what the command line passes when no cache was named."""
-        assert cache.wordnet_dir(None, version) == (
-            Path(user_cache_dir("wsc")) / "wordnet" / version
-        )
-
-    @given(wordnet_versions)
-    def test_creates_nothing(
-        self,
-        workspace: Callable[[], Path],
-        version: str,
-    ) -> None:
-        """Naming the wordnet is not fetching it, so the disk is left alone."""
-        directory = workspace()
-
-        _ = cache.wordnet_dir(directory / "cache", version)
 
         assert list(directory.iterdir()) == []
 
@@ -173,7 +131,7 @@ class TestFetchedDate:
             _ = fetch_dump(cache_dir, "en", date)
 
         newer = data.draw(dump_dates.filter(lambda date: date > max(dates)))
-        _ = (cache_dir / "wiktionary" / "en" / newer).write_text("not a dump")
+        _ = (cache_dir / "en" / newer).write_text("not a dump")
 
         assert cache.fetched_date(cache_dir, "en", cache.LATEST) == max(dates)
 

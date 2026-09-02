@@ -1,196 +1,178 @@
 """
 Tests for src/wsc/extract/offsets.py.
+
+Whether a pipeline reads a sentence rightly is kwic's to answer; what is asked
+here is the query, the fallback, and the order the ranges come back in.
 """
 
-import string
 from itertools import pairwise
 
 from hypothesis import given
 from hypothesis import strategies as st
+from kwic import POS as UNIVERSAL_POS
+from kwic import Locator
 from strategies import words
 
-from wsc.extract import find_word_offsets
+from wsc.extract import build_query, find_word_offsets
+from wsc.models import POS
 
-_TEXTS = st.text(max_size=60)
+_FORMS = st.lists(words, max_size=4).map(frozenset)
 
-_FORMS = st.lists(words, min_size=1, max_size=4)
+_PARTS_OF_SPEECH = st.sampled_from(POS)
 
-# ASCII alone, since a text is compared with itself in another case and only
-# there does raising a letter leave its length alone.
-_ASCII_WORDS = st.text(alphabet=string.ascii_letters, min_size=1, max_size=6)
+# The tagset every engine reports, stated here as it is stated in the source:
+# what a reader is handed is worth writing down twice.
+_UNIVERSAL_TAGS = {
+    POS.NOUN: UNIVERSAL_POS.NOUN,
+    POS.NAME: UNIVERSAL_POS.PROPN,
+    POS.VERB: UNIVERSAL_POS.VERB,
+    POS.ADJECTIVE: UNIVERSAL_POS.ADJ,
+    POS.ADVERB: UNIVERSAL_POS.ADV,
+}
 
-_ASCII_TEXTS = st.text(alphabet=f"{string.ascii_letters} ", max_size=40)
 
-# A form holding what a pattern would read, and nothing a pattern reads as a
-# word, so that the padding around it cannot match.
-_METACHARACTERS = st.text(alphabet="ab.*+?[](){}|^$\\", min_size=1, max_size=5)
-
-
-def _stands_alone(
-    text: str,
-    start: int,
-    end: int,
-) -> bool:
+class TestQueries:
     """
-    Say whether a range has no word character on either side of it.
-
-    Args:
-        text: The sentence the range was read out of.
-        start: Where the range opens.
-        end: Where it closes, the way Python slices.
-
-    Returns:
-        Whether the occurrence is a word of its own.
-    """
-    neighbours = (text[start - 1] if start else "", text[end : end + 1])
-
-    return not any(character.isalnum() or character == "_" for character in neighbours)
-
-
-class TestOccurrences:
-    """
-    What is handed back for one sentence.
+    What one entry is looked for by.
     """
 
-    @given(_TEXTS, _FORMS)
-    def test_a_range_slices_the_form_back_out(
+    @given(words, _PARTS_OF_SPEECH, _FORMS)
+    def test_carries_the_headword_and_every_form_collected(
         self,
-        text: str,
-        forms: list[str],
+        headword: str,
+        pos: POS,
+        forms: frozenset[str],
     ) -> None:
-        """Half-open and in code points, so the text is indexed as Python does."""
-        folded = {form.casefold() for form in forms}
+        """A sentence attests the lemma in whatever form it needs."""
+        query = build_query(headword, pos, forms)
+
+        assert query.lemma == headword
+        assert query.forms == forms
+
+    @given(words, _PARTS_OF_SPEECH, _FORMS)
+    def test_names_the_part_of_speech_in_the_tagset_engines_report(
+        self,
+        headword: str,
+        pos: POS,
+        forms: frozenset[str],
+    ) -> None:
+        """Wiktionary writes adj where Universal Dependencies writes ADJ."""
+        assert build_query(headword, pos, forms).pos == _UNIVERSAL_TAGS[pos]
+
+
+class TestSearches:
+    """
+    What comes back for a batch of sentences.
+    """
+
+    @given(st.lists(words, max_size=6))
+    def test_answers_every_sentence_it_was_handed(
+        self,
+        locator: Locator,
+        headwords: list[str],
+    ) -> None:
+        """A sentence attesting nothing is still a sentence that was read."""
+        searches = [
+            (f"1 {headword} 2", build_query(headword, POS.NOUN, frozenset({headword})))
+            for headword in headwords
+        ]
+
+        assert len(list(find_word_offsets(locator, searches))) == len(searches)
+
+    @given(st.lists(words, min_size=1, max_size=6))
+    def test_reads_each_sentence_for_its_own_lemma(
+        self,
+        locator: Locator,
+        headwords: list[str],
+    ) -> None:
+        """The ranges come back beside the sentence they were read out of."""
+        searches = [
+            (f"1 {headword} 2", build_query(headword, POS.NOUN, frozenset({headword})))
+            for headword in headwords
+        ]
+
+        found = list(find_word_offsets(locator, searches))
 
         assert all(
-            text[start:end].casefold() in folded
-            for start, end in find_word_offsets(text, frozenset(forms))
+            text[start:end].casefold() == query.lemma.casefold()
+            for (text, query), word_offsets in zip(searches, found, strict=True)
+            for start, end in word_offsets
         )
 
-    @given(_TEXTS, _FORMS)
+    @given(words)
     def test_reads_leftmost_first_and_never_twice_over(
         self,
-        text: str,
-        forms: list[str],
+        locator: Locator,
+        headword: str,
     ) -> None:
         """A sentence may attest the lemma more than once, and each occurrence once."""
-        found = find_word_offsets(text, frozenset(forms))
+        text = f"{headword} and {headword} again {headword}"
+
+        (found,) = find_word_offsets(
+            locator,
+            [(text, build_query(headword, POS.NOUN, frozenset({headword})))],
+        )
 
         assert all(start < end for start, end in found)
         assert all(before[1] <= after[0] for before, after in pairwise(found))
 
-    @given(_TEXTS, _FORMS)
-    def test_leaves_a_form_inside_a_longer_word_alone(
+
+class TestFallback:
+    """
+    Matching the listed forms where the reading found nothing.
+    """
+
+    @given(words)
+    def test_matches_a_form_the_reading_passed_over(
         self,
-        text: str,
-        forms: list[str],
+        locator: Locator,
+        headword: str,
     ) -> None:
-        """A banker is not a bank, however the letters run."""
-        assert all(
-            _stands_alone(text, start, end)
-            for start, end in find_word_offsets(text, frozenset(forms))
+        """The engine reads every word as a noun, so a verb is never read off."""
+        text = f"1 {headword} 2"
+
+        (found,) = find_word_offsets(
+            locator,
+            [(text, build_query(headword, POS.VERB, frozenset({headword})))],
         )
 
-    @given(st.data())
-    def test_locates_every_occurrence_there_is(
-        self,
-        data: st.DataObject,
-    ) -> None:
-        """A sentence attesting the lemma five times is evidence five times over."""
-        form = data.draw(words)
-        others = words.filter(lambda word: word.casefold() != form.casefold())
-
-        tokens = data.draw(st.lists(st.just(form) | others, max_size=6))
-        text = " ".join(tokens)
-
-        expected: list[tuple[int, int]] = []
-        start = 0
-
-        for token in tokens:
-            if token == form:
-                expected.append((start, start + len(token)))
-
-            start += len(token) + 1
-
-        assert find_word_offsets(text, frozenset({form})) == tuple(expected)
+        assert found == ((2, 2 + len(headword)),)
 
     @given(st.data())
-    def test_hands_back_nothing_when_the_lemma_is_absent(
+    def test_hands_back_nothing_where_neither_finds_it(
         self,
+        locator: Locator,
         data: st.DataObject,
     ) -> None:
         """A sentence illustrating a sense need not spell the lemma out."""
-        text = data.draw(_TEXTS)
-        form = data.draw(
-            words.filter(lambda form: form.casefold() not in text.casefold())
+        text = data.draw(st.text(alphabet="123 ", max_size=20))
+        headword = data.draw(words)
+
+        (found,) = find_word_offsets(
+            locator,
+            [(text, build_query(headword, POS.VERB, frozenset({headword})))],
         )
 
-        assert find_word_offsets(text, frozenset({form})) == ()
+        assert found == ()
 
-
-class TestForms:
-    """
-    Which shapes of the lemma are looked for, and how.
-    """
-
-    @given(_ASCII_TEXTS, st.lists(_ASCII_WORDS, min_size=1, max_size=3))
-    def test_reads_the_lemma_whatever_the_case(
+    @given(st.data())
+    def test_falls_back_on_one_sentence_without_touching_the_next(
         self,
-        text: str,
-        forms: list[str],
+        locator: Locator,
+        data: st.DataObject,
     ) -> None:
-        """A sentence opening on the lemma capitalises it, and it is the lemma."""
-        looked_for = frozenset(forms)
-        found = find_word_offsets(text, looked_for)
-
-        assert find_word_offsets(text.upper(), looked_for) == found
-        assert find_word_offsets(text.lower(), looked_for) == found
-
-    @given(words, words)
-    def test_takes_the_longest_form_that_fits(
-        self,
-        head: str,
-        tail: str,
-    ) -> None:
-        """A phrasal verb is what it is, not the verb that opens it."""
-        phrase = f"{head} {tail}"
-
-        assert find_word_offsets(phrase, frozenset({head, phrase})) == (
-            (0, len(phrase)),
+        """Each sentence is answered for itself, whichever found it."""
+        read = data.draw(words)
+        matched = data.draw(
+            words.filter(lambda word: word.casefold() != read.casefold())
         )
 
-    @given(words)
-    def test_locates_a_form_closing_on_an_apostrophe(
-        self,
-        word: str,
-    ) -> None:
-        """A word boundary would fall on the wrong side of the apostrophe."""
-        form = f"{word}'"
-        text = f"He is {form} fast."
+        searches = [
+            (f"1 {read} 2", build_query(read, POS.NOUN, frozenset({read}))),
+            (f"1 {matched} 2", build_query(matched, POS.VERB, frozenset({matched}))),
+        ]
 
-        assert find_word_offsets(text, frozenset({form})) == ((6, 6 + len(form)),)
-
-    @given(_METACHARACTERS)
-    def test_reads_a_form_as_text_rather_than_as_a_pattern(
-        self,
-        form: str,
-    ) -> None:
-        """A form holding what a regex would read is matched letter for letter."""
-        text = f"! {form} !"
-
-        assert find_word_offsets(text, frozenset({form})) == ((2, 2 + len(form)),)
-
-    @given(words, words)
-    def test_reads_one_lemma_after_another(
-        self,
-        first: str,
-        second: str,
-    ) -> None:
-        """Only the last pattern is held on to, so forms must not outlive them."""
-        text = f"{first} {second}"
-
-        opening = find_word_offsets(text, frozenset({first}))
-        closing = find_word_offsets(text, frozenset({second}))
-
-        assert opening[0] == (0, len(first))
-        assert closing[-1] == (len(first) + 1, len(text))
-        assert find_word_offsets(text, frozenset({first})) == opening
+        assert list(find_word_offsets(locator, searches)) == [
+            ((2, 2 + len(read)),),
+            ((2, 2 + len(matched)),),
+        ]

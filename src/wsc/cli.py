@@ -8,11 +8,11 @@ from typing import Annotated
 
 import typer
 
-from .constants import CHUNK_SIZE, TIMEOUT, USER_AGENT
+from .constants import BATCH_SIZE, CHUNK_SIZE, PROCESSES, TIMEOUT, USER_AGENT
 from .export import Writer, open_writer
-from .extract import WiktionaryExtractor, WordNetExtractor
-from .models import POS, Lemma, Synset
-from .upstream import cache, download, repositories, wiktextract
+from .extract import WiktionaryExtractor, open_locator
+from .models import POS, Engine, Lemma
+from .upstream import cache, download, repository, wiktextract
 
 # Named apart from the signatures, so that the commands asking for the same
 # option share one.
@@ -61,7 +61,7 @@ def fetch(
 
     date = dump_date
     if date == cache.LATEST:
-        date = repositories.wiktionary.latest_date(language, user_agent, TIMEOUT)
+        date = repository.latest_date(language, user_agent, TIMEOUT)
         typer.echo(f"Resolved latest to {date}")
 
     dump_path = cache.dump_dir(cache_dir, language, date) / cache.DUMP_NAME
@@ -70,7 +70,7 @@ def fetch(
         return
 
     download(
-        repositories.wiktionary.url(language, date),
+        repository.url(language, date),
         dump_path,
         user_agent,
         TIMEOUT,
@@ -168,6 +168,32 @@ def collect(
             show_default="no limit",
         ),
     ] = None,
+    engine: Annotated[
+        Engine,
+        typer.Option(
+            help="What the sentences are read with to locate the lemma.",
+        ),
+    ] = Engine.SPACY,
+    processes: Annotated[
+        int,
+        typer.Option(
+            help="Processes the reading may run; Stanza runs one regardless.",
+        ),
+    ] = PROCESSES,
+    batch_size: Annotated[
+        int,
+        typer.Option(
+            help="How many sentences the reading takes at a time.",
+        ),
+    ] = BATCH_SIZE,
+    *,
+    gpu: Annotated[
+        bool,
+        typer.Option(
+            "--gpu/--cpu",
+            help="Read on the graphics card",
+        ),
+    ] = False,
     cache_dir: CacheDir = None,
 ) -> None:
     """
@@ -187,6 +213,7 @@ def collect(
         frozenset(pos) if pos else None,
         minimum_year,
         maximum_year,
+        open_locator(engine, processes, batch_size, gpu=gpu),
     )
 
     writer: Writer[Lemma] = open_writer(output_path)
@@ -196,58 +223,3 @@ def collect(
             writer.write(lemma)
 
     typer.echo(f"Collected {output_path}")
-
-
-@app.command()
-def wordnet(
-    edition: Annotated[
-        str,
-        typer.Option(
-            envvar="WSC_WORDNET_EDITION",
-            help="Wordnet edition to use, as 2025, or latest.",
-        ),
-    ] = cache.LATEST,
-    cache_dir: CacheDir = None,
-) -> None:
-    """
-    Download the wordnet the senses are aligned with, and read its synsets.
-
-    Needs the network, unless the edition asked for is already here.
-    """
-    user_agent = USER_AGENT.format(version=version("wsc"))
-
-    if edition == cache.LATEST:
-        edition = repositories.wordnet.latest_version(user_agent, TIMEOUT)
-        typer.echo(f"Resolved latest to {edition}")
-
-    wordnet_dir = cache.wordnet_dir(cache_dir, edition)
-
-    wordnet_path = wordnet_dir / cache.WORDNET_NAME
-    if wordnet_path.exists():
-        typer.echo(f"Already fetched {wordnet_path}")
-    else:
-        download(
-            repositories.wordnet.url(edition),
-            wordnet_path,
-            user_agent,
-            TIMEOUT,
-            CHUNK_SIZE,
-        )
-
-        typer.echo(f"Fetched {wordnet_path}")
-
-    output_path = wordnet_dir / cache.SYNSETS_NAME
-    if output_path.exists():
-        typer.echo(f"Already read {output_path}")
-        return
-
-    # A cache answering to a filter is one the next run cannot trust.
-    extractor = WordNetExtractor(None)
-
-    writer: Writer[Synset] = open_writer(output_path)
-
-    with writer:
-        for synset in extractor.extract(wordnet_path):
-            writer.write(synset)
-
-    typer.echo(f"Read {output_path}")

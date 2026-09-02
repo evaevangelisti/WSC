@@ -1,6 +1,6 @@
 # Wiktionary Sense Collector
 
-Collects the senses of every Wiktionary lemma into one file, each with its glosses, its labels and the sentences that illustrate it.
+Collects every Wiktionary lemma into one file, with its glosses, labels, attesting sentences and translations.
 
 <!-- installation -->
 
@@ -77,6 +77,8 @@ wsc parse
 
 Reads the senses out of those entries and writes them where you asked. The suffix of the file picks the format.
 
+[kwic](https://github.com/evaevangelisti/kwic) reads each sentence to place the lemma; where the reading finds nothing, the listed forms are matched.
+
 ```sh
 wsc collect senses.jsonl
 ```
@@ -88,19 +90,14 @@ wsc collect senses.jsonl
 | `--pos` | every part of speech | Parts of speech to keep; repeat to name several |
 | `--min-year` | no limit | Oldest quotation to keep |
 | `--max-year` | no limit | Newest quotation to keep |
+| `--engine` | `spacy` | What reads a sentence to locate the lemma in it |
+| `--processes` | `1` | Processes the reading may run; Stanza runs one regardless |
+| `--batch-size` | `8` | How many sentences the reading takes at a time |
+| `--gpu` | off | Read on the graphics card |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
 
-### wordnet
-
-Downloads [Open English WordNet](https://en-word.net), which the senses are aligned with, and reads its synsets into the cache beside it. It stands apart from the three steps above, and is only worth running if you mean to align.
-
-```sh
-wsc wordnet
-```
-
-Every part of speech is kept, whatever `collect` was told to keep: a cache answering to a filter is one the next run cannot trust.
-
-| Option | Default | |
+| Engine | Reads with | Speed |
 | --- | --- | --- |
-| `--edition` | `latest` | Wordnet edition to use, as `2025` |
-| `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
+| `spacy` | a transformer pipeline, the most accurate of the three | tens a second |
+| `stanza` | Stanza, whose parser finds a phrasal verb written apart | tens a second |
+| `lemminflect` | spaCy for the tags and LemmInflect for the lemmas | hundreds a second |

@@ -51,13 +51,13 @@ def download(
         # A 206 reports the requested range alone, so the whole file is what
         # came before plus it.
         content_length = int(response.headers.get("content-length") or 0)
-        total = downloaded_bytes + content_length if content_length else None
+        total_bytes = downloaded_bytes + content_length if content_length else None
 
         with (
             partial_path.open("ab" if downloaded_bytes else "wb") as file,
             tqdm(
                 desc=output_path.name,
-                total=total,
+                total=total_bytes,
                 unit="B",
                 unit_scale=True,
                 initial=downloaded_bytes,

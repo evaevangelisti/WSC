@@ -1,15 +1,8 @@
 """
 Reporting the figures of a collected export.
 
-What the pipeline produced is counted here rather than judged: the report
-says how much of each thing there is, and where the offsets fall short of
-what the extractor promises. Whether a record is faithful is a question for
-the annotation study.
-
-The figures are gathered into sections of tables, one section per subject,
-so that figures read against one another sit together. The renderer takes
-them to Markdown, and the document is kept rather than read once, one file
-per pass named for the moment it was written.
+What the pipeline produced is counted here rather than judged; whether a
+record is faithful is a question for the annotation study.
 """
 
 import argparse
@@ -18,35 +11,29 @@ import unicodedata
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
 
-from corpus import Entry, read
+from corpus import SENSES, Entry, read
 
 REPORTS = Path(__file__).resolve().parent / "reports"
 """Where the written reports are kept, one file per pass."""
 
-STAMP = "%Y%m%dT%H%M%SZ"
-"""How a report names itself, the moment being what tells two of them apart."""
-
 MARKS = str.maketrans({"’": "'", "‘": "'", "‐": "-", "‑": "-", "–": "-"})
 """Punctuation Wiktionary sets typographically, unified before a near miss is
-looked for. The extractor matches the form as it is spelled, so a headword
-written with a straight apostrophe misses a sentence written with a curly
-one."""
+looked for."""
 
 WORD = re.compile(r"\w", re.UNICODE)
 """One word character, which is what an offset may not be flanked by."""
 
 PARTS_OF_SPEECH = {
     "noun": "Noun",
+    "name": "Proper noun",
     "verb": "Verb",
     "adj": "Adjective",
     "adv": "Adverb",
 }
-"""What the collector keeps, written out and in the order a grammar names
-them, rather than by how much of the export each one carries."""
+"""What the collector keeps, in the order a grammar names them."""
 
 LABELS = 10
 """How many of the most common tags and topics the report names."""
@@ -77,8 +64,7 @@ class Section:
     One part of the report, holding the tables that speak to one thing.
 
     Figures on the same subject are read against one another, so they are
-    kept together: how many quotations name a year belongs beside the years
-    they name, and where the headword was found beside what was found there.
+    kept together.
 
     Attributes:
         title: What the tables have in common.
@@ -113,6 +99,14 @@ class Figures:
         inflected: How many offsets fall on a form other than the headword.
         tags: How often each tag is used.
         topics: How often each topic is used.
+        named: How many senses name a sense of Wiktionary's own.
+        tied: How many senses name a Wikidata item.
+        varying: How many entries are written another way too.
+        variants: How many other spellings there are in all.
+        translated: How many entries carry a translation table.
+        translations: How many translations there are in all.
+        glosses_translated: How many glosses a translation table heads.
+        languages: How often each language offers a translation.
     """
 
     entries: Counter[str] = field(default_factory=Counter)
@@ -133,6 +127,14 @@ class Figures:
     inflected: int = 0
     tags: Counter[str] = field(default_factory=Counter)
     topics: Counter[str] = field(default_factory=Counter)
+    named: int = 0
+    tied: int = 0
+    varying: int = 0
+    variants: int = 0
+    translated: int = 0
+    translations: int = 0
+    glosses_translated: int = 0
+    languages: Counter[str] = field(default_factory=Counter)
 
 
 def shape_of(
@@ -141,9 +143,8 @@ def shape_of(
     """
     Say what a headword looks like, where no occurrence of it was found.
 
-    The classes are tried in turn and the first that fits wins, so that a
-    headword is counted once. A plain one is the interesting case: nothing
-    about how it is spelled explains the miss.
+    The first class that fits wins, so a headword is counted once. A plain
+    one is the interesting case: nothing about it explains the miss.
 
     Args:
         lemma: The headword.
@@ -173,9 +174,8 @@ def spelled_in(
     """
     Say whether a sentence spells a headword the extractor did not find.
 
-    Case and typographic punctuation are unified first, which is where the
-    extractor is strict and Wiktionary is not. Word boundaries are kept, so a
-    headword sitting inside a longer word still does not count.
+    Case and typographic punctuation are unified first. Word boundaries are
+    kept, so a headword inside a longer word still does not count.
 
     Args:
         lemma: The headword.
@@ -204,9 +204,8 @@ def check(
     """
     Hold one sentence's offsets against what the extractor promises.
 
-    A failure here is a defect rather than a shortfall: the extractor states
-    that offsets are ordered, disjoint, within the text and flanked by no
-    word character, and nothing downstream re-checks it.
+    A failure here is a defect rather than a shortfall, and nothing
+    downstream re-checks what the extractor promises.
 
     Args:
         text: The sentence the offsets index.
@@ -237,6 +236,35 @@ def check(
         read_up_to = end
 
 
+def count_entry(
+    figures: Figures,
+    entry: Entry,
+) -> None:
+    """
+    Add up what one entry carries beside its senses.
+
+    Args:
+        figures: What the pass has added up so far.
+        entry: The entry to read.
+    """
+    variants = entry.get("variants", [])
+    if variants:
+        figures.varying += 1
+        figures.variants += len(variants)
+
+    translations = entry.get("translations", {})
+    if not translations:
+        return
+
+    figures.translated += 1
+    figures.glosses_translated += len(translations)
+
+    for offered in translations.values():
+        for language, words in offered.items():
+            figures.languages[language] += len(words)
+            figures.translations += len(words)
+
+
 def tally(
     entries: Iterable[Entry],
     every: int,
@@ -263,11 +291,16 @@ def tally(
         figures.entries[pos] += 1
         figures.senses_per_entry.append(len(senses))
 
+        count_entry(figures, entry)
+
         for sense in senses:
             figures.senses[pos] += 1
             figures.depths[len(sense["glosses"])] += 1
             figures.tags.update(sense.get("tags", []))
             figures.topics.update(sense.get("topics", []))
+
+            figures.named += bool(sense.get("sense_ids"))
+            figures.tied += bool(sense.get("wikidata_ids"))
 
             sentences = sense.get("sentences", [])
             if not sentences:
@@ -373,8 +406,8 @@ def _depths(
         "Gloss chain depth",
         ("Depth", "Senses", "Share"),
         tuple(
-            (str(depth), count(held), share(held, senses))
-            for depth, held in sorted(figures.depths.items())
+            (str(depth), count(nested), share(nested, senses))
+            for depth, nested in sorted(figures.depths.items())
         ),
     )
 
@@ -410,8 +443,8 @@ def _kinds(
         "By kind",
         ("Kind", "Count", "Share"),
         tuple(
-            (kind, count(held), share(held, sentences))
-            for kind, held in figures.sentences.most_common()
+            (kind, count(written), share(written, sentences))
+            for kind, written in figures.sentences.most_common()
         ),
     )
 
@@ -462,13 +495,17 @@ def _found(
     """Lay out how many sentences the headword was found in."""
     sentences = sum(figures.sentences.values())
     unlocated = sum(figures.unlocated.values())
-    located = sentences - unlocated
+    located_sentences = sentences - unlocated
 
     return Table(
         "By sentence",
         ("Figure", "Sentences", "Share"),
         (
-            ("Headword found", count(located), share(located, sentences)),
+            (
+                "Headword found",
+                count(located_sentences),
+                share(located_sentences, sentences),
+            ),
             ("Headword not found", count(unlocated), share(unlocated, sentences)),
         ),
     )
@@ -485,11 +522,11 @@ def _occurrences(
         ("Occurrences", "Sentences", "Share"),
         tuple(
             (
-                "5 and over" if found == 5 else str(found),
-                count(held),
-                share(held, sentences),
+                "5 and over" if occurrences == 5 else str(occurrences),
+                count(attesting),
+                share(attesting, sentences),
             )
-            for found, held in sorted(figures.occurrences.items())
+            for occurrences, attesting in sorted(figures.occurrences.items())
         ),
     )
 
@@ -529,8 +566,8 @@ def _unlocated(
         ("Shape", "Sentences", "Share"),
         (
             *(
-                (shape, count(held), share(held, unlocated))
-                for shape, held in figures.shapes.most_common()
+                (shape, count(missed), share(missed, unlocated))
+                for shape, missed in figures.shapes.most_common()
             ),
             (
                 "Spelled in after all",
@@ -551,7 +588,107 @@ def _broken(
     return Table(
         "Promises broken",
         ("Promise", "Offsets"),
-        tuple((promise, count(held)) for promise, held in figures.broken.most_common()),
+        tuple(
+            (promise, count(broken)) for promise, broken in figures.broken.most_common()
+        ),
+    )
+
+
+def _tied(
+    figures: Figures,
+) -> Table:
+    """Lay out how many senses are tied to something outside Wiktionary."""
+    senses = sum(figures.senses.values())
+
+    return Table(
+        "Ties",
+        ("Figure", "Senses", "Share"),
+        (
+            ("Named by Wiktionary", count(figures.named), share(figures.named, senses)),
+            ("Tied to Wikidata", count(figures.tied), share(figures.tied, senses)),
+        ),
+    )
+
+
+def _variants(
+    figures: Figures,
+) -> Table:
+    """Lay out how many entries are written another way too."""
+    entries = sum(figures.entries.values())
+    plain = entries - figures.varying
+
+    return Table(
+        "By entry",
+        ("Figure", "Entries", "Share"),
+        (
+            (
+                "Written another way",
+                count(figures.varying),
+                share(figures.varying, entries),
+            ),
+            ("Written one way alone", count(plain), share(plain, entries)),
+            (
+                "Spellings per entry that has one",
+                f"{figures.variants / figures.varying:.1f}" if figures.varying else "",
+                "",
+            ),
+        ),
+    )
+
+
+def _translated(
+    figures: Figures,
+) -> Table:
+    """Lay out how many entries Wiktionary hangs a translation table off."""
+    entries = sum(figures.entries.values())
+    untranslated = entries - figures.translated
+
+    return Table(
+        "By entry",
+        ("Figure", "Entries", "Share"),
+        (
+            (
+                "Translated",
+                count(figures.translated),
+                share(figures.translated, entries),
+            ),
+            ("Untranslated", count(untranslated), share(untranslated, entries)),
+        ),
+    )
+
+
+def _translations(
+    figures: Figures,
+) -> Table:
+    """Lay out how much a translated entry carries."""
+    translated = figures.translated or 1
+
+    return Table(
+        "Totals",
+        ("Figure", "Count"),
+        (
+            ("Translations", count(figures.translations)),
+            ("Glosses translated", count(figures.glosses_translated)),
+            ("Distinct languages", count(len(figures.languages))),
+            (
+                "Translations per entry translated",
+                f"{figures.translations / translated:.1f}",
+            ),
+        ),
+    )
+
+
+def _languages(
+    figures: Figures,
+) -> Table:
+    """Lay out the languages offering the most translations."""
+    return Table(
+        "Most translating languages",
+        ("Language", "Translations"),
+        tuple(
+            (language, count(offered))
+            for language, offered in figures.languages.most_common(LABELS)
+        ),
     )
 
 
@@ -562,7 +699,7 @@ def _tags(
     return Table(
         "Most common tags",
         ("Tag", "Uses"),
-        tuple((tag, count(held)) for tag, held in figures.tags.most_common(LABELS)),
+        tuple((tag, count(uses)) for tag, uses in figures.tags.most_common(LABELS)),
     )
 
 
@@ -574,7 +711,7 @@ def _topics(
         "Most common topics",
         ("Topic", "Uses"),
         tuple(
-            (topic, count(held)) for topic, held in figures.topics.most_common(LABELS)
+            (topic, count(uses)) for topic, uses in figures.topics.most_common(LABELS)
         ),
     )
 
@@ -610,7 +747,20 @@ def compose(
         The sections, in reading order.
     """
     return [
-        _section("Records", _totals(figures), _by_pos(figures), _depths(figures)),
+        _section(
+            "Records",
+            _totals(figures),
+            _by_pos(figures),
+            _depths(figures),
+            _tied(figures),
+        ),
+        _section("Variants", _variants(figures)),
+        _section(
+            "Translations",
+            _translated(figures),
+            _translations(figures),
+            _languages(figures),
+        ),
         _section("Sentences", _kinds(figures)),
         _section("Quotations", _dated(figures), _years(figures)),
         _section(
@@ -664,21 +814,25 @@ def write(
     sections: Iterable[Section],
     note: str,
     directory: Path,
+    export_path: Path,
 ) -> Path:
     """
-    Write the report to a directory, under the moment it was written.
+    Write the report to a directory, named after the export it read.
+
+    One export has one report, so a rerun overwrites rather than piling up.
 
     Args:
         sections: The sections to write.
         note: What to say before them, or nothing.
         directory: Where the report goes.
+        export_path: The export it was made from.
 
     Returns:
         The document written.
     """
     directory.mkdir(parents=True, exist_ok=True)
 
-    path = directory / f"{datetime.now(UTC):{STAMP}}.md"
+    path = directory / f"{export_path.stem}.md"
     _ = path.write_text(to_markdown(sections, note), encoding="utf-8")
 
     return path
@@ -689,10 +843,12 @@ class Arguments(argparse.Namespace):
     What the command line settles.
 
     Attributes:
-        every: How much of the export to read, one entry in this many.
+        export: Which export to read.
+        every: How much of it to read, one entry in this many.
         to: Which directory the report is written to.
     """
 
+    export: Path = SENSES
     every: int = EVERY
     to: Path = REPORTS
 
@@ -702,10 +858,17 @@ def read_arguments() -> Arguments:
     Read what the command line settles, falling back on the defaults above.
 
     Returns:
-        How much of the export to read, and where the report goes.
+        Which export to read, how much of it, and where the report goes.
     """
     parser = argparse.ArgumentParser(description="Report the figures of an export.")
 
+    _ = parser.add_argument(
+        "export",
+        nargs="?",
+        type=Path,
+        default=SENSES,
+        help=f"the export to read (default: {SENSES})",
+    )
     _ = parser.add_argument(
         "--every",
         type=int,
@@ -730,8 +893,7 @@ def sampling_note(
     Say what part of the export a pass read, where it read only part of it.
 
     A sampled report holds the same figures as a whole one, and nothing on
-    its face says how much of the export they came from, which is what the
-    note supplies.
+    its face says how much of the export they came from.
 
     Args:
         every: How much was read, one entry in this many.
@@ -753,11 +915,13 @@ def main() -> None:
     """
     arguments = read_arguments()
 
-    figures = tally(read(), arguments.every)
+    figures = tally(read(arguments.export), arguments.every)
     sections = compose(figures)
     note = sampling_note(arguments.every)
 
-    print(f"Wrote {write(sections, note, arguments.to)}")  # noqa: T201
+    written = write(sections, note, arguments.to, arguments.export)
+
+    print(f"Wrote {written}")  # noqa: T201
 
 
 if __name__ == "__main__":

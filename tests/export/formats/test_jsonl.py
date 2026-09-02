@@ -3,8 +3,6 @@ Tests for src/wsc/export/formats/jsonl.py.
 
 What was written is compared whole rather than reached into, so a key that
 appears where none was expected is caught along with one that went missing.
-The record a lemma is expected to read as is spelled out below: it is the
-schema a reader will be handed, and stating it twice is the point.
 """
 
 import json
@@ -66,7 +64,8 @@ def _record_of_sense(
         ("topics", sense.topics),
         ("tags", sense.tags),
         ("sentences", tuple(map(_record_of_sentence, sense.sentences))),
-        ("synset_ids", sense.synset_ids),
+        ("sense_ids", sense.sense_ids),
+        ("wikidata_ids", sense.wikidata_ids),
     ):
         if held:
             record[key] = list(held)
@@ -90,6 +89,15 @@ def _record_of_lemma(
 
     if lemma.senses:
         record["senses"] = [_record_of_sense(sense) for sense in lemma.senses]
+
+    if lemma.variants:
+        record["variants"] = sorted(lemma.variants)
+
+    if lemma.translations:
+        record["translations"] = {
+            gloss: {language: sorted(words) for language, words in translated.items()}
+            for gloss, translated in lemma.translations.items()
+        }
 
     return record
 

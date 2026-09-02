@@ -13,8 +13,7 @@ class Writer[T](ABC):
     A sink for items of one kind, writing atomically.
 
     Output goes to a sibling .part file, moved into place only once writing
-    finishes. A run that fails leaves neither behind, a half-written export
-    being of no use.
+    finishes. A run that fails leaves neither behind.
     """
 
     def __init__(
@@ -58,8 +57,7 @@ class Writer[T](ABC):
         try:
             self._close()
         except Exception:
-            # Closing is where buffered output reaches the disk, so a failure
-            # here leaves the file short of what was written to it.
+            # Closing is where buffered output reaches the disk.
             succeeded = False
             raise
         finally:

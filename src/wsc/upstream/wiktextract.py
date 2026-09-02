@@ -34,8 +34,8 @@ def parse(
         language: Wiktionary's code for the edition and the language to keep.
         processes: How many processes wiktextract may run, at 4 GB each.
         database_path: Where the pages extracted from the dump are kept, or
-        None for a temporary file. One already holding the interwiki map
-        spares the run its only request, and so lets it work offline.
+        None for a temporary file. One already built lets the run work
+        offline.
 
     Returns:
         How many lines of wiktextract's own reporting were set aside. Far
@@ -57,6 +57,7 @@ def parse(
         "--language-code",
         language,
         "--examples",
+        "--translations",
         "--quiet",
         "--num-processes",
         str(processes),

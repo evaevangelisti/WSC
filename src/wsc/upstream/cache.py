@@ -10,13 +10,6 @@ LATEST = "latest"
 
 DUMP_NAME = "dump.xml.bz2"
 WIKTEXTRACT_NAME = "wiktextract.jsonl.zst"
-WORDNET_NAME = "wordnet.xml.gz"
-SYNSETS_NAME = "synsets.jsonl"
-
-# One directory per source, and under it one per release: a dump belongs to an
-# edition and a day, a wordnet to the year it came out.
-_WIKTIONARY = "wiktionary"
-_WORDNET = "wordnet"
 
 
 def _root(
@@ -48,7 +41,7 @@ def _edition_dir(
     Returns:
         The directory, whether or not it exists yet.
     """
-    return _root(cache_dir) / _WIKTIONARY / language
+    return _root(cache_dir) / language
 
 
 def dump_dir(
@@ -68,23 +61,6 @@ def dump_dir(
         The directory, whether or not it exists yet.
     """
     return _edition_dir(cache_dir, language) / date
-
-
-def wordnet_dir(
-    cache_dir: Path | None,
-    version: str,
-) -> Path:
-    """
-    Name the directory holding one wordnet and everything derived from it.
-
-    Args:
-        cache_dir: Where the sources are kept, or None for the usual place.
-        version: The edition of the wordnet, as 2025.
-
-    Returns:
-        The directory, whether or not it exists yet.
-    """
-    return _root(cache_dir) / _WORDNET / version
 
 
 def fetched_date(

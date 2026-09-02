@@ -1,13 +1,8 @@
 """
 Generators the properties are drawn from.
 
-A generator says what a source may write rather than what it usually writes:
-a property is only worth stating if the entry nobody thought of can falsify
-it, so the alphabets reach past ASCII and the lists reach down to empty.
-
-A strategy is named for what it draws. One that has to be told something is a
-function, so that a test spells out the part it rests on and leaves the rest
-to be drawn.
+A generator says what a source may write rather than what it usually writes,
+so the alphabets reach past ASCII and the lists reach down to empty.
 """
 
 import string
@@ -20,9 +15,8 @@ from wsc.models import POS, Example, Lemma, Quotation, Sense, Sentence
 type RawJson = dict[str, object]
 """One decoded JSON object, as wiktextract writes them."""
 
-# Letters as far as Latin Extended-B. Wiktionary is written in more than
-# these, but Python's re folds their case the way str does, and reading a
-# form back out of a sentence rests on the two agreeing.
+# Letters as far as Latin Extended-B, whose case Python's re folds the way
+# str does.
 _LETTERS = st.characters(categories=("Ll", "Lu"), max_codepoint=0x24F)
 
 # How a reference names a date, the year aside. Wiktionary writes one in more
@@ -77,9 +71,6 @@ dump_dates = st.dates(
 ).map(lambda day: day.strftime("%Y%m%d"))
 """The day a dump began, as the directory holding it is named."""
 
-wordnet_versions = st.integers(min_value=1000, max_value=9999).map(str)
-"""The year one edition of the wordnet came out."""
-
 parts_of_speech: st.SearchStrategy[POS] = st.sampled_from(POS)
 """One part of speech the collector keeps."""
 
@@ -93,9 +84,8 @@ unknown_pos_codes = st.text(
 ).filter(lambda code: code not in {pos.value for pos in POS})
 """A part of speech Wiktionary describes and the collector does not keep."""
 
-# What a builder falls back on when a test has nothing to say about that part
-# of an entry. A default draws what a source may hold rather than nothing at
-# all, so that the part no test speaks for is still varied.
+# What a builder falls back on when a test has nothing to say about that
+# part of an entry, drawn rather than left empty.
 
 _OFFSETS = st.integers(min_value=0, max_value=60)
 
@@ -247,6 +237,35 @@ _FORMS = st.lists(raw_forms(), max_size=2)
 
 
 @st.composite
+def raw_translations(
+    draw: st.DrawFn,
+    translations: st.SearchStrategy[str] = words,
+    codes: st.SearchStrategy[str] = languages,
+    glosses: st.SearchStrategy[str] = glosses,
+) -> RawJson:
+    """
+    Draw one word another language uses for a sense of the entry.
+
+    Args:
+        draw: Turns a strategy into one of its values.
+        translations: The words to draw the translation from.
+        codes: The languages it may belong to.
+        glosses: The meanings a translation table may head.
+
+    Returns:
+        The translation, as wiktextract writes one.
+    """
+    return {
+        "word": draw(translations),
+        "lang_code": draw(codes),
+        "sense": draw(glosses),
+    }
+
+
+_TRANSLATIONS = st.lists(raw_translations(), max_size=2)
+
+
+@st.composite
 def raw_entries(
     draw: st.DrawFn,
     headwords: st.SearchStrategy[str] = words,
@@ -254,6 +273,7 @@ def raw_entries(
     languages: st.SearchStrategy[str] = _ENGLISH,
     forms: st.SearchStrategy[list[RawJson]] = _FORMS,
     senses: st.SearchStrategy[list[RawJson]] = _SENSES,
+    translations: st.SearchStrategy[list[RawJson]] = _TRANSLATIONS,
 ) -> RawJson:
     """
     Draw one dictionary entry, which is what a lemma is read out of.
@@ -265,6 +285,7 @@ def raw_entries(
         languages: The languages a headword may belong to.
         forms: The shapes a headword takes.
         senses: The meanings to hang off it.
+        translations: What other languages call it.
 
     Returns:
         The entry, as wiktextract writes one.
@@ -275,16 +296,19 @@ def raw_entries(
         "lang_code": draw(languages),
     }
 
-    for key, drawn in (("forms", draw(forms)), ("senses", draw(senses))):
+    for key, drawn in (
+        ("forms", draw(forms)),
+        ("senses", draw(senses)),
+        ("translations", draw(translations)),
+    ):
         if drawn:
             raw[key] = drawn
 
     return raw
 
 
-# The models an export is handed. Their text is drawn wider than an
-# extraction would hand over, a writer having to survive whatever a source
-# wrote: quotation marks, newlines and the rest.
+# The models an export is handed, their text drawn wider than an extraction
+# would hand over: quotation marks, newlines and the rest.
 
 _LABEL_LISTS = st.lists(st.text(max_size=10), max_size=2).map(tuple)
 
@@ -307,15 +331,29 @@ senses = st.builds(
     _LABEL_LISTS,
     _LABEL_LISTS,
     st.lists(sentences, max_size=3),
-    st.lists(st.text(max_size=16), max_size=2).map(tuple),
+    _LABEL_LISTS,
+    _LABEL_LISTS,
 )
 """One meaning of a lemma, filled the way an extraction fills it."""
+
+translations = st.dictionaries(
+    st.text(max_size=20),
+    st.dictionaries(
+        languages,
+        st.lists(words, min_size=1, max_size=3).map(frozenset),
+        max_size=2,
+    ),
+    max_size=2,
+)
+"""What other languages call a lemma, gathered under the glosses translated."""
 
 lemmas = st.builds(
     Lemma,
     identifiers,
     words,
     parts_of_speech,
+    st.lists(words, max_size=3).map(frozenset),
     st.lists(senses, max_size=3),
+    translations,
 )
 """One lemma, as an extraction hands it to a writer."""

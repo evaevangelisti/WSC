@@ -5,3 +5,11 @@ default:
 # Report the figures of the collected export.
 report *options:
     @uv run python -m report.report {{ options }}
+
+# Build the Label Studio tasks for the word offset study.
+tasks *options:
+    @uv run python -m annotation.build_tasks {{ options }}
+
+# Report on one set of word offset annotations.
+annotations *options:
+    @uv run python -m annotation.report {{ options }}

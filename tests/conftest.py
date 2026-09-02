@@ -1,28 +1,8 @@
 """
 Fixtures the whole suite shares.
 
-A test states a property: whatever a generator draws, this holds of it. The
-generators live in strategies.py and the pages each source serves in
-documents.py, so that a test file holds properties and little else. An
-example is spelled out where one input is the whole point of the test, such
-as an address that is published rather than derived.
-
-A feature is exercised from outside, through the public API: the commands
-through the command line, and what lies under them through what the package
-exports. A test reaching for anything else is the exception, and says why.
-
-The test tree mirrors the package: tests/extract/resources/test_wiktionary.py
-covers src/wsc/extract/resources/wiktionary.py, and a module at the top of the
-tree covers one of the same name in src/wsc. A new source or format is a new
-file in the matching directory, never an addition to an existing one. Within a
-file, the classes follow the order of the module they cover, and a refusal is
-tested after what it refuses.
-
-What every directory reads lives here; what one directory alone needs belongs
-in a conftest.py of its own, next to the tests that ask for it.
-
-A test is documented in a single line, its parameters being fixtures rather
-than arguments. A fixture is documented like any other function.
+A feature is exercised from outside, over what the generators draw, and the
+test tree mirrors the package.
 """
 
 import gzip
@@ -33,16 +13,15 @@ from itertools import count
 from pathlib import Path
 
 import pytest
-from documents import WORDNET, lexicon
+from engines import WhitespaceEngine
 from hypothesis import HealthCheck, settings
+from kwic import Locator
 from strategies import RawJson
 
 from wsc.upstream import cache
 
-# A property that reaches the disk or spawns a process is timed by the machine
-# it runs on, and how long one example took says nothing about the code. The
-# fixtures below hand out a directory per call rather than per test, so an
-# example never reads what another one wrote.
+# A property reaching the disk is timed by the machine it runs on, and the
+# fixtures below hand out a directory per call rather than per test.
 settings.register_profile(
     "wsc",
     deadline=None,
@@ -135,60 +114,6 @@ def fetch_dump() -> Callable[..., Path]:
 
 
 @pytest.fixture
-def fetch_wordnet() -> Callable[..., Path]:
-    """
-    Stand in for a finished fetch of the wordnet, without the network.
-
-    Returns:
-        A builder placing the wordnet where the wordnet command would have.
-        It holds a whole one, gzipped as the release publishes it, since the
-        command goes on to read what it fetched.
-    """
-
-    def build(
-        cache_dir: Path,
-        version: str = "2025",
-        elements: Iterable[str] = WORDNET,
-    ) -> Path:
-        path = cache.wordnet_dir(cache_dir, version) / cache.WORDNET_NAME
-        path.parent.mkdir(parents=True, exist_ok=True)
-        _ = path.write_bytes(gzip.compress(lexicon(*elements).encode()))
-
-        return path
-
-    return build
-
-
-@pytest.fixture
-def read_wordnet(
-    fetch_wordnet: Callable[..., Path],
-) -> Callable[..., Path]:
-    """
-    Stand in for a finished fetch and read of the wordnet.
-
-    Args:
-        fetch_wordnet: Places the wordnet the read would have read.
-
-    Returns:
-        A builder placing the synsets where the wordnet command would have.
-    """
-
-    def build(
-        cache_dir: Path,
-        version: str = "2025",
-        lines: Iterable[str] = (),
-    ) -> Path:
-        _ = fetch_wordnet(cache_dir, version)
-
-        path = cache.wordnet_dir(cache_dir, version) / cache.SYNSETS_NAME
-        _ = path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
-
-        return path
-
-    return build
-
-
-@pytest.fixture
 def parse_dump(
     fetch_dump: Callable[..., Path],
     write_entries: Callable[[Path, Iterable[RawJson]], Path],
@@ -217,3 +142,14 @@ def parse_dump(
         return write_entries(path, entries)
 
     return build
+
+
+@pytest.fixture(scope="session")
+def locator() -> Locator:
+    """
+    Hand out the search every extraction reads with.
+
+    Returns:
+        A search over an engine that never varies and loads nothing.
+    """
+    return Locator(WhitespaceEngine())

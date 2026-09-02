@@ -7,7 +7,7 @@
 ```{toctree}
 :hidden:
 
-repositories/index
+repository
 download
 cache
 wiktextract

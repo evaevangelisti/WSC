@@ -3,7 +3,8 @@ JSONL output, one JSON object per line.
 """
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from collections.abc import Set as AbstractSet
 from dataclasses import fields, is_dataclass
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, cast, override
@@ -71,9 +72,7 @@ class JsonlWriter[T: "DataclassInstance"](Writer[T]):
         Read one value into what is written, dropping what holds nothing.
 
         Absence says as much as emptiness, and in fewer bytes: a sentence
-        with no reference reads back as an Example. A dataclass is read field
-        by field rather than dumped and then pruned, so the empty keys are
-        never built in the first place.
+        with no reference reads back as an Example.
 
         Args:
             value: An item to write, or a part of one.
@@ -85,14 +84,26 @@ class JsonlWriter[T: "DataclassInstance"](Writer[T]):
             case list() | tuple():
                 return [cls._record(item) for item in cast(Sequence[object], value)]
 
+            case Mapping():
+                return {
+                    key: cls._record(carried)
+                    for key, carried in cast(Mapping[str, object], value).items()
+                }
+
+            # Sorted, so that one collection reads back the same as the next.
+            case AbstractSet():
+                return [
+                    cls._record(item) for item in sorted(cast(AbstractSet[str], value))
+                ]
+
             case _ if is_dataclass(value) and not isinstance(value, type):
                 record: dict[str, Json] = {}
 
                 for field in fields(value):
-                    held = cast(object, getattr(value, field.name))
+                    carried = cast(object, getattr(value, field.name))
 
-                    if held not in (None, (), [], {}):
-                        record[field.name] = cls._record(held)
+                    if carried not in (None, (), [], {}, frozenset()):
+                        record[field.name] = cls._record(carried)
 
                 return record
 

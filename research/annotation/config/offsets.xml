@@ -1,0 +1,22 @@
+<View>
+  <Header value="Lemma"/>
+  <Text name="lemma" value="$lemma ($pos)"/>
+
+  <Header value="Sentence"/>
+  <HyperText name="sentence" value="$marked" inline="true"/>
+
+  <Header value="Is every marking an occurrence of the lemma?"/>
+  <Choices name="marking" toName="sentence" choice="single" required="true" showInline="true">
+    <Choice value="all correct"/>
+    <Choice value="some wrong"/>
+    <Choice value="nothing marked"/>
+  </Choices>
+
+  <Header value="Is any occurrence left unmarked?"/>
+  <Choices name="coverage" toName="sentence" choice="single" required="true" showInline="true">
+    <Choice value="nothing missing"/>
+    <Choice value="something missing"/>
+  </Choices>
+
+  <TextArea name="notes" toName="sentence" rows="2" placeholder="anything the labels miss"/>
+</View>
