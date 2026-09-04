@@ -61,6 +61,7 @@ def _record_of_sense(
     record: RawJson = {"id": sense.id, "glosses": list(sense.glosses)}
 
     for key, held in (
+        ("synonyms", sense.synonyms),
         ("topics", sense.topics),
         ("tags", sense.tags),
         ("sentences", tuple(map(_record_of_sentence, sense.sentences))),

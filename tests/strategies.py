@@ -65,6 +65,9 @@ undated_references = st.text(alphabet=_UNDATED, min_size=1, max_size=20).filter(
 languages = st.text(alphabet=string.ascii_lowercase, min_size=2, max_size=3)
 """Wiktionary's code for one edition."""
 
+wordnet_versions = st.integers(min_value=1000, max_value=9999).map(str)
+"""The year one edition of the wordnet came out."""
+
 dump_dates = st.dates(
     min_value=date(2001, 1, 1),
     max_value=date(2099, 12, 31),
@@ -175,12 +178,34 @@ _EXAMPLES = st.lists(raw_examples(), max_size=2)
 
 
 @st.composite
+def raw_synonyms(
+    draw: st.DrawFn,
+    words: st.SearchStrategy[str] = words,
+) -> RawJson:
+    """
+    Draw one word standing for the same meaning as a sense or an entry.
+
+    Args:
+        draw: Turns a strategy into one of its values.
+        words: The words to draw the synonym from.
+
+    Returns:
+        The synonym, as wiktextract writes one.
+    """
+    return {"word": draw(words)}
+
+
+_SYNONYMS = st.lists(raw_synonyms(), max_size=2)
+
+
+@st.composite
 def raw_senses(
     draw: st.DrawFn,
     glosses: st.SearchStrategy[list[str]] = _GLOSS_CHAINS,
     tags: st.SearchStrategy[list[str]] = _LABELS,
     topics: st.SearchStrategy[list[str]] = _LABELS,
     examples: st.SearchStrategy[list[RawJson]] = _EXAMPLES,
+    synonyms: st.SearchStrategy[list[RawJson]] = _SYNONYMS,
 ) -> RawJson:
     """
     Draw one sense of an entry.
@@ -194,6 +219,7 @@ def raw_senses(
         tags: The labels of grammar and register to draw from.
         topics: The subject fields to draw from.
         examples: The sentences to draw from.
+        synonyms: Other words for that meaning alone.
 
     Returns:
         The sense, as wiktextract writes one.
@@ -204,6 +230,7 @@ def raw_senses(
         ("tags", draw(tags)),
         ("topics", draw(topics)),
         ("examples", draw(examples)),
+        ("synonyms", draw(synonyms)),
     ):
         if drawn:
             raw[key] = drawn
@@ -328,6 +355,7 @@ senses = st.builds(
     Sense,
     identifiers,
     st.lists(st.text(max_size=30), min_size=1, max_size=3).map(tuple),
+    _LABEL_LISTS,
     _LABEL_LISTS,
     _LABEL_LISTS,
     st.lists(sentences, max_size=3),

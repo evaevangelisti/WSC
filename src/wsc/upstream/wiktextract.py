@@ -58,6 +58,7 @@ def parse(
         language,
         "--examples",
         "--translations",
+        "--linkages",
         "--quiet",
         "--num-processes",
         str(processes),

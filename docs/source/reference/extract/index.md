@@ -7,9 +7,7 @@
 ```{toctree}
 :hidden:
 
-extractor
-schema
-identifiers
-parts/index
+wiktionary/index
+wordnet
 offsets
 ```

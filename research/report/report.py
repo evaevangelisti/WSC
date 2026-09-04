@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import median
 
-from corpus import SENSES, Entry, read
+from corpus import SENSES, Entry, Sense, read
 
 REPORTS = Path(__file__).resolve().parent / "reports"
 """Where the written reports are kept, one file per pass."""
@@ -103,6 +103,8 @@ class Figures:
         tied: How many senses name a Wikidata item.
         varying: How many entries are written another way too.
         variants: How many other spellings there are in all.
+        synonymised: How many senses carry a synonym of their own.
+        sense_synonyms: How many sense-tied synonyms there are in all.
         translated: How many entries carry a translation table.
         translations: How many translations there are in all.
         glosses_translated: How many glosses a translation table heads.
@@ -131,6 +133,8 @@ class Figures:
     tied: int = 0
     varying: int = 0
     variants: int = 0
+    synonymised: int = 0
+    sense_synonyms: int = 0
     translated: int = 0
     translations: int = 0
     glosses_translated: int = 0
@@ -265,6 +269,26 @@ def count_entry(
             figures.translations += len(words)
 
 
+def count_sense(
+    figures: Figures,
+    sense: Sense,
+) -> None:
+    """
+    Add up what one sense carries beside its sentences.
+
+    Args:
+        figures: What the pass has added up so far.
+        sense: The sense to read.
+    """
+    figures.named += bool(sense.get("sense_ids"))
+    figures.tied += bool(sense.get("wikidata_ids"))
+
+    synonyms = sense.get("synonyms", [])
+    if synonyms:
+        figures.synonymised += 1
+        figures.sense_synonyms += len(synonyms)
+
+
 def tally(
     entries: Iterable[Entry],
     every: int,
@@ -299,8 +323,7 @@ def tally(
             figures.tags.update(sense.get("tags", []))
             figures.topics.update(sense.get("topics", []))
 
-            figures.named += bool(sense.get("sense_ids"))
-            figures.tied += bool(sense.get("wikidata_ids"))
+            count_sense(figures, sense)
 
             sentences = sense.get("sentences", [])
             if not sentences:
@@ -636,6 +659,34 @@ def _variants(
     )
 
 
+def _synonyms(
+    figures: Figures,
+) -> Table:
+    """Lay out how many senses are put another way too."""
+    senses = sum(figures.senses.values())
+    plain = senses - figures.synonymised
+
+    return Table(
+        "By sense",
+        ("Figure", "Senses", "Share"),
+        (
+            (
+                "Put another way",
+                count(figures.synonymised),
+                share(figures.synonymised, senses),
+            ),
+            ("Put one way alone", count(plain), share(plain, senses)),
+            (
+                "Words per sense that has one",
+                f"{figures.sense_synonyms / figures.synonymised:.1f}"
+                if figures.synonymised
+                else "",
+                "",
+            ),
+        ),
+    )
+
+
 def _translated(
     figures: Figures,
 ) -> Table:
@@ -755,6 +806,7 @@ def compose(
             _tied(figures),
         ),
         _section("Variants", _variants(figures)),
+        _section("Synonyms", _synonyms(figures)),
         _section(
             "Translations",
             _translated(figures),

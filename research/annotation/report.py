@@ -1,25 +1,18 @@
 """
 Reporting on one set of word offset annotations.
 
-The export each reading judged is looked up in the key the tasks were built
-with, so that no reading says which run it is scoring.
+A reading names the export it judged, so several passes may sit in one
+project and still be scored apart.
 """
 
 import argparse
 import json
 from collections import Counter, defaultdict
 from collections.abc import Iterable
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict, cast
 
 HERE = Path(__file__).resolve().parent
-
-KEY = HERE / "key.json"
-"""Which export each task came from, written when the tasks were built."""
-
-STAMP = "%Y%m%dT%H%M%SZ"
-"""How a report names itself, the moment being what tells two of them apart."""
 
 MARKINGS = ("all correct", "some wrong", "nothing marked")
 """What a reading may find of the spans marked, in the order it is offered."""
@@ -34,6 +27,7 @@ class Reading(TypedDict):
     """
 
     item_id: str
+    source: str
     marking: str
     coverage: str
 
@@ -51,31 +45,6 @@ def read_json[Payload](
         What it holds, of the shape the caller declares.
     """
     return cast(Payload, json.loads(path.read_text(encoding="utf-8")))
-
-
-def group(
-    readings: Iterable[Reading],
-    key: dict[str, str],
-) -> dict[str, list[Reading]]:
-    """
-    Sort the readings by the export each one judged.
-
-    A sentence that came round again is judged twice, and both readings are
-    kept: which of them is right is what the agreement figure asks.
-
-    Args:
-        readings: What the annotator wrote.
-        key: Which export each task came from.
-
-    Returns:
-        The readings of each export, named as the export is.
-    """
-    grouped: defaultdict[str, list[Reading]] = defaultdict(list)
-
-    for reading in readings:
-        grouped[key[reading["item_id"]]].append(reading)
-
-    return dict(grouped)
 
 
 def score(
@@ -124,10 +93,12 @@ def agreement(
     Returns:
         How many repeated tasks agree, and how many came round again.
     """
-    judgements: defaultdict[str, list[tuple[str, str]]] = defaultdict(list)
+    judgements: defaultdict[tuple[str, str], list[tuple[str, str]]] = defaultdict(list)
 
     for reading in readings:
-        judgements[reading["item_id"]].append((reading["marking"], reading["coverage"]))
+        judgements[reading["source"], reading["item_id"]].append(
+            (reading["marking"], reading["coverage"])
+        )
 
     repeated = [judged for judged in judgements.values() if len(judged) > 1]
 
@@ -151,6 +122,26 @@ def share(
     return f"{part / whole:.1%} ({part}/{whole})" if whole else ""
 
 
+def group(
+    readings: Iterable[Reading],
+) -> dict[str, list[Reading]]:
+    """
+    Sort the readings by the export each one judged.
+
+    Args:
+        readings: What the annotator wrote.
+
+    Returns:
+        The readings of each export, named as the export is.
+    """
+    grouped: defaultdict[str, list[Reading]] = defaultdict(list)
+
+    for reading in readings:
+        grouped[reading["source"]].append(reading)
+
+    return dict(grouped)
+
+
 def to_markdown(
     grouped: dict[str, list[Reading]],
 ) -> str:
@@ -165,32 +156,27 @@ def to_markdown(
     """
     names = sorted(grouped)
     scored = {name: score(grouped[name]) for name in names}
+    rule = f"|{'|'.join(' --- ' for _ in range(len(names) + 1))}|"
 
-    lines = [
-        "# Word offsets",
-        "",
-        f"| Figure | {' | '.join(names)} |",
-        f"|{'|'.join(' --- ' for _ in range(len(names) + 1))}|",
-    ]
+    lines = ["# Word offsets", "", f"| Figure | {' | '.join(names)} |", rule]
 
     for figure in ("Precision", "Recall", "Both", "Marked at all"):
         row = " | ".join(share(*scored[name][figure]) for name in names)
         lines.append(f"| {figure} | {row} |")
 
-    lines += ["", "## What was found", "", f"| Label | {' | '.join(names)} |"]
-    lines.append(f"|{'|'.join(' --- ' for _ in range(len(names) + 1))}|")
+    lines += ["", "## What was found", "", f"| Label | {' | '.join(names)} |", rule]
 
     for label in (*MARKINGS, *COVERAGES):
         field = "marking" if label in MARKINGS else "coverage"
-        counts = [
-            Counter(reading[field] for reading in grouped[name])[label]
+        row = " | ".join(
+            str(Counter(reading[field] for reading in grouped[name])[label])
             for name in names
-        ]
+        )
 
-        lines.append(f"| {label} | {' | '.join(str(count) for count in counts)} |")
+        lines.append(f"| {label} | {row} |")
 
-    lines += ["", "## Agreement with oneself", ""]
-    lines += ["| Export | Repeated tasks judged the same |", "| --- | --- |"]
+    lines += ["", "## Agreement with oneself", "", "| Export | Judged the same |"]
+    lines.append("| --- | --- |")
 
     for name in names:
         lines.append(f"| {name} | {share(*agreement(grouped[name]))} |")
@@ -223,11 +209,10 @@ def main() -> None:
     annotations = read_arguments()
 
     readings: list[Reading] = read_json(annotations)
-    key: dict[str, str] = read_json(KEY)
 
-    document = to_markdown(group(readings, key))
+    document = to_markdown(group(readings))
 
-    path = annotations.parent / f"{datetime.now(UTC):{STAMP}}.md"
+    path = annotations.with_suffix(".md")
     _ = path.write_text(document, encoding="utf-8")
 
     print(f"Wrote {path}")  # noqa: T201

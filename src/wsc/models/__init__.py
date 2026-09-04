@@ -4,13 +4,14 @@ Data structures passed around the pipeline.
 
 from .engine import Engine
 from .pos import POS
-from .wiktionary import (
+from .resources import (
     Attestation,
     Example,
     Lemma,
     Quotation,
     Sense,
     Sentence,
+    Synset,
     Translations,
     WordOffset,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "Quotation",
     "Sense",
     "Sentence",
+    "Synset",
     "Translations",
     "WordOffset",
 ]

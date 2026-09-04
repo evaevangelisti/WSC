@@ -32,7 +32,7 @@ class TestDumpDir:
         cache_dir = workspace()
 
         assert cache.dump_dir(cache_dir, language, date) == (
-            cache_dir / language / date
+            cache_dir / "wiktionary" / language / date
         )
 
     @given(languages, dump_dates)
@@ -43,7 +43,7 @@ class TestDumpDir:
     ) -> None:
         """None is what the command line passes when no cache was named."""
         assert cache.dump_dir(None, language, date) == (
-            Path(user_cache_dir("wsc")) / language / date
+            Path(user_cache_dir("wsc")) / "wiktionary" / language / date
         )
 
     @given(languages, dump_dates)
@@ -131,7 +131,7 @@ class TestFetchedDate:
             _ = fetch_dump(cache_dir, "en", date)
 
         newer = data.draw(dump_dates.filter(lambda date: date > max(dates)))
-        _ = (cache_dir / "en" / newer).write_text("not a dump")
+        _ = (cache_dir / "wiktionary" / "en" / newer).write_text("not a dump")
 
         assert cache.fetched_date(cache_dir, "en", cache.LATEST) == max(dates)
 

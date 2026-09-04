@@ -13,6 +13,12 @@ DUMP_STATUS_URL = (
 DUMP_URL = "https://dumps.wikimedia.org/{language}wiktionary/{date}/{language}wiktionary-{date}-pages-articles.xml.bz2"
 """The archive of pages sitting inside a dump, which is the dump itself."""
 
+WORDNET_INDEX_URL = "https://en-word.net/downloads"
+"""Where the wordnet lists its editions, one file per year and format."""
+
+WORDNET_URL = "https://en-word.net/downloads/english-wordnet-{version}.xml.gz"
+"""Where one edition is published, in WN-LMF."""
+
 USER_AGENT = "wsc/{version} (https://github.com/evaevangelisti/WSC)"
 """How a request names itself, Wikimedia asking that it name someone."""
 

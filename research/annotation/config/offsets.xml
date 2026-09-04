@@ -1,6 +1,6 @@
 <View>
   <Header value="Lemma"/>
-  <Text name="lemma" value="$lemma ($pos)"/>
+  <Text name="lemma" value="$target"/>
 
   <Header value="Sentence"/>
   <HyperText name="sentence" value="$marked" inline="true"/>

@@ -1,6 +1,6 @@
 # Wiktionary Sense Collector
 
-Collects every Wiktionary lemma into one file, with its glosses, labels, attesting sentences and translations.
+Collects every Wiktionary lemma into one file, with its glosses, synonyms, labels, attesting sentences, and translations.
 
 <!-- installation -->
 
@@ -59,7 +59,7 @@ wsc fetch
 
 ### parse
 
-Reads the dump with [wiktextract](https://github.com/tatuylonen/wiktextract), which turns Wiktionary's markup into entries.
+Reads the dump with [wiktextract](https://github.com/tatuylonen/wiktextract), which turns Wiktionary's markup into entries, examples, translations and synonyms among them.
 
 ```sh
 wsc parse
@@ -103,3 +103,16 @@ wsc collect senses.jsonl
 | `spacy` | a transformer pipeline, the most accurate of the three | tens a second |
 | `stanza` | Stanza, whose parser finds a phrasal verb written apart | tens a second |
 | `lemminflect` | spaCy for the tags and LemmInflect for the lemmas | hundreds a second |
+
+### wordnet
+
+Downloads [Open English WordNet](https://en-word.net) and reads its synsets, worth running only if you mean to align senses.
+
+```sh
+wsc wordnet
+```
+
+| Option | Default | |
+| --- | --- | --- |
+| `--edition` | `latest` | Wordnet edition to use, as `2025` |
+| `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |

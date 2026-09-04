@@ -1,15 +1,15 @@
 """
 Building the Label Studio tasks for the word offset study.
 
-The same sentences are drawn once and shown as each export marked them, all
-shuffled into one pass, so that no reading can tell which export it is judging.
+One export at a time: the tasks are named after it, so judging a second run
+is building a second pass rather than mixing the two.
 """
 
 import argparse
 import json
 import random
 from collections import defaultdict
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
@@ -24,10 +24,10 @@ SEED = 0
 """What the drawing and the shuffling answer to by default."""
 
 COUNT = 100
-"""How many sentences are drawn, each shown once per export."""
+"""How many sentences are drawn."""
 
-EXPORTS = ("spacy.jsonl", "stanza.jsonl", "lemminflect.jsonl")
-"""Which exports are judged, the first of them settling the strata."""
+EXPORT = "spacy.jsonl"
+"""Which export is judged unless another is named."""
 
 REPEATED_SHARE = 0.1
 """What part of the pass comes round again, to measure agreement with oneself."""
@@ -40,7 +40,7 @@ PARTS_OF_SPEECH = ("noun", "name", "verb", "adj", "adv")
 """What the collector keeps, in the order a grammar names them."""
 
 type Stratum = tuple[str, bool]
-"""A part of speech, and whether the reference export marked the sentence."""
+"""A part of speech, and whether the export marked the sentence."""
 
 type Task = dict[str, dict[str, object]]
 """One task, as Label Studio reads it: everything shown sits under data."""
@@ -49,10 +49,10 @@ type Task = dict[str, dict[str, object]]
 @dataclass(frozen=True, slots=True)
 class Sentence:
     """
-    One sentence of one export, and where that export put the lemma.
+    One sentence of an export, and where it put the lemma.
 
     Attributes:
-        key: Names the sentence across exports, as bank.noun.1.02#0.
+        key: Names the sentence, as bank.noun.3f9c1a2b#0.
         lemma: The headword the sentence was collected under.
         pos: Its part of speech.
         text: The sentence.
@@ -137,8 +137,8 @@ def balance(
     """
     Spread a count as evenly as the strata allow.
 
-    A sentence the reference export left unmarked is rare, so drawing evenly
-    is what gives the misses enough weight to be read.
+    A sentence the export left unmarked is rare, so drawing evenly is what
+    gives the misses enough weight to be read.
 
     Args:
         pools: What each stratum has to offer.
@@ -195,75 +195,44 @@ def mark(
     return "".join(pieces)
 
 
-def collect(
-    paths: list[Path],
-    keys: set[str],
-) -> dict[str, dict[str, Sentence]]:
-    """
-    Read back how each export marked the sentences drawn.
-
-    Args:
-        paths: The exports to read.
-        keys: The sentences to pick up.
-
-    Returns:
-        The sentence each export holds under each key.
-    """
-    return {
-        path.name: {
-            sentence.key: sentence
-            for sentence in walk(read(path))
-            if sentence.key in keys
-        }
-        for path in paths
-    }
-
-
 def lay_out(
     drawn: list[Sentence],
-    marked: dict[str, dict[str, Sentence]],
+    source: str,
     rng: random.Random,
-) -> tuple[list[Task], dict[str, str]]:
+) -> list[Task]:
     """
-    Turn the sample into what the pass is handed, and into the key.
+    Turn the sample into what the pass is handed.
+
+    The source travels with each task and is never shown, so that several
+    passes may sit in one project without saying which run made which mark.
 
     Args:
         drawn: The sentences drawn, in the order they were drawn.
-        marked: How each export marked them.
+        source: The export they were drawn from.
         rng: What the shuffling answers to.
 
     Returns:
-        The tasks, shuffled, and which export each one came from.
+        The tasks, shuffled, a tenth of them coming round again.
     """
-    tasks: list[Task] = []
-    key: dict[str, str] = {}
+    tasks: list[Task] = [
+        {
+            "data": {
+                "item_id": sentence.key,
+                "source": source,
+                "lemma": sentence.lemma,
+                "pos": sentence.pos,
+                "target": f"{sentence.lemma} ({sentence.pos})",
+                "marked": mark(sentence),
+            }
+        }
+        for sentence in drawn
+    ]
 
-    for name, sentences in marked.items():
-        for sentence in drawn:
-            marked_sentence = sentences.get(sentence.key)
-            if marked_sentence is None:
-                continue
-
-            item_id = f"{name}:{marked_sentence.key}"
-
-            tasks.append(
-                {
-                    "data": {
-                        "item_id": item_id,
-                        "lemma": marked_sentence.lemma,
-                        "pos": marked_sentence.pos,
-                        "marked": mark(marked_sentence),
-                    }
-                }
-            )
-            key[item_id] = name
-
-    repeated = rng.sample(tasks, int(len(tasks) * REPEATED_SHARE))
-    tasks += repeated
+    tasks += rng.sample(tasks, int(len(tasks) * REPEATED_SHARE))
 
     rng.shuffle(tasks)
 
-    return tasks, key
+    return tasks
 
 
 def write_json(
@@ -288,14 +257,14 @@ class Arguments(argparse.Namespace):
     What the command line settles.
 
     Attributes:
+        export: Which export the sentences are drawn from.
         seed: What the drawing and the shuffling answer to.
         count: How many sentences are drawn.
-        exports: Which exports are judged, the first settling the strata.
     """
 
+    export: Path = DATA / EXPORT
     seed: int = SEED
     count: int = COUNT
-    exports: Sequence[str] = EXPORTS
 
 
 def read_arguments() -> Arguments:
@@ -303,10 +272,17 @@ def read_arguments() -> Arguments:
     Read what the command line settles, falling back on the defaults above.
 
     Returns:
-        The seed, the size of the sample, and the exports to judge.
+        The export to draw from, the seed, and the size of the sample.
     """
     parser = argparse.ArgumentParser(description="Build the word offset tasks.")
 
+    _ = parser.add_argument(
+        "export",
+        nargs="?",
+        type=Path,
+        default=DATA / EXPORT,
+        help=f"the export to draw from (default: {DATA / EXPORT})",
+    )
     _ = parser.add_argument(
         "--seed",
         type=int,
@@ -317,36 +293,28 @@ def read_arguments() -> Arguments:
         type=int,
         help=f"how many sentences are drawn (default: {COUNT})",
     )
-    _ = parser.add_argument(
-        "--exports",
-        nargs="+",
-        help=f"which exports to judge (default: {' '.join(EXPORTS)})",
-    )
 
     return parser.parse_args(namespace=Arguments())
 
 
 def main() -> None:
     """
-    Draw the sentences, read how each export marked them, and lay out the pass.
+    Draw the sentences of one export and lay them out as a pass.
     """
     arguments = read_arguments()
 
     rng = random.Random(arguments.seed)
-    paths = [DATA / name for name in arguments.exports]
 
     keep = -(-arguments.count * 2 // (len(PARTS_OF_SPEECH) * 2))
-    pools = reserve(walk(read(paths[0])), keep, rng)
+    pools = reserve(walk(read(arguments.export)), keep, rng)
 
     drawn = balance(pools, arguments.count, rng)
-    marked = collect(paths, {sentence.key for sentence in drawn})
+    tasks = lay_out(drawn, arguments.export.stem, rng)
 
-    tasks, key = lay_out(drawn, marked, rng)
+    written = HERE / "tasks" / f"{arguments.export.stem}.json"
+    write_json(written, tasks)
 
-    write_json(HERE / "offsets.json", tasks)
-    write_json(HERE / "key.json", key)
-
-    print(f"{len(drawn)} sentences, {len(tasks)} tasks over {len(paths)} exports")  # noqa: T201
+    print(f"{len(drawn)} sentences, {len(tasks)} tasks -> {written}")  # noqa: T201
 
 
 if __name__ == "__main__":

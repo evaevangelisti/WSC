@@ -9,5 +9,5 @@
 
 pos
 engine
-wiktionary
+resources/index
 ```
