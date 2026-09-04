@@ -1,6 +1,6 @@
 # Wiktionary
 
 ```{eval-rst}
-.. automodule:: wsc.models.wiktionary
+.. automodule:: wsc.models.resources.wiktionary
    :members:
 ```

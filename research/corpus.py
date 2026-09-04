@@ -41,9 +41,12 @@ class Sense(TypedDict):
 
     id: str
     glosses: list[str]
+    synonyms: NotRequired[list[str]]
     topics: NotRequired[list[str]]
     tags: NotRequired[list[str]]
     sentences: NotRequired[list[Sentence]]
+    sense_ids: NotRequired[list[str]]
+    wikidata_ids: NotRequired[list[str]]
 
 
 class Entry(TypedDict):
@@ -54,6 +57,7 @@ class Entry(TypedDict):
     id: str
     lemma: str
     pos: str
+    variants: NotRequired[list[str]]
     senses: NotRequired[list[Sense]]
     translations: NotRequired[dict[str, dict[str, list[str]]]]
 

@@ -62,8 +62,8 @@ class Sense:
         id: Identifies the sense, such as bank.noun.3f9c1a2b.
         glosses: The gloss chain, outermost first. Never empty.
         synonyms: Other words standing for this meaning alone.
-        tags: Labels of grammar and register, such as transitive or obsolete.
         topics: Subject fields the sense belongs to, such as mathematics.
+        tags: Labels of grammar and register, such as transitive or obsolete.
         sentences: The examples and quotations attached to this sense.
         sense_ids: What Wiktionary names the sense, such as en:Q23622.
         wikidata_ids: The Wikidata items it was tied to, such as Q23622.

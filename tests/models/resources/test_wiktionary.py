@@ -1,5 +1,5 @@
 """
-Tests for src/wsc/models/wiktionary.py.
+Tests for src/wsc/models/resources/wiktionary.py.
 
 A sense reading its own gloss chain is stated here rather than downstream:
 nothing else in the collector asks a sense what it means.

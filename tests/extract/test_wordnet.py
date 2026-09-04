@@ -1,5 +1,5 @@
 """
-Tests for src/wsc/extract/resources/wordnet.py.
+Tests for src/wsc/extract/wordnet.py.
 """
 
 import gzip
