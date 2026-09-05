@@ -5,6 +5,7 @@ What other languages call an entry.
 from collections import defaultdict
 
 from ....models import Translations
+from ..merge import add_translations
 from ..schema import RawTranslation
 
 # What a translation table is headed with where nobody wrote a gloss. Matched
@@ -23,15 +24,17 @@ _PLACEHOLDER_GLOSSES = frozenset(
 
 def parse_translations(
     raw_translations: list[RawTranslation],
+    off_page_translations: Translations | None = None,
 ) -> Translations:
     """
-    Gather the translations of an entry under the glosses heading them.
+    Gather an entry's translations under the glosses heading them.
 
-    Wiktionary hangs a translation table off the entry rather than off a
-    sense, and names the meaning it translates in prose of its own.
+    Wiktionary hangs a table off the entry, not off a sense.
 
     Args:
         raw_translations: What wiktextract listed under the entry.
+        off_page_translations: What the dump holds away from the entry, or
+        None where the dump was not walked for it.
 
     Returns:
         The words each language offers for each gloss translated.
@@ -53,7 +56,12 @@ def parse_translations(
 
         gathered_translations[gloss][language].add(word)
 
-    return {
+    translations: Translations = {
         gloss: {language: frozenset(words) for language, words in translated.items()}
         for gloss, translated in gathered_translations.items()
     }
+
+    if off_page_translations:
+        add_translations(translations, off_page_translations)
+
+    return translations

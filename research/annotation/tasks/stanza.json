@@ -1,7 +1,7 @@
 [
   {
     "data": {
-      "item_id": "cheek by jowl.adv.89b335f8#3",
+      "item_id": "cheek by jowl.adv.13ad0670#3",
       "source": "stanza",
       "lemma": "cheek by jowl",
       "pos": "adv",
@@ -11,17 +11,17 @@
   },
   {
     "data": {
-      "item_id": "judge.verb.ebd9e387#0",
+      "item_id": "list.verb.57ec962c#4",
       "source": "stanza",
-      "lemma": "judge",
+      "lemma": "list",
       "pos": "verb",
-      "target": "judge (verb)",
-      "marked": "Noble and milde this Perſean ſeemes to be,\nIf outward habit <b>Iudge</b> the inward man."
+      "target": "list (verb)",
+      "marked": "Ye are as gods, that can create soil. Soil-creating gods there is no withstanding. They have the might to sell wheat at what price they <b>list</b>; and the right, to all lengths, and famine-lengths,—if they be pitiless infernal gods!"
     }
   },
   {
     "data": {
-      "item_id": "tawny.adj.0673cc58#2",
+      "item_id": "tawny.adj.7a81da22#2",
       "source": "stanza",
       "lemma": "tawny",
       "pos": "adj",
@@ -31,7 +31,7 @@
   },
   {
     "data": {
-      "item_id": "Xiyang.name.c5ce63b4#0",
+      "item_id": "Xiyang.name.2990888a#0",
       "source": "stanza",
       "lemma": "Xiyang",
       "pos": "name",
@@ -41,7 +41,7 @@
   },
   {
     "data": {
-      "item_id": "Feixi.name.6e119817#0",
+      "item_id": "Feixi.name.79a27bb5#0",
       "source": "stanza",
       "lemma": "Feixi",
       "pos": "name",
@@ -51,7 +51,7 @@
   },
   {
     "data": {
-      "item_id": "skirting.noun.aac842a7#0",
+      "item_id": "skirting.noun.e7a261a9#0",
       "source": "stanza",
       "lemma": "skirting",
       "pos": "noun",
@@ -61,27 +61,27 @@
   },
   {
     "data": {
-      "item_id": "sanguine.adj.1685c674#0",
+      "item_id": "contiguous.adj.25e7a16a#0",
       "source": "stanza",
-      "lemma": "sanguine",
+      "lemma": "contiguous",
       "pos": "adj",
-      "target": "sanguine (adj)",
-      "marked": "What, what, ye <b>sanguine</b>, shallow-hearted boys!"
+      "target": "contiguous (adj)",
+      "marked": "Though poor the peasant’s hut, his feasts though small,\nHe sees his little lot the lot of all;\nSees no <b>contiguous</b> palace rear its head\nTo shame the meanness of his humble shed;"
     }
   },
   {
     "data": {
-      "item_id": "diverse.adv.b60e3e4e#0",
+      "item_id": "nowadays.adv.cc7609a0#1",
       "source": "stanza",
-      "lemma": "diverse",
+      "lemma": "nowadays",
       "pos": "adv",
-      "target": "diverse (adv)",
-      "marked": "[The river in the Garden of Eden] novv divided into four main Streams, / Runs divers, vvandring many a famous Realme / And Country vvhereof here needs no account, […]"
+      "target": "nowadays (adv)",
+      "marked": "Me-thinkes miſtreſſe, you ſhould haue little reaſon for that: and yet to ſay the truth, reaſon and loue keepe little company together, now-adayes."
     }
   },
   {
     "data": {
-      "item_id": "antishadow.adj.05dbe0d9#1",
+      "item_id": "antishadow.adj.c9448d85#1",
       "source": "stanza",
       "lemma": "antishadow",
       "pos": "adj",
@@ -91,7 +91,7 @@
   },
   {
     "data": {
-      "item_id": "discompose.verb.a894a41f#1",
+      "item_id": "discompose.verb.1a49ba2b#1",
       "source": "stanza",
       "lemma": "discompose",
       "pos": "verb",
@@ -101,17 +101,17 @@
   },
   {
     "data": {
-      "item_id": "permeable.adj.ce862c7b#1",
+      "item_id": "nitty.adj.4910ccc2#3",
       "source": "stanza",
-      "lemma": "permeable",
+      "lemma": "nitty",
       "pos": "adj",
-      "target": "permeable (adj)",
-      "marked": "<b>permeable</b> boundaries"
+      "target": "nitty (adj)",
+      "marked": "Sure thy father was ſome botcher, and thy hungry tongue bit off theſe ſhreds of complaints, to patch up the elbows of thy <b>nitty</b> eloquence."
     }
   },
   {
     "data": {
-      "item_id": "megafarm.noun.c37d97d9#0",
+      "item_id": "megafarm.noun.b5e2da1f#0",
       "source": "stanza",
       "lemma": "megafarm",
       "pos": "noun",
@@ -121,17 +121,17 @@
   },
   {
     "data": {
-      "item_id": "reverend.adj.49c5419f#0",
+      "item_id": "secular.adj.35436387#0",
       "source": "stanza",
-      "lemma": "reverend",
+      "lemma": "secular",
       "pos": "adj",
-      "target": "reverend (adj)",
-      "marked": "Near-synonyms: reverable, estimable"
+      "target": "secular (adj)",
+      "marked": "Near-synonyms: centurial, centennial"
     }
   },
   {
     "data": {
-      "item_id": "pelike.noun.95621524#1",
+      "item_id": "pelike.noun.1951904c#1",
       "source": "stanza",
       "lemma": "pelike",
       "pos": "noun",
@@ -141,7 +141,7 @@
   },
   {
     "data": {
-      "item_id": "unverifiably.adv.7345405e#0",
+      "item_id": "unverifiably.adv.f6021f87#0",
       "source": "stanza",
       "lemma": "unverifiably",
       "pos": "adv",
@@ -151,7 +151,7 @@
   },
   {
     "data": {
-      "item_id": "megafarm.noun.c37d97d9#0",
+      "item_id": "megafarm.noun.b5e2da1f#0",
       "source": "stanza",
       "lemma": "megafarm",
       "pos": "noun",
@@ -161,7 +161,7 @@
   },
   {
     "data": {
-      "item_id": "searer.noun.f1b254e3#1",
+      "item_id": "searer.noun.a4a6c1bd#1",
       "source": "stanza",
       "lemma": "searer",
       "pos": "noun",
@@ -171,7 +171,7 @@
   },
   {
     "data": {
-      "item_id": "layless.adj.4b071120#1",
+      "item_id": "layless.adj.2349e227#1",
       "source": "stanza",
       "lemma": "layless",
       "pos": "adj",
@@ -181,7 +181,7 @@
   },
   {
     "data": {
-      "item_id": "angeliferous.adj.1d978401#0",
+      "item_id": "angeliferous.adj.e7570f52#0",
       "source": "stanza",
       "lemma": "angeliferous",
       "pos": "adj",
@@ -191,7 +191,7 @@
   },
   {
     "data": {
-      "item_id": "Balaton.name.dbe5e438#0",
+      "item_id": "Balaton.name.fb8f7bd3#0",
       "source": "stanza",
       "lemma": "Balaton",
       "pos": "name",
@@ -201,7 +201,7 @@
   },
   {
     "data": {
-      "item_id": "turriphilia.noun.bbd6897e#1",
+      "item_id": "turriphilia.noun.2624753f#1",
       "source": "stanza",
       "lemma": "turriphilia",
       "pos": "noun",
@@ -211,7 +211,7 @@
   },
   {
     "data": {
-      "item_id": "volubly.adv.12a926f4#0",
+      "item_id": "volubly.adv.f8d16223#0",
       "source": "stanza",
       "lemma": "volubly",
       "pos": "adv",
@@ -221,17 +221,17 @@
   },
   {
     "data": {
-      "item_id": "personate.adj.744fac47#0",
+      "item_id": "abiding.adj.8cc15e85#3",
       "source": "stanza",
-      "lemma": "personate",
+      "lemma": "abiding",
       "pos": "adj",
-      "target": "personate (adj)",
-      "marked": "This arrangement is well typified in plants with a <b>personate</b> corolla, such as the toad-flax and snap-dragon, ..."
+      "target": "abiding (adj)",
+      "marked": "Through all their projects, their <b>abiding</b> ethos has been observing and responding to the site and its existing ecology and growth patterns."
     }
   },
   {
     "data": {
-      "item_id": "narrow-gutted.adj.7b9adf2f#0",
+      "item_id": "narrow-gutted.adj.c887cc73#0",
       "source": "stanza",
       "lemma": "narrow-gutted",
       "pos": "adj",
@@ -241,7 +241,7 @@
   },
   {
     "data": {
-      "item_id": "subharmonically.adv.40548d3c#0",
+      "item_id": "subharmonically.adv.a63dad0c#0",
       "source": "stanza",
       "lemma": "subharmonically",
       "pos": "adv",
@@ -251,7 +251,7 @@
   },
   {
     "data": {
-      "item_id": "Red Tribe.name.71fc73c7#2",
+      "item_id": "Red Tribe.name.36beb420#2",
       "source": "stanza",
       "lemma": "Red Tribe",
       "pos": "name",
@@ -261,7 +261,7 @@
   },
   {
     "data": {
-      "item_id": "sport one's oak.verb.51acd129#9",
+      "item_id": "sport one's oak.verb.52b149ee#9",
       "source": "stanza",
       "lemma": "sport one's oak",
       "pos": "verb",
@@ -271,7 +271,7 @@
   },
   {
     "data": {
-      "item_id": "workpiece.noun.14c46d70#4",
+      "item_id": "workpiece.noun.8247559e#4",
       "source": "stanza",
       "lemma": "workpiece",
       "pos": "noun",
@@ -281,7 +281,7 @@
   },
   {
     "data": {
-      "item_id": "Merle.name.990291bd#1",
+      "item_id": "Merle.name.a7148648#1",
       "source": "stanza",
       "lemma": "Merle",
       "pos": "name",
@@ -291,7 +291,7 @@
   },
   {
     "data": {
-      "item_id": "ransack.verb.6a3d5c01#0",
+      "item_id": "ransack.verb.95ef2084#0",
       "source": "stanza",
       "lemma": "ransack",
       "pos": "verb",
@@ -301,7 +301,7 @@
   },
   {
     "data": {
-      "item_id": "East Bumfuck, Kansas.name.7e5e4a07#2",
+      "item_id": "East Bumfuck, Kansas.name.936bba50#2",
       "source": "stanza",
       "lemma": "East Bumfuck, Kansas",
       "pos": "name",
@@ -311,17 +311,17 @@
   },
   {
     "data": {
-      "item_id": "carve.verb.eef3086a#1",
+      "item_id": "twit.verb.854dfa3b#0",
       "source": "stanza",
-      "lemma": "carve",
+      "lemma": "twit",
       "pos": "verb",
-      "target": "carve (verb)",
-      "marked": "The facades of the buildings fronting upon the avenue within the wall were richly <b>carven</b>[…]."
+      "target": "twit (verb)",
+      "marked": "Secrecy about B.R. plans for reorganisation and closure of lines and notably some failures to consult with staff representatives concerned with redundancy, are defects with which the railway unions have <b>twitted</b> Dr. Beeching."
     }
   },
   {
     "data": {
-      "item_id": "akiosexual.adj.829dec1f#4",
+      "item_id": "akiosexual.adj.ec88324c#4",
       "source": "stanza",
       "lemma": "akiosexual",
       "pos": "adj",
@@ -331,7 +331,7 @@
   },
   {
     "data": {
-      "item_id": "thick and threefold.adv.c3288aa6#0",
+      "item_id": "thick and threefold.adv.a80082e4#0",
       "source": "stanza",
       "lemma": "thick and threefold",
       "pos": "adv",
@@ -341,7 +341,7 @@
   },
   {
     "data": {
-      "item_id": "Man Upstairs.name.b4157e3f#0",
+      "item_id": "Man Upstairs.name.27c331f1#0",
       "source": "stanza",
       "lemma": "Man Upstairs",
       "pos": "name",
@@ -351,7 +351,7 @@
   },
   {
     "data": {
-      "item_id": "Ruyang.name.84b55b8a#0",
+      "item_id": "Ruyang.name.ca209ffa#0",
       "source": "stanza",
       "lemma": "Ruyang",
       "pos": "name",
@@ -361,7 +361,7 @@
   },
   {
     "data": {
-      "item_id": "not here for a haircut.adv.4affe511#1",
+      "item_id": "not here for a haircut.adv.f6ec4792#1",
       "source": "stanza",
       "lemma": "not here for a haircut",
       "pos": "adv",
@@ -371,27 +371,27 @@
   },
   {
     "data": {
-      "item_id": "gender.verb.d5e28f6c#2",
+      "item_id": "vociferate.verb.f6142852#1",
       "source": "stanza",
-      "lemma": "gender",
+      "lemma": "vociferate",
       "pos": "verb",
-      "target": "gender (verb)",
-      "marked": "Yet because texts by “female authors” are not dependent on the voice to <b>gender</b> the text, the topics that they address and the traditions that they employ seem broader and somewhat less constrained by gender stereotypes."
+      "target": "vociferate (verb)",
+      "marked": "He then began to <b>vociferate</b> pretty loudly, and at last an old woman, opening an upper casement, asked, Who they were, and what they wanted?"
     }
   },
   {
     "data": {
-      "item_id": "veld.noun.bcf49a2f#13",
+      "item_id": "syndicate.noun.0b9c35df#0",
       "source": "stanza",
-      "lemma": "veld",
+      "lemma": "syndicate",
       "pos": "noun",
-      "target": "veld (noun)",
-      "marked": "In the flatness of the veldts, one would want to communicate with someone else in order to provide theme and variation to the unbounded and unfettered thoughts stretching outward, inspired by the immense sameness of this place."
+      "target": "syndicate (noun)",
+      "marked": "The ſoveraintie lies in the Council of 200, and this Council chuſes out of its number 25, who are the leſſer Council; […] they are choſen by a ſort of ballet, ſo that it is not known for whom they give their votes, which is an effectual method to ſuppreſs factions and reſentments; ſince in a competition no man can know who voted for him or againſt him: yet the election is not ſo carried, but that the whole Town is in an intrigue concerning it: for ſince the being of the little Council leads one to the Sindicat, which is the chieffe honor of the State: this dignitie is courted here, with as active and ſolicitous an ambition as appears elſewhere for greater matters."
     }
   },
   {
     "data": {
-      "item_id": "Whore of Babylon.name.755d3da3#0",
+      "item_id": "Whore of Babylon.name.25175c5a#0",
       "source": "stanza",
       "lemma": "Whore of Babylon",
       "pos": "name",
@@ -401,7 +401,7 @@
   },
   {
     "data": {
-      "item_id": "Rebecca.name.f2ad3b2f#1",
+      "item_id": "Rebecca.name.ecb59364#1",
       "source": "stanza",
       "lemma": "Rebecca",
       "pos": "name",
@@ -411,7 +411,7 @@
   },
   {
     "data": {
-      "item_id": "Elsie.name.7bf20918#2",
+      "item_id": "Elsie.name.0863b9c6#2",
       "source": "stanza",
       "lemma": "Elsie",
       "pos": "name",
@@ -421,7 +421,7 @@
   },
   {
     "data": {
-      "item_id": "octa.noun.e81355fc#1",
+      "item_id": "octa.noun.7293fda8#1",
       "source": "stanza",
       "lemma": "octa",
       "pos": "noun",
@@ -431,17 +431,17 @@
   },
   {
     "data": {
-      "item_id": "nostrum.noun.1dd1296c#0",
+      "item_id": "apple of someone's eye.noun.f58b9b96#9",
       "source": "stanza",
-      "lemma": "nostrum",
+      "lemma": "apple of someone's eye",
       "pos": "noun",
-      "target": "nostrum (noun)",
-      "marked": "Near-synonyms: paternoster, patent medicine, snake oil"
+      "target": "apple of someone's eye (noun)",
+      "marked": "I hoped that he had truly loved us, that we had honestly been the apples of his eye."
     }
   },
   {
     "data": {
-      "item_id": "north-northwesterly.adj.a67d0683#0",
+      "item_id": "north-northwesterly.adj.7ff1c7ba#0",
       "source": "stanza",
       "lemma": "north-northwesterly",
       "pos": "adj",
@@ -451,7 +451,7 @@
   },
   {
     "data": {
-      "item_id": "thundershowery.adj.67516ec6#2",
+      "item_id": "thundershowery.adj.47f5df78#2",
       "source": "stanza",
       "lemma": "thundershowery",
       "pos": "adj",
@@ -461,7 +461,7 @@
   },
   {
     "data": {
-      "item_id": "antishadow.adj.05dbe0d9#1",
+      "item_id": "antishadow.adj.c9448d85#1",
       "source": "stanza",
       "lemma": "antishadow",
       "pos": "adj",
@@ -471,17 +471,17 @@
   },
   {
     "data": {
-      "item_id": "lief.adv.9ceb6e77#1",
+      "item_id": "forte.adv.3330efb7#0",
       "source": "stanza",
-      "lemma": "lief",
+      "lemma": "forte",
       "pos": "adv",
-      "target": "lief (adv)",
-      "marked": "1. Gent. And thou the Veluet; thou art good veluet;\nthou'rt a three pild-peece I warrant thee: I had as liefe\nbe a Lyst of an English Kersey, as be pil'd, as thou art\npil'd, for a French Veluet. [...]"
+      "target": "forte (adv)",
+      "marked": "(abbreviation) f"
     }
   },
   {
     "data": {
-      "item_id": "Man Upstairs.name.b4157e3f#0",
+      "item_id": "Man Upstairs.name.27c331f1#0",
       "source": "stanza",
       "lemma": "Man Upstairs",
       "pos": "name",
@@ -491,7 +491,7 @@
   },
   {
     "data": {
-      "item_id": "Cainamero.noun.f50b0b77#0",
+      "item_id": "Cainamero.noun.dd3b2135#0",
       "source": "stanza",
       "lemma": "Cainamero",
       "pos": "noun",
@@ -501,17 +501,17 @@
   },
   {
     "data": {
-      "item_id": "wrack.noun.b5dacfd1#0",
+      "item_id": "cast.noun.4bd58a93#0",
       "source": "stanza",
-      "lemma": "wrack",
+      "lemma": "cast",
       "pos": "noun",
-      "target": "wrack (noun)",
-      "marked": "The dead mans corps hath made ſome Serpents weépe, / Such rewth may ryſe in beaſts of bloudy race: / And yet can man (which bragges aboue the reſt) / Uſe wracke for rewth? can murder like him beſt?"
+      "target": "cast (noun)",
+      "marked": "Coordinate term: hundred"
     }
   },
   {
     "data": {
-      "item_id": "hypostatic.adj.4166cd8c#0",
+      "item_id": "hypostatic.adj.6ea754f5#0",
       "source": "stanza",
       "lemma": "hypostatic",
       "pos": "adj",
@@ -521,7 +521,7 @@
   },
   {
     "data": {
-      "item_id": "lord and master.noun.28d8d8f2#1",
+      "item_id": "lord and master.noun.77d66e23#1",
       "source": "stanza",
       "lemma": "lord and master",
       "pos": "noun",
@@ -531,17 +531,17 @@
   },
   {
     "data": {
-      "item_id": "groin.verb.93f97929#0",
+      "item_id": "try.verb.3b01e0a3#0",
       "source": "stanza",
-      "lemma": "groin",
+      "lemma": "try",
       "pos": "verb",
-      "target": "groin (verb)",
-      "marked": "Such tunges ſhuld be torne out by the harde rootes,"
+      "target": "try (verb)",
+      "marked": "[…]euery feend his buſie paines applyde, / To melt the golden metall, ready to be tryde."
     }
   },
   {
     "data": {
-      "item_id": "therapeutically.adv.d1e5c55a#0",
+      "item_id": "therapeutically.adv.505bd245#0",
       "source": "stanza",
       "lemma": "therapeutically",
       "pos": "adv",
@@ -551,17 +551,17 @@
   },
   {
     "data": {
-      "item_id": "blast.verb.34574136#1",
+      "item_id": "endow.verb.fa9ebe02#4",
       "source": "stanza",
-      "lemma": "blast",
+      "lemma": "endow",
       "pos": "verb",
-      "target": "blast (verb)",
-      "marked": "Tell age it daily wasteth;\ntell honour how it alters;\nTell beauty how she blasteth;\ntell fauour how it falters:\nAnd as they shall reply,\ngiue euery one the lye."
+      "target": "endow (verb)",
+      "marked": "[A]midst so many vicissitudes of fortune to which I have been exposed, amongst all the goods and evils, the joyful and gloomy, the pleasing and disagreeable circumstances of life, thou [God] endowest me with an equal, constant, manly, and superior spirit on every occasion."
     }
   },
   {
     "data": {
-      "item_id": "kilowatt-hour.noun.4cbbf742#1",
+      "item_id": "kilowatt-hour.noun.bf31caa4#1",
       "source": "stanza",
       "lemma": "kilowatt-hour",
       "pos": "noun",
@@ -571,7 +571,7 @@
   },
   {
     "data": {
-      "item_id": "fit to kill.adv.2231f657#2",
+      "item_id": "fit to kill.adv.459b4f19#2",
       "source": "stanza",
       "lemma": "fit to kill",
       "pos": "adv",
@@ -581,7 +581,7 @@
   },
   {
     "data": {
-      "item_id": "somever.adv.e6d2bfd7#0",
+      "item_id": "somever.adv.e5fc83cd#0",
       "source": "stanza",
       "lemma": "somever",
       "pos": "adv",
@@ -591,17 +591,17 @@
   },
   {
     "data": {
-      "item_id": "index.verb.5b09a851#0",
+      "item_id": "pulse.verb.8c709a7a#0",
       "source": "stanza",
-      "lemma": "index",
+      "lemma": "pulse",
       "pos": "verb",
-      "target": "index (verb)",
-      "marked": "MySQL does not <b>index</b> short words and common words."
+      "target": "pulse (verb)",
+      "marked": "Hot blood <b>pulsed</b> through my veins as I grew angrier."
     }
   },
   {
     "data": {
-      "item_id": "top of one's class.adv.c8a7fb29#0",
+      "item_id": "top of one's class.adv.da90b1e8#0",
       "source": "stanza",
       "lemma": "top of one's class",
       "pos": "adv",
@@ -611,17 +611,17 @@
   },
   {
     "data": {
-      "item_id": "retain.verb.a886524d#0",
+      "item_id": "establish.verb.51b236fb#0",
       "source": "stanza",
-      "lemma": "retain",
+      "lemma": "establish",
       "pos": "verb",
-      "target": "retain (verb)",
-      "marked": "water <b>retained</b> by a dam"
+      "target": "establish (verb)",
+      "marked": "By some paradoxical evolution rancour and intolerance have been <b>established</b> in the vanguard of primitive Christianity. Mrs. Spoker, in common with many of the stricter disciples of righteousness, was as inclement in demeanour as she was cadaverous in aspect."
     }
   },
   {
     "data": {
-      "item_id": "gaudless.adj.0a2e22b8#0",
+      "item_id": "gaudless.adj.330ced30#0",
       "source": "stanza",
       "lemma": "gaudless",
       "pos": "adj",
@@ -631,7 +631,7 @@
   },
   {
     "data": {
-      "item_id": "firebomb a Walmart.verb.9e4dbd75#2",
+      "item_id": "firebomb a Walmart.verb.68345831#2",
       "source": "stanza",
       "lemma": "firebomb a Walmart",
       "pos": "verb",
@@ -641,7 +641,7 @@
   },
   {
     "data": {
-      "item_id": "ordinate dimension.noun.f5e2f4a4#0",
+      "item_id": "ordinate dimension.noun.dff56e02#0",
       "source": "stanza",
       "lemma": "ordinate dimension",
       "pos": "noun",
@@ -651,7 +651,7 @@
   },
   {
     "data": {
-      "item_id": "tagworm.noun.860da369#0",
+      "item_id": "tagworm.noun.ed73d1b2#0",
       "source": "stanza",
       "lemma": "tagworm",
       "pos": "noun",
@@ -661,7 +661,7 @@
   },
   {
     "data": {
-      "item_id": "Laohekou.name.94bc56a9#0",
+      "item_id": "Laohekou.name.b79af1f6#0",
       "source": "stanza",
       "lemma": "Laohekou",
       "pos": "name",
@@ -671,7 +671,7 @@
   },
   {
     "data": {
-      "item_id": "dogs of war.noun.19cefe1e#3",
+      "item_id": "dogs of war.noun.36d0f939#3",
       "source": "stanza",
       "lemma": "dogs of war",
       "pos": "noun",
@@ -681,7 +681,7 @@
   },
   {
     "data": {
-      "item_id": "East Bumfuck, Kansas.name.7e5e4a07#2",
+      "item_id": "East Bumfuck, Kansas.name.936bba50#2",
       "source": "stanza",
       "lemma": "East Bumfuck, Kansas",
       "pos": "name",
@@ -691,7 +691,7 @@
   },
   {
     "data": {
-      "item_id": "as of now.adv.af81647f#0",
+      "item_id": "as of now.adv.a6423cc2#0",
       "source": "stanza",
       "lemma": "as of now",
       "pos": "adv",
@@ -701,7 +701,7 @@
   },
   {
     "data": {
-      "item_id": "clam up.verb.19dc8728#1",
+      "item_id": "clam up.verb.4a4a753e#1",
       "source": "stanza",
       "lemma": "clam up",
       "pos": "verb",
@@ -711,7 +711,7 @@
   },
   {
     "data": {
-      "item_id": "Bernardine.name.227ee4c1#2",
+      "item_id": "Bernardine.name.89efad2b#2",
       "source": "stanza",
       "lemma": "Bernardine",
       "pos": "name",
@@ -721,7 +721,7 @@
   },
   {
     "data": {
-      "item_id": "Hephzibah.name.314f8f9c#0",
+      "item_id": "Hephzibah.name.85a48f29#0",
       "source": "stanza",
       "lemma": "Hephzibah",
       "pos": "name",
@@ -731,7 +731,7 @@
   },
   {
     "data": {
-      "item_id": "jovially.adv.a3b6c052#1",
+      "item_id": "jovially.adv.c77b1a32#1",
       "source": "stanza",
       "lemma": "jovially",
       "pos": "adv",
@@ -741,7 +741,7 @@
   },
   {
     "data": {
-      "item_id": "knight.verb.65935f8d#0",
+      "item_id": "knight.verb.c8e05966#0",
       "source": "stanza",
       "lemma": "knight",
       "pos": "verb",
@@ -751,7 +751,7 @@
   },
   {
     "data": {
-      "item_id": "fittable.adj.f111cfdb#0",
+      "item_id": "fittable.adj.a9647a40#0",
       "source": "stanza",
       "lemma": "fittable",
       "pos": "adj",
@@ -761,7 +761,7 @@
   },
   {
     "data": {
-      "item_id": "hunter eyes.noun.884811a3#0",
+      "item_id": "hunter eyes.noun.cacb4d49#0",
       "source": "stanza",
       "lemma": "hunter eyes",
       "pos": "noun",
@@ -771,7 +771,7 @@
   },
   {
     "data": {
-      "item_id": "recuperatively.adv.5fc680ed#0",
+      "item_id": "recuperatively.adv.f4a42078#0",
       "source": "stanza",
       "lemma": "recuperatively",
       "pos": "adv",
@@ -781,7 +781,7 @@
   },
   {
     "data": {
-      "item_id": "Chencang.name.954ae170#0",
+      "item_id": "Chencang.name.0e41b6cb#0",
       "source": "stanza",
       "lemma": "Chencang",
       "pos": "name",
@@ -791,7 +791,7 @@
   },
   {
     "data": {
-      "item_id": "contused.adj.73b7b9ed#0",
+      "item_id": "contused.adj.97421168#0",
       "source": "stanza",
       "lemma": "contused",
       "pos": "adj",
@@ -801,7 +801,7 @@
   },
   {
     "data": {
-      "item_id": "orchestra.noun.b00a2334#2",
+      "item_id": "orchestra.noun.bfe22701#2",
       "source": "stanza",
       "lemma": "orchestra",
       "pos": "noun",
@@ -811,27 +811,27 @@
   },
   {
     "data": {
-      "item_id": "index.verb.5b09a851#0",
+      "item_id": "pulse.verb.8c709a7a#0",
       "source": "stanza",
-      "lemma": "index",
+      "lemma": "pulse",
       "pos": "verb",
-      "target": "index (verb)",
-      "marked": "MySQL does not <b>index</b> short words and common words."
+      "target": "pulse (verb)",
+      "marked": "Hot blood <b>pulsed</b> through my veins as I grew angrier."
     }
   },
   {
     "data": {
-      "item_id": "First World.name.b892e45a#2",
+      "item_id": "East Anglia.name.eae66fc6#1",
       "source": "stanza",
-      "lemma": "First World",
+      "lemma": "East Anglia",
       "pos": "name",
-      "target": "First World (name)",
-      "marked": "Near-synonym: free world"
+      "target": "East Anglia (name)",
+      "marked": "Meronyms: Norfolk, Suffolk"
     }
   },
   {
     "data": {
-      "item_id": "Tengchong.name.5bb67135#0",
+      "item_id": "Tengchong.name.866e7c6c#0",
       "source": "stanza",
       "lemma": "Tengchong",
       "pos": "name",
@@ -841,17 +841,17 @@
   },
   {
     "data": {
-      "item_id": "Nubia.name.64f45780#2",
+      "item_id": "Ragnarok.name.cda96876#1",
       "source": "stanza",
-      "lemma": "Nubia",
+      "lemma": "Ragnarok",
       "pos": "name",
-      "target": "Nubia (name)",
-      "marked": "<b>Nubia</b> is part of this landscape, created, formed and sustained by the Nile in complex interplays of geology and river hydrology."
+      "target": "Ragnarok (name)",
+      "marked": "And all that is before them and the whole civilised world, would be long centuries of anarchy such as the world has not seen for ages—a true <b>Ragnarok</b>, a twilight of the very gods, an age such as the wise woman foretold in the old Voluspà."
     }
   },
   {
     "data": {
-      "item_id": "inward-looking.adj.e85a7026#0",
+      "item_id": "inward-looking.adj.4cc48db2#0",
       "source": "stanza",
       "lemma": "inward-looking",
       "pos": "adj",
@@ -861,17 +861,17 @@
   },
   {
     "data": {
-      "item_id": "else.adv.683e7c29#1",
+      "item_id": "now.adv.26749b3e#2",
       "source": "stanza",
-      "lemma": "else",
+      "lemma": "now",
       "pos": "adv",
-      "target": "else (adv)",
-      "marked": "I'm busy Friday; when <b>else</b> (= what other time) works for you?"
+      "target": "now (adv)",
+      "marked": "We all want what is <b>now</b> best for our children."
     }
   },
   {
     "data": {
-      "item_id": "antichronism.noun.d75032b4#0",
+      "item_id": "antichronism.noun.72860354#0",
       "source": "stanza",
       "lemma": "antichronism",
       "pos": "noun",
@@ -881,7 +881,7 @@
   },
   {
     "data": {
-      "item_id": "begrime.verb.2a7b6831#3",
+      "item_id": "begrime.verb.987a8cbb#3",
       "source": "stanza",
       "lemma": "begrime",
       "pos": "verb",
@@ -891,7 +891,7 @@
   },
   {
     "data": {
-      "item_id": "split-toe.adj.227d8763#0",
+      "item_id": "split-toe.adj.e263c00d#0",
       "source": "stanza",
       "lemma": "split-toe",
       "pos": "adj",
@@ -901,17 +901,17 @@
   },
   {
     "data": {
-      "item_id": "personate.adj.744fac47#0",
+      "item_id": "abiding.adj.8cc15e85#3",
       "source": "stanza",
-      "lemma": "personate",
+      "lemma": "abiding",
       "pos": "adj",
-      "target": "personate (adj)",
-      "marked": "This arrangement is well typified in plants with a <b>personate</b> corolla, such as the toad-flax and snap-dragon, ..."
+      "target": "abiding (adj)",
+      "marked": "Through all their projects, their <b>abiding</b> ethos has been observing and responding to the site and its existing ecology and growth patterns."
     }
   },
   {
     "data": {
-      "item_id": "strike someone's fancy.verb.6ae60a46#0",
+      "item_id": "strike someone's fancy.verb.27648cf5#0",
       "source": "stanza",
       "lemma": "strike someone's fancy",
       "pos": "verb",
@@ -921,7 +921,7 @@
   },
   {
     "data": {
-      "item_id": "slipslop.verb.264761e2#2",
+      "item_id": "slipslop.verb.55cba8f0#2",
       "source": "stanza",
       "lemma": "slipslop",
       "pos": "verb",
@@ -931,7 +931,7 @@
   },
   {
     "data": {
-      "item_id": "sunburn.verb.be2d6fc0#1",
+      "item_id": "sunburn.verb.fc0abe47#1",
       "source": "stanza",
       "lemma": "sunburn",
       "pos": "verb",
@@ -941,7 +941,7 @@
   },
   {
     "data": {
-      "item_id": "supercolossally.adv.8ee0ab67#1",
+      "item_id": "supercolossally.adv.330786c4#1",
       "source": "stanza",
       "lemma": "supercolossally",
       "pos": "adv",
@@ -951,27 +951,27 @@
   },
   {
     "data": {
-      "item_id": "Vladivostok.name.35f31e9a#2",
+      "item_id": "Zurich.name.68f84d76#0",
       "source": "stanza",
-      "lemma": "Vladivostok",
+      "lemma": "Zurich",
       "pos": "name",
-      "target": "Vladivostok (name)",
-      "marked": "Brezhnev shared my enthusiasm. Impulsively, after a late lunch, he invited me to accompany him on a tour of <b>Vladivostok</b>. We climbed into the back seat of a long black limousine and headed toward the city, thirteen miles away. The local commissar, a large, dark-complexioned man wearing a thick wool coat, sat in the jump seat in front of Brezhnev, and the interpreter, Victor Sukhodrev, sat in front of me. Our conversation was natural and uninhibited. How many people lived in <b>Vladivostok</b>? What was the main industry? And was it always this cold? Twenty minutes later, we drove down a steep hill, entered the city and swung around the main square. A small crowd was there, and even though it was dusk, they recognized the car and applauded. The city itself reminded me of San Francisco, and I wished that I'd had more time to explore the place. But it was starting to get dark and we headed back toward Okeanskaya."
+      "target": "Zurich (name)",
+      "marked": "The <b>Zurich</b> group has shared a preliminary writeup of its findings."
     }
   },
   {
     "data": {
-      "item_id": "unlock.verb.134026ff#0",
+      "item_id": "corrupt.verb.821ec9b6#1",
       "source": "stanza",
-      "lemma": "unlock",
+      "lemma": "corrupt",
       "pos": "verb",
-      "target": "unlock (verb)",
-      "marked": "I <b>unlocked</b> the door and walked in."
+      "target": "corrupt (verb)",
+      "marked": "[…] Lanfrank takes Notice of Tract. 3. Doct. 3. cap. 18. ſaying, \"I have ſeen many who being full of Humours, have made an Iſſue under the Knee, before due Purgation had been premis'd; whence, by reaſon of the too great Defluxion of Humours, the Legs tumified, ſo that the cauterized Place <b>corrupted</b>, and a Cancer (or rather cacoethic Ulcer) was thereby made, with which great Difficulty was cur'd.\""
     }
   },
   {
     "data": {
-      "item_id": "Gunchester.name.babd5d50#0",
+      "item_id": "Gunchester.name.4a84d2ea#0",
       "source": "stanza",
       "lemma": "Gunchester",
       "pos": "name",
@@ -981,7 +981,7 @@
   },
   {
     "data": {
-      "item_id": "orchestra.noun.b00a2334#2",
+      "item_id": "orchestra.noun.bfe22701#2",
       "source": "stanza",
       "lemma": "orchestra",
       "pos": "noun",
@@ -991,7 +991,7 @@
   },
   {
     "data": {
-      "item_id": "not in the slightest.adv.8ce78436#1",
+      "item_id": "not in the slightest.adv.a9ac4137#1",
       "source": "stanza",
       "lemma": "not in the slightest",
       "pos": "adv",
@@ -1001,7 +1001,7 @@
   },
   {
     "data": {
-      "item_id": "bomb it.verb.0cbc6a77#0",
+      "item_id": "bomb it.verb.769418d0#0",
       "source": "stanza",
       "lemma": "bomb it",
       "pos": "verb",
@@ -1011,17 +1011,17 @@
   },
   {
     "data": {
-      "item_id": "prophylactic.noun.86c865fb#0",
+      "item_id": "proffer.noun.ec34ee94#4",
       "source": "stanza",
-      "lemma": "prophylactic",
+      "lemma": "proffer",
       "pos": "noun",
-      "target": "prophylactic (noun)",
-      "marked": "It is not clear whether such education is to be directed to homosexuals (for whom <b>prophylactics</b> are not a contraceptive) or to heterosexuals as well (for whom <b>prophylactics</b> are a contraceptive)."
+      "target": "proffer (noun)",
+      "marked": "He said a reversionary <b>proffer</b> – saying the property would revert to its prior zoning if certain benchmarks were not met by the developers – was brought up in a conceptual discussion in a pre-application meeting in May 2014 with the developers, but did not progress beyond that."
     }
   },
   {
     "data": {
-      "item_id": "narrow-gutted.adj.7b9adf2f#0",
+      "item_id": "narrow-gutted.adj.c887cc73#0",
       "source": "stanza",
       "lemma": "narrow-gutted",
       "pos": "adj",
@@ -1031,7 +1031,7 @@
   },
   {
     "data": {
-      "item_id": "break open.verb.1e18ad97#1",
+      "item_id": "break open.verb.50ed58e9#1",
       "source": "stanza",
       "lemma": "break open",
       "pos": "verb",
@@ -1041,7 +1041,7 @@
   },
   {
     "data": {
-      "item_id": "mendaciloquent.adj.05b74bb4#0",
+      "item_id": "mendaciloquent.adj.717898dc#0",
       "source": "stanza",
       "lemma": "mendaciloquent",
       "pos": "adj",
@@ -1051,7 +1051,7 @@
   },
   {
     "data": {
-      "item_id": "Merle.name.990291bd#1",
+      "item_id": "Merle.name.a7148648#1",
       "source": "stanza",
       "lemma": "Merle",
       "pos": "name",
@@ -1061,7 +1061,7 @@
   },
   {
     "data": {
-      "item_id": "deradically.adv.71ae498d#2",
+      "item_id": "deradically.adv.4f39d7f7#2",
       "source": "stanza",
       "lemma": "deradically",
       "pos": "adv",
@@ -1071,17 +1071,17 @@
   },
   {
     "data": {
-      "item_id": "carve.verb.eef3086a#1",
+      "item_id": "twit.verb.854dfa3b#0",
       "source": "stanza",
-      "lemma": "carve",
+      "lemma": "twit",
       "pos": "verb",
-      "target": "carve (verb)",
-      "marked": "The facades of the buildings fronting upon the avenue within the wall were richly <b>carven</b>[…]."
+      "target": "twit (verb)",
+      "marked": "Secrecy about B.R. plans for reorganisation and closure of lines and notably some failures to consult with staff representatives concerned with redundancy, are defects with which the railway unions have <b>twitted</b> Dr. Beeching."
     }
   },
   {
     "data": {
-      "item_id": "whilom.adv.6940baf4#1",
+      "item_id": "whilom.adv.ee5601ba#1",
       "source": "stanza",
       "lemma": "whilom",
       "pos": "adv",
@@ -1091,7 +1091,7 @@
   },
   {
     "data": {
-      "item_id": "worth one's salt.adj.421e9335#1",
+      "item_id": "worth one's salt.adj.56a0fad8#1",
       "source": "stanza",
       "lemma": "worth one's salt",
       "pos": "adj",

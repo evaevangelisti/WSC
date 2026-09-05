@@ -32,6 +32,7 @@ from strategies import (
     years,
 )
 
+from wsc.constants import LANGUAGE
 from wsc.extract import WiktionaryExtractor
 from wsc.models import POS, Example, Lemma, Quotation, Sentence
 
@@ -160,7 +161,6 @@ def extract(
 
     def run(
         entries: Iterable[RawJson],
-        language: str = "en",
         allowed_pos: frozenset[POS] | None = None,
         minimum_year: int | None = None,
         maximum_year: int | None = None,
@@ -169,7 +169,6 @@ def extract(
         path = write_entries(workspace() / name, entries)
 
         extractor = WiktionaryExtractor(
-            language,
             allowed_pos,
             minimum_year,
             maximum_year,
@@ -204,7 +203,7 @@ def extract_lines(
         path = workspace() / "wiktextract.jsonl"
         _ = path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
 
-        return list(WiktionaryExtractor("en", None, None, None, locator).extract(path))
+        return list(WiktionaryExtractor(None, None, None, locator).extract(path))
 
     return run
 
@@ -275,24 +274,24 @@ class TestEntries:
     """
 
     @given(st.data())
-    def test_keeps_the_language_asked_for(
+    def test_keeps_english_alone(
         self,
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
     ) -> None:
-        """A dump holds every language Wiktionary describes, not the one alone."""
-        editions = data.draw(st.lists(languages, min_size=1, max_size=3, unique=True))
+        """A dump holds every language Wiktionary describes, not English alone."""
+        editions = data.draw(
+            st.lists(languages, min_size=1, max_size=3, unique=True).map(
+                lambda drawn: [*drawn, LANGUAGE]
+            )
+        )
         entries = data.draw(
             st.lists(raw_entries(languages=st.sampled_from(editions)), max_size=5)
         )
 
-        language = data.draw(st.sampled_from(editions))
-        spoken = [entry for entry in entries if entry["lang_code"] == language]
+        spoken = [entry for entry in entries if entry["lang_code"] == LANGUAGE]
 
-        assert extract(entries, language=language) == extract(
-            spoken,
-            language=language,
-        )
+        assert extract(entries) == extract(spoken)
 
     @given(st.lists(raw_entries(), max_size=5), st.data())
     def test_keeps_only_the_parts_of_speech_asked_for(
@@ -345,8 +344,12 @@ class TestEntries:
         entries: list[RawJson],
     ) -> None:
         """The whitespace an editor left around a headword is not part of it."""
+        gathered = dict.fromkeys(
+            (str(entry["word"]).strip(), entry["pos"]) for entry in entries
+        )
+
         assert [lemma.lemma for lemma in extract(entries)] == [
-            str(entry["word"]).strip() for entry in entries
+            headword for headword, _ in gathered
         ]
 
     @given(parts_of_speech, st.data())
@@ -373,11 +376,11 @@ class TestIdentifiers:
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
-        """An identifier reads as bank.noun.3f9c1a2b, the digest naming the rest."""
+        """An entry is named bank.noun, and a sense adds a digest of its own."""
         for lemma in extract(entries):
             key = f"{lemma.lemma}.{lemma.pos}"
 
-            assert lemma.id.startswith(f"{key}.")
+            assert lemma.id == key
             assert all(sense.id.startswith(f"{key}.") for sense in lemma.senses)
 
     @given(st.lists(raw_entries(), max_size=5))
@@ -452,12 +455,18 @@ class TestSenses:
         senses: list[RawJson] = [{"glosses": chain} for chain in chains]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
+        # Two chains reading alike are one meaning, and are gathered as one.
+        gathered = list(
+            dict.fromkeys(
+                tuple(gloss.strip() for gloss in chain if gloss.strip())
+                for chain in chains
+            )
+        )
+
         kept = extract([entry])[0].senses
 
-        assert [sense.depth for sense in kept] == [len(chain) for chain in chains]
-        assert [sense.gloss for sense in kept] == [
-            chain[-1].strip() for chain in chains
-        ]
+        assert [sense.depth for sense in kept] == [len(chain) for chain in gathered]
+        assert [sense.gloss for sense in kept] == [chain[-1] for chain in gathered]
 
     @given(st.lists(words, max_size=3), st.lists(words, max_size=3), st.data())
     def test_keeps_tags_and_topics_apart(
@@ -1015,65 +1024,27 @@ class TestWordOffsets:
 
 class TestVariants:
     """
-    How else a lemma is written, which two things say.
+    How else a lemma is spelled, which one thing says.
     """
 
     @given(words, words, st.data())
-    def test_takes_a_form_the_entry_lists_as_alternative(
-        self,
-        extract: Callable[..., list[Lemma]],
-        headword: str,
-        spelling: str,
-        data: st.DataObject,
-    ) -> None:
-        """Wiktionary heads a section Alternative forms and tags them so."""
-        form = data.draw(
-            raw_forms(forms=st.just(spelling), tags=st.just(["alternative"]))
-        )
-        entry = data.draw(
-            raw_entries(headwords=st.just(headword), forms=st.just([form]))
-        )
-
-        (lemma,) = extract([entry])
-
-        assert lemma.variants == frozenset({spelling}) - {headword}
-
-    @given(words, st.data())
-    def test_leaves_a_form_that_is_no_alternative_alone(
-        self,
-        extract: Callable[..., list[Lemma]],
-        headword: str,
-        data: st.DataObject,
-    ) -> None:
-        """An inflection is how the lemma bends, not another way of writing it."""
-        form = data.draw(raw_forms(tags=st.just(["plural"])))
-        entry = data.draw(
-            raw_entries(headwords=st.just(headword), forms=st.just([form]))
-        )
-
-        (lemma,) = extract([entry])
-
-        assert lemma.variants == frozenset()
-
-    @given(form_tags, words, words, st.data())
     def test_takes_a_spelling_from_the_entry_pointing_at_it(
         self,
         extract: Callable[..., list[Lemma]],
-        tag: str,
         headword: str,
         spelling: str,
         data: st.DataObject,
     ) -> None:
-        """An inflection sits on a page of its own and points back at the lemma."""
+        """Another spelling sits on a page of its own and points back."""
         pointing: RawJson = {
             "word": spelling,
             "pos": "noun",
             "lang_code": "en",
             "senses": [
                 {
-                    "glosses": [f"Plural of {headword}."],
-                    "tags": [tag],
-                    "form_of": [{"word": headword}],
+                    "glosses": [f"Alternative spelling of {headword}."],
+                    "tags": ["alt-of"],
+                    "alt_of": [{"word": headword}],
                 }
             ],
         }
@@ -1088,6 +1059,55 @@ class TestVariants:
         ]
 
     @given(words, words, st.data())
+    def test_leaves_an_inflection_alone(
+        self,
+        extract: Callable[..., list[Lemma]],
+        headword: str,
+        spelling: str,
+        data: st.DataObject,
+    ) -> None:
+        """A plural bends the lemma rather than spelling it another way."""
+        pointing: RawJson = {
+            "word": spelling,
+            "pos": "noun",
+            "lang_code": "en",
+            "senses": [
+                {
+                    "glosses": [f"Plural of {headword}."],
+                    "tags": ["form-of", "plural"],
+                    "form_of": [{"word": headword}],
+                }
+            ],
+        }
+        defined = data.draw(
+            raw_entries(headwords=st.just(headword), pos_codes=st.just("noun"))
+        )
+
+        lemmas = extract([pointing, defined])
+
+        assert [lemma.variants for lemma in lemmas] == [frozenset()]
+
+    @given(words, words, st.data())
+    def test_leaves_the_forms_an_entry_lists_for_itself_alone(
+        self,
+        extract: Callable[..., list[Lemma]],
+        headword: str,
+        spelling: str,
+        data: st.DataObject,
+    ) -> None:
+        """An Alternative forms section names derivations as readily as spellings."""
+        form = data.draw(
+            raw_forms(forms=st.just(spelling), tags=st.just(["alternative"]))
+        )
+        entry = data.draw(
+            raw_entries(headwords=st.just(headword), forms=st.just([form]))
+        )
+
+        (lemma,) = extract([entry])
+
+        assert lemma.variants == frozenset()
+
+    @given(words, words, st.data())
     def test_points_only_at_the_same_part_of_speech(
         self,
         extract: Callable[..., list[Lemma]],
@@ -1095,16 +1115,16 @@ class TestVariants:
         spelling: str,
         data: st.DataObject,
     ) -> None:
-        """A plural noun says nothing about how the verb is written."""
+        """A spelling of the noun says nothing about how the verb is written."""
         pointing: RawJson = {
             "word": spelling,
             "pos": "verb",
             "lang_code": "en",
             "senses": [
                 {
-                    "glosses": [f"Form of {headword}."],
-                    "tags": ["form-of"],
-                    "form_of": [{"word": headword}],
+                    "glosses": [f"Alternative spelling of {headword}."],
+                    "tags": ["alt-of"],
+                    "alt_of": [{"word": headword}],
                 }
             ],
         }

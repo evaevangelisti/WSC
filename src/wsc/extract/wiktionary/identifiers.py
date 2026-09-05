@@ -5,8 +5,9 @@ How a lemma and its senses are named.
 from collections.abc import Iterable
 from hashlib import blake2b
 
-# Bytes of digest an identifier carries. A digest tells apart the senses of
-# one headword, never the senses of the dump, so a short one is enough.
+from ...models import POS
+
+# A digest tells apart the senses of one headword, never those of the dump.
 _DIGEST_SIZE = 4
 
 
@@ -15,9 +16,6 @@ def _digest(
 ) -> str:
     """
     Name something after what it says rather than after where it was read.
-
-    A position shifts whenever Wiktionary reorders a page or a filter changes;
-    what a sense means is what survives the next dump.
 
     Args:
         written: The strings to name it by.
@@ -28,35 +26,40 @@ def _digest(
     return blake2b("\n".join(written).encode(), digest_size=_DIGEST_SIZE).hexdigest()
 
 
+def lemma_id(
+    lemma: str,
+    pos: POS,
+) -> str:
+    """
+    Name one entry after the headword and part of speech gathering it.
+
+    Args:
+        lemma: The headword.
+        pos: Its part of speech.
+
+    Returns:
+        The identifier, as bank.noun.
+    """
+    return f"{lemma}.{pos}"
+
+
 def sense_id(
-    key: str,
+    lemma_id: str,
+    etymology: str,
     glosses: Iterable[str],
 ) -> str:
     """
-    Name one sense after the gloss chain it carries.
+    Name one sense after its gloss chain and the etymology holding it.
+
+    The chain alone does not tell etymologies apart.
 
     Args:
-        key: The headword and its part of speech, as bank.noun.
+        lemma_id: What the entry is named.
+        etymology: Which etymology holds the sense, empty where the page
+        states only one.
         glosses: The gloss chain, outermost first.
 
     Returns:
         The identifier, as bank.noun.3f9c1a2b.
     """
-    return f"{key}.{_digest(*glosses)}"
-
-
-def lemma_id(
-    key: str,
-    sense_ids: Iterable[str],
-) -> str:
-    """
-    Name one entry after the meanings it holds.
-
-    Args:
-        key: The headword and its part of speech, as bank.noun.
-        sense_ids: What each of its senses is named.
-
-    Returns:
-        The identifier, as bank.noun.7d20e4c8.
-    """
-    return f"{key}.{_digest(*sense_ids)}"
+    return f"{lemma_id}.{_digest(etymology, *glosses)}"

@@ -5,10 +5,12 @@ A command is tested for what it settles and what it refuses, not for what
 the modules under it already answer for.
 """
 
+import bz2
 import gzip
 import json
 import string
 from collections.abc import Callable, Generator
+from compression import zstd
 from contextlib import contextmanager
 from importlib.metadata import version
 from pathlib import Path
@@ -16,14 +18,20 @@ from typing import cast
 
 import pytest
 import responses
-from documents import WORDNET, dump_index, dump_status, lexicon, wordnet_index
+from documents import (
+    WORDNET,
+    dump,
+    dump_index,
+    dump_status,
+    lexicon,
+    wordnet_index,
+)
 from hypothesis import given
 from hypothesis import strategies as st
 from kwic import Locator
 from strategies import (
     RawJson,
     dump_dates,
-    languages,
     parts_of_speech,
     raw_entries,
     raw_examples,
@@ -100,16 +108,43 @@ def _years_of(
     return [sentence["year"] for sentence in sentences]
 
 
+_DUMP_BODY = bz2.compress(dump().encode())
+
+
+def _gathered(
+    entries: list[RawJson],
+    codes: set[str] | None = None,
+) -> list[object]:
+    """
+    Spell out the headwords a collection is expected to write.
+
+    Entries sharing a headword and part of speech become one.
+
+    Args:
+        entries: The entries the parsed dump holds.
+        codes: The parts of speech kept, or None for every one.
+
+    Returns:
+        One headword per entry gathered, in the order the first was read.
+    """
+    return [
+        word
+        for word, _ in dict.fromkeys(
+            (entry["word"], entry["pos"])
+            for entry in entries
+            if codes is None or entry["pos"] in codes
+        )
+    ]
+
+
 @contextmanager
 def _wikimedia(
-    language: str,
     date: str,
 ) -> Generator[responses.RequestsMock]:
     """
     Answer in Wikimedia's place: one edition, one dump, and it is finished.
 
     Args:
-        language: Wiktionary's code for the edition.
         date: The day the dump it holds began.
 
     Yields:
@@ -117,18 +152,12 @@ def _wikimedia(
         was told which dump to fetch leaves the index unasked.
     """
     with responses.RequestsMock(assert_all_requests_are_fired=False) as server:
+        _ = server.get(DUMP_INDEX_URL, body=dump_index(date))
         _ = server.get(
-            DUMP_INDEX_URL.format(language=language),
-            body=dump_index(date),
-        )
-        _ = server.get(
-            DUMP_STATUS_URL.format(language=language, date=date),
+            DUMP_STATUS_URL.format(date=date),
             body=dump_status("done"),
         )
-        _ = server.get(
-            DUMP_URL.format(language=language, date=date),
-            body=b"a dump",
-        )
+        _ = server.get(DUMP_URL.format(date=date), body=_DUMP_BODY)
 
         yield server
 
@@ -208,7 +237,7 @@ def cli(
 @pytest.fixture
 def stub_parse(
     monkeypatch: pytest.MonkeyPatch,
-) -> Callable[..., list[tuple[Path, Path, str, int, Path | None]]]:
+) -> Callable[..., list[tuple[Path, Path, int, Path | None]]]:
     """
     Answer in wiktextract's place, which its own module is tested on.
 
@@ -222,17 +251,22 @@ def stub_parse(
 
     def build(
         skipped_lines: int = 0,
-    ) -> list[tuple[Path, Path, str, int, Path | None]]:
-        calls: list[tuple[Path, Path, str, int, Path | None]] = []
+    ) -> list[tuple[Path, Path, int, Path | None]]:
+        calls: list[tuple[Path, Path, int, Path | None]] = []
 
         def parse(
             dump_path: Path,
             output_path: Path,
-            language: str,
             processes: int,
+            _narrow: object,
             database_path: Path | None,
         ) -> int:
-            calls.append((dump_path, output_path, language, processes, database_path))
+            calls.append((dump_path, output_path, processes, database_path))
+
+            # The command reads back what it wrote, to answer the pointers.
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with zstd.open(output_path, "wt", encoding="utf-8") as file:
+                _ = file.write("")
 
             return skipped_lines
 
@@ -268,91 +302,83 @@ class TestFetch:
     Downloading a dump, and settling which one that is.
     """
 
-    @given(languages, dump_dates)
+    @given(dump_dates)
     def test_resolves_latest_against_wikimedia(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
-        language: str,
         date: str,
     ) -> None:
         """Latest is the newest finished dump, and only Wikimedia knows which."""
         cache_dir = workspace() / "cache"
 
-        with _wikimedia(language, date):
-            result = cli("fetch", "--language", language, cache_dir=cache_dir)
+        with _wikimedia(date):
+            result = cli("fetch", cache_dir=cache_dir)
 
         assert result.exit_code == 0
         assert f"Resolved latest to {date}" in _said(result)
         assert (
-            cache.dump_dir(cache_dir, language, date) / cache.DUMP_NAME
-        ).read_bytes() == b"a dump"
+            cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
+        ).read_bytes() == _DUMP_BODY
 
-    @given(languages, dump_dates)
+    @given(dump_dates)
     def test_fetches_the_dump_asked_for(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
-        language: str,
         date: str,
     ) -> None:
         """A dump named on the command line is fetched without asking the index."""
         cache_dir = workspace() / "cache"
 
-        with _wikimedia(language, date) as server:
+        with _wikimedia(date) as server:
             result = cli(
                 "fetch",
-                "--language",
-                language,
                 "--dump-date",
                 date,
                 cache_dir=cache_dir,
             )
 
             assert [call.request.url for call in server.calls] == [
-                DUMP_URL.format(language=language, date=date)
+                DUMP_URL.format(date=date)
             ]
 
         assert result.exit_code == 0
 
-    @given(languages, dump_dates)
+    @given(dump_dates)
     def test_names_the_collector_and_its_version_to_wikimedia(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
-        language: str,
         date: str,
     ) -> None:
         """Wikimedia asks that requests name whoever answers for them."""
         cache_dir = workspace() / "cache"
         expected = USER_AGENT.format(version=version("wsc"))
 
-        with _wikimedia(language, date) as server:
-            _ = cli("fetch", "--language", language, cache_dir=cache_dir)
+        with _wikimedia(date) as server:
+            _ = cli("fetch", cache_dir=cache_dir)
 
             assert server.calls
             assert all(
                 call.request.headers["User-Agent"] == expected for call in server.calls
             )
 
-    @given(languages, dump_dates)
+    @given(dump_dates)
     def test_stops_when_what_it_would_fetch_is_already_there(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        language: str,
         date: str,
     ) -> None:
         """A dump is tens of gigabytes, and is not downloaded twice."""
         cache_dir = workspace() / "cache"
-        _ = fetch_dump(cache_dir, language, date)
+        _ = fetch_dump(cache_dir, date)
 
         with responses.RequestsMock() as server:
             result = cli(
                 "fetch",
-                "--language",
-                language,
                 "--dump-date",
                 date,
                 cache_dir=cache_dir,
@@ -369,14 +395,13 @@ class TestParse:
     What a parse settles, wiktextract standing in for itself.
     """
 
-    @given(languages, dump_dates, st.integers(min_value=1, max_value=16))
+    @given(dump_dates, st.integers(min_value=1, max_value=16))
     def test_points_wiktextract_at_what_the_command_settled(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
-        language: str,
+        stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
         date: str,
         processes: int,
     ) -> None:
@@ -384,25 +409,22 @@ class TestParse:
         cache_dir = workspace() / "cache"
 
         calls = stub_parse()
-        _ = fetch_dump(cache_dir, language, date)
+        _ = fetch_dump(cache_dir, date)
 
         result = cli(
             "parse",
-            "--language",
-            language,
             "--processes",
             str(processes),
             cache_dir=cache_dir,
         )
 
-        dump_dir = cache.dump_dir(cache_dir, language, date)
+        dump_dir = cache.dump_dir(cache_dir, date)
 
         assert result.exit_code == 0
         assert calls == [
             (
                 dump_dir / cache.DUMP_NAME,
                 dump_dir / cache.WIKTEXTRACT_NAME,
-                language,
                 processes,
                 None,
             )
@@ -415,7 +437,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
         name: str,
     ) -> None:
         """A database of one's own is what a run without the network needs."""
@@ -434,7 +456,7 @@ class TestParse:
         )
 
         assert result.exit_code == 0
-        assert calls[0][4] == database_path
+        assert calls[0][3] == database_path
 
     @given(st.lists(dump_dates, min_size=2, max_size=4, unique=True), st.data())
     def test_parses_the_dump_asked_for(
@@ -442,7 +464,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
         dates: list[str],
         data: st.DataObject,
     ) -> None:
@@ -451,12 +473,12 @@ class TestParse:
 
         calls = stub_parse()
         for date in dates:
-            _ = fetch_dump(cache_dir, "en", date)
+            _ = fetch_dump(cache_dir, date)
 
         asked = data.draw(st.sampled_from(dates))
         _ = cli("parse", "--dump-date", asked, cache_dir=cache_dir)
 
-        assert calls[0][0] == cache.dump_dir(cache_dir, "en", asked) / cache.DUMP_NAME
+        assert calls[0][0] == cache.dump_dir(cache_dir, asked) / cache.DUMP_NAME
 
     @given(st.integers(min_value=1, max_value=10000))
     def test_reports_the_lines_set_aside(
@@ -464,7 +486,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
         skipped_lines: int,
     ) -> None:
         """Far more than a few hundred means something went wrong, so it is said."""
@@ -482,7 +504,7 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
-        stub_parse: Callable[..., list[tuple[Path, Path, str, int, Path | None]]],
+        stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
     ) -> None:
         """A parse with nothing to report reports nothing."""
         cache_dir = workspace() / "cache"
@@ -511,37 +533,32 @@ class TestParse:
         assert result.exit_code == 0
         assert "Already parsed" in _said(result)
 
-    @given(languages)
     def test_refuses_when_the_dump_was_not_fetched(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
-        language: str,
     ) -> None:
         """Parsing reads a dump, so there has to be one to read."""
         result = cli(
             "parse",
-            "--language",
-            language,
             cache_dir=workspace() / "cache",
         )
 
         assert result.exit_code != 0
         assert "fetch one first" in _said(result)
 
-    @given(languages, dump_dates)
+    @given(dump_dates)
     def test_refuses_when_the_dump_is_gone_from_its_directory(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
-        language: str,
         date: str,
     ) -> None:
         """A fetch cut short leaves the directory behind without the dump in it."""
         cache_dir = workspace() / "cache"
-        cache.dump_dir(cache_dir, language, date).mkdir(parents=True)
+        cache.dump_dir(cache_dir, date).mkdir(parents=True)
 
-        result = cli("parse", "--language", language, cache_dir=cache_dir)
+        result = cli("parse", cache_dir=cache_dir)
 
         assert result.exit_code != 0
         assert "fetch it first" in _said(result)
@@ -570,9 +587,9 @@ class TestCollect:
         result = cli("collect", str(output_path), cache_dir=cache_dir)
 
         assert result.exit_code == 0
-        assert [record["lemma"] for record in collected(output_path)] == [
-            entry["word"] for entry in entries
-        ]
+        assert [record["lemma"] for record in collected(output_path)] == _gathered(
+            entries
+        )
 
     @given(st.lists(raw_entries(), max_size=4), st.data())
     def test_keeps_only_the_parts_of_speech_asked_for(
@@ -599,9 +616,9 @@ class TestCollect:
 
         codes = {pos.value for pos in allowed}
 
-        assert [record["lemma"] for record in collected(output_path)] == [
-            entry["word"] for entry in entries if entry["pos"] in codes
-        ]
+        assert [record["lemma"] for record in collected(output_path)] == _gathered(
+            entries, codes
+        )
 
     @given(st.sampled_from(["--min-year", "--max-year"]), st.data())
     def test_bounds_the_quotations_the_way_round_they_were_named(
@@ -672,41 +689,37 @@ class TestCollect:
             cache_dir=cache_dir,
         )
 
-        assert [record["lemma"] for record in collected(output_path)] == [
-            entry["word"] for entry in entries
-        ]
+        assert [record["lemma"] for record in collected(output_path)] == _gathered(
+            entries
+        )
 
-    @given(languages, st.data())
+    @given(dump_dates, st.lists(raw_entries(), min_size=1, max_size=3))
     def test_takes_its_settings_from_the_environment(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
         parse_dump: Callable[..., Path],
         collected: Callable[[Path], list[RawJson]],
-        language: str,
-        data: st.DataObject,
+        date: str,
+        entries: list[RawJson],
     ) -> None:
         """An option a whole session shares is read from the environment."""
-        entries = data.draw(
-            st.lists(raw_entries(languages=st.just(language)), min_size=1, max_size=3)
-        )
-
         directory = workspace()
         cache_dir = directory / "cache"
-        _ = parse_dump(cache_dir, entries, language=language)
+        _ = parse_dump(cache_dir, entries, date)
 
         output_path = directory / "senses.jsonl"
         result = cli(
             "collect",
             str(output_path),
             cache_dir=cache_dir,
-            env={"WSC_LANGUAGE": language},
+            env={"WSC_DUMP_DATE": date},
         )
 
         assert result.exit_code == 0
-        assert [record["lemma"] for record in collected(output_path)] == [
-            entry["word"] for entry in entries
-        ]
+        assert [record["lemma"] for record in collected(output_path)] == _gathered(
+            entries
+        )
 
     def test_refuses_when_nothing_was_parsed(
         self,

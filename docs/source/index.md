@@ -19,4 +19,5 @@ reference/upstream/index
 reference/extract/index
 reference/export/index
 reference/constants
+reference/files
 ```

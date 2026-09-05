@@ -41,6 +41,7 @@ class Sense(TypedDict):
 
     id: str
     glosses: list[str]
+    etymology: NotRequired[str]
     synonyms: NotRequired[list[str]]
     topics: NotRequired[list[str]]
     tags: NotRequired[list[str]]

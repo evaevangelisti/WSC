@@ -77,6 +77,9 @@ dump_dates = st.dates(
 parts_of_speech: st.SearchStrategy[POS] = st.sampled_from(POS)
 """One part of speech the collector keeps."""
 
+etymologies = st.integers(min_value=1, max_value=9).map(str)
+"""Which etymology of a page an entry sits under, as Wiktionary numbers them."""
+
 pos_codes = parts_of_speech.map(lambda pos: pos.value)
 """Wiktextract's code for one of them."""
 
@@ -103,6 +106,8 @@ _GLOSS_CHAINS = st.lists(glosses, min_size=1, max_size=3)
 _LABELS = st.lists(words, max_size=2)
 
 _ENGLISH = st.just("en")
+
+_NO_ETYMOLOGY = st.just("")
 
 
 def references(
@@ -298,6 +303,8 @@ def raw_entries(
     headwords: st.SearchStrategy[str] = words,
     pos_codes: st.SearchStrategy[str] = pos_codes,
     languages: st.SearchStrategy[str] = _ENGLISH,
+    etymology_numbers: st.SearchStrategy[str] = _NO_ETYMOLOGY,
+    etymology_texts: st.SearchStrategy[str] = _NO_ETYMOLOGY,
     forms: st.SearchStrategy[list[RawJson]] = _FORMS,
     senses: st.SearchStrategy[list[RawJson]] = _SENSES,
     translations: st.SearchStrategy[list[RawJson]] = _TRANSLATIONS,
@@ -310,6 +317,8 @@ def raw_entries(
         headwords: The words to draw from.
         pos_codes: Wiktextract's codes for a part of speech.
         languages: The languages a headword may belong to.
+        etymology_numbers: Which etymology of the page it sits under.
+        etymology_texts: What that etymology says.
         forms: The shapes a headword takes.
         senses: The meanings to hang off it.
         translations: What other languages call it.
@@ -324,6 +333,8 @@ def raw_entries(
     }
 
     for key, drawn in (
+        ("etymology_number", draw(etymology_numbers)),
+        ("etymology_text", draw(etymology_texts)),
         ("forms", draw(forms)),
         ("senses", draw(senses)),
         ("translations", draw(translations)),
@@ -344,7 +355,7 @@ sentences: st.SearchStrategy[Sentence] = st.one_of(
     st.builds(
         Quotation,
         texts,
-        st.text(max_size=20),
+        st.text(min_size=1, max_size=20),
         st.none() | years,
         word_offsets=_WORD_OFFSETS,
     ),
@@ -355,6 +366,7 @@ senses = st.builds(
     Sense,
     identifiers,
     st.lists(st.text(max_size=30), min_size=1, max_size=3).map(tuple),
+    st.just("") | etymologies,
     _LABEL_LISTS,
     _LABEL_LISTS,
     _LABEL_LISTS,

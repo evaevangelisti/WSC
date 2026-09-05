@@ -16,22 +16,20 @@ _FORM_TAGS = frozenset({"form-of", "alt-of"})
 
 def parse_senses(
     raw_senses: list[RawSense],
-    key: str,
+    lemma_id: str,
     lemma: str,
+    etymology: str,
     minimum_year: int | None,
     maximum_year: int | None,
 ) -> list[Sense]:
     """
     Collect the senses of one entry.
 
-    A nested sense is kept alongside its parent, which often carries
-    examples of its own. A sense stating a form names no meaning, and one
-    whose gloss carries markup states it in a shape nobody can read.
-
     Args:
         raw_senses: What wiktextract listed under the entry.
-        key: The headword and its part of speech, opening each identifier.
+        lemma_id: What the entry is named, opening each identifier.
         lemma: The headword, which is no synonym of itself.
+        etymology: Which etymology of the entry the senses sit under.
         minimum_year: Oldest quotation to keep, or None for no bound.
         maximum_year: Newest quotation to keep, or None for no bound.
 
@@ -53,8 +51,9 @@ def parse_senses(
 
         senses.append(
             Sense(
-                sense_id(key, glosses),
+                sense_id(lemma_id, etymology, glosses),
                 glosses,
+                etymology,
                 parse_synonyms(raw_sense.get("synonyms", []), lemma),
                 tuple(raw_sense.get("topics", [])),
                 tags,

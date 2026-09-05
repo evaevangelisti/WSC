@@ -662,7 +662,7 @@ def _variants(
 def _synonyms(
     figures: Figures,
 ) -> Table:
-    """Lay out how many senses are put another way too."""
+    """Lay out how many senses Wiktionary offers another word for."""
     senses = sum(figures.senses.values())
     plain = senses - figures.synonymised
 
@@ -671,13 +671,13 @@ def _synonyms(
         ("Figure", "Senses", "Share"),
         (
             (
-                "Put another way",
+                "With a synonym",
                 count(figures.synonymised),
                 share(figures.synonymised, senses),
             ),
-            ("Put one way alone", count(plain), share(plain, senses)),
+            ("With none", count(plain), share(plain, senses)),
             (
-                "Words per sense that has one",
+                "Synonyms per sense that has one",
                 f"{figures.sense_synonyms / figures.synonymised:.1f}"
                 if figures.synonymised
                 else "",

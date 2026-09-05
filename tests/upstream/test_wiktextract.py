@@ -18,8 +18,8 @@ from typing import IO, Self
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from strategies import languages
 
+from wsc.constants import LANGUAGE
 from wsc.upstream import wiktextract
 
 # One entry, as wiktextract writes it: a JSON object, and so a line opening
@@ -38,6 +38,23 @@ _REPORT_LINES = st.text(
 ).filter(lambda line: not line.startswith("{"))
 
 _SPAWNS = settings(max_examples=10)
+
+
+def _whole(
+    entry: object,
+) -> object:
+    """
+    Keep an entry as it stands, cutting nothing down.
+
+    What to cut is the schema's business, tested elsewhere.
+
+    Args:
+        entry: One entry, as the extraction wrote it.
+
+    Returns:
+        The same entry.
+    """
+    return entry
 
 
 class _MutePopen:
@@ -170,7 +187,7 @@ class TestParse:
         _ = stub_wiktextract(written)
 
         output_path = workspace() / "wiktextract.jsonl.zst"
-        skipped_lines = wiktextract.parse(dump_path, output_path, "en", 1)
+        skipped_lines = wiktextract.parse(dump_path, output_path, 1, _whole)
 
         entries = [line for line in written if line.startswith("{")]
 
@@ -178,25 +195,25 @@ class TestParse:
         assert skipped_lines == len(written) - len(entries)
 
     @_SPAWNS
-    @given(languages, st.integers(min_value=1, max_value=16))
+    @given(st.integers(min_value=1, max_value=16))
     def test_asks_wiktextract_for_what_the_collector_reads(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
         stub_wiktextract: Callable[..., list[list[str]]],
-        language: str,
         processes: int,
     ) -> None:
         """
         The command is compared whole, since it settles what the data is.
 
         The edition and the language to keep are the same one, and --examples,
-        --translations and --linkages are what put those in the output at all.
+        --translations, --linkages and --etymologies are what put those in
+        the output at all.
         """
         commands = stub_wiktextract(['{"word": "bank"}'])
 
         output_path = workspace() / "wiktextract.jsonl.zst"
-        _ = wiktextract.parse(dump_path, output_path, language, processes)
+        _ = wiktextract.parse(dump_path, output_path, processes, _whole)
 
         assert commands == [
             [
@@ -204,12 +221,13 @@ class TestParse:
                 "--out",
                 "-",
                 "--edition",
-                language,
+                LANGUAGE,
                 "--language-code",
-                language,
+                LANGUAGE,
                 "--examples",
                 "--translations",
                 "--linkages",
+                "--etymologies",
                 "--quiet",
                 "--num-processes",
                 str(processes),
@@ -240,8 +258,8 @@ class TestParse:
         _ = wiktextract.parse(
             dump_path,
             directory / "wiktextract.jsonl.zst",
-            "en",
             1,
+            _whole,
             database_path,
         )
 
@@ -260,7 +278,7 @@ class TestParse:
         _ = stub_wiktextract(['{"word": "bank"}'])
 
         output_path = workspace().joinpath(*directories) / "wiktextract.jsonl.zst"
-        _ = wiktextract.parse(dump_path, output_path, "en", 1)
+        _ = wiktextract.parse(dump_path, output_path, 1, _whole)
 
         assert output_path.exists()
 
@@ -278,7 +296,7 @@ class TestParse:
 
         directory = workspace()
         output_path = directory / "wiktextract.jsonl.zst"
-        _ = wiktextract.parse(dump_path, output_path, "en", 1)
+        _ = wiktextract.parse(dump_path, output_path, 1, _whole)
 
         assert list(directory.iterdir()) == [output_path]
 
@@ -300,8 +318,8 @@ class TestParse:
             _ = wiktextract.parse(
                 dump_path,
                 directory / "wiktextract.jsonl.zst",
-                "en",
                 1,
+                _whole,
             )
 
         assert list(directory.iterdir()) == []
@@ -328,8 +346,8 @@ class TestParse:
             _ = wiktextract.parse(
                 dump_path,
                 directory / "wiktextract.jsonl.zst",
-                "en",
                 1,
+                _whole,
             )
 
         assert list(directory.iterdir()) == []
@@ -353,8 +371,8 @@ class TestParse:
             _ = wiktextract.parse(
                 dump_path,
                 directory / "wiktextract.jsonl.zst",
-                "en",
                 1,
+                _whole,
             )
 
         assert list(directory.iterdir()) == []

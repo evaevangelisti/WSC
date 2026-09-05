@@ -1,37 +1,37 @@
 [
   {
     "data": {
-      "item_id": "underbelly.noun.b2365687#2",
+      "item_id": "tongue.noun.e24bb98a#0",
       "source": "spacy",
-      "lemma": "underbelly",
+      "lemma": "tongue",
       "pos": "noun",
-      "target": "underbelly (noun)",
-      "marked": "The documents in this report reveal how such doctrinal disagreements have historically driven wedges within the upper echelons of al-Qa'ida. It is this intra-movement contention that comprises the soft <b>underbelly</b> of violent jihad, which can be exploited to great ends."
+      "target": "tongue (noun)",
+      "marked": "The iron <b>tongue</b> of midnight hath told twelve:"
     }
   },
   {
     "data": {
-      "item_id": "monarcho-fascist.adj.9b40c8e5#0",
+      "item_id": "autistiform.adj.b13930e1#1",
       "source": "spacy",
-      "lemma": "monarcho-fascist",
+      "lemma": "autistiform",
       "pos": "adj",
-      "target": "monarcho-fascist (adj)",
-      "marked": "Yet the leadership of the Greek Communist Party adopted the standpoint that the people was to be disarmed and its weapons handed to the <b>monarcho-fascist</b> reactionaries, making the excuse that monarcho-fascism would not be for a peaceful democratic development, and hence the people's liberation movement would be compelled to settle the question of power the revolutionary way."
+      "target": "autistiform (adj)",
+      "marked": "<b>autistiform</b> conditions"
     }
   },
   {
     "data": {
-      "item_id": "foodful.adj.ca7b70d2#1",
+      "item_id": "creativelike.adj.b5578038#0",
       "source": "spacy",
-      "lemma": "foodful",
+      "lemma": "creativelike",
       "pos": "adj",
-      "target": "foodful (adj)",
-      "marked": "The democratick commonwealth is the foodfull nurſe of ambition. […] Whenever, in ſtates which have had a democratick baſis, they have endeavoured to put reſtraints upon ambition, their methods were as violent, as in the end they were ineffectual; as violent indeed as any the moſt jealous deſpotiſm could invent."
+      "target": "creativelike (adj)",
+      "marked": "My experiments in genetics started over 45 years ago and grew to strengthen my combined beliefs in our creative[-]like abilities, which could be used to aid in improving our longevity and solving the potential hazards we may face in the future."
     }
   },
   {
     "data": {
-      "item_id": "booting.noun.a5ae2bcc#0",
+      "item_id": "booting.noun.1098b42c#0",
       "source": "spacy",
       "lemma": "booting",
       "pos": "noun",
@@ -41,27 +41,27 @@
   },
   {
     "data": {
-      "item_id": "personate.adj.744fac47#0",
+      "item_id": "free.adj.86a16049#1",
       "source": "spacy",
-      "lemma": "personate",
+      "lemma": "free",
       "pos": "adj",
-      "target": "personate (adj)",
-      "marked": "This arrangement is well typified in plants with a <b>personate</b> corolla, such as the toad-flax and snap-dragon, ..."
+      "target": "free (adj)",
+      "marked": "The door finally shook <b>free</b> of its hinges."
     }
   },
   {
     "data": {
-      "item_id": "groin.verb.93f97929#0",
+      "item_id": "make whole.verb.501c918a#2",
       "source": "spacy",
-      "lemma": "groin",
+      "lemma": "make whole",
       "pos": "verb",
-      "target": "groin (verb)",
-      "marked": "Such tunges ſhuld be torne out by the harde rootes,"
+      "target": "make whole (verb)",
+      "marked": "Companies “are increasingly covering more complicated forms of compensation that executives forfeited from prior jobs,” says Hodgson. For instance, Home Depot promised Robert Nardelli half his salary and bonus, subject to certain undisclosed offsets, to make him whole for retirement benefits he earned at GE."
     }
   },
   {
     "data": {
-      "item_id": "top of one's class.adv.c8a7fb29#0",
+      "item_id": "top of one's class.adv.da90b1e8#0",
       "source": "spacy",
       "lemma": "top of one's class",
       "pos": "adv",
@@ -71,7 +71,7 @@
   },
   {
     "data": {
-      "item_id": "eloign.verb.156575ca#0",
+      "item_id": "eloign.verb.e0571e5c#0",
       "source": "spacy",
       "lemma": "eloign",
       "pos": "verb",
@@ -81,17 +81,17 @@
   },
   {
     "data": {
-      "item_id": "bestow.verb.8c7914b4#3",
+      "item_id": "hurtle.verb.ffe3dc69#3",
       "source": "spacy",
-      "lemma": "bestow",
+      "lemma": "hurtle",
       "pos": "verb",
-      "target": "bestow (verb)",
-      "marked": "Harke yee Lords, you ſee I haue giuen her Phiſicke, / And you muſt needs beſtovv her Funerall, […]"
+      "target": "hurtle (verb)",
+      "marked": "Away, thou east wind, snarling like a scold! / […] / Now, like sheep-shearer, from some mountain fold, / Thou hurtlest air with twisting, fleecy flakes / Of martial snow, that like a tyrant bold, / His pleasure in his neighbour's vineyard takes, / Nor careth for the wreck that everywhere he makes."
     }
   },
   {
     "data": {
-      "item_id": "mushroomy.adj.1296800a#0",
+      "item_id": "mushroomy.adj.7d4bf6e4#0",
       "source": "spacy",
       "lemma": "mushroomy",
       "pos": "adj",
@@ -101,17 +101,17 @@
   },
   {
     "data": {
-      "item_id": "accessorial.adj.996f754a#0",
+      "item_id": "sassy.adj.b974943e#5",
       "source": "spacy",
-      "lemma": "accessorial",
+      "lemma": "sassy",
       "pos": "adj",
-      "target": "accessorial (adj)",
-      "marked": "The pope sits upon a draped throne chair, robed in full pontificals, holding the keys in one hand, and giving the benediction with the other. His action is dignified and natural, and the <b>accessorial</b> ornaments about the marble background, and upon the large console which supports the statue, are tasteful, and carefully sculptured."
+      "target": "sassy (adj)",
+      "marked": "But for those of you that don't know, what men really like, is for you to talk to them with a feisty little attitude. You spark their fire when you do that. The feistier and <b>sassier</b> you act, the better."
     }
   },
   {
     "data": {
-      "item_id": "appendagelike.adj.1bbaf9d6#0",
+      "item_id": "appendagelike.adj.9550bfcd#0",
       "source": "spacy",
       "lemma": "appendagelike",
       "pos": "adj",
@@ -121,47 +121,47 @@
   },
   {
     "data": {
-      "item_id": "rut.verb.5ff32bc2#0",
+      "item_id": "rerepeal.verb.9d1376fe#2",
       "source": "spacy",
-      "lemma": "rut",
+      "lemma": "rerepeal",
       "pos": "verb",
-      "target": "rut (verb)",
-      "marked": "“Alfred,” Ragnar continued scathingly. “All he cares about is <b>rutting</b> girls, which is good![…]”"
+      "target": "rerepeal (verb)",
+      "marked": "It also <b>rerepeals</b> a Section that was amended by an Act of the 87th General Assembly after it was repealed by an internal repealer."
     }
   },
   {
     "data": {
-      "item_id": "succour.verb.2fab4f84#0",
+      "item_id": "impale.verb.a489157d#0",
       "source": "spacy",
-      "lemma": "succour",
+      "lemma": "impale",
       "pos": "verb",
-      "target": "succour (verb)",
-      "marked": "By this River ſide in the medovv, there vvere Cotes and Folds for Sheep, […] [B]y theſe VVaters they might be houſed, harboured, ſuckered, and nouriſhed, […]"
+      "target": "impale (verb)",
+      "marked": "[T]he Tovvne is impailed about halfe a mile compaſſe."
     }
   },
   {
     "data": {
-      "item_id": "reverend.adj.49c5419f#0",
+      "item_id": "secular.adj.35436387#0",
       "source": "spacy",
-      "lemma": "reverend",
+      "lemma": "secular",
       "pos": "adj",
-      "target": "reverend (adj)",
-      "marked": "Near-synonyms: reverable, estimable"
+      "target": "secular (adj)",
+      "marked": "Near-synonyms: centurial, centennial"
     }
   },
   {
     "data": {
-      "item_id": "enfeoff.verb.1cd572cc#0",
+      "item_id": "fug.verb.d3963dd5#2",
       "source": "spacy",
-      "lemma": "enfeoff",
+      "lemma": "fug",
       "pos": "verb",
-      "target": "enfeoff (verb)",
-      "marked": "Suppose a man bargains to <b>enfeoff</b> me, as in our case here, and he afterwards <b>enfeoffs</b> another, and then he re-enters [i.e. on the first feoffee] and <b>enfeoffs</b> me, and the other ousts me. Now here the action of covenant may not be brought, because he has at last <b>enfeoffed</b> me according to his covenant, and yet the deceit remains upon which an action may be based. Wherefore it does not always follow that where there is a covenant the action of deceit will not lie."
+      "target": "fug (verb)",
+      "marked": "Tell them every detail, so they can find an Apprentice again, because if they don't, they're <b>fugged</b>.”"
     }
   },
   {
     "data": {
-      "item_id": "well-favouredly.adv.6c3e5ff7#0",
+      "item_id": "well-favouredly.adv.8efacdd4#0",
       "source": "spacy",
       "lemma": "well-favouredly",
       "pos": "adv",
@@ -171,7 +171,7 @@
   },
   {
     "data": {
-      "item_id": "reginally.adv.6f2b51ed#0",
+      "item_id": "reginally.adv.ace4f1bd#0",
       "source": "spacy",
       "lemma": "reginally",
       "pos": "adv",
@@ -181,7 +181,7 @@
   },
   {
     "data": {
-      "item_id": "Bridge End.name.1a81cbaa#0",
+      "item_id": "Bridge End.name.96255f35#0",
       "source": "spacy",
       "lemma": "Bridge End",
       "pos": "name",
@@ -191,7 +191,7 @@
   },
   {
     "data": {
-      "item_id": "whilere.adv.d3073464#1",
+      "item_id": "whilere.adv.10f672b9#1",
       "source": "spacy",
       "lemma": "whilere",
       "pos": "adv",
@@ -201,7 +201,7 @@
   },
   {
     "data": {
-      "item_id": "hammerwise.adv.7a50867e#0",
+      "item_id": "hammerwise.adv.af89adc3#0",
       "source": "spacy",
       "lemma": "hammerwise",
       "pos": "adv",
@@ -211,7 +211,7 @@
   },
   {
     "data": {
-      "item_id": "wax down.verb.12c11384#0",
+      "item_id": "wax down.verb.de5ebe9c#0",
       "source": "spacy",
       "lemma": "wax down",
       "pos": "verb",
@@ -221,17 +221,17 @@
   },
   {
     "data": {
-      "item_id": "Hobbesian.adj.2ccab4ce#0",
+      "item_id": "Blairist.adj.cbb2a925#0",
       "source": "spacy",
-      "lemma": "Hobbesian",
+      "lemma": "Blairist",
       "pos": "adj",
-      "target": "Hobbesian (adj)",
-      "marked": "a cutthroat, <b>Hobbesian</b> environment"
+      "target": "Blairist (adj)",
+      "marked": "The campaigns in Afghanistan and Iraq left him looking like the leader of a <b>Blairist</b> 'front' party as he backed the government on these and other issues."
     }
   },
   {
     "data": {
-      "item_id": "tendentious.adj.3d95bb1e#0",
+      "item_id": "tendentious.adj.1ffa5b50#0",
       "source": "spacy",
       "lemma": "tendentious",
       "pos": "adj",
@@ -241,7 +241,7 @@
   },
   {
     "data": {
-      "item_id": "thick and fast.adv.7d5ccfda#0",
+      "item_id": "thick and fast.adv.447899a6#0",
       "source": "spacy",
       "lemma": "thick and fast",
       "pos": "adv",
@@ -251,7 +251,7 @@
   },
   {
     "data": {
-      "item_id": "clear up.verb.55794d51#0",
+      "item_id": "clear up.verb.0a4200d9#0",
       "source": "spacy",
       "lemma": "clear up",
       "pos": "verb",
@@ -261,17 +261,17 @@
   },
   {
     "data": {
-      "item_id": "ripped.adj.28bfe4dd#0",
+      "item_id": "crisp.adj.8e14e572#1",
       "source": "spacy",
-      "lemma": "ripped",
+      "lemma": "crisp",
       "pos": "adj",
-      "target": "ripped (adj)",
-      "marked": "Stream ripping had a major impact on the global recorded music industry in 2016. This fast growing piracy delivery method witnessed a 60% year-on-year growth globally."
+      "target": "crisp (adj)",
+      "marked": "Common Mother [Nature] […] vvhoſe ſelfeſame Mettle […] Engenders the blacke Toad, and Adder blevv, / The gilded Nevvt, and eyeleſſe venom'd VVorme, / VVith all th'abhorred Births belovv Criſpe Heauen, / VVhereon Hyperions quickning fire doth ſhine: […]"
     }
   },
   {
     "data": {
-      "item_id": "wax down.verb.12c11384#0",
+      "item_id": "wax down.verb.de5ebe9c#0",
       "source": "spacy",
       "lemma": "wax down",
       "pos": "verb",
@@ -281,7 +281,7 @@
   },
   {
     "data": {
-      "item_id": "Oxford spelling.noun.89e70eb5#6",
+      "item_id": "Oxford spelling.noun.e2e82d63#6",
       "source": "spacy",
       "lemma": "Oxford spelling",
       "pos": "noun",
@@ -291,7 +291,7 @@
   },
   {
     "data": {
-      "item_id": "supermonstrously.adv.8d4a0d32#1",
+      "item_id": "supermonstrously.adv.174680ab#1",
       "source": "spacy",
       "lemma": "supermonstrously",
       "pos": "adv",
@@ -301,17 +301,17 @@
   },
   {
     "data": {
-      "item_id": "Kham.name.b68ee695#2",
+      "item_id": "Rebecca.name.ecb59364#1",
       "source": "spacy",
-      "lemma": "Kham",
+      "lemma": "Rebecca",
       "pos": "name",
-      "target": "Kham (name)",
-      "marked": "For Samdhong Rinpoche, this tour around the world is also his last trip as PM, now that his term is over and cannot be extended. He has decided to take his future after March 20 as it comes. If he could do what he wanted, he would go back to his home monastery in <b>Kham</b>, where he has not returned since 1959 and where he used to sit under the trees and meditate as a young man. He said, \"they are wonderful and they are still standing.\""
+      "target": "Rebecca (name)",
+      "marked": "They would say, if 'twas <b>Rebecca</b>,\nThat she is a little Quaker."
     }
   },
   {
     "data": {
-      "item_id": "oarfish.noun.4764282b#0",
+      "item_id": "oarfish.noun.183659df#0",
       "source": "spacy",
       "lemma": "oarfish",
       "pos": "noun",
@@ -321,7 +321,7 @@
   },
   {
     "data": {
-      "item_id": "judging.noun.434e9e07#0",
+      "item_id": "judging.noun.3ab21c4d#0",
       "source": "spacy",
       "lemma": "judging",
       "pos": "noun",
@@ -331,27 +331,27 @@
   },
   {
     "data": {
-      "item_id": "groin.verb.93f97929#0",
+      "item_id": "make whole.verb.501c918a#2",
       "source": "spacy",
-      "lemma": "groin",
+      "lemma": "make whole",
       "pos": "verb",
-      "target": "groin (verb)",
-      "marked": "Such tunges ſhuld be torne out by the harde rootes,"
+      "target": "make whole (verb)",
+      "marked": "Companies “are increasingly covering more complicated forms of compensation that executives forfeited from prior jobs,” says Hodgson. For instance, Home Depot promised Robert Nardelli half his salary and bonus, subject to certain undisclosed offsets, to make him whole for retirement benefits he earned at GE."
     }
   },
   {
     "data": {
-      "item_id": "large and in charge.adj.8cf3a9dc#0",
+      "item_id": "gamboge.adj.08717943#0",
       "source": "spacy",
-      "lemma": "large and in charge",
+      "lemma": "gamboge",
       "pos": "adj",
-      "target": "large and in charge (adj)",
-      "marked": "Garfield Large &amp; in Charge."
+      "target": "gamboge (adj)",
+      "marked": "The cab stopped, and out jumped a man in a coarse Petersham great coat, whitey-brown neckerchief, faded black suit, gambooge-coloured top-boots, and one of those large crowned hats, formerly seldom met with, but now very generally patronised by gentlemen and costermongers."
     }
   },
   {
     "data": {
-      "item_id": "booting.noun.a5ae2bcc#0",
+      "item_id": "booting.noun.1098b42c#0",
       "source": "spacy",
       "lemma": "booting",
       "pos": "noun",
@@ -361,7 +361,7 @@
   },
   {
     "data": {
-      "item_id": "one's head off.adv.778424e5#0",
+      "item_id": "one's head off.adv.7d29d4c7#0",
       "source": "spacy",
       "lemma": "one's head off",
       "pos": "adv",
@@ -371,7 +371,7 @@
   },
   {
     "data": {
-      "item_id": "CID.name.c2fdd012#0",
+      "item_id": "CID.name.412f231b#0",
       "source": "spacy",
       "lemma": "CID",
       "pos": "name",
@@ -381,17 +381,17 @@
   },
   {
     "data": {
-      "item_id": "metatemplate.noun.66f34303#0",
+      "item_id": "workpiece.noun.8247559e#1",
       "source": "spacy",
-      "lemma": "metatemplate",
+      "lemma": "workpiece",
       "pos": "noun",
-      "target": "metatemplate (noun)",
-      "marked": "To index the knowledge base PAR employs meta-templates and super-sets in a corresponding manner."
+      "target": "workpiece (noun)",
+      "marked": "Scantling s[ubstantive] (prescribed dimension of a work[-]piece)."
     }
   },
   {
     "data": {
-      "item_id": "Alexandrine parakeet.noun.b75610c7#2",
+      "item_id": "Alexandrine parakeet.noun.17c4fb98#2",
       "source": "spacy",
       "lemma": "Alexandrine parakeet",
       "pos": "noun",
@@ -401,7 +401,7 @@
   },
   {
     "data": {
-      "item_id": "tagworm.noun.860da369#0",
+      "item_id": "tagworm.noun.ed73d1b2#0",
       "source": "spacy",
       "lemma": "tagworm",
       "pos": "noun",
@@ -411,7 +411,7 @@
   },
   {
     "data": {
-      "item_id": "autobiographicalize.verb.c35be030#1",
+      "item_id": "autobiographicalize.verb.cfdf5aab#1",
       "source": "spacy",
       "lemma": "autobiographicalize",
       "pos": "verb",
@@ -421,17 +421,17 @@
   },
   {
     "data": {
-      "item_id": "Titusville.name.0eac6271#0",
+      "item_id": "Kiwi.name.e6f77a18#0",
       "source": "spacy",
-      "lemma": "Titusville",
+      "lemma": "Kiwi",
       "pos": "name",
-      "target": "Titusville (name)",
-      "marked": "Rockledge's Shanikqua Smith goes for a layup during Tuesday's game against <b>Titusville</b>."
+      "target": "Kiwi (name)",
+      "marked": "At <b>Kiwi</b>, 40 miles from Nelson, eight women installed themselves in the goods shed, taking with them their knitting, and a supply of food and magazines. The demolition crew was unable to pull the building down without injuring them."
     }
   },
   {
     "data": {
-      "item_id": "coreward.adv.8d1c1dcc#0",
+      "item_id": "coreward.adv.13227ee6#0",
       "source": "spacy",
       "lemma": "coreward",
       "pos": "adv",
@@ -441,7 +441,7 @@
   },
   {
     "data": {
-      "item_id": "hammerwise.adv.7a50867e#0",
+      "item_id": "hammerwise.adv.af89adc3#0",
       "source": "spacy",
       "lemma": "hammerwise",
       "pos": "adv",
@@ -451,17 +451,17 @@
   },
   {
     "data": {
-      "item_id": "sunburn.verb.be2d6fc0#1",
+      "item_id": "tickle someone's pickle.verb.088d8ba3#0",
       "source": "spacy",
-      "lemma": "sunburn",
+      "lemma": "tickle someone's pickle",
       "pos": "verb",
-      "target": "sunburn (verb)",
-      "marked": "[…] there is a Country, in the World, call’d Turkey; where Women are secur’d against the Danger of Sun-burning, by being kept out of the open Air, and lock’d up, like other Jewels, in Places where no Mischief can reach ’em."
+      "target": "tickle someone's pickle (verb)",
+      "marked": "Cole slowly put his face into the man's clothes, his own sweat plastering his hair over his brow, a few pubic hairs brushing against his nose. \"That's the way, fairy, tickle my pickle.\""
     }
   },
   {
     "data": {
-      "item_id": "fish kettle.noun.23c4d5d5#0",
+      "item_id": "fish kettle.noun.ff7a2ae1#0",
       "source": "spacy",
       "lemma": "fish kettle",
       "pos": "noun",
@@ -471,7 +471,7 @@
   },
   {
     "data": {
-      "item_id": "Haeju.name.d540d3f8#4",
+      "item_id": "Haeju.name.b75c8179#4",
       "source": "spacy",
       "lemma": "Haeju",
       "pos": "name",
@@ -481,17 +481,17 @@
   },
   {
     "data": {
-      "item_id": "stevedore.noun.49442a3e#0",
+      "item_id": "superabundant number.noun.dcce0b8f#1",
       "source": "spacy",
-      "lemma": "stevedore",
+      "lemma": "superabundant number",
       "pos": "noun",
-      "target": "stevedore (noun)",
-      "marked": "Stowadores."
+      "target": "superabundant number (noun)",
+      "marked": "1) A number n is called superabundant if (σ(n))/n&gt;(σ(m))/m for all m with 1Corollary. Q(x)&gt;c log x log log x/( log log log x)²."
     }
   },
   {
     "data": {
-      "item_id": "a small matter.adv.18f6d8ca#0",
+      "item_id": "a small matter.adv.a41ed9d2#0",
       "source": "spacy",
       "lemma": "a small matter",
       "pos": "adv",
@@ -501,17 +501,17 @@
   },
   {
     "data": {
-      "item_id": "anti-vax.adj.c0413a1a#2",
+      "item_id": "unmastered.adj.c72c0b81#0",
       "source": "spacy",
-      "lemma": "anti-vax",
+      "lemma": "unmastered",
       "pos": "adj",
-      "target": "anti-vax (adj)",
-      "marked": "Donald Trump’s habit of projecting his own failings onto his adversaries reached a new level of absurdity on Labor Day, when he attacked the Democratic ticket of Joe Biden and Kamala Harris for “reckless anti-vaccine rhetoric” and accused them of a position that “undermines science.”"
+      "target": "unmastered (adj)",
+      "marked": "Then way what loſſe your honor may ſuſtaine / If with too credent eare you liſt his ſongs / Or looſe your hart, or your chaſt treaſure open / To his vnmaſtred importunity."
     }
   },
   {
     "data": {
-      "item_id": "fraught.adj.a878ee87#0",
+      "item_id": "fraught.adj.02a3895d#0",
       "source": "spacy",
       "lemma": "fraught",
       "pos": "adj",
@@ -521,27 +521,27 @@
   },
   {
     "data": {
-      "item_id": "monarcho-fascist.adj.9b40c8e5#0",
+      "item_id": "autistiform.adj.b13930e1#1",
       "source": "spacy",
-      "lemma": "monarcho-fascist",
+      "lemma": "autistiform",
       "pos": "adj",
-      "target": "monarcho-fascist (adj)",
-      "marked": "Yet the leadership of the Greek Communist Party adopted the standpoint that the people was to be disarmed and its weapons handed to the <b>monarcho-fascist</b> reactionaries, making the excuse that monarcho-fascism would not be for a peaceful democratic development, and hence the people's liberation movement would be compelled to settle the question of power the revolutionary way."
+      "target": "autistiform (adj)",
+      "marked": "<b>autistiform</b> conditions"
     }
   },
   {
     "data": {
-      "item_id": "cast up one's accounts.verb.ff6b7245#0",
+      "item_id": "aver.verb.fc1c722c#0",
       "source": "spacy",
-      "lemma": "cast up one's accounts",
+      "lemma": "aver",
       "pos": "verb",
-      "target": "cast up one's accounts (verb)",
-      "marked": "He was very careful to cast up his accounts every quarter ; which he did, that he might spend neither more nor less than what he could spend every year."
+      "target": "aver (verb)",
+      "marked": "[…] I return'd with ſimular proofe enough, / To make the Noble Leonatus mad, / By wounding his beleefe in her Renowne, / With tokens thus, and thus: auerring notes / Of Chamber-hanging, Pictures, this her Bracelet / (Oh cunning how I got) nay ſome markes / Of ſecret on her perſon, that he could not / But thinke her bond of Chaſtity quite crack'd, / I hauing tane the forfeyt."
     }
   },
   {
     "data": {
-      "item_id": "Anbu.name.e885079c#0",
+      "item_id": "Anbu.name.9bfed272#0",
       "source": "spacy",
       "lemma": "Anbu",
       "pos": "name",
@@ -551,27 +551,27 @@
   },
   {
     "data": {
-      "item_id": "Bifrost.name.d7926ad4#3",
+      "item_id": "Abram.name.e2434f08#0",
       "source": "spacy",
-      "lemma": "Bifrost",
+      "lemma": "Abram",
       "pos": "name",
-      "target": "Bifrost (name)",
-      "marked": "In W. Petrie's book \"The Story of the Aurora Borealis” (1963) it reads the following: “One can produce arguments that suggest <b>Bifrost</b> was the aurora.\""
+      "target": "Abram (name)",
+      "marked": "And <b>Abram</b> took Sarai his wife, and Lot his brother's son, and all their substance that they had gathered, and the souls that they had gotten in Haran; and they went forth to go into the land of Canaan; and into the land of Canaan they came."
     }
   },
   {
     "data": {
-      "item_id": "empty.verb.88a8ec6c#3",
+      "item_id": "waver.verb.942e8378#2",
       "source": "spacy",
-      "lemma": "empty",
+      "lemma": "waver",
       "pos": "verb",
-      "target": "empty (verb)",
-      "marked": "If the clouds be full of raine, they emptie themselues vpon the earth[…]"
+      "target": "waver (verb)",
+      "marked": "[H]eerein thou vvauereſt and doubteſt."
     }
   },
   {
     "data": {
-      "item_id": "halfheartedly.adv.fa11b0c6#0",
+      "item_id": "halfheartedly.adv.e8601f73#0",
       "source": "spacy",
       "lemma": "halfheartedly",
       "pos": "adv",
@@ -581,7 +581,7 @@
   },
   {
     "data": {
-      "item_id": "Chimay.name.ffaf6cd8#0",
+      "item_id": "Chimay.name.4f0ad669#0",
       "source": "spacy",
       "lemma": "Chimay",
       "pos": "name",
@@ -591,17 +591,17 @@
   },
   {
     "data": {
-      "item_id": "supply.adv.f7ffbbad#3",
+      "item_id": "hand over fist.adv.6de11404#4",
       "source": "spacy",
-      "lemma": "supply",
+      "lemma": "hand over fist",
       "pos": "adv",
-      "target": "supply (adv)",
-      "marked": "Grigory hesitantly took her in his arms to kiss her, but she held him off, bent <b>supply</b> backwards and shot a frightened glance at the windows.\n'They'll see!'\n'Let them!'\n'I'd be ashamed—'"
+      "target": "hand over fist (adv)",
+      "marked": "Why, those Dalmatians are showing Pajaro apples on the South African market right now, and coining money out of it <b>hand over fist</b>."
     }
   },
   {
     "data": {
-      "item_id": "bandura.noun.f9aac5f5#1",
+      "item_id": "bandura.noun.264a5bbe#1",
       "source": "spacy",
       "lemma": "bandura",
       "pos": "noun",
@@ -611,17 +611,17 @@
   },
   {
     "data": {
-      "item_id": "Mason-Dixon Line.name.842d80fb#1",
+      "item_id": "Sue, Grabbit and Runne.name.ecc2f585#4",
       "source": "spacy",
-      "lemma": "Mason-Dixon Line",
+      "lemma": "Sue, Grabbit and Runne",
       "pos": "name",
-      "target": "Mason-Dixon Line (name)",
-      "marked": "The Virginia gentlemen offer to divide exactly the 40th degree with us, […] Perhaps we would be as well off with Mason and Dixon's''' line continued."
+      "target": "Sue, Grabbit and Runne (name)",
+      "marked": "A rather pathetic pseudo-apology you might think; as Milne had no evidence for his damaging accusation, he was lucky Douglas-Home did not set Messrs Sue, Grabbit &amp; Runne on him."
     }
   },
   {
     "data": {
-      "item_id": "akiosexual.adj.829dec1f#3",
+      "item_id": "akiosexual.adj.ec88324c#3",
       "source": "spacy",
       "lemma": "akiosexual",
       "pos": "adj",
@@ -631,7 +631,7 @@
   },
   {
     "data": {
-      "item_id": "natively.adv.443666ec#0",
+      "item_id": "natively.adv.3bd7f0c3#0",
       "source": "spacy",
       "lemma": "natively",
       "pos": "adv",
@@ -641,7 +641,7 @@
   },
   {
     "data": {
-      "item_id": "Kosong.name.c633be32#0",
+      "item_id": "Kosong.name.29d8f54c#0",
       "source": "spacy",
       "lemma": "Kosong",
       "pos": "name",
@@ -651,17 +651,17 @@
   },
   {
     "data": {
-      "item_id": "cocky.noun.10afe894#4",
+      "item_id": "maim.noun.9b4a7481#0",
       "source": "spacy",
-      "lemma": "cocky",
+      "lemma": "maim",
       "pos": "noun",
-      "target": "cocky (noun)",
-      "marked": "\"Go on board that little cockleshell of yourn?\"—pointing to the splendid yacht—\"not if I knows it, my cockeys! This old oss is spry to when he is well off—so make tracks and be off, before you gits this old coon's dander up."
+      "target": "maim (noun)",
+      "marked": "it ſequeſtred me from the woonted meanes of my maintenance, which is as great a maime to any mans happineſſe as can bee feared from the hands of miſerie, or the deepe pit of diſpaire wherinto I was falne, beyond my greateſt friendes reach to recouer mee"
     }
   },
   {
     "data": {
-      "item_id": "clear up.verb.55794d51#0",
+      "item_id": "clear up.verb.0a4200d9#0",
       "source": "spacy",
       "lemma": "clear up",
       "pos": "verb",
@@ -671,7 +671,7 @@
   },
   {
     "data": {
-      "item_id": "epitomize.verb.37ad8c3d#0",
+      "item_id": "epitomize.verb.a2f06a14#0",
       "source": "spacy",
       "lemma": "epitomize",
       "pos": "verb",
@@ -681,7 +681,7 @@
   },
   {
     "data": {
-      "item_id": "convellent.adj.923f43d8#0",
+      "item_id": "convellent.adj.0b65c462#0",
       "source": "spacy",
       "lemma": "convellent",
       "pos": "adj",
@@ -691,7 +691,7 @@
   },
   {
     "data": {
-      "item_id": "Altyn Tagh.name.af41f3ab#2",
+      "item_id": "Altyn Tagh.name.83daa800#2",
       "source": "spacy",
       "lemma": "Altyn Tagh",
       "pos": "name",
@@ -701,7 +701,7 @@
   },
   {
     "data": {
-      "item_id": "vaudeville.noun.7e24374b#0",
+      "item_id": "vaudeville.noun.024aee47#0",
       "source": "spacy",
       "lemma": "vaudeville",
       "pos": "noun",
@@ -711,77 +711,77 @@
   },
   {
     "data": {
-      "item_id": "green sea.noun.e0ae5a82#0",
+      "item_id": "sloebush.noun.e90d1882#1",
       "source": "spacy",
-      "lemma": "green sea",
+      "lemma": "sloebush",
       "pos": "noun",
-      "target": "green sea (noun)",
-      "marked": "We're taking <b>green seas</b> aboard."
+      "target": "sloebush (noun)",
+      "marked": "Now raspberries grow above me, On a rocking twig of a <b>sloebush</b> a robin chirps."
     }
   },
   {
     "data": {
-      "item_id": "Boötes.name.9235a8a0#0",
+      "item_id": "Son of the Morning Star.name.3097b8ff#1",
       "source": "spacy",
-      "lemma": "Boötes",
+      "lemma": "Son of the Morning Star",
       "pos": "name",
-      "target": "Boötes (name)",
-      "marked": "when my name and honor ſhall be ſpread,\nAs far as Boreas claps his braſen wings,\nOr faire Botëes ſends his cheerefull light."
+      "target": "Son of the Morning Star (name)",
+      "marked": "He [Hunting Horse] pictured a snorting, wild buffalo he had cornered in a shallow cave during his last hunt with “Sun^([sic])-Of-The-Morning-Star.”"
     }
   },
   {
     "data": {
-      "item_id": "ordinator.noun.66b00aad#2",
+      "item_id": "undertranslation.noun.018906b3#2",
       "source": "spacy",
-      "lemma": "ordinator",
+      "lemma": "undertranslation",
       "pos": "noun",
-      "target": "ordinator (noun)",
-      "marked": "God is <b>ordinator</b> no less than creator; if he is naturarum bonarum creator, he is also malarum uoluntatum <b>ordinator</b>; if human wills make a bad use of good things , he in turn makes a good use even of evil wills."
+      "target": "undertranslation (noun)",
+      "marked": "Overtranslation and <b>undertranslation</b> are standard translation mistakes resulting from improper T.U. delineation:"
     }
   },
   {
     "data": {
-      "item_id": "overrake.verb.d6592545#5",
+      "item_id": "enjoy.verb.d232a485#0",
       "source": "spacy",
-      "lemma": "overrake",
+      "lemma": "enjoy",
       "pos": "verb",
-      "target": "overrake (verb)",
-      "marked": "<b>Overraking</b> will cause the surface to form a crust, which may not drain well."
+      "target": "enjoy (verb)",
+      "marked": "Never did thy Beautie[…]so enflame my sense With ardor to <b>enjoy</b> thee."
     }
   },
   {
     "data": {
-      "item_id": "oft.adv.ad5bffb3#4",
+      "item_id": "hence.adv.400f2f40#0",
       "source": "spacy",
-      "lemma": "oft",
+      "lemma": "hence",
       "pos": "adv",
-      "target": "oft (adv)",
-      "marked": "Now, the English-language Wikipedia does make an attempt to document knowledge of the whole world, not just the English-speaking world. At the same time, it admits in its own <b>oft</b>-cited “essays” that it has a pro-Western “systemic bias”; this is borne out by studies cited in the Wikipedia article about itself."
+      "target": "hence (adv)",
+      "marked": "A year <b>hence</b> it will be forgotten."
     }
   },
   {
     "data": {
-      "item_id": "waist-high.adj.a5acad1b#0",
+      "item_id": "rugless.adj.244113b3#0",
       "source": "spacy",
-      "lemma": "waist-high",
+      "lemma": "rugless",
       "pos": "adj",
-      "target": "waist-high (adj)",
-      "marked": "Near-synonym: waist-deep"
+      "target": "rugless (adj)",
+      "marked": "Near-synonyms: carpetless, uncarpeted"
     }
   },
   {
     "data": {
-      "item_id": "take one's half out of the middle.verb.95014820#2",
+      "item_id": "piss in someone's pocket.verb.ff363041#0",
       "source": "spacy",
-      "lemma": "take one's half out of the middle",
+      "lemma": "piss in someone's pocket",
       "pos": "verb",
-      "target": "take one's half out of the middle (verb)",
-      "marked": "In fact, I have heard people say they didn't believe what some pastor said, because they did not live their three score and ten years. So your 66.2 is a bit shy. Satan is still taking his half out of the middle."
+      "target": "piss in someone's pocket (verb)",
+      "marked": "‘Don′t piss in my pocket, son. How would you know what I used to be?’ But he was flattered."
     }
   },
   {
     "data": {
-      "item_id": "bite one's lip.verb.7bab9c56#1",
+      "item_id": "bite one's lip.verb.9bb0fd3e#1",
       "source": "spacy",
       "lemma": "bite one's lip",
       "pos": "verb",
@@ -791,7 +791,7 @@
   },
   {
     "data": {
-      "item_id": "hexachromatic.adj.8adf2a8c#3",
+      "item_id": "hexachromatic.adj.a833fb4b#3",
       "source": "spacy",
       "lemma": "hexachromatic",
       "pos": "adj",
@@ -801,7 +801,7 @@
   },
   {
     "data": {
-      "item_id": "sable.adj.a6fae30a#3",
+      "item_id": "sable.adj.f5864bda#3",
       "source": "spacy",
       "lemma": "sable",
       "pos": "adj",
@@ -811,7 +811,7 @@
   },
   {
     "data": {
-      "item_id": "king of all one surveys.noun.c21a4a3b#5",
+      "item_id": "king of all one surveys.noun.172e7e68#5",
       "source": "spacy",
       "lemma": "king of all one surveys",
       "pos": "noun",
@@ -821,17 +821,17 @@
   },
   {
     "data": {
-      "item_id": "batman.noun.f050cbfd#0",
+      "item_id": "bovine.noun.49b00ae9#0",
       "source": "spacy",
-      "lemma": "batman",
+      "lemma": "bovine",
       "pos": "noun",
-      "target": "batman (noun)",
-      "marked": "Euery bateman [in Bagdad] maketh 7. pound and 5. ounces English waight."
+      "target": "bovine (noun)",
+      "marked": "Near-synonyms: cattle beast, cattlebeast, cow"
     }
   },
   {
     "data": {
-      "item_id": "Nicolae Bălcescu.name.1d739128#7",
+      "item_id": "Nicolae Bălcescu.name.b6006f90#7",
       "source": "spacy",
       "lemma": "Nicolae Bălcescu",
       "pos": "name",
@@ -841,17 +841,17 @@
   },
   {
     "data": {
-      "item_id": "diamond.noun.b4cfcddc#1",
+      "item_id": "outdoors.noun.498c1185#0",
       "source": "spacy",
-      "lemma": "diamond",
+      "lemma": "outdoors",
       "pos": "noun",
-      "target": "diamond (noun)",
-      "marked": "Although there are dozens of different types of gems, among the best known and most important are <b>diamond</b>, ruby and sapphire, emerald and other gem forms of the mineral beryl, chrysoberyl, tanzanite, tsavorite, topaz and jade."
+      "target": "outdoors (noun)",
+      "marked": "He won't leave his house: he's afraid of the <b>outdoors</b>."
     }
   },
   {
     "data": {
-      "item_id": "Xin'an.name.4b34c223#1",
+      "item_id": "Xin'an.name.c642391c#1",
       "source": "spacy",
       "lemma": "Xin'an",
       "pos": "name",
@@ -861,7 +861,7 @@
   },
   {
     "data": {
-      "item_id": "Haeju.name.d540d3f8#4",
+      "item_id": "Haeju.name.b75c8179#4",
       "source": "spacy",
       "lemma": "Haeju",
       "pos": "name",
@@ -871,27 +871,27 @@
   },
   {
     "data": {
-      "item_id": "incise.verb.a4abcfb5#0",
+      "item_id": "shuffle.verb.075b84f2#1",
       "source": "spacy",
-      "lemma": "incise",
+      "lemma": "shuffle",
       "pos": "verb",
-      "target": "incise (verb)",
-      "marked": "The executioner’s blade is <b>incised</b> with Christ’s crown of thorns, and with the words of a prayer."
+      "target": "shuffle (verb)",
+      "marked": "I <b>shuffled</b> my feet in embarrassment."
     }
   },
   {
     "data": {
-      "item_id": "Pocket.name.2507ba88#1",
+      "item_id": "Slavi.name.600b10a7#1",
       "source": "spacy",
-      "lemma": "Pocket",
+      "lemma": "Slavi",
       "pos": "name",
-      "target": "Pocket (name)",
-      "marked": "Pollyanna <b>Pocket</b> was small, with long floppy ears and a tail that coiled upwards in a little ringlet. She was a bouncy, happy young dog, who frolicked all day"
+      "target": "Slavi (name)",
+      "marked": "Church functions such as the Moravian Song Fests and the Russian Orthodox Christmas (\"<b>Slavi</b>\") provide opportunities for social gatherings and visiting among residents of the communities."
     }
   },
   {
     "data": {
-      "item_id": "Dagu.name.dc4e4353#1",
+      "item_id": "Dagu.name.3d811fc4#1",
       "source": "spacy",
       "lemma": "Dagu",
       "pos": "name",
@@ -901,27 +901,27 @@
   },
   {
     "data": {
-      "item_id": "cast up one's accounts.verb.ff6b7245#0",
+      "item_id": "aver.verb.fc1c722c#0",
       "source": "spacy",
-      "lemma": "cast up one's accounts",
+      "lemma": "aver",
       "pos": "verb",
-      "target": "cast up one's accounts (verb)",
-      "marked": "He was very careful to cast up his accounts every quarter ; which he did, that he might spend neither more nor less than what he could spend every year."
+      "target": "aver (verb)",
+      "marked": "[…] I return'd with ſimular proofe enough, / To make the Noble Leonatus mad, / By wounding his beleefe in her Renowne, / With tokens thus, and thus: auerring notes / Of Chamber-hanging, Pictures, this her Bracelet / (Oh cunning how I got) nay ſome markes / Of ſecret on her perſon, that he could not / But thinke her bond of Chaſtity quite crack'd, / I hauing tane the forfeyt."
     }
   },
   {
     "data": {
-      "item_id": "feel.verb.f5e1ffc1#0",
+      "item_id": "vociferate.verb.f6142852#1",
       "source": "spacy",
-      "lemma": "feel",
+      "lemma": "vociferate",
       "pos": "verb",
-      "target": "feel (verb)",
-      "marked": "He <b>felt</b> (about) for the light switch in the dark."
+      "target": "vociferate (verb)",
+      "marked": "He then began to <b>vociferate</b> pretty loudly, and at last an old woman, opening an upper casement, asked, Who they were, and what they wanted?"
     }
   },
   {
     "data": {
-      "item_id": "volubly.adv.12a926f4#0",
+      "item_id": "volubly.adv.f8d16223#0",
       "source": "spacy",
       "lemma": "volubly",
       "pos": "adv",
@@ -931,7 +931,7 @@
   },
   {
     "data": {
-      "item_id": "startup.noun.727cb50c#1",
+      "item_id": "startup.noun.8fb364c2#1",
       "source": "spacy",
       "lemma": "startup",
       "pos": "noun",
@@ -941,17 +941,17 @@
   },
   {
     "data": {
-      "item_id": "plonk.adv.88454302#0",
+      "item_id": "electronically.adv.cb845fe9#0",
       "source": "spacy",
-      "lemma": "plonk",
+      "lemma": "electronically",
       "pos": "adv",
-      "target": "plonk (adv)",
-      "marked": "He dropped his bag of tools <b>plonk</b> in the middle of the table."
+      "target": "electronically (adv)",
+      "marked": "In America alone, people spent $170 billion on “direct marketing”—junk mail of both the physical and electronic varieties—last year. Yet of those who received unsolicited adverts through the post, only 3% bought anything as a result. If the bumf arrived <b>electronically</b>, the take-up rate was 0.1%. And for online adverts the “conversion” into sales was a minuscule 0.01%."
     }
   },
   {
     "data": {
-      "item_id": "Sijiangou.name.7d17b02e#0",
+      "item_id": "Sijiangou.name.be20da04#0",
       "source": "spacy",
       "lemma": "Sijiangou",
       "pos": "name",
@@ -961,7 +961,7 @@
   },
   {
     "data": {
-      "item_id": "down on one's luck.adj.687c5004#4",
+      "item_id": "down on one's luck.adj.c93aa88d#4",
       "source": "spacy",
       "lemma": "down on one's luck",
       "pos": "adj",
@@ -971,17 +971,17 @@
   },
   {
     "data": {
-      "item_id": "sieve.verb.9b2f6974#0",
+      "item_id": "lust after.verb.d6d6a9ae#1",
       "source": "spacy",
-      "lemma": "sieve",
+      "lemma": "lust after",
       "pos": "verb",
-      "target": "sieve (verb)",
-      "marked": "Serpulorbis grandis feeds on plankton that it seives ^([sic]) from the water like a clam does."
+      "target": "lust after (verb)",
+      "marked": "But I ſay vnto you / that whoſoever eyeth a wyfe / luſtynge affter her / hathe committed advoutrie with her alredy in his hert."
     }
   },
   {
     "data": {
-      "item_id": "unhonestly.adv.92793712#1",
+      "item_id": "unhonestly.adv.e94dcaac#1",
       "source": "spacy",
       "lemma": "unhonestly",
       "pos": "adv",
@@ -991,27 +991,27 @@
   },
   {
     "data": {
-      "item_id": "underlive.verb.5be9b0d0#1",
+      "item_id": "personate.verb.1c836c88#0",
       "source": "spacy",
-      "lemma": "underlive",
+      "lemma": "personate",
       "pos": "verb",
-      "target": "underlive (verb)",
-      "marked": "The Chinese go to stay. A few rebuffs do not dishearten them. Knowing their capacity to <b>underlive</b> and undersell their competitors, they are tenacious in the extreme."
+      "target": "personate (verb)",
+      "marked": "I vvill drop in his vvay ſome obſcure Epiſtles of loue, vvherein by the colour of his beard, the ſhape of his legge, the manner of his gate, the expreſſure of his eye, forehead, and complection, he ſhall finde himſelfe moſt feelingly <b>perſonated</b>."
     }
   },
   {
     "data": {
-      "item_id": "Pyongan.name.7221f389#5",
+      "item_id": "Yellow River.name.1eb7d0c6#0",
       "source": "spacy",
-      "lemma": "Pyongan",
+      "lemma": "Yellow River",
       "pos": "name",
-      "target": "Pyongan (name)",
-      "marked": "A series of peasant uprisings begun in 889 in the Korean Peninsula, which ultimately led to the downfall of the Unified Silla, was one of the early cases. Peasant rebellions of 1172 in Pyŏngan Province, the revolt of Mangi and Mangsoi in 1176 in Kongju, Ch'ungch'ŏng Province, the insurrections of Kim Sami and Hyosim in 1193 in Kyŏngsang Province and the peasant rebellion in 1199 in Myŏngju (Kangnung), Kangwŏn Province were notable during the Koryŏ Dynasty."
+      "target": "Yellow River (name)",
+      "marked": "That Riuer of Nanquin which I called (Yamſu or) Ianſu, the ſonne of the Sea, goeth Northward to Nanquin, and then returning ſomewhat Southward, runneth into the Sea with great force; fortie myles from which it paſſeth by Nanquin. And that from hence to Pequin there might bee paſſage by Riuers, the Kings of China haue deriued a large Channell from this to another Riuer, called the Yellow Riuer, ſuch being the colour of that troubled water. This is the other famous Riuer of that Kingdome, in greatneſſe and note, which ariſesth without the Kingdome to the Weſt, out of the Hill Cunlun, conjectured to bee the ſame whence Ganges ariſeth, or one neere to it."
     }
   },
   {
     "data": {
-      "item_id": "shorthandedly.adv.67c71f45#0",
+      "item_id": "shorthandedly.adv.101b0fff#0",
       "source": "spacy",
       "lemma": "shorthandedly",
       "pos": "adv",
@@ -1021,7 +1021,7 @@
   },
   {
     "data": {
-      "item_id": "Paradeisos of Pammenes.name.9db94801#0",
+      "item_id": "Paradeisos of Pammenes.name.1b664a6d#0",
       "source": "spacy",
       "lemma": "Paradeisos of Pammenes",
       "pos": "name",
@@ -1031,17 +1031,17 @@
   },
   {
     "data": {
-      "item_id": "filmology.name.622241c9#0",
+      "item_id": "Rudolph the Red-Nosed Reindeer.name.40e02f96#4",
       "source": "spacy",
-      "lemma": "filmology",
+      "lemma": "Rudolph the Red-Nosed Reindeer",
       "pos": "name",
-      "target": "filmology (name)",
-      "marked": "[title] International Bureau of <b>Filmology</b> ¶ When the International Film Congress met in Paris in 1947 a plan was approved for the organization of a “Bureau International de Filmologie.”"
+      "target": "Rudolph the Red-Nosed Reindeer (name)",
+      "marked": "These days, you see more of those giant inflatable Frosty the Snowmen and <b>Rudolph the Red-Nosed Reindeers</b>."
     }
   },
   {
     "data": {
-      "item_id": "inseparably.adv.fb9e058a#0",
+      "item_id": "inseparably.adv.c3bb9e61#0",
       "source": "spacy",
       "lemma": "inseparably",
       "pos": "adv",
@@ -1051,7 +1051,7 @@
   },
   {
     "data": {
-      "item_id": "antiaphrodisiac.adj.1fd5c610#0",
+      "item_id": "antiaphrodisiac.adj.5617609a#0",
       "source": "spacy",
       "lemma": "antiaphrodisiac",
       "pos": "adj",
@@ -1061,17 +1061,17 @@
   },
   {
     "data": {
-      "item_id": "well-nigh.adv.dd11cfe5#0",
+      "item_id": "with one's eyes open.adv.512b6b0b#0",
       "source": "spacy",
-      "lemma": "well-nigh",
+      "lemma": "with one's eyes open",
       "pos": "adv",
-      "target": "well-nigh (adv)",
-      "marked": "The ſame ſo ſore annoyed has the Knight, / That welnigh choked with the deadly ſtinke, / His forces faile, ne can no lenger fight."
+      "target": "with one's eyes open (adv)",
+      "marked": "Those banks, they're big boys. They went into this deal with their eyes open. That's what reserve requirements are for."
     }
   },
   {
     "data": {
-      "item_id": "autobiographicalize.verb.c35be030#1",
+      "item_id": "autobiographicalize.verb.cfdf5aab#1",
       "source": "spacy",
       "lemma": "autobiographicalize",
       "pos": "verb",
@@ -1081,7 +1081,7 @@
   },
   {
     "data": {
-      "item_id": "sacred ibis.noun.7388d92a#0",
+      "item_id": "sacred ibis.noun.9ecf1f8d#0",
       "source": "spacy",
       "lemma": "sacred ibis",
       "pos": "noun",
@@ -1091,7 +1091,7 @@
   },
   {
     "data": {
-      "item_id": "akiosexual.adj.829dec1f#3",
+      "item_id": "akiosexual.adj.ec88324c#3",
       "source": "spacy",
       "lemma": "akiosexual",
       "pos": "adj",

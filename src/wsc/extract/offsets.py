@@ -38,8 +38,7 @@ def open_locator(
     """
     Load the search the sentences are read by.
 
-    Each analyser is imported where it is loaded, so that naming one does not
-    pay for the others. Stanza runs one process whatever it is asked for.
+    Stanza runs one process whatever it is asked for.
 
     Args:
         engine: Which analyser to read with.

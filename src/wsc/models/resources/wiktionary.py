@@ -61,6 +61,8 @@ class Sense:
     Attributes:
         id: Identifies the sense, such as bank.noun.3f9c1a2b.
         glosses: The gloss chain, outermost first. Never empty.
+        etymology: Which etymology of the entry it belongs to, empty where
+        the page states only one.
         synonyms: Other words standing for this meaning alone.
         topics: Subject fields the sense belongs to, such as mathematics.
         tags: Labels of grammar and register, such as transitive or obsolete.
@@ -71,6 +73,7 @@ class Sense:
 
     id: str
     glosses: tuple[str, ...]
+    etymology: str = ""
     synonyms: tuple[str, ...] = ()
     topics: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
@@ -105,8 +108,11 @@ class Lemma:
     """
     A written form with a part of speech.
 
+    Wiktionary splits an entry by etymology, which the senses carry
+    instead.
+
     Attributes:
-        id: Identifies the entry, such as bank.noun.7d20e4c8.
+        id: Identifies the entry, such as bank.noun.
         lemma: The headword.
         pos: Its part of speech.
         variants: How else the lemma is written, from the entries stating

@@ -2,23 +2,21 @@
 Extraction of lemmas from wiktextract output.
 """
 
-import gzip
-import json
 from collections.abc import Iterator, Sequence
-from compression import zstd
 from dataclasses import replace
 from pathlib import Path
-from typing import IO, cast
 
 from kwic import Locator, Query
 from tqdm import tqdm
 
-from ...models import POS, Lemma
+from ...constants import LANGUAGE
+from ...models import POS, Lemma, Translations
 from ..offsets import build_query, find_word_offsets
+from .entries import read_entries
 from .identifiers import lemma_id
+from .merge import merge_lemmas
 from .parts import (
     Variants,
-    alternative_forms,
     gather_variants,
     parse_forms,
     parse_senses,
@@ -42,24 +40,23 @@ class WiktionaryExtractor:
 
     def __init__(
         self,
-        language: str,
         allowed_pos: frozenset[POS] | None,
         minimum_year: int | None,
         maximum_year: int | None,
         locator: Locator,
+        off_page_translations: dict[str, Translations] | None = None,
     ) -> None:
         """
         Set the filters every extraction will answer to.
 
         Args:
-            language: Wiktionary's code for the language to read, such as en.
             allowed_pos: Parts of speech to keep, or None for every known one.
             minimum_year: Oldest quotation to keep, or None for no bound.
             maximum_year: Newest quotation to keep, or None for no bound.
             locator: The search the lemma is located with.
+            off_page_translations: What each entry is translated by elsewhere, or None
+            where the dump was not walked for it.
         """
-        self._language: str = language
-
         self._allowed_pos: frozenset[POS] | None = allowed_pos
 
         self._minimum_year: int | None = minimum_year
@@ -67,55 +64,9 @@ class WiktionaryExtractor:
 
         self._locator: Locator = locator
 
-    @staticmethod
-    def _open(
-        input_path: Path,
-    ) -> IO[str]:
-        """
-        Open a wiktextract file, decompressing it if need be.
-
-        Args:
-            input_path: The file to read.
-
-        Returns:
-            The open file, in text mode.
-        """
-        match input_path.suffix:
-            case ".zst":
-                return zstd.open(input_path, "rt", encoding="utf-8")
-
-            case ".gz":
-                return gzip.open(input_path, "rt", encoding="utf-8")
-
-            case _:
-                return input_path.open(encoding="utf-8")
-
-    def _read_entries(
-        self,
-        input_path: Path,
-        description: str,
-    ) -> Iterator[RawEntry]:
-        """
-        Walk the entries of a wiktextract file, passing over what is not one.
-
-        Args:
-            input_path: The wiktextract file to read, compressed or not.
-            description: What the progress bar says the pass is doing.
-
-        Yields:
-            One entry per line that holds a whole one.
-        """
-        with self._open(input_path) as file:
-            for line in tqdm(file, desc=description, unit=" entry"):
-                # wiktextract carries its reporting among the entries.
-                if not line.startswith("{"):
-                    continue
-
-                try:
-                    yield cast(RawEntry, json.loads(line))
-                except json.JSONDecodeError:
-                    # A dump cut short leaves an entry that opens and no more.
-                    continue
+        self._off_page_translations: dict[str, Translations] = (
+            off_page_translations or {}
+        )
 
     def _parse_entry(
         self,
@@ -127,9 +78,6 @@ class WiktionaryExtractor:
         """
         Read one entry into a lemma, or into nothing where it defines none.
 
-        The entry is named after the meanings it holds, so that a page
-        reordered upstream reads back under the identifier it had.
-
         Args:
             entry: The entry, as wiktextract wrote it.
             lemma: The headword.
@@ -140,12 +88,13 @@ class WiktionaryExtractor:
         Returns:
             The lemma, or None where no sense of it survived the filters.
         """
-        key = f"{lemma}.{pos}"
+        entry_id = lemma_id(lemma, pos)
 
         senses = parse_senses(
             entry.get("senses", []),
-            key,
+            entry_id,
             lemma,
+            entry.get("etymology_number", ""),
             self._minimum_year,
             self._maximum_year,
         )
@@ -153,13 +102,15 @@ class WiktionaryExtractor:
             return None
 
         return Lemma(
-            lemma_id(key, (sense.id for sense in senses)),
+            entry_id,
             lemma,
             pos,
-            variants.get((lemma, pos), frozenset())
-            | alternative_forms(entry.get("forms", []), lemma),
+            variants.get((lemma, pos), frozenset()),
             senses,
-            parse_translations(entry.get("translations", [])),
+            parse_translations(
+                entry.get("translations", []),
+                self._off_page_translations.get(entry_id),
+            ),
         )
 
     def _read_lemmas(
@@ -178,9 +129,9 @@ class WiktionaryExtractor:
             One lemma per entry with a part of speech we keep and a sense,
             and what its sentences are to be searched for.
         """
-        for entry in self._read_entries(input_path, input_path.name):
+        for entry in read_entries(input_path, input_path.name):
             # A dump holds every language Wiktionary describes.
-            if entry.get("lang_code") != self._language:
+            if entry.get("lang_code") != LANGUAGE:
                 continue
 
             lemma = entry.get("word", "").strip()
@@ -262,19 +213,29 @@ class WiktionaryExtractor:
         """
         Read the lemmas of a wiktextract file, located in what attests them.
 
-        The file is walked twice: an inflection sits on a page of its own and
-        points back at the lemma, which may be anywhere in it. Every entry is
-        then held while the search reads the sentences of all of them.
+        Walked twice, then held while sentences are read.
 
         Args:
             input_path: The wiktextract file to read, compressed or not.
 
         Yields:
-            One lemma per entry with a part of speech we keep and a sense.
+            One lemma per headword and part of speech we keep, carrying the
+            senses of every etymology the page states.
         """
         variants = gather_variants(
-            self._read_entries(input_path, _GATHERING_VARIANTS),
-            self._language,
+            read_entries(
+                input_path,
+                _GATHERING_VARIANTS,
+            ),
         )
 
-        yield from self._locate(list(self._read_lemmas(input_path, variants)))
+        yield from self._locate(
+            list(
+                merge_lemmas(
+                    self._read_lemmas(
+                        input_path,
+                        variants,
+                    )
+                )
+            )
+        )

@@ -8,6 +8,7 @@
 :hidden:
 
 wiktionary/index
+dump/index
 wordnet
 offsets
 ```

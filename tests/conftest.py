@@ -5,6 +5,7 @@ A feature is exercised from outside, over what the generators draw, and the
 test tree mirrors the package.
 """
 
+import bz2
 import gzip
 import json
 from collections.abc import Callable, Iterable
@@ -13,12 +14,13 @@ from itertools import count
 from pathlib import Path
 
 import pytest
-from documents import WORDNET, lexicon
+from documents import WORDNET, dump, lexicon
 from engines import WhitespaceEngine
 from hypothesis import HealthCheck, settings
 from kwic import Locator
 from strategies import RawJson
 
+from wsc.extract import write_off_page_translations
 from wsc.upstream import cache
 
 # A property reaching the disk is timed by the machine it runs on, and the
@@ -97,17 +99,19 @@ def fetch_dump() -> Callable[..., Path]:
     Stand in for a finished fetch, without the network.
 
     Returns:
-        A builder placing a dump where the fetch command would have.
+        A builder placing a dump where the fetch command would have. It holds
+        a whole one, since a parse goes on to walk it for the translations
+        Wiktionary keeps away from the entry.
     """
 
     def build(
         cache_dir: Path,
-        language: str = "en",
         date: str = "20260801",
+        pages: Iterable[str] = (),
     ) -> Path:
-        path = cache.dump_dir(cache_dir, language, date) / cache.DUMP_NAME
+        path = cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
         path.parent.mkdir(parents=True, exist_ok=True)
-        _ = path.write_bytes(b"a dump")
+        _ = path.write_bytes(bz2.compress(dump(*pages).encode()))
 
         return path
 
@@ -187,14 +191,14 @@ def parse_dump(
     def build(
         cache_dir: Path,
         entries: Iterable[RawJson],
-        language: str = "en",
         date: str = "20260801",
     ) -> Path:
-        _ = fetch_dump(cache_dir, language, date)
+        _ = fetch_dump(cache_dir, date)
 
-        path = cache.dump_dir(cache_dir, language, date) / cache.WIKTEXTRACT_NAME
+        dump_dir = cache.dump_dir(cache_dir, date)
+        write_off_page_translations(dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME, {})
 
-        return write_entries(path, entries)
+        return write_entries(dump_dir / cache.WIKTEXTRACT_NAME, entries)
 
     return build
 

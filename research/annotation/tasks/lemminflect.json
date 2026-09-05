@@ -1,7 +1,7 @@
 [
   {
     "data": {
-      "item_id": "juju.noun.51999fff#0",
+      "item_id": "juju.noun.6c6e914d#0",
       "source": "lemminflect",
       "lemma": "juju",
       "pos": "noun",
@@ -11,7 +11,7 @@
   },
   {
     "data": {
-      "item_id": "longeve.adj.ff277000#3",
+      "item_id": "longeve.adj.c5c47361#3",
       "source": "lemminflect",
       "lemma": "longeve",
       "pos": "adj",
@@ -21,17 +21,17 @@
   },
   {
     "data": {
-      "item_id": "inveterate.adj.00d0d9e8#0",
+      "item_id": "nettlesome.adj.4c2ca2f0#5",
       "source": "lemminflect",
-      "lemma": "inveterate",
+      "lemma": "nettlesome",
       "pos": "adj",
-      "target": "inveterate (adj)",
-      "marked": "Near-synonyms: deep-rooted, ingrained, ineradicable, indelible, radicated, chronic, permanent"
+      "target": "nettlesome (adj)",
+      "marked": "For nearly 40 years, Mr. Solarin, an unpretentious and intensely pugnacious man, has been an intellectual guru for Nigeria's disenchanted and disfranchised."
     }
   },
   {
     "data": {
-      "item_id": "cheapstead.noun.0e78585c#0",
+      "item_id": "cheapstead.noun.2de0ebf7#0",
       "source": "lemminflect",
       "lemma": "cheapstead",
       "pos": "noun",
@@ -41,7 +41,7 @@
   },
   {
     "data": {
-      "item_id": "uniped.adj.1ca0d445#2",
+      "item_id": "uniped.adj.7f2706d5#2",
       "source": "lemminflect",
       "lemma": "uniped",
       "pos": "adj",
@@ -51,17 +51,17 @@
   },
   {
     "data": {
-      "item_id": "begrime.verb.2a7b6831#3",
+      "item_id": "bestow.verb.152ab0e5#3",
       "source": "lemminflect",
-      "lemma": "begrime",
+      "lemma": "bestow",
       "pos": "verb",
-      "target": "begrime (verb)",
-      "marked": "[H]e should forthwith reform his manners, purify himself, and discontinue the vile, filthy habit of snuff-taking—a habit which, to use her own words, begrimeth the face, spoileth the form of the nose—Heaven bless the mark!—destroyeth the voice, and eventually undermineth the constitution."
+      "target": "bestow (verb)",
+      "marked": "Harke yee Lords, you ſee I haue giuen her Phiſicke, / And you muſt needs beſtovv her Funerall, […]"
     }
   },
   {
     "data": {
-      "item_id": "top of one's class.adv.c8a7fb29#0",
+      "item_id": "top of one's class.adv.da90b1e8#0",
       "source": "lemminflect",
       "lemma": "top of one's class",
       "pos": "adv",
@@ -71,27 +71,27 @@
   },
   {
     "data": {
-      "item_id": "plump.verb.31da6fc6#1",
+      "item_id": "replace.verb.051b43e3#2",
       "source": "lemminflect",
-      "lemma": "plump",
+      "lemma": "replace",
       "pos": "verb",
-      "target": "plump (verb)",
-      "marked": "to <b>plump</b> up the hollowness of their history with improbable miracles"
+      "target": "replace (verb)",
+      "marked": "Next Wednesday, four women and 15 men on the Crown Nominations Commission will gather for two days of prayer and horsetrading to <b>replace</b> Rowan Williams as archbishop of Canterbury."
     }
   },
   {
     "data": {
-      "item_id": "rid.verb.b86abacf#0",
+      "item_id": "gorge.verb.aadcf71e#1",
       "source": "lemminflect",
-      "lemma": "rid",
+      "lemma": "gorge",
       "pos": "verb",
-      "target": "rid (verb)",
-      "marked": "[Parradio] Reſolude to ſlay the Prince, / And ridde him of his lyfe: […]"
+      "target": "gorge (verb)",
+      "marked": "The giant, gorg'd with flesh, and wine, and blood,\n Lay stretch'd at length and snoring in his den,\n Belching raw gobbets from his maw, o'ercharged\n With purple wine and curdled gore confus'd."
     }
   },
   {
     "data": {
-      "item_id": "war-weary.adj.de391ec6#4",
+      "item_id": "war-weary.adj.158cdf8e#4",
       "source": "lemminflect",
       "lemma": "war-weary",
       "pos": "adj",
@@ -101,37 +101,37 @@
   },
   {
     "data": {
-      "item_id": "acrid.adj.9cda0757#1",
+      "item_id": "inborn.adj.806ab960#2",
       "source": "lemminflect",
-      "lemma": "acrid",
+      "lemma": "inborn",
       "pos": "adj",
-      "target": "acrid (adj)",
-      "marked": "Since the mid-1980s, when Indonesia first began to clear its bountiful forests on an industrial scale in favour of lucrative palm-oil plantations, “haze” has become an almost annual occurrence in South-East Asia. The cheapest way to clear logged woodland is to burn it, producing an <b>acrid</b> cloud of foul white smoke that, carried by the wind, can cover hundreds, or even thousands, of square miles."
+      "target": "inborn (adj)",
+      "marked": "However, a scientific study just published in American Psychologist provides strong reasons to doubt that there are many <b>inborn</b> differences between genders."
     }
   },
   {
     "data": {
-      "item_id": "paranoid.adj.3533d6f1#1",
+      "item_id": "contiguous.adj.25e7a16a#0",
       "source": "lemminflect",
-      "lemma": "paranoid",
+      "lemma": "contiguous",
       "pos": "adj",
-      "target": "paranoid (adj)",
-      "marked": "People generally want to believe good news, and Max was so <b>paranoid</b> about germs that he'd really love to believe Plum Island was spewing antibiotics and vaccine into the air."
+      "target": "contiguous (adj)",
+      "marked": "Though poor the peasant’s hut, his feasts though small,\nHe sees his little lot the lot of all;\nSees no <b>contiguous</b> palace rear its head\nTo shame the meanness of his humble shed;"
     }
   },
   {
     "data": {
-      "item_id": "blow down.verb.0f171d09#0",
+      "item_id": "bell out.verb.faceac0c#0",
       "source": "lemminflect",
-      "lemma": "blow down",
+      "lemma": "bell out",
       "pos": "verb",
-      "target": "blow down (verb)",
-      "marked": "<b>Blow down</b> this enclosure and do some chip handling before you run this machine any further."
+      "target": "bell out (verb)",
+      "marked": "Her dress <b>belled out</b> at the bottom."
     }
   },
   {
     "data": {
-      "item_id": "eat out of someone's hand.verb.f90ce064#0",
+      "item_id": "eat out of someone's hand.verb.e4001f98#0",
       "source": "lemminflect",
       "lemma": "eat out of someone's hand",
       "pos": "verb",
@@ -141,7 +141,7 @@
   },
   {
     "data": {
-      "item_id": "fairylike.adj.39a5ec05#1",
+      "item_id": "fairylike.adj.1ac679cc#1",
       "source": "lemminflect",
       "lemma": "fairylike",
       "pos": "adj",
@@ -151,17 +151,17 @@
   },
   {
     "data": {
-      "item_id": "last.verb.b659f11c#0",
+      "item_id": "personate.verb.1c836c88#0",
       "source": "lemminflect",
-      "lemma": "last",
+      "lemma": "personate",
       "pos": "verb",
-      "target": "last (verb)",
-      "marked": "Summer seems to <b>last</b> longer each year."
+      "target": "personate (verb)",
+      "marked": "I vvill drop in his vvay ſome obſcure Epiſtles of loue, vvherein by the colour of his beard, the ſhape of his legge, the manner of his gate, the expreſſure of his eye, forehead, and complection, he ſhall finde himſelfe moſt feelingly <b>perſonated</b>."
     }
   },
   {
     "data": {
-      "item_id": "one's head off.adv.778424e5#0",
+      "item_id": "one's head off.adv.7d29d4c7#0",
       "source": "lemminflect",
       "lemma": "one's head off",
       "pos": "adv",
@@ -171,7 +171,7 @@
   },
   {
     "data": {
-      "item_id": "reginally.adv.6f2b51ed#0",
+      "item_id": "reginally.adv.ace4f1bd#0",
       "source": "lemminflect",
       "lemma": "reginally",
       "pos": "adv",
@@ -181,7 +181,7 @@
   },
   {
     "data": {
-      "item_id": "Madeleine.name.1838bfba#0",
+      "item_id": "Madeleine.name.63cd38e1#0",
       "source": "lemminflect",
       "lemma": "Madeleine",
       "pos": "name",
@@ -191,17 +191,17 @@
   },
   {
     "data": {
-      "item_id": "wherewithal.adv.815be63a#0",
+      "item_id": "out of hand.adv.eb90c77f#0",
       "source": "lemminflect",
-      "lemma": "wherewithal",
+      "lemma": "out of hand",
       "pos": "adv",
-      "target": "wherewithal (adv)",
-      "marked": "Wherewithall shall a yong man cleanse his way? by taking heede thereto according to thy word."
+      "target": "out of hand (adv)",
+      "marked": "Near-synonym: offhand"
     }
   },
   {
     "data": {
-      "item_id": "hammerwise.adv.7a50867e#0",
+      "item_id": "hammerwise.adv.af89adc3#0",
       "source": "lemminflect",
       "lemma": "hammerwise",
       "pos": "adv",
@@ -211,7 +211,7 @@
   },
   {
     "data": {
-      "item_id": "misyield.verb.8b9d65b7#1",
+      "item_id": "misyield.verb.5bd480ca#1",
       "source": "lemminflect",
       "lemma": "misyield",
       "pos": "verb",
@@ -221,7 +221,7 @@
   },
   {
     "data": {
-      "item_id": "superambitious.adj.b0b2c432#0",
+      "item_id": "superambitious.adj.c296ef72#0",
       "source": "lemminflect",
       "lemma": "superambitious",
       "pos": "adj",
@@ -231,17 +231,17 @@
   },
   {
     "data": {
-      "item_id": "hasty.adj.590f8635#1",
+      "item_id": "nautical.adj.a3bc79f8#0",
       "source": "lemminflect",
-      "lemma": "hasty",
+      "lemma": "nautical",
       "pos": "adj",
-      "target": "hasty (adj)",
-      "marked": "Thys wolfbayne of all poysones is the most hastye poison."
+      "target": "nautical (adj)",
+      "marked": "Near-synonyms: marine, maritime, naval, seafaring"
     }
   },
   {
     "data": {
-      "item_id": "thick and fast.adv.7d5ccfda#0",
+      "item_id": "thick and fast.adv.447899a6#0",
       "source": "lemminflect",
       "lemma": "thick and fast",
       "pos": "adv",
@@ -251,7 +251,7 @@
   },
   {
     "data": {
-      "item_id": "slipslop.verb.bf8e345d#0",
+      "item_id": "slipslop.verb.3f64ca51#0",
       "source": "lemminflect",
       "lemma": "slipslop",
       "pos": "verb",
@@ -261,7 +261,7 @@
   },
   {
     "data": {
-      "item_id": "loggerheaded.adj.dc52369a#0",
+      "item_id": "loggerheaded.adj.bba54bfc#0",
       "source": "lemminflect",
       "lemma": "loggerheaded",
       "pos": "adj",
@@ -271,7 +271,7 @@
   },
   {
     "data": {
-      "item_id": "misyield.verb.8b9d65b7#1",
+      "item_id": "misyield.verb.5bd480ca#1",
       "source": "lemminflect",
       "lemma": "misyield",
       "pos": "verb",
@@ -281,7 +281,7 @@
   },
   {
     "data": {
-      "item_id": "dining table.noun.dafbd324#0",
+      "item_id": "dining table.noun.1dfcc129#0",
       "source": "lemminflect",
       "lemma": "dining table",
       "pos": "noun",
@@ -291,7 +291,7 @@
   },
   {
     "data": {
-      "item_id": "supermonstrously.adv.8d4a0d32#1",
+      "item_id": "supermonstrously.adv.174680ab#1",
       "source": "lemminflect",
       "lemma": "supermonstrously",
       "pos": "adv",
@@ -301,7 +301,7 @@
   },
   {
     "data": {
-      "item_id": "Haeju.name.d540d3f8#4",
+      "item_id": "Haeju.name.b75c8179#4",
       "source": "lemminflect",
       "lemma": "Haeju",
       "pos": "name",
@@ -311,7 +311,7 @@
   },
   {
     "data": {
-      "item_id": "water crane.noun.e1b65fe5#0",
+      "item_id": "water crane.noun.7bec11ff#0",
       "source": "lemminflect",
       "lemma": "water crane",
       "pos": "noun",
@@ -321,27 +321,27 @@
   },
   {
     "data": {
-      "item_id": "abnegation.noun.bd16b104#0",
+      "item_id": "outdoors.noun.498c1185#0",
       "source": "lemminflect",
-      "lemma": "abnegation",
+      "lemma": "outdoors",
       "pos": "noun",
-      "target": "abnegation (noun)",
-      "marked": "With <b>abnegation</b> of God, of his honor, and of religion, they may retain the friendship of the court."
+      "target": "outdoors (noun)",
+      "marked": "He won't leave his house: he's afraid of the <b>outdoors</b>."
     }
   },
   {
     "data": {
-      "item_id": "begrime.verb.2a7b6831#3",
+      "item_id": "bestow.verb.152ab0e5#3",
       "source": "lemminflect",
-      "lemma": "begrime",
+      "lemma": "bestow",
       "pos": "verb",
-      "target": "begrime (verb)",
-      "marked": "[H]e should forthwith reform his manners, purify himself, and discontinue the vile, filthy habit of snuff-taking—a habit which, to use her own words, begrimeth the face, spoileth the form of the nose—Heaven bless the mark!—destroyeth the voice, and eventually undermineth the constitution."
+      "target": "bestow (verb)",
+      "marked": "Harke yee Lords, you ſee I haue giuen her Phiſicke, / And you muſt needs beſtovv her Funerall, […]"
     }
   },
   {
     "data": {
-      "item_id": "pantherine.adj.e60612c6#0",
+      "item_id": "pantherine.adj.805442e8#0",
       "source": "lemminflect",
       "lemma": "pantherine",
       "pos": "adj",
@@ -351,7 +351,7 @@
   },
   {
     "data": {
-      "item_id": "cheapstead.noun.0e78585c#0",
+      "item_id": "cheapstead.noun.2de0ebf7#0",
       "source": "lemminflect",
       "lemma": "cheapstead",
       "pos": "noun",
@@ -361,7 +361,7 @@
   },
   {
     "data": {
-      "item_id": "well-favouredly.adv.6c3e5ff7#0",
+      "item_id": "well-favouredly.adv.8efacdd4#0",
       "source": "lemminflect",
       "lemma": "well-favouredly",
       "pos": "adv",
@@ -371,7 +371,7 @@
   },
   {
     "data": {
-      "item_id": "Churchtown.name.33d83592#0",
+      "item_id": "Churchtown.name.6289de2a#0",
       "source": "lemminflect",
       "lemma": "Churchtown",
       "pos": "name",
@@ -381,7 +381,7 @@
   },
   {
     "data": {
-      "item_id": "gear.noun.2a7a23a5#0",
+      "item_id": "gear.noun.d17d7d89#0",
       "source": "lemminflect",
       "lemma": "gear",
       "pos": "noun",
@@ -391,7 +391,7 @@
   },
   {
     "data": {
-      "item_id": "tohutō.noun.b8b745a3#1",
+      "item_id": "tohutō.noun.ac45cf7e#1",
       "source": "lemminflect",
       "lemma": "tohutō",
       "pos": "noun",
@@ -401,7 +401,7 @@
   },
   {
     "data": {
-      "item_id": "king of all one surveys.noun.c21a4a3b#5",
+      "item_id": "king of all one surveys.noun.172e7e68#5",
       "source": "lemminflect",
       "lemma": "king of all one surveys",
       "pos": "noun",
@@ -411,17 +411,17 @@
   },
   {
     "data": {
-      "item_id": "sound.verb.497c25ca#2",
+      "item_id": "twit.verb.7e90ea68#1",
       "source": "lemminflect",
-      "lemma": "sound",
+      "lemma": "twit",
       "pos": "verb",
-      "target": "sound (verb)",
-      "marked": "If a train enters the forward section before its description has been transmitted, a \"not described\" lamp is illuminated on the transmitter, an alarm buzzer is <b>sounded</b>, and the lamp remains alight until a description has been transmitted."
+      "target": "twit (verb)",
+      "marked": "Not only are some of the notoriously foul-mouthed echoes excluded from the BBS message base, but each message is auto-censored for key words that are, in the opinion of the SysOp (me in this case), offensive to a \"G\" audience. And no, it isn't 100% effective. And no, there is no \"thought purification program\" that can filter out some folks^([sic]) obscene ideas that can be expressed w/o written vulgarities. That has to be simply \"dealt\" with, either by ignoring or <b>twitting</b> the individual that offends habitually."
     }
   },
   {
     "data": {
-      "item_id": "Chimay.name.ffaf6cd8#0",
+      "item_id": "Chimay.name.4f0ad669#0",
       "source": "lemminflect",
       "lemma": "Chimay",
       "pos": "name",
@@ -431,7 +431,7 @@
   },
   {
     "data": {
-      "item_id": "coreward.adv.8d1c1dcc#0",
+      "item_id": "coreward.adv.13227ee6#0",
       "source": "lemminflect",
       "lemma": "coreward",
       "pos": "adv",
@@ -441,7 +441,7 @@
   },
   {
     "data": {
-      "item_id": "hammerwise.adv.7a50867e#0",
+      "item_id": "hammerwise.adv.af89adc3#0",
       "source": "lemminflect",
       "lemma": "hammerwise",
       "pos": "adv",
@@ -451,7 +451,7 @@
   },
   {
     "data": {
-      "item_id": "ally.verb.d8909d78#0",
+      "item_id": "ally.verb.9bf1a289#0",
       "source": "lemminflect",
       "lemma": "ally",
       "pos": "verb",
@@ -461,7 +461,7 @@
   },
   {
     "data": {
-      "item_id": "auctioneeress.noun.ccd37a4a#7",
+      "item_id": "auctioneeress.noun.8cf62ab9#7",
       "source": "lemminflect",
       "lemma": "auctioneeress",
       "pos": "noun",
@@ -471,7 +471,7 @@
   },
   {
     "data": {
-      "item_id": "Merle.name.990291bd#1",
+      "item_id": "Merle.name.a7148648#1",
       "source": "lemminflect",
       "lemma": "Merle",
       "pos": "name",
@@ -481,7 +481,7 @@
   },
   {
     "data": {
-      "item_id": "midget golf.noun.d3d3afa0#1",
+      "item_id": "midget golf.noun.dfe9dccd#1",
       "source": "lemminflect",
       "lemma": "midget golf",
       "pos": "noun",
@@ -491,7 +491,7 @@
   },
   {
     "data": {
-      "item_id": "peaceably.adv.2805bb32#0",
+      "item_id": "peaceably.adv.5f39e3c1#0",
       "source": "lemminflect",
       "lemma": "peaceably",
       "pos": "adv",
@@ -501,7 +501,7 @@
   },
   {
     "data": {
-      "item_id": "smoky.adj.992e0d95#2",
+      "item_id": "smoky.adj.e6620728#2",
       "source": "lemminflect",
       "lemma": "smoky",
       "pos": "adj",
@@ -511,7 +511,7 @@
   },
   {
     "data": {
-      "item_id": "waspish.adj.cbb3c864#0",
+      "item_id": "waspish.adj.b5cddbcf#0",
       "source": "lemminflect",
       "lemma": "waspish",
       "pos": "adj",
@@ -521,7 +521,7 @@
   },
   {
     "data": {
-      "item_id": "longeve.adj.ff277000#3",
+      "item_id": "longeve.adj.c5c47361#3",
       "source": "lemminflect",
       "lemma": "longeve",
       "pos": "adj",
@@ -531,7 +531,7 @@
   },
   {
     "data": {
-      "item_id": "bespew.verb.1e83981a#1",
+      "item_id": "bespew.verb.2555dae0#1",
       "source": "lemminflect",
       "lemma": "bespew",
       "pos": "verb",
@@ -541,27 +541,27 @@
   },
   {
     "data": {
-      "item_id": "G-d.name.41c695c4#1",
+      "item_id": "Asia Minor.name.49371d69#0",
       "source": "lemminflect",
-      "lemma": "G-d",
+      "lemma": "Asia Minor",
       "pos": "name",
-      "target": "G-d (name)",
-      "marked": "[…] having made a cross cut, so as to ascertain the depth of the fat upon the chest, exclaimed, in a sort of rapture, “Three inches of white fat on the brisket!—prime—prime, as I am a crowded sinner—and de’il ane o’ the lazy loons in but mysell! Seven—aught—aught tines on the antlers. By G⁠—⁠d, a hart of aught tines, and the first of the season![…]”"
+      "target": "Asia Minor (name)",
+      "marked": "Holonyms: Turkey, Türkiye, Turkiye &lt; West Asia &lt; Asia &lt; Earth"
     }
   },
   {
     "data": {
-      "item_id": "Janus.name.bcfb145f#5",
+      "item_id": "First Amendment.name.de72298e#7",
       "source": "lemminflect",
-      "lemma": "Janus",
+      "lemma": "First Amendment",
       "pos": "name",
-      "target": "Janus (name)",
-      "marked": "Good reviews look both backward and forward; an argument could even be made that one must look backward in order to discern the way forward, that backward and forward are two sides of the same research coin. Nowhere is such a <b>Janus</b>-like perspective more apparent than in the current set of reviews."
+      "target": "First Amendment (name)",
+      "marked": "Under the CDA, telecommunications facilities could face criminal charges if they failed to take \"good faith, reasonable, effective, and appropriate actions\" to stop minors from seeing indecent content. The law faced a <b>First Amendment</b> challenge, and the U.S. Supreme Court in late 1997 struck down many of the decency provisions entirely."
     }
   },
   {
     "data": {
-      "item_id": "tide over.verb.ec8d48b9#1",
+      "item_id": "tide over.verb.2082605c#1",
       "source": "lemminflect",
       "lemma": "tide over",
       "pos": "verb",
@@ -571,17 +571,17 @@
   },
   {
     "data": {
-      "item_id": "halfheartedly.adv.fa11b0c6#0",
+      "item_id": "o'clock.adv.fbca53bc#4",
       "source": "lemminflect",
-      "lemma": "halfheartedly",
+      "lemma": "o'clock",
       "pos": "adv",
-      "target": "halfheartedly (adv)",
-      "marked": "Near-synonyms: unenthusiastically, lukewarmly"
+      "target": "o'clock (adv)",
+      "marked": "At 1057 we were just over the islands and at 1100 the tail gunner reported flak at six o’clock, below."
     }
   },
   {
     "data": {
-      "item_id": "Macca's.name.2846d258#0",
+      "item_id": "Macca's.name.e6267113#0",
       "source": "lemminflect",
       "lemma": "Macca's",
       "pos": "name",
@@ -591,7 +591,7 @@
   },
   {
     "data": {
-      "item_id": "dazzlingly.adv.3a2744ff#1",
+      "item_id": "dazzlingly.adv.bef1cfca#1",
       "source": "lemminflect",
       "lemma": "dazzlingly",
       "pos": "adv",
@@ -601,7 +601,7 @@
   },
   {
     "data": {
-      "item_id": "bathtub cockpit.noun.f66d600c#3",
+      "item_id": "bathtub cockpit.noun.2685bd0a#3",
       "source": "lemminflect",
       "lemma": "bathtub cockpit",
       "pos": "noun",
@@ -611,17 +611,17 @@
   },
   {
     "data": {
-      "item_id": "Acheron.name.8949df64#0",
+      "item_id": "Stephen.name.31048abe#0",
       "source": "lemminflect",
-      "lemma": "Acheron",
+      "lemma": "Stephen",
       "pos": "name",
-      "target": "Acheron (name)",
-      "marked": "Ile diue into the burning lake belowe, / And pull her out of Acaron by the heeles."
+      "target": "Stephen (name)",
+      "marked": "And Steuen full of faith and power, did great wonders and miracles among the people."
     }
   },
   {
     "data": {
-      "item_id": "unhummable.adj.2b32d9c5#0",
+      "item_id": "unhummable.adj.7c14b4f8#0",
       "source": "lemminflect",
       "lemma": "unhummable",
       "pos": "adj",
@@ -631,7 +631,7 @@
   },
   {
     "data": {
-      "item_id": "properly.adv.558e4bad#1",
+      "item_id": "properly.adv.df07e8df#1",
       "source": "lemminflect",
       "lemma": "properly",
       "pos": "adv",
@@ -641,7 +641,7 @@
   },
   {
     "data": {
-      "item_id": "Fern.name.360bedd6#1",
+      "item_id": "Fern.name.0069baed#1",
       "source": "lemminflect",
       "lemma": "Fern",
       "pos": "name",
@@ -651,17 +651,17 @@
   },
   {
     "data": {
-      "item_id": "dint.noun.637629ba#0",
+      "item_id": "acrasia.noun.b485ea7e#2",
       "source": "lemminflect",
-      "lemma": "dint",
+      "lemma": "acrasia",
       "pos": "noun",
-      "target": "dint (noun)",
-      "marked": "[D]epe wͭ dynt the ſword enforced furſt / had ranſakt through his ribs ⁊ ſwete whyte breſt at once had burſt."
+      "target": "acrasia (noun)",
+      "marked": "It has been already remarked, that, by the humoral pathologists, organic diseases in general, and of course inflammation, were attributed to an akrasia or intemperies, consisting in an inordinate flow to certain organs of one or other of the four principal fluids of the body; that of blood producing the phlegmenous inflammation; that of yellow bile, the erythematic, or, as they call it, the erysipelatous; that of the black bile, the scirrhous; that that of the phlegm, the leucophlegmatic, or œdematous, an affection now known to be not of itself inflammatory, although a frequent consequence of inflammation."
     }
   },
   {
     "data": {
-      "item_id": "slipslop.verb.bf8e345d#0",
+      "item_id": "slipslop.verb.3f64ca51#0",
       "source": "lemminflect",
       "lemma": "slipslop",
       "pos": "verb",
@@ -671,7 +671,7 @@
   },
   {
     "data": {
-      "item_id": "autobiographicalize.verb.c35be030#1",
+      "item_id": "autobiographicalize.verb.cfdf5aab#1",
       "source": "lemminflect",
       "lemma": "autobiographicalize",
       "pos": "verb",
@@ -681,7 +681,7 @@
   },
   {
     "data": {
-      "item_id": "supernormal.adj.33030292#1",
+      "item_id": "supernormal.adj.33f8ea10#1",
       "source": "lemminflect",
       "lemma": "supernormal",
       "pos": "adj",
@@ -691,7 +691,7 @@
   },
   {
     "data": {
-      "item_id": "Kaixian.name.ad7b00e7#2",
+      "item_id": "Kaixian.name.6875f04f#2",
       "source": "lemminflect",
       "lemma": "Kaixian",
       "pos": "name",
@@ -701,7 +701,7 @@
   },
   {
     "data": {
-      "item_id": "booting.noun.a5ae2bcc#0",
+      "item_id": "booting.noun.1098b42c#0",
       "source": "lemminflect",
       "lemma": "booting",
       "pos": "noun",
@@ -711,7 +711,7 @@
   },
   {
     "data": {
-      "item_id": "jibber-jabber.noun.294b6a38#2",
+      "item_id": "jibber-jabber.noun.e47b9c5a#2",
       "source": "lemminflect",
       "lemma": "jibber-jabber",
       "pos": "noun",
@@ -721,7 +721,7 @@
   },
   {
     "data": {
-      "item_id": "Sanmenxia.name.781908a7#0",
+      "item_id": "Sanmenxia.name.519b9844#0",
       "source": "lemminflect",
       "lemma": "Sanmenxia",
       "pos": "name",
@@ -731,47 +731,47 @@
   },
   {
     "data": {
-      "item_id": "ubiety.noun.844f855c#1",
+      "item_id": "pod.noun.673b0d5a#0",
       "source": "lemminflect",
-      "lemma": "ubiety",
+      "lemma": "pod",
       "pos": "noun",
-      "target": "ubiety (noun)",
-      "marked": "The place of a ſpirit has been often called ubiety, which may moſt properly refer to ſo much of the material world, of which it has a more evident conſciouſneſs, and on which it can act : In God the infinite Spirit, his <b>ubiety</b> is whereſoever there are objects for his conſiouſneſs and activity : And you may extend this to all poſſible, as well as real and actual worlds, if you pleaſe; for he knows and can do whatever can be known or can be done, and therefore he is ſaid to be every where."
+      "target": "pod (noun)",
+      "marked": "Near-synonym: escape <b>pod</b>"
     }
   },
   {
     "data": {
-      "item_id": "clear up.verb.55794d51#0",
+      "item_id": "indulgiate.verb.59b83b40#0",
       "source": "lemminflect",
-      "lemma": "clear up",
+      "lemma": "indulgiate",
       "pos": "verb",
-      "target": "clear up (verb)",
-      "marked": "All of their symptoms <b>cleared up</b> after the mold was removed."
+      "target": "indulgiate (verb)",
+      "marked": "Sergius Oratus vvas the firſt that made pits for them [oysters] about his houſe here; more for profit, then to <b>indulgiate</b> his gluttony."
     }
   },
   {
     "data": {
-      "item_id": "handily.adv.37287247#0",
+      "item_id": "hence.adv.400f2f40#0",
       "source": "lemminflect",
-      "lemma": "handily",
+      "lemma": "hence",
       "pos": "adv",
-      "target": "handily (adv)",
-      "marked": "As the mysteries of valetism are not very recondite or difficult to be acquired by an intelligent person, Lockwood, after a little practice, performed his functions <b>handily</b> enough; […]"
+      "target": "hence (adv)",
+      "marked": "A year <b>hence</b> it will be forgotten."
     }
   },
   {
     "data": {
-      "item_id": "reverend.adj.49c5419f#0",
+      "item_id": "secular.adj.35436387#0",
       "source": "lemminflect",
-      "lemma": "reverend",
+      "lemma": "secular",
       "pos": "adj",
-      "target": "reverend (adj)",
-      "marked": "Near-synonyms: reverable, estimable"
+      "target": "secular (adj)",
+      "marked": "Near-synonyms: centurial, centennial"
     }
   },
   {
     "data": {
-      "item_id": "sunburn.verb.be2d6fc0#1",
+      "item_id": "sunburn.verb.fc0abe47#1",
       "source": "lemminflect",
       "lemma": "sunburn",
       "pos": "verb",
@@ -781,7 +781,7 @@
   },
   {
     "data": {
-      "item_id": "groin.verb.93f97929#0",
+      "item_id": "groin.verb.52aa3cfe#0",
       "source": "lemminflect",
       "lemma": "groin",
       "pos": "verb",
@@ -791,7 +791,7 @@
   },
   {
     "data": {
-      "item_id": "antishadow.adj.05dbe0d9#1",
+      "item_id": "antishadow.adj.c9448d85#1",
       "source": "lemminflect",
       "lemma": "antishadow",
       "pos": "adj",
@@ -801,7 +801,7 @@
   },
   {
     "data": {
-      "item_id": "trolly.adj.a8b96cfe#1",
+      "item_id": "trolly.adj.10a5c690#1",
       "source": "lemminflect",
       "lemma": "trolly",
       "pos": "adj",
@@ -811,17 +811,17 @@
   },
   {
     "data": {
-      "item_id": "nostrum.noun.1dd1296c#0",
+      "item_id": "toss.noun.93a92450#0",
       "source": "lemminflect",
-      "lemma": "nostrum",
+      "lemma": "toss",
       "pos": "noun",
-      "target": "nostrum (noun)",
-      "marked": "Near-synonyms: paternoster, patent medicine, snake oil"
+      "target": "toss (noun)",
+      "marked": "This put us at the board into a Tosse."
     }
   },
   {
     "data": {
-      "item_id": "crystal stone.noun.564d682a#0",
+      "item_id": "crystal stone.noun.4ebb3ded#0",
       "source": "lemminflect",
       "lemma": "crystal stone",
       "pos": "noun",
@@ -831,7 +831,7 @@
   },
   {
     "data": {
-      "item_id": "Anbu.name.e885079c#0",
+      "item_id": "Anbu.name.9bfed272#0",
       "source": "lemminflect",
       "lemma": "Anbu",
       "pos": "name",
@@ -841,17 +841,17 @@
   },
   {
     "data": {
-      "item_id": "van.noun.acb1524b#0",
+      "item_id": "capital.noun.19fa2f43#0",
       "source": "lemminflect",
-      "lemma": "van",
+      "lemma": "capital",
       "pos": "noun",
-      "target": "van (noun)",
-      "marked": "While Santa Monica has a longstanding prohibition against public camping that includes living in vehicles, the van rental business has been a problem in Venice for years. […] Organizations that provide safe parking locations have limited capacity and are often unable to accommodate the kind of non-operational <b>vans</b> that are being repurposed as makeshift housing."
+      "target": "capital (noun)",
+      "marked": "But a great wonder of this chamber, and a marvel to behold, was how the <b>capital</b> of every one of the four-and-twenty pillars was hewn from a single precious stone, carved by the hand of some sculptor of long ago into the living form of a monster: […]"
     }
   },
   {
     "data": {
-      "item_id": "Jumada I.name.fdac47da#2",
+      "item_id": "Jumada I.name.ebe863e0#2",
       "source": "lemminflect",
       "lemma": "Jumada I",
       "pos": "name",
@@ -861,7 +861,7 @@
   },
   {
     "data": {
-      "item_id": "Merle.name.990291bd#1",
+      "item_id": "Merle.name.a7148648#1",
       "source": "lemminflect",
       "lemma": "Merle",
       "pos": "name",
@@ -871,17 +871,17 @@
   },
   {
     "data": {
-      "item_id": "unlock.verb.134026ff#0",
+      "item_id": "corrupt.verb.821ec9b6#1",
       "source": "lemminflect",
-      "lemma": "unlock",
+      "lemma": "corrupt",
       "pos": "verb",
-      "target": "unlock (verb)",
-      "marked": "I <b>unlocked</b> the door and walked in."
+      "target": "corrupt (verb)",
+      "marked": "[…] Lanfrank takes Notice of Tract. 3. Doct. 3. cap. 18. ſaying, \"I have ſeen many who being full of Humours, have made an Iſſue under the Knee, before due Purgation had been premis'd; whence, by reaſon of the too great Defluxion of Humours, the Legs tumified, ſo that the cauterized Place <b>corrupted</b>, and a Cancer (or rather cacoethic Ulcer) was thereby made, with which great Difficulty was cur'd.\""
     }
   },
   {
     "data": {
-      "item_id": "Altyn Tagh.name.af41f3ab#0",
+      "item_id": "Altyn Tagh.name.83daa800#0",
       "source": "lemminflect",
       "lemma": "Altyn Tagh",
       "pos": "name",
@@ -891,7 +891,7 @@
   },
   {
     "data": {
-      "item_id": "Rannia Zoria.name.04aee033#0",
+      "item_id": "Rannia Zoria.name.c8fa4454#0",
       "source": "lemminflect",
       "lemma": "Rannia Zoria",
       "pos": "name",
@@ -901,7 +901,7 @@
   },
   {
     "data": {
-      "item_id": "bespew.verb.1e83981a#1",
+      "item_id": "bespew.verb.2555dae0#1",
       "source": "lemminflect",
       "lemma": "bespew",
       "pos": "verb",
@@ -911,7 +911,7 @@
   },
   {
     "data": {
-      "item_id": "run down.verb.8550dbb3#0",
+      "item_id": "run down.verb.66045d8f#0",
       "source": "lemminflect",
       "lemma": "run down",
       "pos": "verb",
@@ -921,7 +921,7 @@
   },
   {
     "data": {
-      "item_id": "volubly.adv.12a926f4#0",
+      "item_id": "volubly.adv.f8d16223#0",
       "source": "lemminflect",
       "lemma": "volubly",
       "pos": "adv",
@@ -931,7 +931,7 @@
   },
   {
     "data": {
-      "item_id": "crack-hemp.noun.8446f5d1#0",
+      "item_id": "crack-hemp.noun.7d3d6e58#0",
       "source": "lemminflect",
       "lemma": "crack-hemp",
       "pos": "noun",
@@ -941,7 +941,7 @@
   },
   {
     "data": {
-      "item_id": "unpublishably.adv.9a80f497#0",
+      "item_id": "unpublishably.adv.7b5a231b#0",
       "source": "lemminflect",
       "lemma": "unpublishably",
       "pos": "adv",
@@ -951,7 +951,7 @@
   },
   {
     "data": {
-      "item_id": "Bacchus.name.809f2d31#0",
+      "item_id": "Bacchus.name.0b3a249f#0",
       "source": "lemminflect",
       "lemma": "Bacchus",
       "pos": "name",
@@ -961,7 +961,7 @@
   },
   {
     "data": {
-      "item_id": "Sino-Xenic.adj.74f662af#0",
+      "item_id": "Sino-Xenic.adj.f50df3ae#0",
       "source": "lemminflect",
       "lemma": "Sino-Xenic",
       "pos": "adj",
@@ -971,7 +971,7 @@
   },
   {
     "data": {
-      "item_id": "get wrong.verb.67c00740#0",
+      "item_id": "get wrong.verb.9236c066#0",
       "source": "lemminflect",
       "lemma": "get wrong",
       "pos": "verb",
@@ -981,7 +981,7 @@
   },
   {
     "data": {
-      "item_id": "unhonestly.adv.92793712#1",
+      "item_id": "unhonestly.adv.e94dcaac#1",
       "source": "lemminflect",
       "lemma": "unhonestly",
       "pos": "adv",
@@ -991,17 +991,17 @@
   },
   {
     "data": {
-      "item_id": "compass.verb.997bc68d#0",
+      "item_id": "wee-wee.verb.90f93b9f#0",
       "source": "lemminflect",
-      "lemma": "compass",
+      "lemma": "wee-wee",
       "pos": "verb",
-      "target": "compass (verb)",
-      "marked": "That he plotted and <b>compassed</b> to raise Sedition and Rebellion [...]"
+      "target": "wee-wee (verb)",
+      "marked": "“This is Bruce who doesn’t <b>wee-wee</b> in the sandbox.” Bruce looked pleased with himself. Mrs. Kemp felt a need to apologize for her granddaughter. “Willa Jean doesn’t mean what she says.” “But I don’t <b>wee-wee</b> in the sandbox,” said Bruce. “I <b>wee-wee</b> in the-”"
     }
   },
   {
     "data": {
-      "item_id": "Hephzibah.name.314f8f9c#0",
+      "item_id": "Hephzibah.name.85a48f29#0",
       "source": "lemminflect",
       "lemma": "Hephzibah",
       "pos": "name",
@@ -1011,7 +1011,7 @@
   },
   {
     "data": {
-      "item_id": "fallingly.adv.da7b9171#0",
+      "item_id": "fallingly.adv.a4ec4c69#0",
       "source": "lemminflect",
       "lemma": "fallingly",
       "pos": "adv",
@@ -1021,7 +1021,7 @@
   },
   {
     "data": {
-      "item_id": "Nicolae Bălcescu.name.1d739128#7",
+      "item_id": "Nicolae Bălcescu.name.b6006f90#7",
       "source": "lemminflect",
       "lemma": "Nicolae Bălcescu",
       "pos": "name",
@@ -1031,7 +1031,7 @@
   },
   {
     "data": {
-      "item_id": "Rudolph the Red-Nosed Reindeer.name.7cec27f9#4",
+      "item_id": "Rudolph the Red-Nosed Reindeer.name.40e02f96#4",
       "source": "lemminflect",
       "lemma": "Rudolph the Red-Nosed Reindeer",
       "pos": "name",
@@ -1041,17 +1041,17 @@
   },
   {
     "data": {
-      "item_id": "inseparably.adv.fb9e058a#0",
+      "item_id": "new.adv.2b84018a#0",
       "source": "lemminflect",
-      "lemma": "inseparably",
+      "lemma": "new",
       "pos": "adv",
-      "target": "inseparably (adv)",
-      "marked": "The positivist outlook which developed and flourished in Britain from the late Middle Ages onwards, and without which we would not have modern science, democratic legislation, or the idea of the rights of man, was from the beginning inseparable^([sic]) linked with the idea of negative freedom and the values of democratic institutions."
+      "target": "new (adv)",
+      "marked": "Near-synonym: recently"
     }
   },
   {
     "data": {
-      "item_id": "probvious.adj.f2cea719#0",
+      "item_id": "probvious.adj.70042c4e#0",
       "source": "lemminflect",
       "lemma": "probvious",
       "pos": "adj",
@@ -1061,7 +1061,7 @@
   },
   {
     "data": {
-      "item_id": "procedurally.adv.d6ef6bba#0",
+      "item_id": "procedurally.adv.ce56edbb#0",
       "source": "lemminflect",
       "lemma": "procedurally",
       "pos": "adv",
@@ -1071,17 +1071,17 @@
   },
   {
     "data": {
-      "item_id": "sound.verb.497c25ca#2",
+      "item_id": "twit.verb.7e90ea68#1",
       "source": "lemminflect",
-      "lemma": "sound",
+      "lemma": "twit",
       "pos": "verb",
-      "target": "sound (verb)",
-      "marked": "If a train enters the forward section before its description has been transmitted, a \"not described\" lamp is illuminated on the transmitter, an alarm buzzer is <b>sounded</b>, and the lamp remains alight until a description has been transmitted."
+      "target": "twit (verb)",
+      "marked": "Not only are some of the notoriously foul-mouthed echoes excluded from the BBS message base, but each message is auto-censored for key words that are, in the opinion of the SysOp (me in this case), offensive to a \"G\" audience. And no, it isn't 100% effective. And no, there is no \"thought purification program\" that can filter out some folks^([sic]) obscene ideas that can be expressed w/o written vulgarities. That has to be simply \"dealt\" with, either by ignoring or <b>twitting</b> the individual that offends habitually."
     }
   },
   {
     "data": {
-      "item_id": "kala namak.noun.242866e5#0",
+      "item_id": "kala namak.noun.35dae72e#0",
       "source": "lemminflect",
       "lemma": "kala namak",
       "pos": "noun",
@@ -1091,7 +1091,7 @@
   },
   {
     "data": {
-      "item_id": "unhummable.adj.2b32d9c5#0",
+      "item_id": "unhummable.adj.7c14b4f8#0",
       "source": "lemminflect",
       "lemma": "unhummable",
       "pos": "adj",

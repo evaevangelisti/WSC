@@ -2,16 +2,25 @@
 Values the program never varies.
 """
 
-DUMP_INDEX_URL = "https://dumps.wikimedia.org/{language}wiktionary/"
-"""Where an edition lists its dumps, one directory per day one began."""
+LANGUAGE = "en"
+"""Wiktionary's code for the edition read, and for the language kept in it."""
 
-DUMP_STATUS_URL = (
-    "https://dumps.wikimedia.org/{language}wiktionary/{date}/dumpstatus.json"
-)
+LANGUAGE_SECTION = "English"
+"""What a page heads that language with, its sections named in the edition's
+own language."""
+
+DUMP_INDEX_URL = "https://dumps.wikimedia.org/enwiktionary/"
+"""Where the edition lists its dumps, one directory per day one began."""
+
+DUMP_STATUS_URL = "https://dumps.wikimedia.org/enwiktionary/{date}/dumpstatus.json"
 """Where one dump reports its jobs, and so whether it finished."""
 
-DUMP_URL = "https://dumps.wikimedia.org/{language}wiktionary/{date}/{language}wiktionary-{date}-pages-articles.xml.bz2"
+DUMP_URL = "https://dumps.wikimedia.org/enwiktionary/{date}/enwiktionary-{date}-pages-articles.xml.bz2"
 """The archive of pages sitting inside a dump, which is the dump itself."""
+
+KAIKKI_URL = "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz"
+"""Where kaikki.org publishes the edition already parsed, which spares the
+hours wiktextract takes to parse it."""
 
 WORDNET_INDEX_URL = "https://en-word.net/downloads"
 """Where the wordnet lists its editions, one file per year and format."""

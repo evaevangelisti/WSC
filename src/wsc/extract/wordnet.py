@@ -2,15 +2,14 @@
 Extraction of synsets from a wordnet published in WN-LMF.
 """
 
-import gzip
 from collections.abc import Iterator
-from io import BufferedIOBase
 from pathlib import Path
 from typing import cast
 from xml.etree import ElementTree
 
 from tqdm import tqdm
 
+from ..files import open_compressed
 from ..models import POS, Synset
 
 # WordNet's own codes. A satellite adjective is an adjective all the same.
@@ -42,27 +41,6 @@ class WordNetExtractor:
             allowed_pos: Parts of speech to keep, or None for every one.
         """
         self._allowed_pos: frozenset[POS] | None = allowed_pos
-
-    @staticmethod
-    def _open(
-        input_path: Path,
-    ) -> BufferedIOBase:
-        """
-        Open a wordnet, decompressing it if need be.
-
-        Args:
-            input_path: The file to read.
-
-        Returns:
-            The open file, in binary mode, so that the parser reads the
-            encoding off the declaration rather than being told it.
-        """
-        match input_path.suffix:
-            case ".gz":
-                return gzip.open(input_path, "rb")
-
-            case _:
-                return input_path.open("rb")
 
     def _parse_synset(
         self,
@@ -123,7 +101,7 @@ class WordNetExtractor:
         """
         written_forms: dict[str, str] = {}
 
-        with self._open(input_path) as file:
+        with open_compressed(input_path, "rb") as file:
             # iterparse is typed loosely; an end event carries the element
             # that ended.
             elements = cast(

@@ -9,7 +9,9 @@ from platformdirs import user_cache_dir
 LATEST = "latest"
 
 DUMP_NAME = "dump.xml.bz2"
+ARCHIVE_NAME = "archive.jsonl.gz"
 WIKTEXTRACT_NAME = "wiktextract.jsonl.zst"
+OFF_PAGE_TRANSLATIONS_NAME = "off-page-translations.json"
 WORDNET_NAME = "wordnet.xml.gz"
 SYNSETS_NAME = "synsets.jsonl"
 
@@ -34,24 +36,21 @@ def _root(
 
 def _edition_dir(
     cache_dir: Path | None,
-    language: str,
 ) -> Path:
     """
-    Name the directory holding every dump of one Wiktionary edition.
+    Name the directory holding every dump of the Wiktionary edition.
 
     Args:
         cache_dir: Where the sources are kept, or None for the usual place.
-        language: Wiktionary's code for the edition.
 
     Returns:
         The directory, whether or not it exists yet.
     """
-    return _root(cache_dir) / _WIKTIONARY / language
+    return _root(cache_dir) / _WIKTIONARY
 
 
 def dump_dir(
     cache_dir: Path | None,
-    language: str,
     date: str,
 ) -> Path:
     """
@@ -59,18 +58,16 @@ def dump_dir(
 
     Args:
         cache_dir: Where the sources are kept, or None for the usual place.
-        language: Wiktionary's code for the edition.
         date: The day that dump began.
 
     Returns:
         The directory, whether or not it exists yet.
     """
-    return _edition_dir(cache_dir, language) / date
+    return _edition_dir(cache_dir) / date
 
 
 def fetched_date(
     cache_dir: Path | None,
-    language: str,
     dump_date: str,
 ) -> str:
     """
@@ -81,7 +78,6 @@ def fetched_date(
 
     Args:
         cache_dir: Where the sources are kept, or None for the usual place.
-        language: Wiktionary's code for the edition.
         dump_date: The day a dump began, or "latest" for the newest fetched.
 
     Returns:
@@ -90,7 +86,7 @@ def fetched_date(
     Raises:
         FileNotFoundError: If no such dump has been fetched.
     """
-    edition_dir = _edition_dir(cache_dir, language)
+    edition_dir = _edition_dir(cache_dir)
 
     if dump_date != LATEST:
         if (edition_dir / dump_date).is_dir():

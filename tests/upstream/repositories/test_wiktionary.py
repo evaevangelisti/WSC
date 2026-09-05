@@ -11,7 +11,7 @@ import responses
 from documents import dump_index, dump_status
 from hypothesis import given
 from hypothesis import strategies as st
-from strategies import dump_dates, languages
+from strategies import dump_dates
 
 from wsc.constants import DUMP_INDEX_URL, DUMP_STATUS_URL
 from wsc.upstream.repositories import wiktionary
@@ -36,7 +36,6 @@ _UNFINISHED = st.dictionaries(
 
 @contextmanager
 def _wikimedia(
-    language: str,
     reports: Mapping[str, str],
     times: int = 1,
 ) -> Generator[responses.RequestsMock]:
@@ -47,7 +46,6 @@ def _wikimedia(
     asks about is registered all the same and left unasked.
 
     Args:
-        language: Wiktionary's code for the edition.
         reports: What each dump reports, by the day it began: the state of
             its job, or missing for one answering nothing and unreadable for
             one answering something other than a report.
@@ -58,12 +56,12 @@ def _wikimedia(
     """
     with responses.RequestsMock(assert_all_requests_are_fired=False) as server:
         _ = server.get(
-            DUMP_INDEX_URL.format(language=language),
+            DUMP_INDEX_URL,
             body=dump_index(*(date for date in reports for _ in range(times))),
         )
 
         for date, report in reports.items():
-            url = DUMP_STATUS_URL.format(language=language, date=date)
+            url = DUMP_STATUS_URL.format(date=date)
 
             match report:
                 case "missing":
@@ -98,11 +96,11 @@ class TestUrl:
     Where the archive of pages for one dump sits.
     """
 
-    def test_names_the_archive_after_the_edition_and_the_date(
+    def test_names_the_archive_after_the_date(
         self,
     ) -> None:
         """The address is built rather than discovered, so it is built here in full."""
-        assert wiktionary.url("en", "20260801") == (
+        assert wiktionary.url("20260801") == (
             "https://dumps.wikimedia.org/enwiktionary/20260801/"
             "enwiktionary-20260801-pages-articles.xml.bz2"
         )
@@ -122,10 +120,8 @@ class TestLatestDate:
         """The newest directory is not the answer: the newest finished one is."""
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
 
-        with _wikimedia("en", reports):
-            assert wiktionary.latest_date("en", USER_AGENT, TIMEOUT) == _finished(
-                reports
-            )
+        with _wikimedia(reports):
+            assert wiktionary.latest_date(USER_AGENT, TIMEOUT) == _finished(reports)
 
     @given(_LISTINGS, st.data())
     def test_asks_about_a_date_once_and_stops_where_it_settles(
@@ -137,8 +133,8 @@ class TestLatestDate:
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
         times = data.draw(st.integers(min_value=1, max_value=3))
 
-        with _wikimedia("en", reports, times) as server:
-            answer = wiktionary.latest_date("en", USER_AGENT, TIMEOUT)
+        with _wikimedia(reports, times) as server:
+            answer = wiktionary.latest_date(USER_AGENT, TIMEOUT)
 
             asked = [
                 call
@@ -157,8 +153,8 @@ class TestLatestDate:
         """Wikimedia asks that requests name whoever answers for them."""
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
 
-        with _wikimedia("en", reports) as server:
-            _ = wiktionary.latest_date("en", USER_AGENT, TIMEOUT)
+        with _wikimedia(reports) as server:
+            _ = wiktionary.latest_date(USER_AGENT, TIMEOUT)
 
             assert server.calls
             assert all(
@@ -173,19 +169,17 @@ class TestLatestDate:
     ) -> None:
         """No dump finished, or none listed at all, means nothing to fetch."""
         with (
-            _wikimedia("en", reports),
-            pytest.raises(RuntimeError, match="No finished enwiktionary dump"),
+            _wikimedia(reports),
+            pytest.raises(RuntimeError, match="No finished dump"),
         ):
-            _ = wiktionary.latest_date("en", USER_AGENT, TIMEOUT)
+            _ = wiktionary.latest_date(USER_AGENT, TIMEOUT)
 
-    @given(languages)
     def test_raises_when_the_index_cannot_be_read(
         self,
-        language: str,
     ) -> None:
         """A server that cannot answer is not a server saying there are no dumps."""
         with responses.RequestsMock() as server:
-            _ = server.get(DUMP_INDEX_URL.format(language=language), status=503)
+            _ = server.get(DUMP_INDEX_URL, status=503)
 
             with pytest.raises(requests.HTTPError):
-                _ = wiktionary.latest_date(language, USER_AGENT, TIMEOUT)
+                _ = wiktionary.latest_date(USER_AGENT, TIMEOUT)

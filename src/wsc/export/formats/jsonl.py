@@ -23,9 +23,6 @@ type Json = (
 class JsonlWriter[T: "DataclassInstance"](Writer[T]):
     """
     Write dataclasses as JSON objects, one per line.
-
-    Any dataclass will do: a lemma is what the collector writes, a synset
-    what the wordnet is read into.
     """
 
     def __init__(
@@ -71,9 +68,6 @@ class JsonlWriter[T: "DataclassInstance"](Writer[T]):
         """
         Read one value into what is written, dropping what holds nothing.
 
-        Absence says as much as emptiness, and in fewer bytes: a sentence
-        with no reference reads back as an Example.
-
         Args:
             value: An item to write, or a part of one.
 
@@ -102,7 +96,7 @@ class JsonlWriter[T: "DataclassInstance"](Writer[T]):
                 for field in fields(value):
                     carried = cast(object, getattr(value, field.name))
 
-                    if carried not in (None, (), [], {}, frozenset()):
+                    if carried not in (None, "", (), [], {}, frozenset()):
                         record[field.name] = cls._record(carried)
 
                 return record

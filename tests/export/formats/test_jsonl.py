@@ -60,6 +60,9 @@ def _record_of_sense(
     """
     record: RawJson = {"id": sense.id, "glosses": list(sense.glosses)}
 
+    if sense.etymology:
+        record["etymology"] = sense.etymology
+
     for key, held in (
         ("synonyms", sense.synonyms),
         ("topics", sense.topics),
