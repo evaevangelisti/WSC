@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import median
 
-from corpus import SENSES, Entry, Sense, read
+from corpus import SENSES, Entry, Sense, WordOffset, read
 
 REPORTS = Path(__file__).resolve().parent / "reports"
 """Where the written reports are kept, one file per pass."""
@@ -92,6 +92,8 @@ class Figures:
         years: The years the quotations name.
         occurrences: How many offsets each sentence carries.
         offsets: How many offsets there are in all.
+        offset_sources: How many candidates each source combination supports.
+        sentence_sources: How the sources relate within each sentence.
         unlocated: How many sentences carry none, by part of speech.
         shapes: What the headword looks like where none were found.
         near_misses: How many of those the headword is spelled in after all.
@@ -122,6 +124,8 @@ class Figures:
     years: list[int] = field(default_factory=list)
     occurrences: Counter[int] = field(default_factory=Counter)
     offsets: int = 0
+    offset_sources: Counter[str] = field(default_factory=Counter)
+    sentence_sources: Counter[str] = field(default_factory=Counter)
     unlocated: Counter[str] = field(default_factory=Counter)
     shapes: Counter[str] = field(default_factory=Counter)
     near_misses: int = 0
@@ -202,7 +206,7 @@ def spelled_in(
 
 def check(
     text: str,
-    offsets: list[list[int]],
+    offsets: list[WordOffset],
     broken: Counter[str],
 ) -> None:
     """
@@ -216,28 +220,74 @@ def check(
         offsets: The offsets, as the export writes them.
         broken: Where a promise broken is counted.
     """
-    read_up_to = 0
+    read_up_to = {"bold": 0, "lemmatizer": 0}
 
-    for offset in offsets:
-        start, end = offset
+    for word_offset in offsets:
+        start, end = word_offset["offset"]
 
-        if not 0 <= start < end <= len(text):
-            broken["Out of range"] += 1
-            continue
+        for source in word_offset["sources"]:
+            if not 0 <= start < end <= len(text):
+                broken[f"Out of range ({source})"] += 1
+                continue
 
-        if start < read_up_to:
-            broken["Overlapping or unordered"] += 1
+            if start < read_up_to[source]:
+                broken[f"Overlapping or unordered ({source})"] += 1
 
-        if text[start:end] != text[start:end].strip():
-            broken["Padded with space"] += 1
+            read_up_to[source] = end
 
-        before = text[start - 1] if start else ""
-        after = text[end] if end < len(text) else ""
+            if text[start:end] != text[start:end].strip():
+                broken[f"Padded with space ({source})"] += 1
 
-        if WORD.match(before) or WORD.match(after):
-            broken["Inside a longer word"] += 1
+            before = text[start - 1] if start else ""
+            after = text[end] if end < len(text) else ""
 
-        read_up_to = end
+            if WORD.match(before) or WORD.match(after):
+                broken[f"Inside a longer word ({source})"] += 1
+
+
+def source_relation(
+    offsets: list[WordOffset],
+) -> str:
+    """
+    Describe how both methods located one sentence.
+
+    Args:
+        offsets: Candidate ranges and their supporting methods.
+
+    Returns:
+        The relationship between bold and lemmatizer proposals.
+    """
+    bold = {
+        tuple(word_offset["offset"])
+        for word_offset in offsets
+        if "bold" in word_offset["sources"]
+    }
+    lemmatizer = {
+        tuple(word_offset["offset"])
+        for word_offset in offsets
+        if "lemmatizer" in word_offset["sources"]
+    }
+
+    if not bold:
+        return "Lemmatizer only"
+
+    if not lemmatizer:
+        return "Bold only"
+
+    if bold == lemmatizer:
+        return "Exact agreement"
+
+    if bold & lemmatizer:
+        return "Partial agreement"
+
+    if any(
+        bold_start < lemmatizer_end and lemmatizer_start < bold_end
+        for bold_start, bold_end in bold
+        for lemmatizer_start, lemmatizer_end in lemmatizer
+    ):
+        return "Overlapping proposals"
+
+    return "Disagreement"
 
 
 def count_entry(
@@ -354,12 +404,18 @@ def tally(
 
                     continue
 
+                figures.sentence_sources[source_relation(offsets)] += 1
+
                 check(text, offsets, figures.broken)
 
                 figures.offsets += len(offsets)
+                figures.offset_sources.update(
+                    "+".join(word_offset["sources"]) for word_offset in offsets
+                )
                 figures.inflected += sum(
                     text[start:end].casefold() != lemma.casefold()
-                    for start, end in offsets
+                    for word_offset in offsets
+                    for start, end in (word_offset["offset"],)
                 )
 
     return figures
@@ -541,7 +597,7 @@ def _occurrences(
     sentences = sum(figures.sentences.values())
 
     return Table(
-        "Occurrences per sentence",
+        "Candidate offsets per sentence",
         ("Occurrences", "Sentences", "Share"),
         tuple(
             (
@@ -550,6 +606,66 @@ def _occurrences(
                 share(attesting, sentences),
             )
             for occurrences, attesting in sorted(figures.occurrences.items())
+        ),
+    )
+
+
+def _source_relations(
+    figures: Figures,
+) -> Table:
+    """
+    Lay out how source proposals relate within sentences.
+
+    Args:
+        figures: Counts gathered from the export.
+
+    Returns:
+        Source relationships ordered by sentence count.
+    """
+    located = sum(figures.sentence_sources.values())
+
+    return Table(
+        "Sources by sentence",
+        ("Figure", "Count", "Share"),
+        tuple(
+            (
+                relation,
+                count(sentences),
+                share(sentences, located),
+            )
+            for relation, sentences in figures.sentence_sources.most_common()
+        ),
+    )
+
+
+def _offset_sources(
+    figures: Figures,
+) -> Table:
+    """
+    Lay out which methods support each candidate offset.
+
+    Args:
+        figures: Counts gathered from the export.
+
+    Returns:
+        Source combinations ordered by candidate count.
+    """
+    names = {
+        "bold+lemmatizer": "Bold and lemmatizer",
+        "bold": "Bold",
+        "lemmatizer": "Lemmatizer",
+    }
+
+    return Table(
+        "Sources by offset",
+        ("Figure", "Count", "Share"),
+        tuple(
+            (
+                names[sources],
+                count(offsets),
+                share(offsets, figures.offsets),
+            )
+            for sources, offsets in figures.offset_sources.most_common()
         ),
     )
 
@@ -818,6 +934,8 @@ def compose(
         _section(
             "Word offsets",
             _found(figures),
+            _source_relations(figures),
+            _offset_sources(figures),
             _occurrences(figures),
             _landed(figures),
             _unlocated(figures),

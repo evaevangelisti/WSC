@@ -10,7 +10,16 @@ from datetime import date
 
 from hypothesis import strategies as st
 
-from wsc.models import POS, Example, Lemma, Quotation, Sense, Sentence
+from wsc.models import (
+    POS,
+    Example,
+    Lemma,
+    Quotation,
+    Sense,
+    Sentence,
+    WordOffset,
+    WordOffsetSource,
+)
 
 type RawJson = dict[str, object]
 """One decoded JSON object, as wiktextract writes them."""
@@ -95,7 +104,21 @@ unknown_pos_codes = st.text(
 
 _OFFSETS = st.integers(min_value=0, max_value=60)
 
-_WORD_OFFSETS = st.lists(st.tuples(_OFFSETS, _OFFSETS), max_size=3).map(tuple)
+_WORD_OFFSET_SOURCES = st.lists(
+    st.sampled_from(WordOffsetSource),
+    min_size=1,
+    max_size=len(WordOffsetSource),
+    unique=True,
+).map(tuple)
+
+_WORD_OFFSETS = st.lists(
+    st.builds(
+        WordOffset,
+        st.tuples(_OFFSETS, _OFFSETS),
+        _WORD_OFFSET_SOURCES,
+    ),
+    max_size=3,
+).map(tuple)
 
 _UNQUOTED: st.SearchStrategy[str | None] = st.none()
 
@@ -371,7 +394,6 @@ senses = st.builds(
     _LABEL_LISTS,
     _LABEL_LISTS,
     st.lists(sentences, max_size=3),
-    _LABEL_LISTS,
     _LABEL_LISTS,
 )
 """One meaning of a lemma, filled the way an extraction fills it."""

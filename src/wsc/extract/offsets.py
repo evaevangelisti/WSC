@@ -11,7 +11,7 @@ from kwic import POS as UNIVERSAL_POS
 from kwic import Locator, Query
 
 from ..constants import BATCH_SIZE, PROCESSES, SPACY_PIPELINE
-from ..models import POS, Engine, WordOffset
+from ..models import POS, Engine, Offset
 
 # Universal Dependencies names the tags every engine reports, whatever the
 # tagset its model was trained on.
@@ -123,7 +123,7 @@ def _compile_forms(
 def match_forms(
     text: str,
     forms: frozenset[str],
-) -> tuple[WordOffset, ...]:
+) -> tuple[Offset, ...]:
     """
     Match the listed forms in one sentence, letter for letter and case aside.
 
@@ -140,7 +140,7 @@ def match_forms(
 def find_word_offsets(
     locator: Locator,
     searches: Iterable[tuple[str, Query]],
-) -> Iterator[tuple[WordOffset, ...]]:
+) -> Iterator[tuple[Offset, ...]]:
     """
     Locate the lemma of every sentence handed over.
 

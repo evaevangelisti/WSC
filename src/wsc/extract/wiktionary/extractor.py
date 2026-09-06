@@ -14,7 +14,7 @@ from ...models import POS, Lemma, Translations
 from ..offsets import build_query, find_word_offsets
 from .entries import read_entries
 from .identifiers import lemma_id
-from .merge import merge_lemmas
+from .merge import merge_lemmas, merge_word_offsets
 from .parts import (
     Variants,
     gather_variants,
@@ -196,7 +196,13 @@ class WiktionaryExtractor:
                     # Walked in the order the searches went out, so a sense
                     # takes as many ranges off the stream as it has sentences.
                     sense.sentences = [
-                        replace(sentence, word_offsets=word_offsets)
+                        replace(
+                            sentence,
+                            word_offsets=merge_word_offsets(
+                                sentence.word_offsets,
+                                word_offsets,
+                            ),
+                        )
                         for sentence, word_offsets in zip(
                             sense.sentences, located_offsets, strict=False
                         )

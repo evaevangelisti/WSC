@@ -35,7 +35,13 @@ def _record_of_sentence(
     record: RawJson = {"text": sentence.text}
 
     if sentence.word_offsets:
-        record["word_offsets"] = [list(offsets) for offsets in sentence.word_offsets]
+        record["word_offsets"] = [
+            {
+                "offset": list(word_offset.offset),
+                "sources": list(word_offset.sources),
+            }
+            for word_offset in sentence.word_offsets
+        ]
 
     if isinstance(sentence, Quotation):
         record["reference"] = sentence.reference

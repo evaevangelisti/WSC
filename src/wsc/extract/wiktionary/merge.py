@@ -7,7 +7,14 @@ from dataclasses import replace
 
 from kwic import Query
 
-from ...models import Lemma, Sense, Translations
+from ...models import (
+    Lemma,
+    Offset,
+    Sense,
+    Translations,
+    WordOffset,
+    WordOffsetSource,
+)
 
 
 def add_translations(
@@ -28,19 +35,53 @@ def add_translations(
             kept_words[language] = kept_words.get(language, frozenset()) | words
 
 
-def _united(
+def merge_word_offsets(
+    bold_offsets: tuple[WordOffset, ...],
+    lemmatizer_offsets: tuple[Offset, ...],
+) -> tuple[WordOffset, ...]:
+    """
+    Merge identical candidates while retaining every source.
+
+    Args:
+        bold_offsets: Candidates supplied by Wiktextract.
+        lemmatizer_offsets: Candidates supplied by the lemmatizer pipeline.
+
+    Returns:
+        Every distinct candidate with its supporting sources.
+    """
+    offset_sources = {
+        word_offset.offset: set(word_offset.sources) for word_offset in bold_offsets
+    }
+
+    for offset in lemmatizer_offsets:
+        offset_sources.setdefault(offset, set()).add(WordOffsetSource.LEMMATIZER)
+
+    return tuple(
+        WordOffset(
+            offset,
+            tuple(
+                source
+                for source in WordOffsetSource
+                if source in offset_sources[offset]
+            ),
+        )
+        for offset in sorted(offset_sources)
+    )
+
+
+def _merge_items(
     kept: tuple[str, ...],
     added: tuple[str, ...],
 ) -> tuple[str, ...]:
     """
-    Add what is not carried already, in the order it was first written.
+    Append items not already kept, preserving their order.
 
     Args:
-        kept: What is carried already.
-        added: What to add to it.
+        kept: Items already retained.
+        added: Items to append when absent.
 
     Returns:
-        The two, a repeat kept once.
+        The retained items followed by new additions.
     """
     return (*kept, *(item for item in added if item not in kept))
 
@@ -69,10 +110,10 @@ def merge_senses(
             gathered_senses[sense.id] = sense
             continue
 
-        kept_sense.synonyms = _united(kept_sense.synonyms, sense.synonyms)
+        kept_sense.synonyms = _merge_items(kept_sense.synonyms, sense.synonyms)
 
-        kept_sense.topics = _united(kept_sense.topics, sense.topics)
-        kept_sense.tags = _united(kept_sense.tags, sense.tags)
+        kept_sense.topics = _merge_items(kept_sense.topics, sense.topics)
+        kept_sense.tags = _merge_items(kept_sense.tags, sense.tags)
 
         kept_sense.sentences += sense.sentences
 
@@ -95,13 +136,13 @@ def merge_lemmas(
         One entry per headword and part of speech, in the order the first of
         its etymologies was read.
     """
-    lemmas: dict[str, tuple[Lemma, Query]] = {}
+    gathered_lemmas: dict[str, tuple[Lemma, Query]] = {}
 
     for lemma, query in queried_lemmas:
-        gathered_lemma = lemmas.get(lemma.id)
+        gathered_lemma = gathered_lemmas.get(lemma.id)
 
         if gathered_lemma is None:
-            lemmas[lemma.id] = lemma, query
+            gathered_lemmas[lemma.id] = lemma, query
             continue
 
         kept_lemma, kept_query = gathered_lemma
@@ -112,12 +153,12 @@ def merge_lemmas(
         add_translations(kept_lemma.translations, lemma.translations)
 
         # Each etymology inflects the headword its own way.
-        lemmas[lemma.id] = (
+        gathered_lemmas[lemma.id] = (
             kept_lemma,
             replace(kept_query, forms=kept_query.forms | query.forms),
         )
 
-    for lemma, query in lemmas.values():
+    for lemma, query in gathered_lemmas.values():
         lemma.senses = merge_senses(lemma.senses)
 
         yield lemma, query

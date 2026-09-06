@@ -8,7 +8,7 @@ every study reads it the same way. A key the writer prunes is optional.
 import json
 from collections.abc import Iterator
 from pathlib import Path
-from typing import NotRequired, TypedDict, cast
+from typing import Literal, NotRequired, TypedDict, cast
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 """Where the exports the studies draw from are kept, outside version control."""
@@ -20,6 +20,19 @@ SEPARATOR = " > "
 """What joins a gloss chain, Wiktionary nesting its senses."""
 
 
+class WordOffset(TypedDict):
+    """
+    One candidate range and the methods supporting it.
+
+    Attributes:
+        offset: Half-open code-point range.
+        sources: Methods supporting the candidate.
+    """
+
+    offset: list[int]
+    sources: list[Literal["bold", "lemmatizer"]]
+
+
 class Sentence(TypedDict):
     """
     A sentence Wiktionary hangs off a sense.
@@ -29,7 +42,7 @@ class Sentence(TypedDict):
     """
 
     text: str
-    word_offsets: NotRequired[list[list[int]]]
+    word_offsets: NotRequired[list[WordOffset]]
     reference: NotRequired[str]
     year: NotRequired[int]
 

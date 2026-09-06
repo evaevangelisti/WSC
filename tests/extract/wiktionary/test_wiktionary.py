@@ -34,7 +34,15 @@ from strategies import (
 
 from wsc.constants import LANGUAGE
 from wsc.extract import WiktionaryExtractor
-from wsc.models import POS, Example, Lemma, Quotation, Sentence
+from wsc.models import (
+    POS,
+    Example,
+    Lemma,
+    Quotation,
+    Sentence,
+    WordOffset,
+    WordOffsetSource,
+)
 
 # json.loads is typed loosely; whether a line decodes at all is the whole of
 # what is asked of it here.
@@ -749,7 +757,12 @@ class TestKinds:
         )[0]
 
         assert found.text == headword
-        assert found.word_offsets == ((0, len(headword)),)
+        assert found.word_offsets == (
+            WordOffset(
+                (0, len(headword)),
+                (WordOffsetSource.LEMMATIZER,),
+            ),
+        )
 
 
 class TestPointers:
@@ -966,7 +979,90 @@ class TestWordOffsets:
         example = data.draw(raw_examples(texts=st.just(f"1 {headword} 2")))
 
         assert attest(example, headword=headword)[0].word_offsets == (
-            (2, 2 + len(headword)),
+            WordOffset(
+                (2, 2 + len(headword)),
+                (WordOffsetSource.LEMMATIZER,),
+            ),
+        )
+
+    def test_combines_sources_supporting_the_same_offset(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """Agreement remains distinguishable from either method alone."""
+        found = attest(
+            {
+                "text": "a bank account",
+                "bold_text_offsets": [[2, 6]],
+            },
+        )
+
+        assert found[0].word_offsets == (
+            WordOffset(
+                (2, 6),
+                (
+                    WordOffsetSource.BOLD,
+                    WordOffsetSource.LEMMATIZER,
+                ),
+            ),
+        )
+
+    def test_keeps_disagreeing_offsets_separately(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """A later review needs both proposals where the methods disagree."""
+        found = attest(
+            {
+                "text": "a bank account",
+                "bold_text_offsets": [[7, 14]],
+            },
+        )
+
+        assert found[0].word_offsets == (
+            WordOffset((2, 6), (WordOffsetSource.LEMMATIZER,)),
+            WordOffset((7, 14), (WordOffsetSource.BOLD,)),
+        )
+
+    def test_discards_a_bold_offset_outside_the_sentence(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """An invalid source range cannot identify text for review."""
+        found = attest(
+            {
+                "text": "a bank account",
+                "bold_text_offsets": [[2, 100]],
+            },
+        )
+
+        assert found[0].word_offsets == (
+            WordOffset((2, 6), (WordOffsetSource.LEMMATIZER,)),
+        )
+
+    def test_moves_bold_offsets_with_a_removed_reference(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """Bold ranges remain relative to the exported sentence."""
+        reference = "2026, bank"
+        start = len(reference) + 1
+        found = attest(
+            {
+                "text": f"{reference}\nbank",
+                "type": "quotation",
+                "bold_text_offsets": [[start, start + 4]],
+            },
+        )
+
+        assert found[0].word_offsets == (
+            WordOffset(
+                (0, 4),
+                (
+                    WordOffsetSource.BOLD,
+                    WordOffsetSource.LEMMATIZER,
+                ),
+            ),
         )
 
     @given(words, words, st.data())
@@ -983,7 +1079,9 @@ class TestWordOffsets:
 
         found = attest(example, headword=headword, forms=[form])
 
-        assert (2, 2 + len(inflection)) in found[0].word_offsets
+        assert (2, 2 + len(inflection)) in (
+            word_offset.offset for word_offset in found[0].word_offsets
+        )
 
     @given(words, _SERVICE_TAGS, st.data())
     def test_skips_what_is_listed_among_the_forms_without_being_one(
@@ -1003,7 +1101,9 @@ class TestWordOffsets:
 
         found = attest(example, headword=headword, forms=[form])
 
-        assert (2, 2 + len(listed)) not in found[0].word_offsets
+        assert (2, 2 + len(listed)) not in (
+            word_offset.offset for word_offset in found[0].word_offsets
+        )
 
     @given(words, _EMPTY_CELLS, st.data())
     def test_skips_a_form_the_inflection_table_left_empty(
@@ -1019,7 +1119,12 @@ class TestWordOffsets:
 
         found = attest(example, headword=headword, forms=[form])
 
-        assert found[0].word_offsets == ((2, 2 + len(headword)),)
+        assert found[0].word_offsets == (
+            WordOffset(
+                (2, 2 + len(headword)),
+                (WordOffsetSource.LEMMATIZER,),
+            ),
+        )
 
 
 class TestVariants:

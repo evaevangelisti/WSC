@@ -4,7 +4,7 @@ The sentences illustrating one sense of an entry.
 
 import re
 
-from ....models import Example, Quotation, Sentence
+from ....models import Example, Quotation, Sentence, WordOffset, WordOffsetSource
 from ..markup import carries_markup
 from ..schema import RawExample
 
@@ -81,6 +81,61 @@ def read_source(
     return text, ""
 
 
+def _sentence_start(
+    raw_text: str,
+    text: str,
+) -> int:
+    """
+    Return the sentence's start within Wiktextract text.
+
+    Args:
+        raw_text: Complete text supplied by Wiktextract.
+        text: Exported sentence without its reference.
+
+    Returns:
+        The sentence's code-point position within the stripped source text.
+    """
+    stripped_text = raw_text.strip()
+    if stripped_text == text:
+        return 0
+
+    head, separator, tail = stripped_text.partition("\n")
+
+    return len(head) + len(separator) + len(tail) - len(tail.lstrip())
+
+
+def _parse_bold_offsets(
+    raw_text: str,
+    text: str,
+    raw_offsets: list[list[int]],
+) -> tuple[WordOffset, ...]:
+    """
+    Read valid bold ranges relative to the exported sentence.
+
+    Args:
+        raw_text: Complete text supplied by Wiktextract.
+        text: Exported sentence without its reference.
+        raw_offsets: Bold ranges relative to the complete text.
+
+    Returns:
+        Distinct valid ranges relative to the exported sentence.
+    """
+    leading_space = len(raw_text) - len(raw_text.lstrip())
+    sentence_start = _sentence_start(raw_text, text)
+    offset_shift = leading_space + sentence_start
+
+    return tuple(
+        dict.fromkeys(
+            WordOffset(
+                (start - offset_shift, end - offset_shift),
+                (WordOffsetSource.BOLD,),
+            )
+            for start, end in raw_offsets
+            if 0 <= start - offset_shift < end - offset_shift <= len(text)
+        )
+    )
+
+
 def parse_sentences(
     raw_examples: list[RawExample],
     minimum_year: int | None,
@@ -103,11 +158,19 @@ def parse_sentences(
     sentences: list[Sentence] = []
 
     for raw_example in raw_examples:
-        text = raw_example.get("text", "").strip()
+        raw_text = raw_example.get("text", "")
+
+        text = raw_text.strip()
         if not text or carries_markup(text):
             continue
 
         text, reference = read_source(text, raw_example)
+
+        word_offsets = _parse_bold_offsets(
+            raw_text,
+            text,
+            raw_example.get("bold_text_offsets", []),
+        )
 
         if not reference:
             # A pointer is only ever left where no kind was read.
@@ -119,7 +182,12 @@ def parse_sentences(
             if "\n" not in text and _REFERENCE_PATTERN.match(text):
                 continue
 
-            sentences.append(Example(text))
+            sentences.append(
+                Example(
+                    text,
+                    word_offsets=word_offsets,
+                )
+            )
 
             continue
 
@@ -136,6 +204,13 @@ def parse_sentences(
             if maximum_year is not None and year > maximum_year:
                 continue
 
-        sentences.append(Quotation(text, reference, year))
+        sentences.append(
+            Quotation(
+                text,
+                reference,
+                year=year,
+                word_offsets=word_offsets,
+            )
+        )
 
     return sentences

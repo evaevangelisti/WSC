@@ -3,15 +3,39 @@ Domain model for Wiktionary entries parsed by wiktextract.
 """
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 
 from ..pos import POS
 
-type WordOffset = tuple[int, int]
-"""Half-open range of code points, as Python slices them."""
+type Offset = tuple[int, int]
+"""Half-open code-point range."""
 
-type Translations = dict[str, dict[str, frozenset[str]]]
-"""What other languages call an entry: the gloss a translation table heads,
-then the language, then the words it offers."""
+
+class WordOffsetSource(StrEnum):
+    """
+    Method proposing a word offset.
+
+    Attributes:
+        BOLD: Range supplied by Wiktextract's bold text.
+        LEMMATIZER: Range supplied by the lemmatizer pipeline.
+    """
+
+    BOLD = "bold"
+    LEMMATIZER = "lemmatizer"
+
+
+@dataclass(frozen=True, slots=True)
+class WordOffset:
+    """
+    Candidate range and its supporting methods.
+
+    Attributes:
+        offset: Half-open code-point range.
+        sources: Methods supporting the candidate.
+    """
+
+    offset: Offset
+    sources: tuple[WordOffsetSource, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,7 +45,7 @@ class Attestation:
 
     Attributes:
         text: The sentence.
-        word_offsets: Where the lemma occurs in it, leftmost first.
+        word_offsets: Candidate ranges and the methods supporting them.
     """
 
     text: str
@@ -101,6 +125,11 @@ class Sense:
     ) -> int:
         """Nesting level: 1 for a top-level sense, 2 for a sub-sense."""
         return len(self.glosses)
+
+
+type Translations = dict[str, dict[str, frozenset[str]]]
+"""What other languages call an entry: the gloss a translation table heads,
+then the language, then the words it offers."""
 
 
 @dataclass(slots=True)

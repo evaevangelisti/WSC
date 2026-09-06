@@ -8,12 +8,14 @@ from .resources import (
     Attestation,
     Example,
     Lemma,
+    Offset,
     Quotation,
     Sense,
     Sentence,
     Synset,
     Translations,
     WordOffset,
+    WordOffsetSource,
 )
 
 __all__ = [
@@ -22,10 +24,12 @@ __all__ = [
     "Engine",
     "Example",
     "Lemma",
+    "Offset",
     "Quotation",
     "Sense",
     "Sentence",
     "Synset",
     "Translations",
     "WordOffset",
+    "WordOffsetSource",
 ]

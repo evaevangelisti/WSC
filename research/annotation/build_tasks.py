@@ -87,7 +87,9 @@ def walk(
                     pos=entry["pos"],
                     text=sentence["text"],
                     offsets=tuple(
-                        (start, end) for start, end in sentence.get("word_offsets", [])
+                        (start, end)
+                        for word_offset in sentence.get("word_offsets", [])
+                        for start, end in (word_offset["offset"],)
                     ),
                 )
 

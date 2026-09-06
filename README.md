@@ -80,7 +80,7 @@ wsc parse
 
 Reads the senses into a file, one entry per headword and part of speech, the suffix picking the format.
 
-[kwic](https://github.com/evaevangelisti/kwic) reads each sentence to place the lemma; where the reading finds nothing, the listed forms are matched.
+Wiktextract's bold ranges and [kwic](https://github.com/evaevangelisti/kwic) independently place the lemma. Each candidate records whether `bold`, `lemmatizer`, or both support it, preserving disagreements for review. Where the lemmatizer finds nothing, the listed forms are matched.
 
 `--gpu` needs CuPy, which kwic offers as an extra named after your CUDA release: `pip install "kwic[cuda13x]"`.
 

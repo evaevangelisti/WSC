@@ -36,6 +36,7 @@ class RawExample(TypedDict, total=False):
     text: str
     ref: str
     type: str
+    bold_text_offsets: list[list[int]]
 
 
 class RawSynonym(TypedDict, total=False):
