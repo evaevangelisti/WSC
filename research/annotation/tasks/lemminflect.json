@@ -1,1042 +1,512 @@
 [
   {
     "data": {
-      "item_id": "juju.noun.6c6e914d#0",
+      "item_id": "insular.adj.abb0ee15#0",
       "source": "lemminflect",
-      "lemma": "juju",
-      "pos": "noun",
-      "target": "juju (noun)",
-      "marked": "Pendants round the neck, bangles round the wrists or ankles, potatoes or nutmegs in the pocket are as old or older than civilisation, carrying the same prophylactic magic as any <b>juju</b> in an African witchdoctor's armamentarium."
-    }
-  },
-  {
-    "data": {
-      "item_id": "longeve.adj.c5c47361#3",
-      "source": "lemminflect",
-      "lemma": "longeve",
+      "lemma": "insular",
       "pos": "adj",
-      "target": "longeve (adj)",
-      "marked": "The most long-lived men can arrive up to one hundred years, while the medium and less <b>longeve</b> respectively can live up to eighty and sixty years."
+      "target": "insular (adj)",
+      "marked": "Near-synonym: islandic"
     }
   },
   {
     "data": {
-      "item_id": "nettlesome.adj.4c2ca2f0#5",
+      "item_id": "going away.adv.c89b13fc#1",
       "source": "lemminflect",
-      "lemma": "nettlesome",
-      "pos": "adj",
-      "target": "nettlesome (adj)",
-      "marked": "For nearly 40 years, Mr. Solarin, an unpretentious and intensely pugnacious man, has been an intellectual guru for Nigeria's disenchanted and disfranchised."
-    }
-  },
-  {
-    "data": {
-      "item_id": "cheapstead.noun.2de0ebf7#0",
-      "source": "lemminflect",
-      "lemma": "cheapstead",
-      "pos": "noun",
-      "target": "cheapstead (noun)",
-      "marked": "[…] three weeks of winter were employed in butchering, and more than an acre of field surrounding the <b>cheapstead</b> at Housewick was covered with knots of men and women decapitating and flaying their flocks."
-    }
-  },
-  {
-    "data": {
-      "item_id": "uniped.adj.7f2706d5#2",
-      "source": "lemminflect",
-      "lemma": "uniped",
-      "pos": "adj",
-      "target": "uniped (adj)",
-      "marked": "Fig. 9 The Black Tezcatlipoca, in aspect of Huitzilopochtli: he is <b>uniped</b>, ‘hurakan’."
-    }
-  },
-  {
-    "data": {
-      "item_id": "bestow.verb.152ab0e5#3",
-      "source": "lemminflect",
-      "lemma": "bestow",
-      "pos": "verb",
-      "target": "bestow (verb)",
-      "marked": "Harke yee Lords, you ſee I haue giuen her Phiſicke, / And you muſt needs beſtovv her Funerall, […]"
-    }
-  },
-  {
-    "data": {
-      "item_id": "top of one's class.adv.da90b1e8#0",
-      "source": "lemminflect",
-      "lemma": "top of one's class",
+      "lemma": "going away",
       "pos": "adv",
-      "target": "top of one's class (adv)",
-      "marked": "I graduated top of my class from college."
+      "target": "going away (adv)",
+      "marked": "Seven weeks later on May 27th, Conibear and his men faced a tough California crew on Lake Washington and defeated them <b>going away</b> in a time of 16:56."
     }
   },
   {
     "data": {
-      "item_id": "replace.verb.051b43e3#2",
+      "item_id": "frugal.adj.167a9ac5#3",
       "source": "lemminflect",
-      "lemma": "replace",
-      "pos": "verb",
-      "target": "replace (verb)",
-      "marked": "Next Wednesday, four women and 15 men on the Crown Nominations Commission will gather for two days of prayer and horsetrading to <b>replace</b> Rowan Williams as archbishop of Canterbury."
-    }
-  },
-  {
-    "data": {
-      "item_id": "gorge.verb.aadcf71e#1",
-      "source": "lemminflect",
-      "lemma": "gorge",
-      "pos": "verb",
-      "target": "gorge (verb)",
-      "marked": "The giant, gorg'd with flesh, and wine, and blood,\n Lay stretch'd at length and snoring in his den,\n Belching raw gobbets from his maw, o'ercharged\n With purple wine and curdled gore confus'd."
-    }
-  },
-  {
-    "data": {
-      "item_id": "war-weary.adj.158cdf8e#4",
-      "source": "lemminflect",
-      "lemma": "war-weary",
+      "lemma": "frugal",
       "pos": "adj",
-      "target": "war-weary (adj)",
-      "marked": "For general relativity, there was a dramatic experimental test that was possible, one that had the potential to dazzle and help heal a <b>war-weary</b> world."
+      "target": "frugal (adj)",
+      "marked": "Pinching and paring he might furnish forth / A <b>frugal</b> board, bare sustenance, no more,[…]"
     }
   },
   {
     "data": {
-      "item_id": "inborn.adj.806ab960#2",
+      "item_id": "pants.verb.d260bd5f#1",
       "source": "lemminflect",
-      "lemma": "inborn",
+      "lemma": "pants",
+      "pos": "verb",
+      "target": "pants (verb)",
+      "marked": "[T]he other boys, Stretch Latham and Rod Becker mainly, <b>pantsed</b> him, got his jockey shorts away and threw them onto Hubcap Willie’s roof."
+    }
+  },
+  {
+    "data": {
+      "item_id": "thereafter.adv.e9b07eb9#0",
+      "source": "lemminflect",
+      "lemma": "thereafter",
+      "pos": "adv",
+      "target": "thereafter (adv)",
+      "marked": "Near-synonyms: afterward, afterwards"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Gilgit.name.c7f4cc27#0",
+      "source": "lemminflect",
+      "lemma": "Gilgit",
+      "pos": "name",
+      "target": "Gilgit (name)",
+      "marked": "<b>Gilgit</b> is one of the two important hubs for mountaineering expeditions to the peaks in the Karakoram range. The other hub is Skardu."
+    }
+  },
+  {
+    "data": {
+      "item_id": "swordswomanship.noun.b873d342#0",
+      "source": "lemminflect",
+      "lemma": "swordswomanship",
+      "pos": "noun",
+      "target": "swordswomanship (noun)",
+      "marked": "As the two women journey from Rhostshyl to far-off Hlavsen, where Nyc's long-time lover — a man — awaits her, they pull off a series of narow escapes, taking turns saving each other through force and <b>swordswomanship</b> or sorcery."
+    }
+  },
+  {
+    "data": {
+      "item_id": "descope.verb.d2a0cc2b#1",
+      "source": "lemminflect",
+      "lemma": "descope",
+      "pos": "verb",
+      "target": "descope (verb)",
+      "marked": "The decision follows a recommendation made by the Oakervee review in February 2020 to <b>descope</b> the original plans for Euston and to re-examine the efficiency of the future station."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Chimpy McFlightsuit.name.c94b5d79#1",
+      "source": "lemminflect",
+      "lemma": "Chimpy McFlightsuit",
+      "pos": "name",
+      "target": "Chimpy McFlightsuit (name)",
+      "marked": "[see title]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "cockatrice.noun.cefa4710#0",
+      "source": "lemminflect",
+      "lemma": "cockatrice",
+      "pos": "noun",
+      "target": "cockatrice (noun)",
+      "marked": "A forlyued cok leiþ eiren in his laste elde... and ȝif any venemous worme sittiþ on broode þerevppon in þe canyculer dayes, þerof is igendrid... a cocatrice."
+    }
+  },
+  {
+    "data": {
+      "item_id": "super-duper.adj.08c95aae#0",
+      "source": "lemminflect",
+      "lemma": "super-duper",
       "pos": "adj",
-      "target": "inborn (adj)",
-      "marked": "However, a scientific study just published in American Psychologist provides strong reasons to doubt that there are many <b>inborn</b> differences between genders."
+      "target": "super-duper (adj)",
+      "marked": "Near-synonym: super-superlative"
     }
   },
   {
     "data": {
-      "item_id": "contiguous.adj.25e7a16a#0",
+      "item_id": "igniferous.adj.49781da0#0",
       "source": "lemminflect",
-      "lemma": "contiguous",
+      "lemma": "igniferous",
       "pos": "adj",
-      "target": "contiguous (adj)",
-      "marked": "Though poor the peasant’s hut, his feasts though small,\nHe sees his little lot the lot of all;\nSees no <b>contiguous</b> palace rear its head\nTo shame the meanness of his humble shed;"
+      "target": "igniferous (adj)",
+      "marked": "Near-synonyms: fire-breathing, flammivomous"
     }
   },
   {
     "data": {
-      "item_id": "bell out.verb.faceac0c#0",
+      "item_id": "high-powered.adj.24a9de26#0",
       "source": "lemminflect",
-      "lemma": "bell out",
-      "pos": "verb",
-      "target": "bell out (verb)",
-      "marked": "Her dress <b>belled out</b> at the bottom."
-    }
-  },
-  {
-    "data": {
-      "item_id": "eat out of someone's hand.verb.e4001f98#0",
-      "source": "lemminflect",
-      "lemma": "eat out of someone's hand",
-      "pos": "verb",
-      "target": "eat out of someone's hand (verb)",
-      "marked": "\"And after all this,\" I remarked, \"I suppose you were ready to eat out of his hand.\" \"Don't be coarse, James. I don't know where you get these vulgar expressions from.\""
-    }
-  },
-  {
-    "data": {
-      "item_id": "fairylike.adj.1ac679cc#1",
-      "source": "lemminflect",
-      "lemma": "fairylike",
+      "lemma": "high-powered",
       "pos": "adj",
-      "target": "fairylike (adj)",
-      "marked": "We halted by a fairy-like pool where the proud Davey stood beside a wopper ’roo."
+      "target": "high-powered (adj)",
+      "marked": "a <b>high-powered</b> sales pitch"
     }
   },
   {
     "data": {
-      "item_id": "personate.verb.1c836c88#0",
+      "item_id": "Green's theorem.name.f6d9cfd0#1",
       "source": "lemminflect",
-      "lemma": "personate",
-      "pos": "verb",
-      "target": "personate (verb)",
-      "marked": "I vvill drop in his vvay ſome obſcure Epiſtles of loue, vvherein by the colour of his beard, the ſhape of his legge, the manner of his gate, the expreſſure of his eye, forehead, and complection, he ſhall finde himſelfe moſt feelingly <b>perſonated</b>."
-    }
-  },
-  {
-    "data": {
-      "item_id": "one's head off.adv.7d29d4c7#0",
-      "source": "lemminflect",
-      "lemma": "one's head off",
-      "pos": "adv",
-      "target": "one's head off (adv)",
-      "marked": "He has been worrying his head off all morning about how he will do on the finals."
-    }
-  },
-  {
-    "data": {
-      "item_id": "reginally.adv.ace4f1bd#0",
-      "source": "lemminflect",
-      "lemma": "reginally",
-      "pos": "adv",
-      "target": "reginally (adv)",
-      "marked": "She strode across the stage, bearing herself <b>reginally</b>."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Madeleine.name.63cd38e1#0",
-      "source": "lemminflect",
-      "lemma": "Madeleine",
+      "lemma": "Green's theorem",
       "pos": "name",
-      "target": "Madeleine (name)",
-      "marked": "\"We've been making up the most glamorous names for you, Marguerite and Marlene and <b>Madeleine</b>―\"\n\"And Melanie and Marianne and Marietta,\" put in Jane."
+      "target": "Green's theorem (name)",
+      "marked": "where ∧ is the wedge product, or equivalently, as\n∬_R∇·⃑Gdx,dy=∮_(∂R)⃑G∧d⃑l,"
     }
   },
   {
     "data": {
-      "item_id": "out of hand.adv.eb90c77f#0",
+      "item_id": "knob.verb.d5e616c6#0",
       "source": "lemminflect",
-      "lemma": "out of hand",
-      "pos": "adv",
-      "target": "out of hand (adv)",
-      "marked": "Near-synonym: offhand"
-    }
-  },
-  {
-    "data": {
-      "item_id": "hammerwise.adv.af89adc3#0",
-      "source": "lemminflect",
-      "lemma": "hammerwise",
-      "pos": "adv",
-      "target": "hammerwise (adv)",
-      "marked": "[…] a handful of almonds; and the ladies having no other way to eat them, one of them saucily snatched off her shoe, and cracked them <b>hammerwise</b> with the heel."
-    }
-  },
-  {
-    "data": {
-      "item_id": "misyield.verb.5bd480ca#1",
-      "source": "lemminflect",
-      "lemma": "misyield",
+      "lemma": "knob",
       "pos": "verb",
-      "target": "misyield (verb)",
-      "marked": "To appreciate how YTM can be “mis-yielding,” (misleading), take a look at Exhibit 8-5, which examines a bond purchased at par with 6 percent YTM under varying reinvestment or interest rate assumptions."
+      "target": "knob (verb)",
+      "marked": "One morning, maybe three weeks after my last grapple with Penny, Thomson came roaring into our form room. ‘Oi, Fleming, you spastic. Guess who I <b>knobbed</b> last night?’"
     }
   },
   {
     "data": {
-      "item_id": "superambitious.adj.c296ef72#0",
+      "item_id": "Aluniș.name.6c1e466e#2",
       "source": "lemminflect",
-      "lemma": "superambitious",
+      "lemma": "Aluniș",
+      "pos": "name",
+      "target": "Aluniș (name)",
+      "marked": "A village in Colți, Buzău County, Romania."
+    }
+  },
+  {
+    "data": {
+      "item_id": "turmoil.verb.3aad4e42#0",
+      "source": "lemminflect",
+      "lemma": "turmoil",
+      "pos": "verb",
+      "target": "turmoil (verb)",
+      "marked": "It is her fatal misfortune […] to be thus miserably tossed and <b>turmoiled</b> with these storms of affliction."
+    }
+  },
+  {
+    "data": {
+      "item_id": "finish off.verb.9542a2af#2",
+      "source": "lemminflect",
+      "lemma": "finish off",
+      "pos": "verb",
+      "target": "finish off (verb)",
+      "marked": "By Noem’s own detailed admission, it took two blasts from a shotgun, separated by a walk back to her truck for more shells, to <b>finish</b><b>finish the goat off</b><b>off</b>."
+    }
+  },
+  {
+    "data": {
+      "item_id": "devitalize.verb.c3df32dc#0",
+      "source": "lemminflect",
+      "lemma": "devitalize",
+      "pos": "verb",
+      "target": "devitalize (verb)",
+      "marked": "Near-synonym: deanimate"
+    }
+  },
+  {
+    "data": {
+      "item_id": "enridge.verb.110f0fea#2",
+      "source": "lemminflect",
+      "lemma": "enridge",
+      "pos": "verb",
+      "target": "enridge (verb)",
+      "marked": "Pass where beneath their rangèd gonfalons\nThe starry cohorts shake their shielded suns,\nThe dreadful mass of their enridgèd spears;"
+    }
+  },
+  {
+    "data": {
+      "item_id": "bathorse.noun.0d4bc18f#0",
+      "source": "lemminflect",
+      "lemma": "bathorse",
+      "pos": "noun",
+      "target": "bathorse (noun)",
+      "marked": "About ten o’clock the wagons and bat horses laden with Indian corn were returning, covered by a party of infantry, with Tarleton and his dragoons as a rear-guard."
+    }
+  },
+  {
+    "data": {
+      "item_id": "undercarriage.noun.e10b23b9#0",
+      "source": "lemminflect",
+      "lemma": "undercarriage",
+      "pos": "noun",
+      "target": "undercarriage (noun)",
+      "marked": "Near-synonym: chassis"
+    }
+  },
+  {
+    "data": {
+      "item_id": "interrogatory.adj.d764c84b#1",
+      "source": "lemminflect",
+      "lemma": "interrogatory",
       "pos": "adj",
-      "target": "superambitious (adj)",
-      "marked": "The men I met in California who were in their 30s and <b>superambitious</b> never really valued women, but Stephen valued me as a person.”"
+      "target": "interrogatory (adj)",
+      "marked": "The <b>interrogatory</b> stare of the cardinal is enough to bring a man to his knees."
     }
   },
   {
     "data": {
-      "item_id": "nautical.adj.a3bc79f8#0",
+      "item_id": "atomize.verb.241f50d5#0",
       "source": "lemminflect",
-      "lemma": "nautical",
+      "lemma": "atomize",
+      "pos": "verb",
+      "target": "atomize (verb)",
+      "marked": "Near-synonyms: pulverize, annihilate"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Bougainvillean.adj.c06cc740#0",
+      "source": "lemminflect",
+      "lemma": "Bougainvillean",
       "pos": "adj",
-      "target": "nautical (adj)",
-      "marked": "Near-synonyms: marine, maritime, naval, seafaring"
+      "target": "Bougainvillean (adj)",
+      "marked": "Slipping into a reflective mood, Mr. Kinna, 36 years old, recalled his <b>Bougainvillean</b> childhood."
     }
   },
   {
     "data": {
-      "item_id": "thick and fast.adv.447899a6#0",
+      "item_id": "egoistically.adv.c8ff7fdb#0",
       "source": "lemminflect",
-      "lemma": "thick and fast",
+      "lemma": "egoistically",
       "pos": "adv",
-      "target": "thick and fast (adv)",
-      "marked": "Near-synonyms: thick on the ground, common, widespread, abundant; ubiquitous"
+      "target": "egoistically (adv)",
+      "marked": "He was going to ask her to marry him—indeed, he had intended to ask her without more delay. But the words were not spoken yet; instead, he found himself talking <b>egoistically</b> on and on."
     }
   },
   {
     "data": {
-      "item_id": "slipslop.verb.3f64ca51#0",
+      "item_id": "cryptobro.noun.16d692a5#2",
       "source": "lemminflect",
-      "lemma": "slipslop",
+      "lemma": "cryptobro",
+      "pos": "noun",
+      "target": "cryptobro (noun)",
+      "marked": "<b>Crypto bros</b> defend the imbalance by noting that women are more risk-averse than men."
+    }
+  },
+  {
+    "data": {
+      "item_id": "soup.verb.ef016c8d#1",
+      "source": "lemminflect",
+      "lemma": "soup",
       "pos": "verb",
-      "target": "slipslop (verb)",
-      "marked": "Below, among dark mysteries of the under-wharf, the water placidly <b>slipslopped</b>; the sea-wind blew gently in, fluffing a lock of hair across my face."
+      "target": "soup (verb)",
+      "marked": "Now laughing together thaws our human ice; long before Swindon it was a talking match, —at Swindon who so devoted as Captain Dolignan,—he handed them out—he <b>souped</b> them,—he tough-chickened them,—he brandied and cochinealed one, and he brandied and burnt-sugared the other;"
     }
   },
   {
     "data": {
-      "item_id": "loggerheaded.adj.bba54bfc#0",
+      "item_id": "dress.verb.794a6177#1",
       "source": "lemminflect",
-      "lemma": "loggerheaded",
+      "lemma": "dress",
+      "pos": "verb",
+      "target": "dress (verb)",
+      "marked": "Heere Loue, thou ſeeſt how diligent I am, / To <b>dreſſe</b> thy meate my ſelfe, and bring it thee."
+    }
+  },
+  {
+    "data": {
+      "item_id": "merlad.noun.fba91e77#2",
+      "source": "lemminflect",
+      "lemma": "merlad",
+      "pos": "noun",
+      "target": "merlad (noun)",
+      "marked": "“At first everyone was standoffish and now they're too friendly,” Thorgil complained, swiping at a <b>merlad</b> who was attempting to grab her hair."
+    }
+  },
+  {
+    "data": {
+      "item_id": "misinflect.verb.3dd14234#2",
+      "source": "lemminflect",
+      "lemma": "misinflect",
+      "pos": "verb",
+      "target": "misinflect (verb)",
+      "marked": "This is one reason why one inclines to quotation in discussing his writing . Any paraphrase that even slightly <b>misinflects</b> his descriptions runs the risk of near-total distortion."
+    }
+  },
+  {
+    "data": {
+      "item_id": "French.name.a0064b54#3",
+      "source": "lemminflect",
+      "lemma": "French",
+      "pos": "name",
+      "target": "French (name)",
+      "marked": "The book... is a welcome change from theory-infected academic discourse, pardon my <b>French</b>."
+    }
+  },
+  {
+    "data": {
+      "item_id": "two-tap.verb.9dd3a790#1",
+      "source": "lemminflect",
+      "lemma": "two-tap",
+      "pos": "verb",
+      "target": "two-tap (verb)",
+      "marked": "This is an interesting PvP choice because Harmony on a 120 when activated should in theory be able to <b>two-tap</b> enemy guardians."
+    }
+  },
+  {
+    "data": {
+      "item_id": "unrightfully.adv.b0dda50a#0",
+      "source": "lemminflect",
+      "lemma": "unrightfully",
+      "pos": "adv",
+      "target": "unrightfully (adv)",
+      "marked": "Near-synonym: unrighteously"
+    }
+  },
+  {
+    "data": {
+      "item_id": "insular.adj.abb0ee15#0",
+      "source": "lemminflect",
+      "lemma": "insular",
       "pos": "adj",
-      "target": "loggerheaded (adj)",
-      "marked": "Here, sir! here, sir! here, sir! here, sir! / You logger-headed and unpolish'd grooms!"
+      "target": "insular (adj)",
+      "marked": "Near-synonym: islandic"
     }
   },
   {
     "data": {
-      "item_id": "misyield.verb.5bd480ca#1",
+      "item_id": "Vesper.name.f0070b28#0",
       "source": "lemminflect",
-      "lemma": "misyield",
-      "pos": "verb",
-      "target": "misyield (verb)",
-      "marked": "To appreciate how YTM can be “mis-yielding,” (misleading), take a look at Exhibit 8-5, which examines a bond purchased at par with 6 percent YTM under varying reinvestment or interest rate assumptions."
-    }
-  },
-  {
-    "data": {
-      "item_id": "dining table.noun.1dfcc129#0",
-      "source": "lemminflect",
-      "lemma": "dining table",
-      "pos": "noun",
-      "target": "dining table (noun)",
-      "marked": "Holonym: dining set"
-    }
-  },
-  {
-    "data": {
-      "item_id": "supermonstrously.adv.174680ab#1",
-      "source": "lemminflect",
-      "lemma": "supermonstrously",
-      "pos": "adv",
-      "target": "supermonstrously (adv)",
-      "marked": "Hence such an expression like something <b>supermonstrously</b> monstrous would be the nearest equivalent, however strange it may appear."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Haeju.name.b75c8179#4",
-      "source": "lemminflect",
-      "lemma": "Haeju",
+      "lemma": "Vesper",
       "pos": "name",
-      "target": "Haeju (name)",
-      "marked": "Seaworthy or not, the ship set sail from the port city of <b>Haeju</b>, North Korea, on July 23, 2016, with a 23-manned North Korean crew that included a captain and a political officer to ensure communist-party discipline on board."
+      "target": "Vesper (name)",
+      "marked": "Near-synonyms: Phosphorus, Eosphorus, Lucifer, morning star, Venus"
     }
   },
   {
     "data": {
-      "item_id": "water crane.noun.7bec11ff#0",
+      "item_id": "natantly.adv.e611dfa9#1",
       "source": "lemminflect",
-      "lemma": "water crane",
-      "pos": "noun",
-      "target": "water crane (noun)",
-      "marked": "Locomotive <b>water cranes</b> are provided, and a water softening plant has been installed."
+      "lemma": "natantly",
+      "pos": "adv",
+      "target": "natantly (adv)",
+      "marked": "A second group, with the joing positioned more anteriorly and with shorter, less <b>natantly</b>-adapted antennules, became active (though not necessarily efficient) swimmers."
     }
   },
   {
     "data": {
-      "item_id": "outdoors.noun.498c1185#0",
+      "item_id": "Dongcheng.name.a4b0a73e#4",
       "source": "lemminflect",
-      "lemma": "outdoors",
-      "pos": "noun",
-      "target": "outdoors (noun)",
-      "marked": "He won't leave his house: he's afraid of the <b>outdoors</b>."
+      "lemma": "Dongcheng",
+      "pos": "name",
+      "target": "Dongcheng (name)",
+      "marked": "The KMT’s act of self-humiliation is reminiscent of what happened in 1948, when it was being buffeted by the storm of the Chinese Civil War.\nIn January of that year, a group of KMT members established the Revolutionary Committee of the Chinese Kuomintang (中國國民黨革命委員會), which supported the CCP’s call, as one of its “May Day slogans,” to establish a democratic coalition government.\nIn so doing, the committee sent a friendly message to the CCP.\nToday, the committee is a subordinate organization of the CCP, with its headquarters on humble Donghuangchenggen S Street in Beijing’s <b>Dongcheng</b> District (東城)."
     }
   },
   {
     "data": {
-      "item_id": "bestow.verb.152ab0e5#3",
+      "item_id": "dick around.verb.ace5d945#0",
       "source": "lemminflect",
-      "lemma": "bestow",
+      "lemma": "dick around",
       "pos": "verb",
-      "target": "bestow (verb)",
-      "marked": "Harke yee Lords, you ſee I haue giuen her Phiſicke, / And you muſt needs beſtovv her Funerall, […]"
+      "target": "dick around (verb)",
+      "marked": "Near-synonym: jerk around"
     }
   },
   {
     "data": {
-      "item_id": "pantherine.adj.805442e8#0",
+      "item_id": "nominal.noun.33c704a8#0",
       "source": "lemminflect",
-      "lemma": "pantherine",
+      "lemma": "nominal",
+      "pos": "noun",
+      "target": "nominal (noun)",
+      "marked": "A considerable number of derived <b>nominals</b>, especially thematic nouns, also exhibited o-grade roots."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Chimpcago.name.22a644c2#0",
+      "source": "lemminflect",
+      "lemma": "Chimpcago",
+      "pos": "name",
+      "target": "Chimpcago (name)",
+      "marked": "But wait! It wasn’t Negro violence, it was “gun violence.” Yes, steel\nobjects must be banned!"
+    }
+  },
+  {
+    "data": {
+      "item_id": "semiquincentennial.noun.4587f20c#0",
+      "source": "lemminflect",
+      "lemma": "semiquincentennial",
+      "pos": "noun",
+      "target": "semiquincentennial (noun)",
+      "marked": "The year 2026 will mark the <b>semiquincentennial</b> of the founding of the United States."
+    }
+  },
+  {
+    "data": {
+      "item_id": "improperly.adv.bbf3c778#0",
+      "source": "lemminflect",
+      "lemma": "improperly",
+      "pos": "adv",
+      "target": "improperly (adv)",
+      "marked": "Prosecutors also said Wednesday their side “does not intend to reference allegations that the defendant violated FARA or <b>improperly</b> coordinated with the Obama Administration,” referring to the Foreign Agents Registration Act, which requires people who lobby on behalf of foreign clients to register beforehand with the US government."
+    }
+  },
+  {
+    "data": {
+      "item_id": "flamboyantly.adv.f37e2520#1",
+      "source": "lemminflect",
+      "lemma": "flamboyantly",
+      "pos": "adv",
+      "target": "flamboyantly (adv)",
+      "marked": "The entire tense, compact play takes place inside a subway car where an exchange between a <b>flamboyantly</b> loose blonde of about 30, Lula (Jennifer Mudge), and a conservatively dressed young black man, Clay (Dulé Hill ), escalates from surreally unsuppressed flirtation to violence and tragedy as all of Clay’s efforts toward assimilation are shown to be for naught."
+    }
+  },
+  {
+    "data": {
+      "item_id": "sorrow.verb.9b58d1d3#0",
+      "source": "lemminflect",
+      "lemma": "sorrow",
+      "pos": "verb",
+      "target": "sorrow (verb)",
+      "marked": "‘<b>Sorrow</b> not, sir,’ says he, ‘like those without hope.’"
+    }
+  },
+  {
+    "data": {
+      "item_id": "soup.verb.ef016c8d#1",
+      "source": "lemminflect",
+      "lemma": "soup",
+      "pos": "verb",
+      "target": "soup (verb)",
+      "marked": "Now laughing together thaws our human ice; long before Swindon it was a talking match, —at Swindon who so devoted as Captain Dolignan,—he handed them out—he <b>souped</b> them,—he tough-chickened them,—he brandied and cochinealed one, and he brandied and burnt-sugared the other;"
+    }
+  },
+  {
+    "data": {
+      "item_id": "microplane.noun.d9f475b9#0",
+      "source": "lemminflect",
+      "lemma": "microplane",
+      "pos": "noun",
+      "target": "microplane (noun)",
+      "marked": "Near-synonym: microlight"
+    }
+  },
+  {
+    "data": {
+      "item_id": "princeful.adj.9260d832#1",
+      "source": "lemminflect",
+      "lemma": "princeful",
       "pos": "adj",
-      "target": "pantherine (adj)",
-      "marked": "Near-synonym: pantherlike (sometimes synonymous)"
+      "target": "princeful (adj)",
+      "marked": "The time long gone when we believed our Prince Charming would come / The <b>princeful</b> fantasy turning out to be a real toad of a tale [...]"
     }
   },
   {
     "data": {
-      "item_id": "cheapstead.noun.2de0ebf7#0",
+      "item_id": "gutshot.adj.80f65c2c#0",
       "source": "lemminflect",
-      "lemma": "cheapstead",
-      "pos": "noun",
-      "target": "cheapstead (noun)",
-      "marked": "[…] three weeks of winter were employed in butchering, and more than an acre of field surrounding the <b>cheapstead</b> at Housewick was covered with knots of men and women decapitating and flaying their flocks."
-    }
-  },
-  {
-    "data": {
-      "item_id": "well-favouredly.adv.8efacdd4#0",
-      "source": "lemminflect",
-      "lemma": "well-favouredly",
-      "pos": "adv",
-      "target": "well-favouredly (adv)",
-      "marked": "I bought thee kerchers to thy head,\nthat were wrought fine and gallantly:\nI kept thee both at boord and bed,\nWhich cost my purse wel fauouredly."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Churchtown.name.6289de2a#0",
-      "source": "lemminflect",
-      "lemma": "Churchtown",
-      "pos": "name",
-      "target": "Churchtown (name)",
-      "marked": "Former name: Penns Neck"
-    }
-  },
-  {
-    "data": {
-      "item_id": "gear.noun.d17d7d89#0",
-      "source": "lemminflect",
-      "lemma": "gear",
-      "pos": "noun",
-      "target": "gear (noun)",
-      "marked": "goe they both together to their geare."
-    }
-  },
-  {
-    "data": {
-      "item_id": "tohutō.noun.ac45cf7e#1",
-      "source": "lemminflect",
-      "lemma": "tohutō",
-      "pos": "noun",
-      "target": "tohutō (noun)",
-      "marked": "NZ Post chief customer officer Bryan Dobson said that they understand that <b>tohutō</b> in te reo Māori are an essential element of the Māori alphabet and were trying to make their system compatible."
-    }
-  },
-  {
-    "data": {
-      "item_id": "king of all one surveys.noun.172e7e68#5",
-      "source": "lemminflect",
-      "lemma": "king of all one surveys",
-      "pos": "noun",
-      "target": "king of all one surveys (noun)",
-      "marked": "He strides around like he's the king of all he surveys through those eyes of his, framed by (okay) wrinkles."
-    }
-  },
-  {
-    "data": {
-      "item_id": "twit.verb.7e90ea68#1",
-      "source": "lemminflect",
-      "lemma": "twit",
-      "pos": "verb",
-      "target": "twit (verb)",
-      "marked": "Not only are some of the notoriously foul-mouthed echoes excluded from the BBS message base, but each message is auto-censored for key words that are, in the opinion of the SysOp (me in this case), offensive to a \"G\" audience. And no, it isn't 100% effective. And no, there is no \"thought purification program\" that can filter out some folks^([sic]) obscene ideas that can be expressed w/o written vulgarities. That has to be simply \"dealt\" with, either by ignoring or <b>twitting</b> the individual that offends habitually."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Chimay.name.4f0ad669#0",
-      "source": "lemminflect",
-      "lemma": "Chimay",
-      "pos": "name",
-      "target": "Chimay (name)",
-      "marked": "<b>CHIMAY</b>, the name of a great lake, lying in the province of Acham, between the Eaſt-Indies and China."
-    }
-  },
-  {
-    "data": {
-      "item_id": "coreward.adv.13227ee6#0",
-      "source": "lemminflect",
-      "lemma": "coreward",
-      "pos": "adv",
-      "target": "coreward (adv)",
-      "marked": "The first colonisation efforts went <b>coreward</b> from the Blue Planetary Nebula with worlds like Sirona Prime, Xalau III and Usinnia being discovered and settled."
-    }
-  },
-  {
-    "data": {
-      "item_id": "hammerwise.adv.af89adc3#0",
-      "source": "lemminflect",
-      "lemma": "hammerwise",
-      "pos": "adv",
-      "target": "hammerwise (adv)",
-      "marked": "[…] a handful of almonds; and the ladies having no other way to eat them, one of them saucily snatched off her shoe, and cracked them <b>hammerwise</b> with the heel."
-    }
-  },
-  {
-    "data": {
-      "item_id": "ally.verb.9bf1a289#0",
-      "source": "lemminflect",
-      "lemma": "ally",
-      "pos": "verb",
-      "target": "ally (verb)",
-      "marked": "To be ſhort, hauing thus ingrafted them into the body of his [God's] Sonne, he ioyneth and allieth him ſelfe to them, he maketh him ſelfe one with them, maketh them his children and heyres, partakers of his immortalitie and glorie, and all this he worketh by the inward vertue of his holy Ghost, […]"
-    }
-  },
-  {
-    "data": {
-      "item_id": "auctioneeress.noun.8cf62ab9#7",
-      "source": "lemminflect",
-      "lemma": "auctioneeress",
-      "pos": "noun",
-      "target": "auctioneeress (noun)",
-      "marked": "One by one the articles were disposed of by the amateur <b>auctioneeress</b>, and Perry was alone with her thoughts."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Merle.name.a7148648#1",
-      "source": "lemminflect",
-      "lemma": "Merle",
-      "pos": "name",
-      "target": "Merle (name)",
-      "marked": "\"I wish I had a name like <b>Merle</b> Oberon or Miriam Hopkins,\" Mary Agnes said dreamily as she scanned the display of Coming Attractions."
-    }
-  },
-  {
-    "data": {
-      "item_id": "midget golf.noun.dfe9dccd#1",
-      "source": "lemminflect",
-      "lemma": "midget golf",
-      "pos": "noun",
-      "target": "midget golf (noun)",
-      "marked": "\"Midget\" golf, a national passion 25 years ago, has been making an unspectacular but steady comeback."
-    }
-  },
-  {
-    "data": {
-      "item_id": "peaceably.adv.5f39e3c1#0",
-      "source": "lemminflect",
-      "lemma": "peaceably",
-      "pos": "adv",
-      "target": "peaceably (adv)",
-      "marked": "[K]ing Edwarde [IV] returned, and wͭ much leſſe nũber thẽ [number then [than]] he had, at Barnet on theſtre daye felde [the Easter Day field], ſlewe the Erle of warwik [Richard Neville, 16th Earl of Warwick] wͭ many other great eſtates of yͤ partie, ⁊ ſo ſtably attained the crowne againe, that he peaſſybly enioyed it vntil his dieng day: […]"
-    }
-  },
-  {
-    "data": {
-      "item_id": "smoky.adj.e6620728#2",
-      "source": "lemminflect",
-      "lemma": "smoky",
+      "lemma": "gutshot",
       "pos": "adj",
-      "target": "smoky (adj)",
-      "marked": "[We] never had better fires in England, then in the dry, ſmoaky houſes of Kecoughtan: […]"
+      "target": "gutshot (adj)",
+      "marked": "For the first group, hunting is the <b>gutshot</b> deer gasping to death while its killer has given up pursuit, the woman in Maine shot in her own backyard by a hunter who thought her brown coat and white mittens meant a deer, and hoarse, bloodthirsty varmint hunters \"blazing\" away"
     }
   },
   {
     "data": {
-      "item_id": "waspish.adj.b5cddbcf#0",
+      "item_id": "New Year's Eve.name.2b7f2df7#1",
       "source": "lemminflect",
-      "lemma": "waspish",
-      "pos": "adj",
-      "target": "waspish (adj)",
-      "marked": "Svveet Hony-Comb, don't be ſo VVaſpiſh: […]"
-    }
-  },
-  {
-    "data": {
-      "item_id": "longeve.adj.c5c47361#3",
-      "source": "lemminflect",
-      "lemma": "longeve",
-      "pos": "adj",
-      "target": "longeve (adj)",
-      "marked": "The most long-lived men can arrive up to one hundred years, while the medium and less <b>longeve</b> respectively can live up to eighty and sixty years."
-    }
-  },
-  {
-    "data": {
-      "item_id": "bespew.verb.2555dae0#1",
-      "source": "lemminflect",
-      "lemma": "bespew",
-      "pos": "verb",
-      "target": "bespew (verb)",
-      "marked": "[...] he does nothing but lye snoring all Night long by my Side, and sometimes bespues the Bed too, to say nothing more."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Asia Minor.name.49371d69#0",
-      "source": "lemminflect",
-      "lemma": "Asia Minor",
+      "lemma": "New Year's Eve",
       "pos": "name",
-      "target": "Asia Minor (name)",
-      "marked": "Holonyms: Turkey, Türkiye, Turkiye &lt; West Asia &lt; Asia &lt; Earth"
+      "target": "New Year's Eve (name)",
+      "marked": "Near-synonym: watchnight (a precise differentiation is explained there)"
     }
   },
   {
     "data": {
-      "item_id": "First Amendment.name.de72298e#7",
+      "item_id": "nowhere.adv.fbbab93d#0",
       "source": "lemminflect",
-      "lemma": "First Amendment",
-      "pos": "name",
-      "target": "First Amendment (name)",
-      "marked": "Under the CDA, telecommunications facilities could face criminal charges if they failed to take \"good faith, reasonable, effective, and appropriate actions\" to stop minors from seeing indecent content. The law faced a <b>First Amendment</b> challenge, and the U.S. Supreme Court in late 1997 struck down many of the decency provisions entirely."
-    }
-  },
-  {
-    "data": {
-      "item_id": "tide over.verb.2082605c#1",
-      "source": "lemminflect",
-      "lemma": "tide over",
-      "pos": "verb",
-      "target": "tide over (verb)",
-      "marked": "Would a small snack tide you over until dinner?"
-    }
-  },
-  {
-    "data": {
-      "item_id": "o'clock.adv.fbca53bc#4",
-      "source": "lemminflect",
-      "lemma": "o'clock",
+      "lemma": "nowhere",
       "pos": "adv",
-      "target": "o'clock (adv)",
-      "marked": "At 1057 we were just over the islands and at 1100 the tail gunner reported flak at six o’clock, below."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Macca's.name.e6267113#0",
-      "source": "lemminflect",
-      "lemma": "Macca's",
-      "pos": "name",
-      "target": "Macca's (name)",
-      "marked": "[T]he busload of bogans stop at <b>Macca's</b> for a sausage-and-egg McMuffin to line their respective stomachs for the day ahead."
-    }
-  },
-  {
-    "data": {
-      "item_id": "dazzlingly.adv.bef1cfca#1",
-      "source": "lemminflect",
-      "lemma": "dazzlingly",
-      "pos": "adv",
-      "target": "dazzlingly (adv)",
-      "marked": "The sun was almost at zenith and the glare was <b>dazzlingly</b> intense."
-    }
-  },
-  {
-    "data": {
-      "item_id": "bathtub cockpit.noun.2685bd0a#3",
-      "source": "lemminflect",
-      "lemma": "bathtub cockpit",
-      "pos": "noun",
-      "target": "bathtub cockpit (noun)",
-      "marked": "Emphasis was on style, but not everyone takes to the \"bathtub” cockpit that resulted from dropped roof and seats."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Stephen.name.31048abe#0",
-      "source": "lemminflect",
-      "lemma": "Stephen",
-      "pos": "name",
-      "target": "Stephen (name)",
-      "marked": "And Steuen full of faith and power, did great wonders and miracles among the people."
-    }
-  },
-  {
-    "data": {
-      "item_id": "unhummable.adj.7c14b4f8#0",
-      "source": "lemminflect",
-      "lemma": "unhummable",
-      "pos": "adj",
-      "target": "unhummable (adj)",
-      "marked": "A dull movie that is also tasteless, with a drunk scene, a seduction scene, Reynolds shaking her behind while Crosby and a nun watch, plus several songs that are <b>unhummable</b>, unwhistleable, and unmemorable."
-    }
-  },
-  {
-    "data": {
-      "item_id": "properly.adv.df07e8df#1",
-      "source": "lemminflect",
-      "lemma": "properly",
-      "pos": "adv",
-      "target": "properly (adv)",
-      "marked": "I know that I am spoiling your life that without me you could work. And you will I know. You see I cant[sic] even write this <b>properly</b>."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Fern.name.0069baed#1",
-      "source": "lemminflect",
-      "lemma": "Fern",
-      "pos": "name",
-      "target": "Fern (name)",
-      "marked": "Her death was confirmed by her daughter, Rachel <b>Fern</b> Harris."
-    }
-  },
-  {
-    "data": {
-      "item_id": "acrasia.noun.b485ea7e#2",
-      "source": "lemminflect",
-      "lemma": "acrasia",
-      "pos": "noun",
-      "target": "acrasia (noun)",
-      "marked": "It has been already remarked, that, by the humoral pathologists, organic diseases in general, and of course inflammation, were attributed to an akrasia or intemperies, consisting in an inordinate flow to certain organs of one or other of the four principal fluids of the body; that of blood producing the phlegmenous inflammation; that of yellow bile, the erythematic, or, as they call it, the erysipelatous; that of the black bile, the scirrhous; that that of the phlegm, the leucophlegmatic, or œdematous, an affection now known to be not of itself inflammatory, although a frequent consequence of inflammation."
-    }
-  },
-  {
-    "data": {
-      "item_id": "slipslop.verb.3f64ca51#0",
-      "source": "lemminflect",
-      "lemma": "slipslop",
-      "pos": "verb",
-      "target": "slipslop (verb)",
-      "marked": "Below, among dark mysteries of the under-wharf, the water placidly <b>slipslopped</b>; the sea-wind blew gently in, fluffing a lock of hair across my face."
-    }
-  },
-  {
-    "data": {
-      "item_id": "autobiographicalize.verb.cfdf5aab#1",
-      "source": "lemminflect",
-      "lemma": "autobiographicalize",
-      "pos": "verb",
-      "target": "autobiographicalize (verb)",
-      "marked": "It is to speak of a little boy lost but searching, for a father, for direction, for justice, for peace. To tell his story in connection with brothers of the past is to <b>autobiographicalize</b> our current generation."
-    }
-  },
-  {
-    "data": {
-      "item_id": "supernormal.adj.33f8ea10#1",
-      "source": "lemminflect",
-      "lemma": "supernormal",
-      "pos": "adj",
-      "target": "supernormal (adj)",
-      "marked": "<b>Supernormal</b> employment."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Kaixian.name.6875f04f#2",
-      "source": "lemminflect",
-      "lemma": "Kaixian",
-      "pos": "name",
-      "target": "Kaixian (name)",
-      "marked": "A combo picture shows the demolition of the last county seat to be inundated by the Three Gorges reservoir, in <b>Kaixian</b> county of southwest China's Chongqing municipality, November 15, 2007.[…]<b>Kaixian</b> was the last of Chongqing’s eight counties to finish relocation work for the project, the report said."
-    }
-  },
-  {
-    "data": {
-      "item_id": "booting.noun.1098b42c#0",
-      "source": "lemminflect",
-      "lemma": "booting",
-      "pos": "noun",
-      "target": "booting (noun)",
-      "marked": "C4 run man through the alley\nGet a man down with the swammy\nGet a man down with the whammy\nBoot couple niggas on the road\nNo face no case with the bally (<b>booting</b>)"
-    }
-  },
-  {
-    "data": {
-      "item_id": "jibber-jabber.noun.e47b9c5a#2",
-      "source": "lemminflect",
-      "lemma": "jibber-jabber",
-      "pos": "noun",
-      "target": "jibber-jabber (noun)",
-      "marked": "Booth: Guys, listen, I'm going to need some science <b>jibber-jabber</b> to distract these guys.\nBrennan: Oh, you know who can do <b>jibber-jabber</b>?\n[...]\nBrennan: Because you have forbidden us from taking samples in order to estimate the osteoconductivity of the oblique taphonomic remodeling pertaining to the midsagittal plane, encephalometric transaction — or translation, if you will — of the intramatrix can be deduced by correlating the force-displacement values with the osteogenic and geogenic hydrogel nanocomposite we placed inside the surrogate."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Sanmenxia.name.519b9844#0",
-      "source": "lemminflect",
-      "lemma": "Sanmenxia",
-      "pos": "name",
-      "target": "Sanmenxia (name)",
-      "marked": "China's largest hydroelectric station is under construction at Sanmensia, and will supply power to the industrial centers of Loyang, Sian and Chengchow."
-    }
-  },
-  {
-    "data": {
-      "item_id": "pod.noun.673b0d5a#0",
-      "source": "lemminflect",
-      "lemma": "pod",
-      "pos": "noun",
-      "target": "pod (noun)",
-      "marked": "Near-synonym: escape <b>pod</b>"
-    }
-  },
-  {
-    "data": {
-      "item_id": "indulgiate.verb.59b83b40#0",
-      "source": "lemminflect",
-      "lemma": "indulgiate",
-      "pos": "verb",
-      "target": "indulgiate (verb)",
-      "marked": "Sergius Oratus vvas the firſt that made pits for them [oysters] about his houſe here; more for profit, then to <b>indulgiate</b> his gluttony."
-    }
-  },
-  {
-    "data": {
-      "item_id": "hence.adv.400f2f40#0",
-      "source": "lemminflect",
-      "lemma": "hence",
-      "pos": "adv",
-      "target": "hence (adv)",
-      "marked": "A year <b>hence</b> it will be forgotten."
-    }
-  },
-  {
-    "data": {
-      "item_id": "secular.adj.35436387#0",
-      "source": "lemminflect",
-      "lemma": "secular",
-      "pos": "adj",
-      "target": "secular (adj)",
-      "marked": "Near-synonyms: centurial, centennial"
-    }
-  },
-  {
-    "data": {
-      "item_id": "sunburn.verb.fc0abe47#1",
-      "source": "lemminflect",
-      "lemma": "sunburn",
-      "pos": "verb",
-      "target": "sunburn (verb)",
-      "marked": "[…] there is a Country, in the World, call’d Turkey; where Women are secur’d against the Danger of Sun-burning, by being kept out of the open Air, and lock’d up, like other Jewels, in Places where no Mischief can reach ’em."
-    }
-  },
-  {
-    "data": {
-      "item_id": "groin.verb.52aa3cfe#0",
-      "source": "lemminflect",
-      "lemma": "groin",
-      "pos": "verb",
-      "target": "groin (verb)",
-      "marked": "Such tunges ſhuld be torne out by the harde rootes,"
-    }
-  },
-  {
-    "data": {
-      "item_id": "antishadow.adj.c9448d85#1",
-      "source": "lemminflect",
-      "lemma": "antishadow",
-      "pos": "adj",
-      "target": "antishadow (adj)",
-      "marked": "This must be kept in mind in examining the \"<b>antishadow</b> economy\" sentiments of the majority of Russians who experienced the Soviet period, many of whom have not found a place for themselves in today's criminal, shadow reality and have been driven to the margins of economic life."
-    }
-  },
-  {
-    "data": {
-      "item_id": "trolly.adj.10a5c690#1",
-      "source": "lemminflect",
-      "lemma": "trolly",
-      "pos": "adj",
-      "target": "trolly (adj)",
-      "marked": "But as a writer on conspiracy sites, with 178,000 Twitter followers along for the ride, Wohl also earned a place among President Donald Trump’s most ardent and <b>trolly</b> online defenders."
-    }
-  },
-  {
-    "data": {
-      "item_id": "toss.noun.93a92450#0",
-      "source": "lemminflect",
-      "lemma": "toss",
-      "pos": "noun",
-      "target": "toss (noun)",
-      "marked": "This put us at the board into a Tosse."
-    }
-  },
-  {
-    "data": {
-      "item_id": "crystal stone.noun.4ebb3ded#0",
-      "source": "lemminflect",
-      "lemma": "crystal stone",
-      "pos": "noun",
-      "target": "crystal stone (noun)",
-      "marked": "A goodly Lady did foreby them rush, / Whose face did seeme as cleare as Christall stone [...]."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Anbu.name.9bfed272#0",
-      "source": "lemminflect",
-      "lemma": "Anbu",
-      "pos": "name",
-      "target": "Anbu (name)",
-      "marked": "Along with the new hospital, dispensaries were opened at Ampow (菴埠) and Tat-hau-pow (達濠埠), 9 miles distant from the city; each one was visited every alternate week. They were kept open until 1872; the dispensary at Tat-hau-pow was again started in 1875."
-    }
-  },
-  {
-    "data": {
-      "item_id": "capital.noun.19fa2f43#0",
-      "source": "lemminflect",
-      "lemma": "capital",
-      "pos": "noun",
-      "target": "capital (noun)",
-      "marked": "But a great wonder of this chamber, and a marvel to behold, was how the <b>capital</b> of every one of the four-and-twenty pillars was hewn from a single precious stone, carved by the hand of some sculptor of long ago into the living form of a monster: […]"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Jumada I.name.ebe863e0#2",
-      "source": "lemminflect",
-      "lemma": "Jumada I",
-      "pos": "name",
-      "target": "Jumada I (name)",
-      "marked": "During the night and following day of 11 Jumadda I, there was an earthquake in Zabid and its districts; tremors continued day and night and the people were alarmed."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Merle.name.a7148648#1",
-      "source": "lemminflect",
-      "lemma": "Merle",
-      "pos": "name",
-      "target": "Merle (name)",
-      "marked": "\"I wish I had a name like <b>Merle</b> Oberon or Miriam Hopkins,\" Mary Agnes said dreamily as she scanned the display of Coming Attractions."
-    }
-  },
-  {
-    "data": {
-      "item_id": "corrupt.verb.821ec9b6#1",
-      "source": "lemminflect",
-      "lemma": "corrupt",
-      "pos": "verb",
-      "target": "corrupt (verb)",
-      "marked": "[…] Lanfrank takes Notice of Tract. 3. Doct. 3. cap. 18. ſaying, \"I have ſeen many who being full of Humours, have made an Iſſue under the Knee, before due Purgation had been premis'd; whence, by reaſon of the too great Defluxion of Humours, the Legs tumified, ſo that the cauterized Place <b>corrupted</b>, and a Cancer (or rather cacoethic Ulcer) was thereby made, with which great Difficulty was cur'd.\""
-    }
-  },
-  {
-    "data": {
-      "item_id": "Altyn Tagh.name.83daa800#0",
-      "source": "lemminflect",
-      "lemma": "Altyn Tagh",
-      "pos": "name",
-      "target": "Altyn Tagh (name)",
-      "marked": "The water used in irrigating the soil is led from the Chargalyk-daria, which flows from the neighbouring <b>Altyn-tagh</b> mountains, an elevated range south of Lob-nor."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Rannia Zoria.name.c8fa4454#0",
-      "source": "lemminflect",
-      "lemma": "Rannia Zoria",
-      "pos": "name",
-      "target": "Rannia Zoria (name)",
-      "marked": "Coordinate term: (the Ukraine’s westernmost settlement) Solomonovo"
-    }
-  },
-  {
-    "data": {
-      "item_id": "bespew.verb.2555dae0#1",
-      "source": "lemminflect",
-      "lemma": "bespew",
-      "pos": "verb",
-      "target": "bespew (verb)",
-      "marked": "[...] he does nothing but lye snoring all Night long by my Side, and sometimes bespues the Bed too, to say nothing more."
-    }
-  },
-  {
-    "data": {
-      "item_id": "run down.verb.66045d8f#0",
-      "source": "lemminflect",
-      "lemma": "run down",
-      "pos": "verb",
-      "target": "run down (verb)",
-      "marked": "The Jylland only missed <b>running down</b> a schooner by a few yards in the fog; it was a near thing—near enough, in fact, to allow of some shouted remarks between those on the bridge of the motorship and the man at the wheel of the schooner to be clearly heard."
-    }
-  },
-  {
-    "data": {
-      "item_id": "volubly.adv.f8d16223#0",
-      "source": "lemminflect",
-      "lemma": "volubly",
-      "pos": "adv",
-      "target": "volubly (adv)",
-      "marked": "The Frenchman then began chattering <b>volubly</b>, and the General supported him; but I recommended the former to read, for example, extracts from the memoirs of General Perovski, who, in 1812, was a prisoner in the hands of the French."
-    }
-  },
-  {
-    "data": {
-      "item_id": "crack-hemp.noun.7d3d6e58#0",
-      "source": "lemminflect",
-      "lemma": "crack-hemp",
-      "pos": "noun",
-      "target": "crack-hemp (noun)",
-      "marked": "Come hither, crackhempe."
-    }
-  },
-  {
-    "data": {
-      "item_id": "unpublishably.adv.7b5a231b#0",
-      "source": "lemminflect",
-      "lemma": "unpublishably",
-      "pos": "adv",
-      "target": "unpublishably (adv)",
-      "marked": "They were doubtless innocent and happy creatures, but some of their ways were <b>unpublishably</b> singular, and were reserved for a scientific book by Herschel."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Bacchus.name.0b3a249f#0",
-      "source": "lemminflect",
-      "lemma": "Bacchus",
-      "pos": "name",
-      "target": "Bacchus (name)",
-      "marked": "Near-synonyms: Liber, Dionysus"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Sino-Xenic.adj.f50df3ae#0",
-      "source": "lemminflect",
-      "lemma": "Sino-Xenic",
-      "pos": "adj",
-      "target": "Sino-Xenic (adj)",
-      "marked": "Japanese: 歴史 (れきし, rekishi)\nJeju: 역ᄉᆞ(歷史) (yeoksaw)\nKorean: 역사(歷史) (yeoksa) (South Korea), 력사(歷史) (ryeoksa) (North Korea)\nVietnamese: lịch sử (歷史)"
-    }
-  },
-  {
-    "data": {
-      "item_id": "get wrong.verb.9236c066#0",
-      "source": "lemminflect",
-      "lemma": "get wrong",
-      "pos": "verb",
-      "target": "get wrong (verb)",
-      "marked": "You've got it all wrong: I'm innocent of this crime!"
-    }
-  },
-  {
-    "data": {
-      "item_id": "unhonestly.adv.e94dcaac#1",
-      "source": "lemminflect",
-      "lemma": "unhonestly",
-      "pos": "adv",
-      "target": "unhonestly (adv)",
-      "marked": "Vnhoneſtly, oneerbaerlijck, oftefameusſelijck."
-    }
-  },
-  {
-    "data": {
-      "item_id": "wee-wee.verb.90f93b9f#0",
-      "source": "lemminflect",
-      "lemma": "wee-wee",
-      "pos": "verb",
-      "target": "wee-wee (verb)",
-      "marked": "“This is Bruce who doesn’t <b>wee-wee</b> in the sandbox.” Bruce looked pleased with himself. Mrs. Kemp felt a need to apologize for her granddaughter. “Willa Jean doesn’t mean what she says.” “But I don’t <b>wee-wee</b> in the sandbox,” said Bruce. “I <b>wee-wee</b> in the-”"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Hephzibah.name.85a48f29#0",
-      "source": "lemminflect",
-      "lemma": "Hephzibah",
-      "pos": "name",
-      "target": "Hephzibah (name)",
-      "marked": "Thou shalt no more bee termed, Forsaken; neither shall thy land any more be termed, Desolate: but thou shalt be called Hephzi-bah, and thy land, Beulah: for the Lord delighteth in thee, and thy land shalbe maried."
-    }
-  },
-  {
-    "data": {
-      "item_id": "fallingly.adv.a4ec4c69#0",
-      "source": "lemminflect",
-      "lemma": "fallingly",
-      "pos": "adv",
-      "target": "fallingly (adv)",
-      "marked": "Here, in distress that was consternation, and in fear that was panic, excitedly bobbed up and down a cowboy in bearskin chaps, vacuously repeating the exclamation, \"Oh God! Oh God!\" — the first division of it rising in inflection, the second division inflected <b>fallingly</b> with despair."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Nicolae Bălcescu.name.b6006f90#7",
-      "source": "lemminflect",
-      "lemma": "Nicolae Bălcescu",
-      "pos": "name",
-      "target": "Nicolae Bălcescu (name)",
-      "marked": "A commune of Călărași County, Romania"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Rudolph the Red-Nosed Reindeer.name.40e02f96#4",
-      "source": "lemminflect",
-      "lemma": "Rudolph the Red-Nosed Reindeer",
-      "pos": "name",
-      "target": "Rudolph the Red-Nosed Reindeer (name)",
-      "marked": "These days, you see more of those giant inflatable Frosty the Snowmen and <b>Rudolph the Red-Nosed Reindeers</b>."
+      "target": "nowhere (adv)",
+      "marked": "We sat in traffic, going <b>nowhere</b>."
     }
   },
   {
@@ -1051,52 +521,582 @@
   },
   {
     "data": {
-      "item_id": "probvious.adj.70042c4e#0",
+      "item_id": "nanolitre.noun.fc768f9d#0",
       "source": "lemminflect",
-      "lemma": "probvious",
-      "pos": "adj",
-      "target": "probvious (adj)",
-      "marked": "For the Collatz conjecture, as written in condensed form, the map is scaling by 1#47;2 or 3#47;2 with equal probability, so the expected growth factor is #92;sqrt#123;3#47;4#125;lt;1}. Thus, we may argue that the map should probviously cycle back to 1. Nevertheless, in a postscript, Conway wrote that the Collatz conjecture is very likely unsettleable."
-    }
-  },
-  {
-    "data": {
-      "item_id": "procedurally.adv.ce56edbb#0",
-      "source": "lemminflect",
-      "lemma": "procedurally",
-      "pos": "adv",
-      "target": "procedurally (adv)",
-      "marked": "Near-synonyms: methodically, systematically, technically, techniquewise; see also Thesaurus:methodically"
-    }
-  },
-  {
-    "data": {
-      "item_id": "twit.verb.7e90ea68#1",
-      "source": "lemminflect",
-      "lemma": "twit",
-      "pos": "verb",
-      "target": "twit (verb)",
-      "marked": "Not only are some of the notoriously foul-mouthed echoes excluded from the BBS message base, but each message is auto-censored for key words that are, in the opinion of the SysOp (me in this case), offensive to a \"G\" audience. And no, it isn't 100% effective. And no, there is no \"thought purification program\" that can filter out some folks^([sic]) obscene ideas that can be expressed w/o written vulgarities. That has to be simply \"dealt\" with, either by ignoring or <b>twitting</b> the individual that offends habitually."
-    }
-  },
-  {
-    "data": {
-      "item_id": "kala namak.noun.35dae72e#0",
-      "source": "lemminflect",
-      "lemma": "kala namak",
+      "lemma": "nanolitre",
       "pos": "noun",
-      "target": "kala namak (noun)",
-      "marked": "At any rate, kālā namak has the major virtue for Hindus of being permitted during fasts and on ritual occasions in which ordinary or sea salt is forbidden. According to Behura, rock salt is much less used in India since 1947, because the Salt Range is in Pakistan (Behura 1962, p. 133)"
+      "target": "nanolitre (noun)",
+      "marked": "Holonyms: microlitre &lt; millilitre &lt; litre &lt; kilolitre &lt; megalitre &lt; gigalitre"
     }
   },
   {
     "data": {
-      "item_id": "unhummable.adj.7c14b4f8#0",
+      "item_id": "kiloton.noun.39f49ac9#1",
       "source": "lemminflect",
-      "lemma": "unhummable",
+      "lemma": "kiloton",
+      "pos": "noun",
+      "target": "kiloton (noun)",
+      "marked": "Meronym: ton of TNT"
+    }
+  },
+  {
+    "data": {
+      "item_id": "transmisogyny-exempt.adj.beaec6e4#0",
+      "source": "lemminflect",
+      "lemma": "transmisogyny-exempt",
       "pos": "adj",
-      "target": "unhummable (adj)",
-      "marked": "A dull movie that is also tasteless, with a drunk scene, a seduction scene, Reynolds shaking her behind while Crosby and a nun watch, plus several songs that are <b>unhummable</b>, unwhistleable, and unmemorable."
+      "target": "transmisogyny-exempt (adj)",
+      "marked": "Coordinate term: transmisogyny-affected"
+    }
+  },
+  {
+    "data": {
+      "item_id": "percontation.noun.e6a28686#0",
+      "source": "lemminflect",
+      "lemma": "percontation",
+      "pos": "noun",
+      "target": "percontation (noun)",
+      "marked": "<b>Percontation</b>. An enquiry."
+    }
+  },
+  {
+    "data": {
+      "item_id": "boots.adv.eccea9c6#3",
+      "source": "lemminflect",
+      "lemma": "boots",
+      "pos": "adv",
+      "target": "boots (adv)",
+      "marked": "[see title]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "dyadically.adv.8cf72f3c#0",
+      "source": "lemminflect",
+      "lemma": "dyadically",
+      "pos": "adv",
+      "target": "dyadically (adv)",
+      "marked": "In the APL programming language, some operators can be used both monadically and <b>dyadically</b>."
+    }
+  },
+  {
+    "data": {
+      "item_id": "niggerfuxation.noun.dc3d7e6c#4",
+      "source": "lemminflect",
+      "lemma": "niggerfuxation",
+      "pos": "noun",
+      "target": "niggerfuxation (noun)",
+      "marked": "80 days until that ignorant nigger Barry Soetoro aka Barack Hussein Obama is out of office."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Jaime.name.33fdd5b9#0",
+      "source": "lemminflect",
+      "lemma": "Jaime",
+      "pos": "name",
+      "target": "Jaime (name)",
+      "marked": "A few minutes later, <b>Jaime</b> stood and rubbed her shoulders. \"You okay?\" I asked. She made a noncommittal noise […]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "egoistically.adv.c8ff7fdb#0",
+      "source": "lemminflect",
+      "lemma": "egoistically",
+      "pos": "adv",
+      "target": "egoistically (adv)",
+      "marked": "He was going to ask her to marry him—indeed, he had intended to ask her without more delay. But the words were not spoken yet; instead, he found himself talking <b>egoistically</b> on and on."
+    }
+  },
+  {
+    "data": {
+      "item_id": "thereamong.adv.f1911d99#0",
+      "source": "lemminflect",
+      "lemma": "thereamong",
+      "pos": "adv",
+      "target": "thereamong (adv)",
+      "marked": "Near-synonyms: therebetween, therebetwixt (archaic)"
+    }
+  },
+  {
+    "data": {
+      "item_id": "twenty-four seven.adv.44e24195#0",
+      "source": "lemminflect",
+      "lemma": "twenty-four seven",
+      "pos": "adv",
+      "target": "twenty-four seven (adv)",
+      "marked": "Near-synonyms: twenty-four hours a day, round the clock"
+    }
+  },
+  {
+    "data": {
+      "item_id": "coincidentally.adv.b0f4bce5#0",
+      "source": "lemminflect",
+      "lemma": "coincidentally",
+      "pos": "adv",
+      "target": "coincidentally (adv)",
+      "marked": "Near-synonyms: incidentally, happenstantially, circumstantially"
+    }
+  },
+  {
+    "data": {
+      "item_id": "workamper.noun.2401080a#2",
+      "source": "lemminflect",
+      "lemma": "workamper",
+      "pos": "noun",
+      "target": "workamper (noun)",
+      "marked": "In the <b>workamper</b> community, CamperForce jobs are often in high demand, with positions often filling up within weeks after they’re posted online, workers told CNBC. But it’s definitely tough work. […] But five years on, Martinez-Machen said she and her wife have adapted to the <b>workamper</b> cycle of seasonal jobs, with Amazon serving as the couple’s “sole source of income and our plans for the fall and winter every single year.”"
+    }
+  },
+  {
+    "data": {
+      "item_id": "taid.noun.ac0c75cb#0",
+      "source": "lemminflect",
+      "lemma": "taid",
+      "pos": "noun",
+      "target": "taid (noun)",
+      "marked": "Coordinate term: nain"
+    }
+  },
+  {
+    "data": {
+      "item_id": "stirious.adj.b7f0d740#0",
+      "source": "lemminflect",
+      "lemma": "stirious",
+      "pos": "adj",
+      "target": "stirious (adj)",
+      "marked": "Chrystal is found sometimes in rocks, and in some places not much unlike the stirrious or stillicidious dependencies of ice."
+    }
+  },
+  {
+    "data": {
+      "item_id": "probingly.adv.95311513#0",
+      "source": "lemminflect",
+      "lemma": "probingly",
+      "pos": "adv",
+      "target": "probingly (adv)",
+      "marked": "The contrasting moods of the five movements were <b>probingly</b> explored, and there was no weak link in the band."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Settler of Catan.noun.bab09267#1",
+      "source": "lemminflect",
+      "lemma": "Settler of Catan",
+      "pos": "noun",
+      "target": "Settler of Catan (noun)",
+      "marked": "World of Warcrafters, LARPers, <b>Settlers of Catan</b>? Weird. Beliebers, Swifties, Directioners? Weirder. Paleos, vegans, carb loaders, ovolactovegetarians? Definitely weird. Face it. We’re all weird. So why are companies still trying to build products for the masses? Why are we still acting like the masses even exist? Weird is the new normal. And only companies that figure that out have any chance of survival. In this book, Seth Godin shows you how."
+    }
+  },
+  {
+    "data": {
+      "item_id": "subchef.noun.cb0c0b7c#0",
+      "source": "lemminflect",
+      "lemma": "subchef",
+      "pos": "noun",
+      "target": "subchef (noun)",
+      "marked": "Near-synonyms: sous-chef, subcook, undercook, chef de partie, station chef, line cook (all sometimes synonymous)"
+    }
+  },
+  {
+    "data": {
+      "item_id": "probingly.adv.95311513#0",
+      "source": "lemminflect",
+      "lemma": "probingly",
+      "pos": "adv",
+      "target": "probingly (adv)",
+      "marked": "The contrasting moods of the five movements were <b>probingly</b> explored, and there was no weak link in the band."
+    }
+  },
+  {
+    "data": {
+      "item_id": "videoke.noun.4a061056#0",
+      "source": "lemminflect",
+      "lemma": "videoke",
+      "pos": "noun",
+      "target": "videoke (noun)",
+      "marked": "“Generously coated in candy-colored skulls and psychedelic scenes of suffering,” the <b>videoke</b> machine, as Manila-based pop critic Alice Sarmiento describes it, plays a loop of a “muzak rendition” of Sinatra's anthem, its lyrics superimposed over video and tabloid headlines about the killings \"with the words going up in flames as the song played.\""
+    }
+  },
+  {
+    "data": {
+      "item_id": "drink off.verb.7a76e74a#0",
+      "source": "lemminflect",
+      "lemma": "drink off",
+      "pos": "verb",
+      "target": "drink off (verb)",
+      "marked": "Take thou this vial, being then in bed, / And this distilled liquor drink thou off; […]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "dyadically.adv.8cf72f3c#0",
+      "source": "lemminflect",
+      "lemma": "dyadically",
+      "pos": "adv",
+      "target": "dyadically (adv)",
+      "marked": "In the APL programming language, some operators can be used both monadically and <b>dyadically</b>."
+    }
+  },
+  {
+    "data": {
+      "item_id": "physicopsychical.adj.cf207466#0",
+      "source": "lemminflect",
+      "lemma": "physicopsychical",
+      "pos": "adj",
+      "target": "physicopsychical (adj)",
+      "marked": "Near-synonym: psychophysical"
+    }
+  },
+  {
+    "data": {
+      "item_id": "preservingly.adv.4fe62813#0",
+      "source": "lemminflect",
+      "lemma": "preservingly",
+      "pos": "adv",
+      "target": "preservingly (adv)",
+      "marked": "If a finite group acts topologically, faithfully and orientation <b>preservingly</b> on R^3, then it is isomorphic to a subgroup of SO(3).."
+    }
+  },
+  {
+    "data": {
+      "item_id": "water-repellent.adj.7270548d#0",
+      "source": "lemminflect",
+      "lemma": "water-repellent",
+      "pos": "adj",
+      "target": "water-repellent (adj)",
+      "marked": "Near-synonym: water-resistant"
+    }
+  },
+  {
+    "data": {
+      "item_id": "June.name.319b73ed#2",
+      "source": "lemminflect",
+      "lemma": "June",
+      "pos": "name",
+      "target": "June (name)",
+      "marked": "'Twas early <b>June</b>, the new grass was flourishing everywheres, the posies in the yard—peonies and such—in full bloom, the sun was shining, and the water of the bay was blue, with light green streaks where the shoal showed."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Meishan.name.e011f63f#2",
+      "source": "lemminflect",
+      "lemma": "Meishan",
+      "pos": "name",
+      "target": "Meishan (name)",
+      "marked": "Police in <b>Meishan</b> City in the southwestern province of Sichuan said the suspects set up hundreds of shell companies and 28 fake industrial chains and lured investors with promises of high returns, it added."
+    }
+  },
+  {
+    "data": {
+      "item_id": "dress.verb.794a6177#1",
+      "source": "lemminflect",
+      "lemma": "dress",
+      "pos": "verb",
+      "target": "dress (verb)",
+      "marked": "Heere Loue, thou ſeeſt how diligent I am, / To <b>dreſſe</b> thy meate my ſelfe, and bring it thee."
+    }
+  },
+  {
+    "data": {
+      "item_id": "antiphysical.adj.d299a75e#1",
+      "source": "lemminflect",
+      "lemma": "antiphysical",
+      "pos": "adj",
+      "target": "antiphysical (adj)",
+      "marked": "Quaternionics was in its vectorial aspects <b>antiphysical</b> and unnatural, and did not harmonize with common scalar mathematics."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Shaoyang.name.ee8097f8#1",
+      "source": "lemminflect",
+      "lemma": "Shaoyang",
+      "pos": "name",
+      "target": "Shaoyang (name)",
+      "marked": "Mr. Tan’s journey from migrant worker to labor organizer began in a small farming community near the city of <b>Shaoyang</b>, in central China’s Hunan Province, where Mao Zedong was born."
+    }
+  },
+  {
+    "data": {
+      "item_id": "pull someone's chestnuts out of the fire.verb.298c36c4#0",
+      "source": "lemminflect",
+      "lemma": "pull someone's chestnuts out of the fire",
+      "pos": "verb",
+      "target": "pull someone's chestnuts out of the fire (verb)",
+      "marked": "By now, however, it's unlikely that even this faithful retainer can once more pull Bush's chestnuts out of the fire."
+    }
+  },
+  {
+    "data": {
+      "item_id": "antiphysical.adj.d299a75e#1",
+      "source": "lemminflect",
+      "lemma": "antiphysical",
+      "pos": "adj",
+      "target": "antiphysical (adj)",
+      "marked": "Quaternionics was in its vectorial aspects <b>antiphysical</b> and unnatural, and did not harmonize with common scalar mathematics."
+    }
+  },
+  {
+    "data": {
+      "item_id": "heartless.adj.af2887c7#0",
+      "source": "lemminflect",
+      "lemma": "heartless",
+      "pos": "adj",
+      "target": "heartless (adj)",
+      "marked": "Near-synonyms: spiritless, unhearty"
+    }
+  },
+  {
+    "data": {
+      "item_id": "disjoint.verb.a16d1df6#0",
+      "source": "lemminflect",
+      "lemma": "disjoint",
+      "pos": "verb",
+      "target": "disjoint (verb)",
+      "marked": "Near-synonyms: unjoin; disassemble, take apart"
+    }
+  },
+  {
+    "data": {
+      "item_id": "heteronymy.noun.cb64e3fc#2",
+      "source": "lemminflect",
+      "lemma": "heteronymy",
+      "pos": "noun",
+      "target": "heteronymy (noun)",
+      "marked": "Cases (3) and (4) you might call <b>heteronymies</b>, case (3) being heteronymy in the special sense and case (4) polyonymy."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Nicolae Bălcescu.name.b6006f90#14",
+      "source": "lemminflect",
+      "lemma": "Nicolae Bălcescu",
+      "pos": "name",
+      "target": "Nicolae Bălcescu (name)",
+      "marked": "A commune of Vâlcea County, Romania"
+    }
+  },
+  {
+    "data": {
+      "item_id": "proleptically.adv.1a4b5109#1",
+      "source": "lemminflect",
+      "lemma": "proleptically",
+      "pos": "adv",
+      "target": "proleptically (adv)",
+      "marked": "The ultimacy of God's eschatological revelation impinges <b>proleptically</b> on . . . and, then, it all gets over my head."
+    }
+  },
+  {
+    "data": {
+      "item_id": "distensive.adj.37e4af91#3",
+      "source": "lemminflect",
+      "lemma": "distensive",
+      "pos": "adj",
+      "target": "distensive (adj)",
+      "marked": "—. <b>distensive</b> deformations in the Apennines and the Tyrrrhenian basin: behind the compressive front one may rapidly pass to <b>distensive</b> deformations."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Indo-Aryan.name.9b25c683#2",
+      "source": "lemminflect",
+      "lemma": "Indo-Aryan",
+      "pos": "name",
+      "target": "Indo-Aryan (name)",
+      "marked": "<b>Indo-Aryan</b> has a very long history of attestation, from around 1400 bc to the present […]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "parlor.adj.0f07b9be#0",
+      "source": "lemminflect",
+      "lemma": "parlor",
+      "pos": "adj",
+      "target": "parlor (adj)",
+      "marked": "<b>Parlor</b> painting."
+    }
+  },
+  {
+    "data": {
+      "item_id": "rightfully.adv.58b4205c#0",
+      "source": "lemminflect",
+      "lemma": "rightfully",
+      "pos": "adv",
+      "target": "rightfully (adv)",
+      "marked": "Near-synonym: fairly"
+    }
+  },
+  {
+    "data": {
+      "item_id": "CNN effect.name.f80b5a9a#2",
+      "source": "lemminflect",
+      "lemma": "CNN effect",
+      "pos": "name",
+      "target": "CNN effect (name)",
+      "marked": "Uncertainty over the outcome in Iraq and the so-called <b>CNN effect</b>, which had folks glued to the TV for news, made for an unusually quiet spring for summer vacation rental agents."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Middleton.name.edf7d9be#0",
+      "source": "lemminflect",
+      "lemma": "Middleton",
+      "pos": "name",
+      "target": "Middleton (name)",
+      "marked": "(historical)"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Bougainvillean.adj.c06cc740#0",
+      "source": "lemminflect",
+      "lemma": "Bougainvillean",
+      "pos": "adj",
+      "target": "Bougainvillean (adj)",
+      "marked": "Slipping into a reflective mood, Mr. Kinna, 36 years old, recalled his <b>Bougainvillean</b> childhood."
+    }
+  },
+  {
+    "data": {
+      "item_id": "apiece.adv.c7892abd#0",
+      "source": "lemminflect",
+      "lemma": "apiece",
+      "pos": "adv",
+      "target": "apiece (adv)",
+      "marked": "Near-synonyms: piecewise, piecemeal; individually, singly, all"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Ise.name.7a43eb03#0",
+      "source": "lemminflect",
+      "lemma": "Ise",
+      "pos": "name",
+      "target": "Ise (name)",
+      "marked": "Former name: Ujiyamada"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Settler of Catan.noun.bab09267#1",
+      "source": "lemminflect",
+      "lemma": "Settler of Catan",
+      "pos": "noun",
+      "target": "Settler of Catan (noun)",
+      "marked": "World of Warcrafters, LARPers, <b>Settlers of Catan</b>? Weird. Beliebers, Swifties, Directioners? Weirder. Paleos, vegans, carb loaders, ovolactovegetarians? Definitely weird. Face it. We’re all weird. So why are companies still trying to build products for the masses? Why are we still acting like the masses even exist? Weird is the new normal. And only companies that figure that out have any chance of survival. In this book, Seth Godin shows you how."
+    }
+  },
+  {
+    "data": {
+      "item_id": "seaward.adv.88c1a14c#0",
+      "source": "lemminflect",
+      "lemma": "seaward",
+      "pos": "adv",
+      "target": "seaward (adv)",
+      "marked": "Near-synonyms: oceanward, oceanwards"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Mars.name.7bfefbd3#0",
+      "source": "lemminflect",
+      "lemma": "Mars",
+      "pos": "name",
+      "target": "Mars (name)",
+      "marked": "Near-synonym: Ares (Greek counterpart)"
+    }
+  },
+  {
+    "data": {
+      "item_id": "done up.adj.c2678cd1#0",
+      "source": "lemminflect",
+      "lemma": "done up",
+      "pos": "adj",
+      "target": "done up (adj)",
+      "marked": "Near-synonyms: effete, dissipated"
+    }
+  },
+  {
+    "data": {
+      "item_id": "antistealth.adj.bf63baed#0",
+      "source": "lemminflect",
+      "lemma": "antistealth",
+      "pos": "adj",
+      "target": "antistealth (adj)",
+      "marked": "<b>antistealth</b> radar"
+    }
+  },
+  {
+    "data": {
+      "item_id": "sweep something under the carpet.verb.1459d664#0",
+      "source": "lemminflect",
+      "lemma": "sweep something under the carpet",
+      "pos": "verb",
+      "target": "sweep something under the carpet (verb)",
+      "marked": "I've been struggling with what I am now for 6 years—and it's time to stop sweeping the issue under the carpet"
+    }
+  },
+  {
+    "data": {
+      "item_id": "reconstructed.adj.04a138a1#0",
+      "source": "lemminflect",
+      "lemma": "reconstructed",
+      "pos": "adj",
+      "target": "reconstructed (adj)",
+      "marked": "Near-synonyms: reconciled, repentant"
+    }
+  },
+  {
+    "data": {
+      "item_id": "nightlight.noun.d0619921#2",
+      "source": "lemminflect",
+      "lemma": "nightlight",
+      "pos": "noun",
+      "target": "nightlight (noun)",
+      "marked": "Your light cannot drive off the dark from me— / not any more than night-lights by the bed / drive off my dreams."
+    }
+  },
+  {
+    "data": {
+      "item_id": "sub out.verb.818d244e#0",
+      "source": "lemminflect",
+      "lemma": "sub out",
+      "pos": "verb",
+      "target": "sub out (verb)",
+      "marked": "Near-synonym: farm out"
+    }
+  },
+  {
+    "data": {
+      "item_id": "niggerfuxation.noun.dc3d7e6c#4",
+      "source": "lemminflect",
+      "lemma": "niggerfuxation",
+      "pos": "noun",
+      "target": "niggerfuxation (noun)",
+      "marked": "80 days until that ignorant nigger Barry Soetoro aka Barack Hussein Obama is out of office."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Black Country.name.49e5c966#1",
+      "source": "lemminflect",
+      "lemma": "Black Country",
+      "pos": "name",
+      "target": "Black Country (name)",
+      "marked": "[…] and with the two promised Sheffielders, Driver Elliott and Fireman Lewis, we were soon on our way over the most unapproachably dreary region of the whole run, scarcely to be paralleled in <b>the Black Country</b><b>Black Country</b> itself."
+    }
+  },
+  {
+    "data": {
+      "item_id": "pig butcher.verb.d9dd87ad#1",
+      "source": "lemminflect",
+      "lemma": "pig butcher",
+      "pos": "verb",
+      "target": "pig butcher (verb)",
+      "marked": "(title)"
     }
   }
 ]

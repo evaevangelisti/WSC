@@ -1,142 +1,672 @@
 [
   {
     "data": {
-      "item_id": "cheek by jowl.adv.13ad0670#3",
+      "item_id": "soft-spoken.adj.382eaf2c#0",
       "source": "stanza",
-      "lemma": "cheek by jowl",
-      "pos": "adv",
-      "target": "cheek by jowl (adv)",
-      "marked": "A Sheep-hook then, with Patch his Dog, / And Tar-box by his side; / He with his Master, jig by jowl, / Unto old Gillian hy'd."
-    }
-  },
-  {
-    "data": {
-      "item_id": "list.verb.57ec962c#4",
-      "source": "stanza",
-      "lemma": "list",
-      "pos": "verb",
-      "target": "list (verb)",
-      "marked": "Ye are as gods, that can create soil. Soil-creating gods there is no withstanding. They have the might to sell wheat at what price they <b>list</b>; and the right, to all lengths, and famine-lengths,—if they be pitiless infernal gods!"
-    }
-  },
-  {
-    "data": {
-      "item_id": "tawny.adj.7a81da22#2",
-      "source": "stanza",
-      "lemma": "tawny",
+      "lemma": "soft-spoken",
       "pos": "adj",
-      "target": "tawny (adj)",
-      "marked": "Come, vve muſt haue you turne Fiddler againe, ſlaue, 'get a Baſe Violin at your backe, and march in a Tavvnie Coate, vvith one ſleeue, to Gooſe-faire, and then you'll knovve vs; […]"
+      "target": "soft-spoken (adj)",
+      "marked": "He was a <b>soft-spoken</b> fellow who loved children and dogs."
     }
   },
   {
     "data": {
-      "item_id": "Xiyang.name.2990888a#0",
+      "item_id": "Mongolian.adj.8812a1b3#0",
       "source": "stanza",
-      "lemma": "Xiyang",
+      "lemma": "Mongolian",
+      "pos": "adj",
+      "target": "Mongolian (adj)",
+      "marked": "He had a Sister, which according to the Mongalian custom lived in the devoted spiritual state."
+    }
+  },
+  {
+    "data": {
+      "item_id": "distensive.adj.37e4af91#3",
+      "source": "stanza",
+      "lemma": "distensive",
+      "pos": "adj",
+      "target": "distensive (adj)",
+      "marked": "—. <b>distensive</b> deformations in the Apennines and the Tyrrrhenian basin: behind the compressive front one may rapidly pass to <b>distensive</b> deformations."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Zvishavane.name.2245c6ac#0",
+      "source": "stanza",
+      "lemma": "Zvishavane",
       "pos": "name",
-      "target": "Xiyang (name)",
-      "marked": "In September last year, under the earnest concern of Chairman Mao and the party Central Committee, Comrade Hua Kuo-feng delivered at the National Conference on Learning From Tachai in Agriculture, held in Hsiyang County in our province, a summary report, \"The Whole Party Must Get Mobilized To Make Ever Greater Efforts To Develop Agriculture and Struggle To Build Tachai-Type Counties Everywhere.\""
+      "target": "Zvishavane (name)",
+      "marked": "Former name: Shabani (until 1982)"
     }
   },
   {
     "data": {
-      "item_id": "Feixi.name.79a27bb5#0",
+      "item_id": "Grover's algorithm.name.5bdc4413#0",
       "source": "stanza",
-      "lemma": "Feixi",
+      "lemma": "Grover's algorithm",
       "pos": "name",
-      "target": "Feixi (name)",
-      "marked": "Leading comrades of Hofei and Wuhu municipalities, Huichou, Anching, Chaohu and Liuan prefectures and Feihsi County have also gone to various prefectural, municipal and county examination centers to inspect and guide the task and to assist in soling various problems."
+      "target": "Grover's algorithm (name)",
+      "marked": "Thus, <b>Grover's algorithm</b> has optimal order of complexity. Here, we present an information-theoretic analysis of <b>Grover's algorithm</b> and show that the square-root speed-up by <b>Grover's algorithm</b> is the best possible by any algorithm using the same quantum oracle."
     }
   },
   {
     "data": {
-      "item_id": "skirting.noun.e7a261a9#0",
+      "item_id": "descope.verb.d2a0cc2b#1",
       "source": "stanza",
-      "lemma": "skirting",
-      "pos": "noun",
-      "target": "skirting (noun)",
-      "marked": "Challenger looked up at the cornice and round at the <b>skirting</b>."
-    }
-  },
-  {
-    "data": {
-      "item_id": "contiguous.adj.25e7a16a#0",
-      "source": "stanza",
-      "lemma": "contiguous",
-      "pos": "adj",
-      "target": "contiguous (adj)",
-      "marked": "Though poor the peasant’s hut, his feasts though small,\nHe sees his little lot the lot of all;\nSees no <b>contiguous</b> palace rear its head\nTo shame the meanness of his humble shed;"
-    }
-  },
-  {
-    "data": {
-      "item_id": "nowadays.adv.cc7609a0#1",
-      "source": "stanza",
-      "lemma": "nowadays",
-      "pos": "adv",
-      "target": "nowadays (adv)",
-      "marked": "Me-thinkes miſtreſſe, you ſhould haue little reaſon for that: and yet to ſay the truth, reaſon and loue keepe little company together, now-adayes."
-    }
-  },
-  {
-    "data": {
-      "item_id": "antishadow.adj.c9448d85#1",
-      "source": "stanza",
-      "lemma": "antishadow",
-      "pos": "adj",
-      "target": "antishadow (adj)",
-      "marked": "This must be kept in mind in examining the \"<b>antishadow</b> economy\" sentiments of the majority of Russians who experienced the Soviet period, many of whom have not found a place for themselves in today's criminal, shadow reality and have been driven to the margins of economic life."
-    }
-  },
-  {
-    "data": {
-      "item_id": "discompose.verb.1a49ba2b#1",
-      "source": "stanza",
-      "lemma": "discompose",
+      "lemma": "descope",
       "pos": "verb",
-      "target": "discompose (verb)",
-      "marked": "You will not be <b>discomposed</b> by the Lord Chancellor, I dare say?"
+      "target": "descope (verb)",
+      "marked": "The decision follows a recommendation made by the Oakervee review in February 2020 to <b>descope</b> the original plans for Euston and to re-examine the efficiency of the future station."
     }
   },
   {
     "data": {
-      "item_id": "nitty.adj.4910ccc2#3",
+      "item_id": "Uladstir.name.7469c124#0",
       "source": "stanza",
-      "lemma": "nitty",
-      "pos": "adj",
-      "target": "nitty (adj)",
-      "marked": "Sure thy father was ſome botcher, and thy hungry tongue bit off theſe ſhreds of complaints, to patch up the elbows of thy <b>nitty</b> eloquence."
+      "lemma": "Uladstir",
+      "pos": "name",
+      "target": "Uladstir (name)",
+      "marked": "The next summer, on St. Bartholomew's Day, he fell in <b>Uladstir</b> (Ulster)."
     }
   },
   {
     "data": {
-      "item_id": "megafarm.noun.b5e2da1f#0",
+      "item_id": "more often than not.adv.e68369ba#0",
       "source": "stanza",
-      "lemma": "megafarm",
+      "lemma": "more often than not",
+      "pos": "adv",
+      "target": "more often than not (adv)",
+      "marked": "Near-synonyms: commonly, frequently; usually; see also Thesaurus:usually"
+    }
+  },
+  {
+    "data": {
+      "item_id": "bedazzle.verb.bd07f3bc#0",
+      "source": "stanza",
+      "lemma": "bedazzle",
+      "pos": "verb",
+      "target": "bedazzle (verb)",
+      "marked": "Near-synonym: daze"
+    }
+  },
+  {
+    "data": {
+      "item_id": "anatomize.verb.f452dd07#0",
+      "source": "stanza",
+      "lemma": "anatomize",
+      "pos": "verb",
+      "target": "anatomize (verb)",
+      "marked": "Near-synonyms: atomize, analyze"
+    }
+  },
+  {
+    "data": {
+      "item_id": "safe pair of hands.noun.874f5d17#0",
+      "source": "stanza",
+      "lemma": "safe pair of hands",
       "pos": "noun",
-      "target": "megafarm (noun)",
-      "marked": "Near-synonyms: factory farm; CAFO"
+      "target": "safe pair of hands (noun)",
+      "marked": "the veteran shot-stopper has proved to be a safe, capable pair of hands over the years"
     }
   },
   {
     "data": {
-      "item_id": "secular.adj.35436387#0",
+      "item_id": "hard time.noun.dd942ccd#0",
       "source": "stanza",
-      "lemma": "secular",
-      "pos": "adj",
-      "target": "secular (adj)",
-      "marked": "Near-synonyms: centurial, centennial"
-    }
-  },
-  {
-    "data": {
-      "item_id": "pelike.noun.1951904c#1",
-      "source": "stanza",
-      "lemma": "pelike",
+      "lemma": "hard time",
       "pos": "noun",
-      "target": "pelike (noun)",
-      "marked": "Polychromy now carried all before it, even the outworn defences of Red-figure; and in the fourth century we find not only white and gold, but other colours—pink, blue, and green—not infrequently used on a group of vases, chiefly hydriae, <b>pelikae</b>, and elaborate toilet-boxes, found at Kertch in the Crimea, in the Cyrenaica and elsewhere, and evidently imported there from Athens Athens (Fig. 17)."
+      "target": "hard time (noun)",
+      "marked": "Jack got <b>hard time</b> for his part in the robbery."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Fairhaven.name.b5dfe1bf#0",
+      "source": "stanza",
+      "lemma": "Fairhaven",
+      "pos": "name",
+      "target": "Fairhaven (name)",
+      "marked": "Former name: Rolph"
+    }
+  },
+  {
+    "data": {
+      "item_id": "frugal.adj.167a9ac5#3",
+      "source": "stanza",
+      "lemma": "frugal",
+      "pos": "adj",
+      "target": "frugal (adj)",
+      "marked": "Pinching and paring he might furnish forth / A <b>frugal</b> board, bare sustenance, no more,[…]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "preservingly.adv.4fe62813#0",
+      "source": "stanza",
+      "lemma": "preservingly",
+      "pos": "adv",
+      "target": "preservingly (adv)",
+      "marked": "If a finite group acts topologically, faithfully and orientation <b>preservingly</b> on R^3, then it is isomorphic to a subgroup of SO(3).."
+    }
+  },
+  {
+    "data": {
+      "item_id": "elsewhither.adv.b125d3b6#0",
+      "source": "stanza",
+      "lemma": "elsewhither",
+      "pos": "adv",
+      "target": "elsewhither (adv)",
+      "marked": "; more at somewhere else"
+    }
+  },
+  {
+    "data": {
+      "item_id": "frugal.adj.167a9ac5#3",
+      "source": "stanza",
+      "lemma": "frugal",
+      "pos": "adj",
+      "target": "frugal (adj)",
+      "marked": "Pinching and paring he might furnish forth / A <b>frugal</b> board, bare sustenance, no more,[…]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "terms and conditions.noun.a36cf95a#1",
+      "source": "stanza",
+      "lemma": "terms and conditions",
+      "pos": "noun",
+      "target": "terms and conditions (noun)",
+      "marked": "Variously abbreviated as T&amp;C, T&amp;Cs, Ts &amp; Cs"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Câmpeni.name.777d16ac#1",
+      "source": "stanza",
+      "lemma": "Câmpeni",
+      "pos": "name",
+      "target": "Câmpeni (name)",
+      "marked": "A village in Pârjol, Bacău County, Romania."
+    }
+  },
+  {
+    "data": {
+      "item_id": "homemade.adj.732b4df0#0",
+      "source": "stanza",
+      "lemma": "homemade",
+      "pos": "adj",
+      "target": "homemade (adj)",
+      "marked": "Near-synonyms: homebrew, handmade"
+    }
+  },
+  {
+    "data": {
+      "item_id": "provocateur.noun.3778e077#0",
+      "source": "stanza",
+      "lemma": "provocateur",
+      "pos": "noun",
+      "target": "provocateur (noun)",
+      "marked": "Near-synonyms: provoker (sometimes synonymous), agitator"
+    }
+  },
+  {
+    "data": {
+      "item_id": "feague.verb.c68d58f9#1",
+      "source": "stanza",
+      "lemma": "feague",
+      "pos": "verb",
+      "target": "feague (verb)",
+      "marked": "[T]here's one Count Sharnofsky, too, such another ambitious dry-chops, he hath not the grace to love good drink, and yet he hath the impudence to aim at the Crown. […] [H]e squints at it fearfully, and he hath an itch at the Princess too; (Landlord squints, and makes grim-faces,) but I hope the Cardinal will feage [footnote: \"Whip\" or \"beat.\"] 'um all."
+    }
+  },
+  {
+    "data": {
+      "item_id": "rightfully.adv.58b4205c#0",
+      "source": "stanza",
+      "lemma": "rightfully",
+      "pos": "adv",
+      "target": "rightfully (adv)",
+      "marked": "Near-synonym: fairly"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Kalashnikov.name.a45ddafa#0",
+      "source": "stanza",
+      "lemma": "Kalashnikov",
+      "pos": "name",
+      "target": "Kalashnikov (name)",
+      "marked": "A Cameroonian soldier lies in a trench, the tip of his <b>Kalashnikov</b> rifle pointing toward the Nigerian town of Gambaru, which has been taken over by Boko Haram terrorists."
+    }
+  },
+  {
+    "data": {
+      "item_id": "merlad.noun.fba91e77#2",
+      "source": "stanza",
+      "lemma": "merlad",
+      "pos": "noun",
+      "target": "merlad (noun)",
+      "marked": "“At first everyone was standoffish and now they're too friendly,” Thorgil complained, swiping at a <b>merlad</b> who was attempting to grab her hair."
+    }
+  },
+  {
+    "data": {
+      "item_id": "teabaglike.adj.0d1ffa94#0",
+      "source": "stanza",
+      "lemma": "teabaglike",
+      "pos": "adj",
+      "target": "teabaglike (adj)",
+      "marked": "The company started packaging coffee for home consumption in 1965, and in 1972 was the first to sell it in <b>teabaglike</b> pods for making single cups."
+    }
+  },
+  {
+    "data": {
+      "item_id": "egoistically.adv.c8ff7fdb#0",
+      "source": "stanza",
+      "lemma": "egoistically",
+      "pos": "adv",
+      "target": "egoistically (adv)",
+      "marked": "He was going to ask her to marry him—indeed, he had intended to ask her without more delay. But the words were not spoken yet; instead, he found himself talking <b>egoistically</b> on and on."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Nicolae Bălcescu.name.b6006f90#7",
+      "source": "stanza",
+      "lemma": "Nicolae Bălcescu",
+      "pos": "name",
+      "target": "Nicolae Bălcescu (name)",
+      "marked": "A commune of Călărași County, Romania"
+    }
+  },
+  {
+    "data": {
+      "item_id": "uranic.adj.810c96e9#3",
+      "source": "stanza",
+      "lemma": "uranic",
+      "pos": "adj",
+      "target": "uranic (adj)",
+      "marked": "."
+    }
+  },
+  {
+    "data": {
+      "item_id": "chin.verb.a86daf40#0",
+      "source": "stanza",
+      "lemma": "chin",
+      "pos": "verb",
+      "target": "chin (verb)",
+      "marked": "It is worth noting that on the eighth day he was strong enough to <b>“chin” himself</b><b>chin</b>” himself six times in succession, though previous to the fasting treatment he had never in his life been able to do this more than once or twice."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Chimpcago.name.22a644c2#0",
+      "source": "stanza",
+      "lemma": "Chimpcago",
+      "pos": "name",
+      "target": "Chimpcago (name)",
+      "marked": "But wait! It wasn’t Negro violence, it was “gun violence.” Yes, steel\nobjects must be banned!"
+    }
+  },
+  {
+    "data": {
+      "item_id": "water-repellent.adj.7270548d#0",
+      "source": "stanza",
+      "lemma": "water-repellent",
+      "pos": "adj",
+      "target": "water-repellent (adj)",
+      "marked": "Near-synonym: water-resistant"
+    }
+  },
+  {
+    "data": {
+      "item_id": "preservingly.adv.4fe62813#0",
+      "source": "stanza",
+      "lemma": "preservingly",
+      "pos": "adv",
+      "target": "preservingly (adv)",
+      "marked": "If a finite group acts topologically, faithfully and orientation <b>preservingly</b> on R^3, then it is isomorphic to a subgroup of SO(3).."
+    }
+  },
+  {
+    "data": {
+      "item_id": "antitussive.adj.e92b9c92#0",
+      "source": "stanza",
+      "lemma": "antitussive",
+      "pos": "adj",
+      "target": "antitussive (adj)",
+      "marked": "Coordinate term: protussive"
+    }
+  },
+  {
+    "data": {
+      "item_id": "die-die.adv.62f8fa6a#2",
+      "source": "stanza",
+      "lemma": "die-die",
+      "pos": "adv",
+      "target": "die-die (adv)",
+      "marked": "My dad’s reluctance to seek medical care isn’t unique. In fact, only a third of older adults here have a regular family doctor, which leads to delayed diagnoses and missed opportunities to catch serious conditions early."
+    }
+  },
+  {
+    "data": {
+      "item_id": "igniferous.adj.49781da0#0",
+      "source": "stanza",
+      "lemma": "igniferous",
+      "pos": "adj",
+      "target": "igniferous (adj)",
+      "marked": "Near-synonyms: fire-breathing, flammivomous"
+    }
+  },
+  {
+    "data": {
+      "item_id": "dubitation.noun.aabf201d#1",
+      "source": "stanza",
+      "lemma": "dubitation",
+      "pos": "noun",
+      "target": "dubitation (noun)",
+      "marked": "[T]he deep earnest soul of the man had fallen into all manner of black scruples, <b>dubitations</b>; he believed himself likely to die soon, and far worse than die."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Georgetown.name.726d95a7#0",
+      "source": "stanza",
+      "lemma": "Georgetown",
+      "pos": "name",
+      "target": "Georgetown (name)",
+      "marked": "Journalists and pols were cozier then. President Kennedy sipped 1945 Lafite-Rothschild at the Alsops' <b>Georgetown</b> home, and the Alsops dined at the White House."
+    }
+  },
+  {
+    "data": {
+      "item_id": "thereamong.adv.f1911d99#0",
+      "source": "stanza",
+      "lemma": "thereamong",
+      "pos": "adv",
+      "target": "thereamong (adv)",
+      "marked": "Near-synonyms: therebetween, therebetwixt (archaic)"
+    }
+  },
+  {
+    "data": {
+      "item_id": "antiphysical.adj.d299a75e#1",
+      "source": "stanza",
+      "lemma": "antiphysical",
+      "pos": "adj",
+      "target": "antiphysical (adj)",
+      "marked": "Quaternionics was in its vectorial aspects <b>antiphysical</b> and unnatural, and did not harmonize with common scalar mathematics."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Kahlúa.name.45c33212#1",
+      "source": "stanza",
+      "lemma": "Kahlúa",
+      "pos": "name",
+      "target": "Kahlúa (name)",
+      "marked": "He lifted the window. “What the hell are you doing down there?” he called down. “Are you drunk?” “No, actually, weirdly enough, we're sober,” Bingley called up. “Although I did have two <b>Kahlúas</b>, but I've probably walked those off by now.\""
+    }
+  },
+  {
+    "data": {
+      "item_id": "terawatt-hour.noun.01106b74#1",
+      "source": "stanza",
+      "lemma": "terawatt-hour",
+      "pos": "noun",
+      "target": "terawatt-hour (noun)",
+      "marked": "Meronyms: milliwatt-hour &lt; watt-hour &lt; kilowatt-hour &lt; megawatt-hour &lt; gigawatt-hour"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Western Bloc.name.0b3422b2#0",
+      "source": "stanza",
+      "lemma": "Western Bloc",
+      "pos": "name",
+      "target": "Western Bloc (name)",
+      "marked": "Holonyms: free world; First World &lt; world, World"
+    }
+  },
+  {
+    "data": {
+      "item_id": "local.noun.0ae9c490#0",
+      "source": "stanza",
+      "lemma": "local",
+      "pos": "noun",
+      "target": "local (noun)",
+      "marked": "Functional programming languages usually don't allow changing the immediate value of <b>locals</b> once they've been initialized, unless they're explicitly marked as being mutable."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Oxford.name.27330df7#0",
+      "source": "stanza",
+      "lemma": "Oxford",
+      "pos": "name",
+      "target": "Oxford (name)",
+      "marked": "(historical)"
+    }
+  },
+  {
+    "data": {
+      "item_id": "cockatrice.noun.cefa4710#0",
+      "source": "stanza",
+      "lemma": "cockatrice",
+      "pos": "noun",
+      "target": "cockatrice (noun)",
+      "marked": "A forlyued cok leiþ eiren in his laste elde... and ȝif any venemous worme sittiþ on broode þerevppon in þe canyculer dayes, þerof is igendrid... a cocatrice."
+    }
+  },
+  {
+    "data": {
+      "item_id": "bedabble.verb.d4d215c6#2",
+      "source": "stanza",
+      "lemma": "bedabble",
+      "pos": "verb",
+      "target": "bedabble (verb)",
+      "marked": "A vision of her pale, sweet face, with her bright hair all <b>bedabbled</b> with gore, seemed to float constantly before his aching eyes."
+    }
+  },
+  {
+    "data": {
+      "item_id": "tipple.noun.9348d816#0",
+      "source": "stanza",
+      "lemma": "tipple",
+      "pos": "noun",
+      "target": "tipple (noun)",
+      "marked": "Alternative form: tippler"
+    }
+  },
+  {
+    "data": {
+      "item_id": "CNN effect.name.f80b5a9a#2",
+      "source": "stanza",
+      "lemma": "CNN effect",
+      "pos": "name",
+      "target": "CNN effect (name)",
+      "marked": "Uncertainty over the outcome in Iraq and the so-called <b>CNN effect</b>, which had folks glued to the TV for news, made for an unusually quiet spring for summer vacation rental agents."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Ages of Man.name.ff9ff8dd#0",
+      "source": "stanza",
+      "lemma": "Ages of Man",
+      "pos": "name",
+      "target": "Ages of Man (name)",
+      "marked": "Meronyms: (Hesiod's Five Ages) Golden Age, Silver Age, Bronze Age, Heroic Age, Iron Age; (Ovid's Four Ages) Golden Age, Silver Age, Bronze Age, Iron Age"
+    }
+  },
+  {
+    "data": {
+      "item_id": "out loud.adv.c20c6ea5#0",
+      "source": "stanza",
+      "lemma": "out loud",
+      "pos": "adv",
+      "target": "out loud (adv)",
+      "marked": "After calling their names <b>out (loud)</b>, the teacher asked her students to take turns reading the story <b>out loud</b> to the rest of the class."
+    }
+  },
+  {
+    "data": {
+      "item_id": "sub out.verb.818d244e#0",
+      "source": "stanza",
+      "lemma": "sub out",
+      "pos": "verb",
+      "target": "sub out (verb)",
+      "marked": "Near-synonym: farm out"
+    }
+  },
+  {
+    "data": {
+      "item_id": "surefootedly.adv.12ef9f30#0",
+      "source": "stanza",
+      "lemma": "surefootedly",
+      "pos": "adv",
+      "target": "surefootedly (adv)",
+      "marked": "[…"
+    }
+  },
+  {
+    "data": {
+      "item_id": "improperly.adv.bbf3c778#0",
+      "source": "stanza",
+      "lemma": "improperly",
+      "pos": "adv",
+      "target": "improperly (adv)",
+      "marked": "Prosecutors also said Wednesday their side “does not intend to reference allegations that the defendant violated FARA or <b>improperly</b> coordinated with the Obama Administration,” referring to the Foreign Agents Registration Act, which requires people who lobby on behalf of foreign clients to register beforehand with the US government."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Upper South.name.34513f40#0",
+      "source": "stanza",
+      "lemma": "Upper South",
+      "pos": "name",
+      "target": "Upper South (name)",
+      "marked": "Holonyms: South &lt; United States, United States of America, U.S., US, USA &lt; North America &lt; Earth &lt; Solar System &lt; Orion Arm &lt; Milky Way &lt; Local Group &lt; Virgo Supercluster &lt; Laniakea &lt; Universe"
+    }
+  },
+  {
+    "data": {
+      "item_id": "hypercorrect.verb.47d84875#0",
+      "source": "stanza",
+      "lemma": "hypercorrect",
+      "pos": "verb",
+      "target": "hypercorrect (verb)",
+      "marked": "Likewise, both the chapcha that accompanies the modern Hebrew handshake and the explicit demand to shake hands like a \"male\" stem from the need to overcompensate (or <b>hypercorrect</b>) for the effeminacy, passivity, feebleness, and bodily unfitness so often ascribed to Jews by other Europeans (especially by Germans) in the nineteenth century."
+    }
+  },
+  {
+    "data": {
+      "item_id": "dick around.verb.ace5d945#0",
+      "source": "stanza",
+      "lemma": "dick around",
+      "pos": "verb",
+      "target": "dick around (verb)",
+      "marked": "Near-synonym: jerk around"
+    }
+  },
+  {
+    "data": {
+      "item_id": "swordswomanship.noun.b873d342#0",
+      "source": "stanza",
+      "lemma": "swordswomanship",
+      "pos": "noun",
+      "target": "swordswomanship (noun)",
+      "marked": "As the two women journey from Rhostshyl to far-off Hlavsen, where Nyc's long-time lover — a man — awaits her, they pull off a series of narow escapes, taking turns saving each other through force and <b>swordswomanship</b> or sorcery."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Prepuna.noun.8338337f#0",
+      "source": "stanza",
+      "lemma": "Prepuna",
+      "pos": "noun",
+      "target": "Prepuna (noun)",
+      "marked": "Compared to other Bolivian ecoregions, the <b>Prepuna</b> and Puna in the Bolivian highlands are distinguished by low precipitation and low biological diversity."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Nicolae Bălcescu.name.b6006f90#7",
+      "source": "stanza",
+      "lemma": "Nicolae Bălcescu",
+      "pos": "name",
+      "target": "Nicolae Bălcescu (name)",
+      "marked": "A commune of Călărași County, Romania"
+    }
+  },
+  {
+    "data": {
+      "item_id": "boots.adv.eccea9c6#3",
+      "source": "stanza",
+      "lemma": "boots",
+      "pos": "adv",
+      "target": "boots (adv)",
+      "marked": "[see title]"
+    }
+  },
+  {
+    "data": {
+      "item_id": "tiara.verb.bec9b6e5#2",
+      "source": "stanza",
+      "lemma": "tiara",
+      "pos": "verb",
+      "target": "tiara (verb)",
+      "marked": "Deem not alone the high insignia set / Where crimsoned cross or smouldering stake doth rise; / Hath e’er Humanity’s arch coronet / <b>Tiaraed</b> the bright beings of the skies?"
+    }
+  },
+  {
+    "data": {
+      "item_id": "snow bunting.noun.058087e5#0",
+      "source": "stanza",
+      "lemma": "snow bunting",
+      "pos": "noun",
+      "target": "snow bunting (noun)",
+      "marked": "Soon the <b>snow bunting</b><b>snow buntings</b> will arrive, bringing song. My favourite <b>snow bunting</b> song is the clearance song they make to land."
+    }
+  },
+  {
+    "data": {
+      "item_id": "videoke.noun.4a061056#0",
+      "source": "stanza",
+      "lemma": "videoke",
+      "pos": "noun",
+      "target": "videoke (noun)",
+      "marked": "“Generously coated in candy-colored skulls and psychedelic scenes of suffering,” the <b>videoke</b> machine, as Manila-based pop critic Alice Sarmiento describes it, plays a loop of a “muzak rendition” of Sinatra's anthem, its lyrics superimposed over video and tabloid headlines about the killings \"with the words going up in flames as the song played.\""
+    }
+  },
+  {
+    "data": {
+      "item_id": "out loud.adv.c20c6ea5#0",
+      "source": "stanza",
+      "lemma": "out loud",
+      "pos": "adv",
+      "target": "out loud (adv)",
+      "marked": "After calling their names <b>out (loud)</b>, the teacher asked her students to take turns reading the story <b>out loud</b> to the rest of the class."
+    }
+  },
+  {
+    "data": {
+      "item_id": "going away.adv.c89b13fc#1",
+      "source": "stanza",
+      "lemma": "going away",
+      "pos": "adv",
+      "target": "going away (adv)",
+      "marked": "Seven weeks later on May 27th, Conibear and his men faced a tough California crew on Lake Washington and defeated them <b>going away</b> in a time of 16:56."
+    }
+  },
+  {
+    "data": {
+      "item_id": "barter.verb.32644858#1",
+      "source": "stanza",
+      "lemma": "barter",
+      "pos": "verb",
+      "target": "barter (verb)",
+      "marked": "You may be able to <b>barter</b> for some of the items you need at the local market."
     }
   },
   {
@@ -151,952 +681,422 @@
   },
   {
     "data": {
-      "item_id": "megafarm.noun.b5e2da1f#0",
+      "item_id": "elsewhither.adv.b125d3b6#0",
       "source": "stanza",
-      "lemma": "megafarm",
-      "pos": "noun",
-      "target": "megafarm (noun)",
-      "marked": "Near-synonyms: factory farm; CAFO"
-    }
-  },
-  {
-    "data": {
-      "item_id": "searer.noun.a4a6c1bd#1",
-      "source": "stanza",
-      "lemma": "searer",
-      "pos": "noun",
-      "target": "searer (noun)",
-      "marked": "<b>Searers</b> insist that a roast develops a rich crust when seared (it does) and that this crust seals in meat juices (it doesn't). After a lifetime of dutifully cooking roasts in a moderate oven, I've defected to the <b>searers'</b> camp."
-    }
-  },
-  {
-    "data": {
-      "item_id": "layless.adj.2349e227#1",
-      "source": "stanza",
-      "lemma": "layless",
-      "pos": "adj",
-      "target": "layless (adj)",
-      "marked": "https://groups.google.com/forum/#!search/%22layless%22/alt.comp.periphs.videocards.nvidia/_hcwae6qJEU/L0FNhldGvpUJ"
-    }
-  },
-  {
-    "data": {
-      "item_id": "angeliferous.adj.e7570f52#0",
-      "source": "stanza",
-      "lemma": "angeliferous",
-      "pos": "adj",
-      "target": "angeliferous (adj)",
-      "marked": "Oh ! you splendiferous creatur’! you anngeliferous anngel! here am I, Ralph Stackpole the Screamer[…]"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Balaton.name.fb8f7bd3#0",
-      "source": "stanza",
-      "lemma": "Balaton",
-      "pos": "name",
-      "target": "Balaton (name)",
-      "marked": "The surface of the <b>Balaton</b> and the surrounding marshes is not less than 24 German square miles, or 384 English square miles; its principal feeder is the Szala, but all the water it receives appears inconsiderable relatively to its superficial extent, and the quantity lost in evaporation."
-    }
-  },
-  {
-    "data": {
-      "item_id": "turriphilia.noun.2624753f#1",
-      "source": "stanza",
-      "lemma": "turriphilia",
-      "pos": "noun",
-      "target": "turriphilia (noun)",
-      "marked": "[Horace Walpole's] contributions to culture are many: he wrote a gothic novel called \"The Castle of Otranto\", he authored an important text on garden design, he coined the term serendipity […], and he was a true icon of <b>turriphilia</b>."
-    }
-  },
-  {
-    "data": {
-      "item_id": "volubly.adv.f8d16223#0",
-      "source": "stanza",
-      "lemma": "volubly",
+      "lemma": "elsewhither",
       "pos": "adv",
-      "target": "volubly (adv)",
-      "marked": "The Frenchman then began chattering <b>volubly</b>, and the General supported him; but I recommended the former to read, for example, extracts from the memoirs of General Perovski, who, in 1812, was a prisoner in the hands of the French."
+      "target": "elsewhither (adv)",
+      "marked": "; more at somewhere else"
     }
   },
   {
     "data": {
-      "item_id": "abiding.adj.8cc15e85#3",
+      "item_id": "deeder.noun.3995fe10#1",
       "source": "stanza",
-      "lemma": "abiding",
-      "pos": "adj",
-      "target": "abiding (adj)",
-      "marked": "Through all their projects, their <b>abiding</b> ethos has been observing and responding to the site and its existing ecology and growth patterns."
-    }
-  },
-  {
-    "data": {
-      "item_id": "narrow-gutted.adj.c887cc73#0",
-      "source": "stanza",
-      "lemma": "narrow-gutted",
-      "pos": "adj",
-      "target": "narrow-gutted (adj)",
-      "marked": "But nothing is accidental in Final Alice: the jokes are all so musical and composed with such mastery as to silence narrow-querulousness about content."
-    }
-  },
-  {
-    "data": {
-      "item_id": "subharmonically.adv.a63dad0c#0",
-      "source": "stanza",
-      "lemma": "subharmonically",
-      "pos": "adv",
-      "target": "subharmonically (adv)",
-      "marked": "For very low temperature the distributed chaos is tuned to the large-scale coherent motions: the viscous (normal) component is tuned to the fundamental mode, whereas the superfluid component is <b>subharmonically</b> tuned."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Red Tribe.name.36beb420#2",
-      "source": "stanza",
-      "lemma": "Red Tribe",
-      "pos": "name",
-      "target": "Red Tribe (name)",
-      "marked": "Mr. Siskind was not a member of the Blue Tribe. He was not a voice from the conservative <b>Red Tribe</b> (\"opposing gay marriage,\" \"getting conspicuously upset about terrorists and commies\"). He identified with something called the Grey Tribe — as did many in Silicon Valley."
-    }
-  },
-  {
-    "data": {
-      "item_id": "sport one's oak.verb.52b149ee#9",
-      "source": "stanza",
-      "lemma": "sport one's oak",
-      "pos": "verb",
-      "target": "sport one's oak (verb)",
-      "marked": "'And I'd feel particularly vulnerable, if I was on the ground floor like you.' / 'You could sport your oak, I suppose. But sporting your oak is said not to be quite the thing. It's felt not to be on, sporting your oak.'"
-    }
-  },
-  {
-    "data": {
-      "item_id": "workpiece.noun.8247559e#4",
-      "source": "stanza",
-      "lemma": "workpiece",
+      "lemma": "deeder",
       "pos": "noun",
-      "target": "workpiece (noun)",
-      "marked": "The work pieces are held in clamps or vises, attached to or carried upon the terminals of the single-turn secondary circuit."
+      "target": "deeder (noun)",
+      "marked": "It would give the <b>deeders</b> and their heirs an opportunity to reclaim and recover the property, should they desire to do so, and as Crescent Park is an exceptionally valuable piece of property to the City at this time, […]"
     }
   },
   {
     "data": {
-      "item_id": "Merle.name.a7148648#1",
+      "item_id": "shredded.adj.3a8f5cf8#0",
       "source": "stanza",
-      "lemma": "Merle",
-      "pos": "name",
-      "target": "Merle (name)",
-      "marked": "\"I wish I had a name like <b>Merle</b> Oberon or Miriam Hopkins,\" Mary Agnes said dreamily as she scanned the display of Coming Attractions."
-    }
-  },
-  {
-    "data": {
-      "item_id": "ransack.verb.95ef2084#0",
-      "source": "stanza",
-      "lemma": "ransack",
-      "pos": "verb",
-      "target": "ransack (verb)",
-      "marked": "What a ſorowe hath it been to ſome of vs when the deuils hath in deſpightfull mockage, caſt in our teeth our olde loue borne to our money, and then ſhewed vs our executours as buſily ryfling ⁊ ranſaking our houſes as though they wer men of warre that had taken a towne by force."
-    }
-  },
-  {
-    "data": {
-      "item_id": "East Bumfuck, Kansas.name.936bba50#2",
-      "source": "stanza",
-      "lemma": "East Bumfuck, Kansas",
-      "pos": "name",
-      "target": "East Bumfuck, Kansas (name)",
-      "marked": "As I recall he had an AWOL dad, a \"space cadet\" mom and was raised by rural grandparents in East Bumfuck Kansas. Privilege ain't what it used to be."
-    }
-  },
-  {
-    "data": {
-      "item_id": "twit.verb.854dfa3b#0",
-      "source": "stanza",
-      "lemma": "twit",
-      "pos": "verb",
-      "target": "twit (verb)",
-      "marked": "Secrecy about B.R. plans for reorganisation and closure of lines and notably some failures to consult with staff representatives concerned with redundancy, are defects with which the railway unions have <b>twitted</b> Dr. Beeching."
-    }
-  },
-  {
-    "data": {
-      "item_id": "akiosexual.adj.ec88324c#4",
-      "source": "stanza",
-      "lemma": "akiosexual",
+      "lemma": "shredded",
       "pos": "adj",
-      "target": "akiosexual (adj)",
-      "marked": "More than two-thirds of the participants identified as asexual (67.3%), followed by graysexual (11.8%), demisexual (10.0%), questioning if asexual/graysexual/demisexual (8.2%), and other identities on the asexual spectrum (e.g., aceflux, aegosexual, <b>akiosexual</b>/lithsexual, apothisexual, and quoisexual) (2.7%)."
+      "target": "shredded (adj)",
+      "marked": "Near-synonyms: jacked, ripped"
     }
   },
   {
     "data": {
-      "item_id": "thick and threefold.adv.a80082e4#0",
+      "item_id": "toothlessness.noun.047292f8#0",
       "source": "stanza",
-      "lemma": "thick and threefold",
-      "pos": "adv",
-      "target": "thick and threefold (adv)",
-      "marked": "A ſclaunderous tunge, a tunge of a ſkolde,\nWorketh more miſchiefe than can be tolde;\nThat, if I wiſt not to be controlde,\nYet ſomwhat to ſay I dare well be bolde,"
+      "lemma": "toothlessness",
+      "pos": "noun",
+      "target": "toothlessness (noun)",
+      "marked": "Near-synonyms: anodontia, edentulism"
     }
   },
   {
     "data": {
-      "item_id": "Man Upstairs.name.27c331f1#0",
+      "item_id": "chin.verb.a86daf40#0",
       "source": "stanza",
-      "lemma": "Man Upstairs",
-      "pos": "name",
-      "target": "Man Upstairs (name)",
-      "marked": "A rhapsodic inquiry greets us from the TV screen and the radio: \"Have you talked to <b>the Man Upstairs</b>?\" God is a friendly neighbor who dwells in the apartment just above. Call on him any time, especially if you are feeling a little blue."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Ruyang.name.ca209ffa#0",
-      "source": "stanza",
-      "lemma": "Ruyang",
-      "pos": "name",
-      "target": "Ruyang (name)",
-      "marked": "A memorial of 1325 says that two Honan men, Chao Ch’ou-ssu and Kuo P’u-sa (Kuo the Bodhisattva), from Hsi-chou (modern Ju-yang county) preached heretical doctrines, saying, \"The Buddha Maitreya should possess the world.\""
-    }
-  },
-  {
-    "data": {
-      "item_id": "not here for a haircut.adv.f6ec4792#1",
-      "source": "stanza",
-      "lemma": "not here for a haircut",
-      "pos": "adv",
-      "target": "not here for a haircut (adv)",
-      "marked": "What else is coming up for the station in 2016?\nNow that would be telling.\nWell you're <b>not here for a haircut</b>, Chief..."
-    }
-  },
-  {
-    "data": {
-      "item_id": "vociferate.verb.f6142852#1",
-      "source": "stanza",
-      "lemma": "vociferate",
+      "lemma": "chin",
       "pos": "verb",
-      "target": "vociferate (verb)",
-      "marked": "He then began to <b>vociferate</b> pretty loudly, and at last an old woman, opening an upper casement, asked, Who they were, and what they wanted?"
+      "target": "chin (verb)",
+      "marked": "It is worth noting that on the eighth day he was strong enough to <b>“chin” himself</b><b>chin</b>” himself six times in succession, though previous to the fasting treatment he had never in his life been able to do this more than once or twice."
     }
   },
   {
     "data": {
-      "item_id": "syndicate.noun.0b9c35df#0",
+      "item_id": "adorably.adv.d92ea65e#0",
       "source": "stanza",
-      "lemma": "syndicate",
-      "pos": "noun",
-      "target": "syndicate (noun)",
-      "marked": "The ſoveraintie lies in the Council of 200, and this Council chuſes out of its number 25, who are the leſſer Council; […] they are choſen by a ſort of ballet, ſo that it is not known for whom they give their votes, which is an effectual method to ſuppreſs factions and reſentments; ſince in a competition no man can know who voted for him or againſt him: yet the election is not ſo carried, but that the whole Town is in an intrigue concerning it: for ſince the being of the little Council leads one to the Sindicat, which is the chieffe honor of the State: this dignitie is courted here, with as active and ſolicitous an ambition as appears elſewhere for greater matters."
+      "lemma": "adorably",
+      "pos": "adv",
+      "target": "adorably (adv)",
+      "marked": "She always said that preschoolers danced <b>adorably</b>, so it was no wonder that she opened a dance school for them."
     }
   },
   {
     "data": {
-      "item_id": "Whore of Babylon.name.25175c5a#0",
+      "item_id": "proleptically.adv.1a4b5109#1",
       "source": "stanza",
-      "lemma": "Whore of Babylon",
+      "lemma": "proleptically",
+      "pos": "adv",
+      "target": "proleptically (adv)",
+      "marked": "The ultimacy of God's eschatological revelation impinges <b>proleptically</b> on . . . and, then, it all gets over my head."
+    }
+  },
+  {
+    "data": {
+      "item_id": "flamboyantly.adv.f37e2520#1",
+      "source": "stanza",
+      "lemma": "flamboyantly",
+      "pos": "adv",
+      "target": "flamboyantly (adv)",
+      "marked": "The entire tense, compact play takes place inside a subway car where an exchange between a <b>flamboyantly</b> loose blonde of about 30, Lula (Jennifer Mudge), and a conservatively dressed young black man, Clay (Dulé Hill ), escalates from surreally unsuppressed flirtation to violence and tragedy as all of Clay’s efforts toward assimilation are shown to be for naught."
+    }
+  },
+  {
+    "data": {
+      "item_id": "unrightfully.adv.b0dda50a#0",
+      "source": "stanza",
+      "lemma": "unrightfully",
+      "pos": "adv",
+      "target": "unrightfully (adv)",
+      "marked": "Near-synonym: unrighteously"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Sgüüx̣s.name.481dd3b2#1",
+      "source": "stanza",
+      "lemma": "Sgüüx̣s",
       "pos": "name",
-      "target": "Whore of Babylon (name)",
-      "marked": "You were the father of modern medicine / I was Mr. Clean / You were the Whore and the Beast of Babylon, / I was Rin Tin Tin"
+      "target": "Sgüüx̣s (name)",
+      "marked": "Currently there are two different variations or dialects of Coast Tsimshian (Shm′algyack/Sm’algyax): [...] They include Coast Tsimshian and <b>Sgüüx̣s</b>, Southern Tsimshian spoken on the BC Island of Klemtu, although its last speaker passed away in 2013 [...]."
     }
   },
   {
     "data": {
-      "item_id": "Rebecca.name.ecb59364#1",
+      "item_id": "sweep something under the carpet.verb.1459d664#0",
       "source": "stanza",
-      "lemma": "Rebecca",
-      "pos": "name",
-      "target": "Rebecca (name)",
-      "marked": "They would say, if 'twas <b>Rebecca</b>,\nThat she is a little Quaker."
+      "lemma": "sweep something under the carpet",
+      "pos": "verb",
+      "target": "sweep something under the carpet (verb)",
+      "marked": "I've been struggling with what I am now for 6 years—and it's time to stop sweeping the issue under the carpet"
     }
   },
   {
     "data": {
-      "item_id": "Elsie.name.0863b9c6#2",
+      "item_id": "acausally.adv.ccaf0df7#0",
       "source": "stanza",
-      "lemma": "Elsie",
-      "pos": "name",
-      "target": "Elsie (name)",
-      "marked": "\"Obviously I wasn't going to go through life saddled with a name like <b>Elsie</b>. When I got up to London at the age of eighteen everybody laughed at me, so a boyfriend suggested a tiny amendment, two letters swopped, and I've been Elise for thirty years.\""
+      "lemma": "acausally",
+      "pos": "adv",
+      "target": "acausally (adv)",
+      "marked": "Particles in the quantum realm seem to move about <b>acausally</b> in a purely random and statistical fashion."
     }
   },
   {
     "data": {
-      "item_id": "octa.noun.7293fda8#1",
+      "item_id": "cockatrice.noun.cefa4710#0",
       "source": "stanza",
-      "lemma": "octa",
+      "lemma": "cockatrice",
       "pos": "noun",
-      "target": "octa (noun)",
-      "marked": "This method does not give any information on the distribution of clouds in the sky dome. But it presents the advantage of an objective method by eliminating the source of error due to personal appreciation of the fraction of the sky covered by clouds, as is the case in the classical climatorlogical observation of the cloudiness expressed in <b>octa</b> (N = 0 corresponding to cloudless sky and N = 8, to overcast sky in this scale)."
+      "target": "cockatrice (noun)",
+      "marked": "A forlyued cok leiþ eiren in his laste elde... and ȝif any venemous worme sittiþ on broode þerevppon in þe canyculer dayes, þerof is igendrid... a cocatrice."
     }
   },
   {
     "data": {
-      "item_id": "apple of someone's eye.noun.f58b9b96#9",
+      "item_id": "enter.verb.2a761186#0",
       "source": "stanza",
-      "lemma": "apple of someone's eye",
-      "pos": "noun",
-      "target": "apple of someone's eye (noun)",
-      "marked": "I hoped that he had truly loved us, that we had honestly been the apples of his eye."
+      "lemma": "enter",
+      "pos": "verb",
+      "target": "enter (verb)",
+      "marked": "to <b>enter</b> a writ, appearance, rule, or judgment"
     }
   },
   {
     "data": {
-      "item_id": "north-northwesterly.adj.7ff1c7ba#0",
+      "item_id": "schisty.adj.255966d6#0",
       "source": "stanza",
-      "lemma": "north-northwesterly",
+      "lemma": "schisty",
       "pos": "adj",
-      "target": "north-northwesterly (adj)",
-      "marked": "Alternative form: north-northwestward"
+      "target": "schisty (adj)",
+      "marked": "The Upper Douro wine began to fetch great prices, and this was the signal for the cultivation, bit by bit, of the whole region as far as the <b>schisty</b> soil, which gave the good wine, reached."
     }
   },
   {
     "data": {
-      "item_id": "thundershowery.adj.47f5df78#2",
+      "item_id": "mashed-potatoey.adj.d2cbf4da#2",
       "source": "stanza",
-      "lemma": "thundershowery",
+      "lemma": "mashed-potatoey",
       "pos": "adj",
-      "target": "thundershowery (adj)",
-      "marked": "One similar <b>thundershowery</b> Sunday afternoon, Kit Adler called to invite we three over to her apartment where she was planning a puppet show for the children (she now had four) and some of their small friends, tea to follow."
+      "target": "mashed-potatoey (adj)",
+      "marked": "We used to break off crumbs and crunch it into a <b>mashed-potatoey</b> pulp."
     }
   },
   {
     "data": {
-      "item_id": "antishadow.adj.c9448d85#1",
+      "item_id": "Blutah.name.189c10fd#3",
       "source": "stanza",
-      "lemma": "antishadow",
+      "lemma": "Blutah",
+      "pos": "name",
+      "target": "Blutah (name)",
+      "marked": "[See title] For decades, Utah has been a ruby-red fixture on America's political map — a state where Republican candidates win not just consistently, but commandingly."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Riverside.name.c9ddb389#0",
+      "source": "stanza",
+      "lemma": "Riverside",
+      "pos": "name",
+      "target": "Riverside (name)",
+      "marked": "“Twelve pesticides commonly applied to citrus groves are slated for study in the project’s plots,” reports Tom S. Bellows, UC <b>Riverside</b> assistant entomologist. They include four acaricides (Morestan, Kelthane, Pictran, Vendex), four thripsicides (Cygon, Carzol, Orthene, Sabadilla), and four scalicides (Parathion, Supracide, Lorsban, Sevin)."
+    }
+  },
+  {
+    "data": {
+      "item_id": "transoceanic.adj.1997f562#0",
+      "source": "stanza",
+      "lemma": "transoceanic",
       "pos": "adj",
-      "target": "antishadow (adj)",
-      "marked": "This must be kept in mind in examining the \"<b>antishadow</b> economy\" sentiments of the majority of Russians who experienced the Soviet period, many of whom have not found a place for themselves in today's criminal, shadow reality and have been driven to the margins of economic life."
+      "target": "transoceanic (adj)",
+      "marked": "Near-synonym: intercontinental"
     }
   },
   {
     "data": {
-      "item_id": "forte.adv.3330efb7#0",
+      "item_id": "unraining.adj.2e56158b#1",
       "source": "stanza",
-      "lemma": "forte",
-      "pos": "adv",
-      "target": "forte (adv)",
-      "marked": "(abbreviation) f"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Man Upstairs.name.27c331f1#0",
-      "source": "stanza",
-      "lemma": "Man Upstairs",
-      "pos": "name",
-      "target": "Man Upstairs (name)",
-      "marked": "A rhapsodic inquiry greets us from the TV screen and the radio: \"Have you talked to <b>the Man Upstairs</b>?\" God is a friendly neighbor who dwells in the apartment just above. Call on him any time, especially if you are feeling a little blue."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Cainamero.noun.dd3b2135#0",
-      "source": "stanza",
-      "lemma": "Cainamero",
-      "pos": "noun",
-      "target": "Cainamero (noun)",
-      "marked": "Since there were hundreds of <b>Cainamero</b> and other southern Pomo residents at Mission San Rafael, Pixpixuecas/Toribio most likely persuaded the Santa Rose <b>Cainamero</b> that he could help them smooth things over with Vásquez del Mercado in order to prevent reprisals against the <b>Cainamero</b> and southern Pomo mission Indians."
-    }
-  },
-  {
-    "data": {
-      "item_id": "cast.noun.4bd58a93#0",
-      "source": "stanza",
-      "lemma": "cast",
-      "pos": "noun",
-      "target": "cast (noun)",
-      "marked": "Coordinate term: hundred"
-    }
-  },
-  {
-    "data": {
-      "item_id": "hypostatic.adj.6ea754f5#0",
-      "source": "stanza",
-      "lemma": "hypostatic",
+      "lemma": "unraining",
       "pos": "adj",
-      "target": "hypostatic (adj)",
-      "marked": "The grand doctrine of the chymists, touching their three hypostatical principles."
+      "target": "unraining (adj)",
+      "marked": "... and scatters the storms and <b>unraining</b> clouds of Scythia; then the tall corn and the stretches of water quiver with the first gentle blasts, and the tops of the woods rustle and the long rollers press towards the beach; but[…]"
     }
   },
   {
     "data": {
-      "item_id": "lord and master.noun.77d66e23#1",
+      "item_id": "stash.noun.b49e732c#0",
       "source": "stanza",
-      "lemma": "lord and master",
+      "lemma": "stash",
       "pos": "noun",
-      "target": "lord and master (noun)",
-      "marked": "Man is here the origin of his thoughts and <b>lord and master</b> of the words which express these thoughts: he is the centre of language."
+      "target": "stash (noun)",
+      "marked": "Near-synonyms: merch, swag"
     }
   },
   {
     "data": {
-      "item_id": "try.verb.3b01e0a3#0",
+      "item_id": "undefeated.adj.a08850f5#0",
       "source": "stanza",
-      "lemma": "try",
-      "pos": "verb",
-      "target": "try (verb)",
-      "marked": "[…]euery feend his buſie paines applyde, / To melt the golden metall, ready to be tryde."
-    }
-  },
-  {
-    "data": {
-      "item_id": "therapeutically.adv.505bd245#0",
-      "source": "stanza",
-      "lemma": "therapeutically",
-      "pos": "adv",
-      "target": "therapeutically (adv)",
-      "marked": "This drug cannot be used <b>therapeutically</b> except as a placebo."
-    }
-  },
-  {
-    "data": {
-      "item_id": "endow.verb.fa9ebe02#4",
-      "source": "stanza",
-      "lemma": "endow",
-      "pos": "verb",
-      "target": "endow (verb)",
-      "marked": "[A]midst so many vicissitudes of fortune to which I have been exposed, amongst all the goods and evils, the joyful and gloomy, the pleasing and disagreeable circumstances of life, thou [God] endowest me with an equal, constant, manly, and superior spirit on every occasion."
-    }
-  },
-  {
-    "data": {
-      "item_id": "kilowatt-hour.noun.bf31caa4#1",
-      "source": "stanza",
-      "lemma": "kilowatt-hour",
-      "pos": "noun",
-      "target": "kilowatt-hour (noun)",
-      "marked": "Meronyms: yoctojoule (1.000e-24 J) &lt; zeptojoule (1.000e-21 J) &lt; attojoule (1.000e-18 J) &lt; hartree (4.35974e-18 J) &lt; femtojoule (1.000e-15 J) &lt; picojoule (1.000e-12 J) &lt; nanojoule (1.000e-9 J) &lt; microjoule (1.000e-6 J) &lt; millijoule (1.000e-3 J) &lt; joule (1 J) &lt; milliwatt-hour (3.6 J) &lt; microwatt-year (31.536 J) &lt; kilojoule (1.000e3 J) &lt; watt-hour (3.600e3 J) &lt; milliwatt-year (31.536e3 J) &lt; megajoule (1.000e6 J)"
-    }
-  },
-  {
-    "data": {
-      "item_id": "fit to kill.adv.459b4f19#2",
-      "source": "stanza",
-      "lemma": "fit to kill",
-      "pos": "adv",
-      "target": "fit to kill (adv)",
-      "marked": "He began to chuckle and, moments later, both of them were laughing <b>fit to kill</b>."
-    }
-  },
-  {
-    "data": {
-      "item_id": "somever.adv.e5fc83cd#0",
-      "source": "stanza",
-      "lemma": "somever",
-      "pos": "adv",
-      "target": "somever (adv)",
-      "marked": "But you know certenly that the name of God may not be taken in vayne, noꝛ vntrewlye: foꝛ God thꝛeateneth a punyſhemente, whiche remayneth dewe vnto you alſo, if you handle not this buſines ryghtly he that dꝛowned the whole woꝛlde with a flud, he that ſwallowed vp Sodome with a fyꝛie ſhoure, the ſame can eaſely deſtroye you alſo, what power ſomeuer you haue."
-    }
-  },
-  {
-    "data": {
-      "item_id": "pulse.verb.8c709a7a#0",
-      "source": "stanza",
-      "lemma": "pulse",
-      "pos": "verb",
-      "target": "pulse (verb)",
-      "marked": "Hot blood <b>pulsed</b> through my veins as I grew angrier."
-    }
-  },
-  {
-    "data": {
-      "item_id": "top of one's class.adv.da90b1e8#0",
-      "source": "stanza",
-      "lemma": "top of one's class",
-      "pos": "adv",
-      "target": "top of one's class (adv)",
-      "marked": "I graduated top of my class from college."
-    }
-  },
-  {
-    "data": {
-      "item_id": "establish.verb.51b236fb#0",
-      "source": "stanza",
-      "lemma": "establish",
-      "pos": "verb",
-      "target": "establish (verb)",
-      "marked": "By some paradoxical evolution rancour and intolerance have been <b>established</b> in the vanguard of primitive Christianity. Mrs. Spoker, in common with many of the stricter disciples of righteousness, was as inclement in demeanour as she was cadaverous in aspect."
-    }
-  },
-  {
-    "data": {
-      "item_id": "gaudless.adj.330ced30#0",
-      "source": "stanza",
-      "lemma": "gaudless",
+      "lemma": "undefeated",
       "pos": "adj",
-      "target": "gaudless (adj)",
-      "marked": "[…] Each weed / That grows about her grave I know; They spring / With <b>gaudless</b> flowers, year after year the same: […]"
+      "target": "undefeated (adj)",
+      "marked": "Near-synonyms: unvanquished, unbeaten, unconquered"
     }
   },
   {
     "data": {
-      "item_id": "firebomb a Walmart.verb.68345831#2",
+      "item_id": "nanolitre.noun.fc768f9d#0",
       "source": "stanza",
-      "lemma": "firebomb a Walmart",
-      "pos": "verb",
-      "target": "firebomb a Walmart (verb)",
-      "marked": "Looks like someone finally firebombed the Walmart"
-    }
-  },
-  {
-    "data": {
-      "item_id": "ordinate dimension.noun.dff56e02#0",
-      "source": "stanza",
-      "lemma": "ordinate dimension",
+      "lemma": "nanolitre",
       "pos": "noun",
-      "target": "ordinate dimension (noun)",
-      "marked": "Coordinate term: coordinate dimension"
+      "target": "nanolitre (noun)",
+      "marked": "Holonyms: microlitre &lt; millilitre &lt; litre &lt; kilolitre &lt; megalitre &lt; gigalitre"
     }
   },
   {
     "data": {
-      "item_id": "tagworm.noun.ed73d1b2#0",
+      "item_id": "dress.verb.794a6177#1",
       "source": "stanza",
-      "lemma": "tagworm",
+      "lemma": "dress",
+      "pos": "verb",
+      "target": "dress (verb)",
+      "marked": "Heere Loue, thou ſeeſt how diligent I am, / To <b>dreſſe</b> thy meate my ſelfe, and bring it thee."
+    }
+  },
+  {
+    "data": {
+      "item_id": "transoceanic.adj.1997f562#0",
+      "source": "stanza",
+      "lemma": "transoceanic",
+      "pos": "adj",
+      "target": "transoceanic (adj)",
+      "marked": "Near-synonym: intercontinental"
+    }
+  },
+  {
+    "data": {
+      "item_id": "twinkle.verb.a0eec054#1",
+      "source": "stanza",
+      "lemma": "twinkle",
+      "pos": "verb",
+      "target": "twinkle (verb)",
+      "marked": "The Owl Fell a Moping and <b>Twinkling</b>."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Harry.name.532591e7#0",
+      "source": "stanza",
+      "lemma": "Harry",
+      "pos": "name",
+      "target": "Harry (name)",
+      "marked": "Yet weep that <b>Harry</b><b>Harry's</b> dead, and so will I; / But <b>Harry</b> lives that shall convert those tears / By number into hours of happiness."
+    }
+  },
+  {
+    "data": {
+      "item_id": "atomize.verb.241f50d5#0",
+      "source": "stanza",
+      "lemma": "atomize",
+      "pos": "verb",
+      "target": "atomize (verb)",
+      "marked": "Near-synonyms: pulverize, annihilate"
+    }
+  },
+  {
+    "data": {
+      "item_id": "want-away.adj.960db7b6#0",
+      "source": "stanza",
+      "lemma": "want-away",
+      "pos": "adj",
+      "target": "want-away (adj)",
+      "marked": "I understand the club could well be close to making the crunch decision on whether to agree to his demands and put Le Saux up for sale, or to hold him to his contract."
+    }
+  },
+  {
+    "data": {
+      "item_id": "soft.adj.cd5a2794#0",
+      "source": "stanza",
+      "lemma": "soft",
+      "pos": "adj",
+      "target": "soft (adj)",
+      "marked": "He made <b>soft</b> fellows stark noddies, and such as were foolish quite mad."
+    }
+  },
+  {
+    "data": {
+      "item_id": "pull someone's chestnuts out of the fire.verb.298c36c4#0",
+      "source": "stanza",
+      "lemma": "pull someone's chestnuts out of the fire",
+      "pos": "verb",
+      "target": "pull someone's chestnuts out of the fire (verb)",
+      "marked": "By now, however, it's unlikely that even this faithful retainer can once more pull Bush's chestnuts out of the fire."
+    }
+  },
+  {
+    "data": {
+      "item_id": "Ages of Man.name.ff9ff8dd#0",
+      "source": "stanza",
+      "lemma": "Ages of Man",
+      "pos": "name",
+      "target": "Ages of Man (name)",
+      "marked": "Meronyms: (Hesiod's Five Ages) Golden Age, Silver Age, Bronze Age, Heroic Age, Iron Age; (Ovid's Four Ages) Golden Age, Silver Age, Bronze Age, Iron Age"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Uranian.adj.65a2b6a8#1",
+      "source": "stanza",
+      "lemma": "Uranian",
+      "pos": "adj",
+      "target": "Uranian (adj)",
+      "marked": "Hail thou! sole Muse that, in an age of toil, / Of all the old <b>Uranian</b> sisterhood, / Art left to light us o'er the furrowed soil, / Of this laborious star!"
+    }
+  },
+  {
+    "data": {
+      "item_id": "Khabarovsk.name.cc63b0d3#2",
+      "source": "stanza",
+      "lemma": "Khabarovsk",
+      "pos": "name",
+      "target": "Khabarovsk (name)",
+      "marked": "The major obstacle to a border settlement is the status of Heixiazi, a 330-square kilometer island at the confluence of the Amur and Ussuri rivers. The island is claimed by the Chinese but controlled by the USSR. Because Heixiazi overlooks <b>Khabarovsk</b> as well as the point where the Trans-Siberian Railway crosses the Amur River, the Soviets are reluctant to give it up."
+    }
+  },
+  {
+    "data": {
+      "item_id": "know whether one is Arthur or Martha.verb.89a5224c#2",
+      "source": "stanza",
+      "lemma": "know whether one is Arthur or Martha",
+      "pos": "verb",
+      "target": "know whether one is Arthur or Martha (verb)",
+      "marked": "The poor little darling had so many mothers; she didn't know whether she was Arthur or Martha!"
+    }
+  },
+  {
+    "data": {
+      "item_id": "laggardly.adv.ba80b443#2",
+      "source": "stanza",
+      "lemma": "laggardly",
+      "pos": "adv",
+      "target": "laggardly (adv)",
+      "marked": "Eager as we were to reach Ellsworth, the boss men made us keep those longhorns moving at a leisurely pace. Leisurely. [...] So it was a good thing Mr. Justus and the major kept us moving <b>laggardly</b>."
+    }
+  },
+  {
+    "data": {
+      "item_id": "catholyte.noun.4576e93d#0",
+      "source": "stanza",
+      "lemma": "catholyte",
       "pos": "noun",
-      "target": "tagworm (noun)",
-      "marked": "The Little Gilt Tail or Tag Worm is of a pale yellow towards the tail, and shorter than the dunghill red worm, but knotted like it. He is commonly found among old horse dung…"
+      "target": "catholyte (noun)",
+      "marked": "The cathode electrodes were only partly submerged in the <b>catholyte</b> to allow for an ‘air-wicking’ aerobic configuration."
     }
   },
   {
     "data": {
-      "item_id": "Laohekou.name.b79af1f6#0",
+      "item_id": "Grover's algorithm.name.5bdc4413#0",
       "source": "stanza",
-      "lemma": "Laohekou",
+      "lemma": "Grover's algorithm",
       "pos": "name",
-      "target": "Laohekou (name)",
-      "marked": "In 1897 Ku-ch'eng Hsien, a city lying some fourteen miles below Lao-ho-k'eo, was opened as an out-station, and an evangelist sent down for permanent work."
+      "target": "Grover's algorithm (name)",
+      "marked": "Thus, <b>Grover's algorithm</b> has optimal order of complexity. Here, we present an information-theoretic analysis of <b>Grover's algorithm</b> and show that the square-root speed-up by <b>Grover's algorithm</b> is the best possible by any algorithm using the same quantum oracle."
     }
   },
   {
     "data": {
-      "item_id": "dogs of war.noun.36d0f939#3",
+      "item_id": "devitalize.verb.c3df32dc#0",
       "source": "stanza",
-      "lemma": "dogs of war",
+      "lemma": "devitalize",
+      "pos": "verb",
+      "target": "devitalize (verb)",
+      "marked": "Near-synonym: deanimate"
+    }
+  },
+  {
+    "data": {
+      "item_id": "kiloton.noun.39f49ac9#1",
+      "source": "stanza",
+      "lemma": "kiloton",
       "pos": "noun",
-      "target": "dogs of war (noun)",
-      "marked": "It became a practice on our side, at 10 o'clock each day, to turn all of these <b>dogs of war</b> loose upon the enemy for an hour or so."
+      "target": "kiloton (noun)",
+      "marked": "Meronym: ton of TNT"
     }
   },
   {
     "data": {
-      "item_id": "East Bumfuck, Kansas.name.936bba50#2",
+      "item_id": "feel one's oats.verb.a509839d#1",
       "source": "stanza",
-      "lemma": "East Bumfuck, Kansas",
-      "pos": "name",
-      "target": "East Bumfuck, Kansas (name)",
-      "marked": "As I recall he had an AWOL dad, a \"space cadet\" mom and was raised by rural grandparents in East Bumfuck Kansas. Privilege ain't what it used to be."
+      "lemma": "feel one's oats",
+      "pos": "verb",
+      "target": "feel one's oats (verb)",
+      "marked": "Next to the officer is a shabby-looking boy, whose seat is by the right jamb of the jail door. Of all boys just old enough to <b>feel their oats</b>, this boy is the most commonplace."
     }
   },
   {
     "data": {
-      "item_id": "as of now.adv.a6423cc2#0",
+      "item_id": "seaward.adv.88c1a14c#0",
       "source": "stanza",
-      "lemma": "as of now",
+      "lemma": "seaward",
       "pos": "adv",
-      "target": "as of now (adv)",
-      "marked": "<b>As of now</b>, no human being has travelled to the planet Jupiter."
-    }
-  },
-  {
-    "data": {
-      "item_id": "clam up.verb.4a4a753e#1",
-      "source": "stanza",
-      "lemma": "clam up",
-      "pos": "verb",
-      "target": "clam up (verb)",
-      "marked": "Teenagers' father. Alright, Matt, I think you've made your point.\nMatt Foley: Dad, I sincerely wish you'd do everyone a great service, and <b>clam up</b>!"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Bernardine.name.89efad2b#2",
-      "source": "stanza",
-      "lemma": "Bernardine",
-      "pos": "name",
-      "target": "Bernardine (name)",
-      "marked": "<b>Bernardine</b> Evaristo, the first black woman to win the literary award, talks about her mission to write about the African diaspora and why her novel involves 12 interconnected characters."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Hephzibah.name.85a48f29#0",
-      "source": "stanza",
-      "lemma": "Hephzibah",
-      "pos": "name",
-      "target": "Hephzibah (name)",
-      "marked": "Thou shalt no more bee termed, Forsaken; neither shall thy land any more be termed, Desolate: but thou shalt be called Hephzi-bah, and thy land, Beulah: for the Lord delighteth in thee, and thy land shalbe maried."
-    }
-  },
-  {
-    "data": {
-      "item_id": "jovially.adv.c77b1a32#1",
-      "source": "stanza",
-      "lemma": "jovially",
-      "pos": "adv",
-      "target": "jovially (adv)",
-      "marked": "This enforced solitarinesse takes place, and produceth this effect soonest in such, as haue spent their time Iouially peraduenture in all honest recreations, in all good company, and are vpon a sudden confined, and restrained of their liberty, and barred from their ordinary associats: solitarinesse is very irkesome to such, most tedious, and a sudden cause of great inconvenience."
-    }
-  },
-  {
-    "data": {
-      "item_id": "knight.verb.c8e05966#0",
-      "source": "stanza",
-      "lemma": "knight",
-      "pos": "verb",
-      "target": "knight (verb)",
-      "marked": "The king <b>knighted</b> the young squire."
-    }
-  },
-  {
-    "data": {
-      "item_id": "fittable.adj.a9647a40#0",
-      "source": "stanza",
-      "lemma": "fittable",
-      "pos": "adj",
-      "target": "fittable (adj)",
-      "marked": "easily <b>fittable</b> spare parts"
-    }
-  },
-  {
-    "data": {
-      "item_id": "hunter eyes.noun.cacb4d49#0",
-      "source": "stanza",
-      "lemma": "hunter eyes",
-      "pos": "noun",
-      "target": "hunter eyes (noun)",
-      "marked": "Coordinate term: prey eyes"
-    }
-  },
-  {
-    "data": {
-      "item_id": "recuperatively.adv.f4a42078#0",
-      "source": "stanza",
-      "lemma": "recuperatively",
-      "pos": "adv",
-      "target": "recuperatively (adv)",
-      "marked": "<b>Recuperatively</b> speaking, that inclination was all to the good. On the off-chance that strategy changed without warning, however, Luce planned in advance."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Chencang.name.0e41b6cb#0",
-      "source": "stanza",
-      "lemma": "Chencang",
-      "pos": "name",
-      "target": "Chencang (name)",
-      "marked": "Ch’en-ts'ang, an ancient name for Tang Feng-hsiang, the modern Pao-chi (Precious Pheasant) county, Shensi. The name derives from the story Wei alludes to: In ancient times, Duke Wen of Ch'in was hunting at Ch'en-ts’ang and encountered the magic bird on the north slope of Ch'en-ts'ang Mountain. It seemed like a stone and was the color of liver. When he returned, he sacrificed to it. It was thought to come from the southeast and possessed a voice like thunder which made all the wild pheasants call."
-    }
-  },
-  {
-    "data": {
-      "item_id": "contused.adj.97421168#0",
-      "source": "stanza",
-      "lemma": "contused",
-      "pos": "adj",
-      "target": "contused (adj)",
-      "marked": "[E]re Sun-riſe, his [Khusrau Mirza's] afflicted vvife (Cavvn Azems daughter) goes to viſit him; vvhere finding him ſpeechleſſe, and (by his contus'd face) murdered; never did poore vvretch ſhed more teares, or ſhevv more paſſion; by tearing her faire hayre, deforming her ſvveet face ſo fiercely, ſo amazedly, that her Father and all his family heare her, and ſee it to their griefe and admiration."
-    }
-  },
-  {
-    "data": {
-      "item_id": "orchestra.noun.bfe22701#2",
-      "source": "stanza",
-      "lemma": "orchestra",
-      "pos": "noun",
-      "target": "orchestra (noun)",
-      "marked": "Then he’ll focus his attention on the family’s sprawling property in the Riverland town of Loxton, where Schubert farms an <b>orchestra</b> of crickets."
-    }
-  },
-  {
-    "data": {
-      "item_id": "pulse.verb.8c709a7a#0",
-      "source": "stanza",
-      "lemma": "pulse",
-      "pos": "verb",
-      "target": "pulse (verb)",
-      "marked": "Hot blood <b>pulsed</b> through my veins as I grew angrier."
-    }
-  },
-  {
-    "data": {
-      "item_id": "East Anglia.name.eae66fc6#1",
-      "source": "stanza",
-      "lemma": "East Anglia",
-      "pos": "name",
-      "target": "East Anglia (name)",
-      "marked": "Meronyms: Norfolk, Suffolk"
-    }
-  },
-  {
-    "data": {
-      "item_id": "Tengchong.name.866e7c6c#0",
-      "source": "stanza",
-      "lemma": "Tengchong",
-      "pos": "name",
-      "target": "Tengchong (name)",
-      "marked": "An anti-Mao force has occupied many rural districts around Tengchung in west Yunnan and is directing peasants there to revolt against Mao Tse-tung, intelligence sources here reported Tuesday."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Ragnarok.name.cda96876#1",
-      "source": "stanza",
-      "lemma": "Ragnarok",
-      "pos": "name",
-      "target": "Ragnarok (name)",
-      "marked": "And all that is before them and the whole civilised world, would be long centuries of anarchy such as the world has not seen for ages—a true <b>Ragnarok</b>, a twilight of the very gods, an age such as the wise woman foretold in the old Voluspà."
-    }
-  },
-  {
-    "data": {
-      "item_id": "inward-looking.adj.4cc48db2#0",
-      "source": "stanza",
-      "lemma": "inward-looking",
-      "pos": "adj",
-      "target": "inward-looking (adj)",
-      "marked": "Near-synonyms: self-absorbed, insular"
-    }
-  },
-  {
-    "data": {
-      "item_id": "now.adv.26749b3e#2",
-      "source": "stanza",
-      "lemma": "now",
-      "pos": "adv",
-      "target": "now (adv)",
-      "marked": "We all want what is <b>now</b> best for our children."
-    }
-  },
-  {
-    "data": {
-      "item_id": "antichronism.noun.72860354#0",
-      "source": "stanza",
-      "lemma": "antichronism",
-      "pos": "noun",
-      "target": "antichronism (noun)",
-      "marked": "[…] many grosse absurdities in our Chronologies, which are by transcribing, interpolation, misprinting, and creeping in of antichronismes now and then strangely disordered."
-    }
-  },
-  {
-    "data": {
-      "item_id": "begrime.verb.987a8cbb#3",
-      "source": "stanza",
-      "lemma": "begrime",
-      "pos": "verb",
-      "target": "begrime (verb)",
-      "marked": "[H]e should forthwith reform his manners, purify himself, and discontinue the vile, filthy habit of snuff-taking—a habit which, to use her own words, begrimeth the face, spoileth the form of the nose—Heaven bless the mark!—destroyeth the voice, and eventually undermineth the constitution."
-    }
-  },
-  {
-    "data": {
-      "item_id": "split-toe.adj.e263c00d#0",
-      "source": "stanza",
-      "lemma": "split-toe",
-      "pos": "adj",
-      "target": "split-toe (adj)",
-      "marked": "They may chafe the tops of your toes, so you will also need to wear some soft <b>split-toe</b> socks underneath, stocked here at Japanese-style department stores or even at the major chain drugstore."
-    }
-  },
-  {
-    "data": {
-      "item_id": "abiding.adj.8cc15e85#3",
-      "source": "stanza",
-      "lemma": "abiding",
-      "pos": "adj",
-      "target": "abiding (adj)",
-      "marked": "Through all their projects, their <b>abiding</b> ethos has been observing and responding to the site and its existing ecology and growth patterns."
-    }
-  },
-  {
-    "data": {
-      "item_id": "strike someone's fancy.verb.27648cf5#0",
-      "source": "stanza",
-      "lemma": "strike someone's fancy",
-      "pos": "verb",
-      "target": "strike someone's fancy (verb)",
-      "marked": "Some of the china ornaments in the gift shop struck my fancy."
-    }
-  },
-  {
-    "data": {
-      "item_id": "slipslop.verb.55cba8f0#2",
-      "source": "stanza",
-      "lemma": "slipslop",
-      "pos": "verb",
-      "target": "slipslop (verb)",
-      "marked": "She had a pair of old, oversized slippers on her feet that <b>slipslopped</b> as she walked."
-    }
-  },
-  {
-    "data": {
-      "item_id": "sunburn.verb.fc0abe47#1",
-      "source": "stanza",
-      "lemma": "sunburn",
-      "pos": "verb",
-      "target": "sunburn (verb)",
-      "marked": "[…] there is a Country, in the World, call’d Turkey; where Women are secur’d against the Danger of Sun-burning, by being kept out of the open Air, and lock’d up, like other Jewels, in Places where no Mischief can reach ’em."
-    }
-  },
-  {
-    "data": {
-      "item_id": "supercolossally.adv.330786c4#1",
-      "source": "stanza",
-      "lemma": "supercolossally",
-      "pos": "adv",
-      "target": "supercolossally (adv)",
-      "marked": "Human wants are insatiable, and American wants are <b>supercolossally</b> insatiable."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Zurich.name.68f84d76#0",
-      "source": "stanza",
-      "lemma": "Zurich",
-      "pos": "name",
-      "target": "Zurich (name)",
-      "marked": "The <b>Zurich</b> group has shared a preliminary writeup of its findings."
-    }
-  },
-  {
-    "data": {
-      "item_id": "corrupt.verb.821ec9b6#1",
-      "source": "stanza",
-      "lemma": "corrupt",
-      "pos": "verb",
-      "target": "corrupt (verb)",
-      "marked": "[…] Lanfrank takes Notice of Tract. 3. Doct. 3. cap. 18. ſaying, \"I have ſeen many who being full of Humours, have made an Iſſue under the Knee, before due Purgation had been premis'd; whence, by reaſon of the too great Defluxion of Humours, the Legs tumified, ſo that the cauterized Place <b>corrupted</b>, and a Cancer (or rather cacoethic Ulcer) was thereby made, with which great Difficulty was cur'd.\""
-    }
-  },
-  {
-    "data": {
-      "item_id": "Gunchester.name.4a84d2ea#0",
-      "source": "stanza",
-      "lemma": "Gunchester",
-      "pos": "name",
-      "target": "Gunchester (name)",
-      "marked": "″You hear people firing off guns all the time,″ she said. ″That’s why they call it <b>Gunchester</b>. I just thought some poor bugger’s got it again, and went on sudsing my hair.″"
-    }
-  },
-  {
-    "data": {
-      "item_id": "orchestra.noun.bfe22701#2",
-      "source": "stanza",
-      "lemma": "orchestra",
-      "pos": "noun",
-      "target": "orchestra (noun)",
-      "marked": "Then he’ll focus his attention on the family’s sprawling property in the Riverland town of Loxton, where Schubert farms an <b>orchestra</b> of crickets."
-    }
-  },
-  {
-    "data": {
-      "item_id": "not in the slightest.adv.a9ac4137#1",
-      "source": "stanza",
-      "lemma": "not in the slightest",
-      "pos": "adv",
-      "target": "not in the slightest (adv)",
-      "marked": "The Mountain versus the Hound played out entertainingly, with the elder Clegane still outmatching his younger brother pound for pound and blow for blow. Being turned into a walking zombie of sorts didn’t just amplify his strength; it essentially obviated the need to parry blows, as even Sandor sinking his sword deep into his undead brother didn’t seem to slow him down in the slightest."
-    }
-  },
-  {
-    "data": {
-      "item_id": "bomb it.verb.769418d0#0",
-      "source": "stanza",
-      "lemma": "bomb it",
-      "pos": "verb",
-      "target": "bomb it (verb)",
-      "marked": "Near-synonym: hoon it (UK)"
-    }
-  },
-  {
-    "data": {
-      "item_id": "proffer.noun.ec34ee94#4",
-      "source": "stanza",
-      "lemma": "proffer",
-      "pos": "noun",
-      "target": "proffer (noun)",
-      "marked": "He said a reversionary <b>proffer</b> – saying the property would revert to its prior zoning if certain benchmarks were not met by the developers – was brought up in a conceptual discussion in a pre-application meeting in May 2014 with the developers, but did not progress beyond that."
-    }
-  },
-  {
-    "data": {
-      "item_id": "narrow-gutted.adj.c887cc73#0",
-      "source": "stanza",
-      "lemma": "narrow-gutted",
-      "pos": "adj",
-      "target": "narrow-gutted (adj)",
-      "marked": "But nothing is accidental in Final Alice: the jokes are all so musical and composed with such mastery as to silence narrow-querulousness about content."
-    }
-  },
-  {
-    "data": {
-      "item_id": "break open.verb.50ed58e9#1",
-      "source": "stanza",
-      "lemma": "break open",
-      "pos": "verb",
-      "target": "break open (verb)",
-      "marked": "The new evidence has broken this case open."
-    }
-  },
-  {
-    "data": {
-      "item_id": "mendaciloquent.adj.717898dc#0",
-      "source": "stanza",
-      "lemma": "mendaciloquent",
-      "pos": "adj",
-      "target": "mendaciloquent (adj)",
-      "marked": "<b>Mendaciloquent</b> (mendaciloqus) that tels lies, or untruths, falſe ſpeaking."
-    }
-  },
-  {
-    "data": {
-      "item_id": "Merle.name.a7148648#1",
-      "source": "stanza",
-      "lemma": "Merle",
-      "pos": "name",
-      "target": "Merle (name)",
-      "marked": "\"I wish I had a name like <b>Merle</b> Oberon or Miriam Hopkins,\" Mary Agnes said dreamily as she scanned the display of Coming Attractions."
-    }
-  },
-  {
-    "data": {
-      "item_id": "deradically.adv.4f39d7f7#2",
-      "source": "stanza",
-      "lemma": "deradically",
-      "pos": "adv",
-      "target": "deradically (adv)",
-      "marked": "The first and most archaic of these forms s-stems <b>deradically</b> by means of a PGk. [Proto-Greek] suffix *-(ī)yos-, continuing the o-grade of the PIE primary comparative."
-    }
-  },
-  {
-    "data": {
-      "item_id": "twit.verb.854dfa3b#0",
-      "source": "stanza",
-      "lemma": "twit",
-      "pos": "verb",
-      "target": "twit (verb)",
-      "marked": "Secrecy about B.R. plans for reorganisation and closure of lines and notably some failures to consult with staff representatives concerned with redundancy, are defects with which the railway unions have <b>twitted</b> Dr. Beeching."
-    }
-  },
-  {
-    "data": {
-      "item_id": "whilom.adv.ee5601ba#1",
-      "source": "stanza",
-      "lemma": "whilom",
-      "pos": "adv",
-      "target": "whilom (adv)",
-      "marked": "Lo I the man, vvhoſe Muſe vvhilome did maske,\nAs time her taught, in lowly Sheapards vveeds,\nAm novv enforſt a far unfitter taske, […]"
-    }
-  },
-  {
-    "data": {
-      "item_id": "worth one's salt.adj.56a0fad8#1",
-      "source": "stanza",
-      "lemma": "worth one's salt",
-      "pos": "adj",
-      "target": "worth one's salt (adj)",
-      "marked": "[T]he encouragement for Shipwrights continues great at the Capital; to which all young People are naturally deſirous to come, whenever they fancy their abilities would diſtinguiſh them, or find a deſire to improve themſelves in their profeſſion; which two claſſes comprehend all the Shipwrights that will ever be worth their salt!"
+      "target": "seaward (adv)",
+      "marked": "Near-synonyms: oceanward, oceanwards"
     }
   }
 ]
