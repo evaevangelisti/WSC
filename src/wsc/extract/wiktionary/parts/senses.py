@@ -62,7 +62,6 @@ def parse_senses(
                     minimum_year,
                     maximum_year,
                 ),
-                tuple(raw_sense.get("senseid", [])),
                 tuple(raw_sense.get("wikidata", [])),
             )
         )

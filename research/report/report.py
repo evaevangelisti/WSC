@@ -101,7 +101,6 @@ class Figures:
         inflected: How many offsets fall on a form other than the headword.
         tags: How often each tag is used.
         topics: How often each topic is used.
-        named: How many senses name a sense of Wiktionary's own.
         tied: How many senses name a Wikidata item.
         varying: How many entries are written another way too.
         variants: How many other spellings there are in all.
@@ -133,7 +132,6 @@ class Figures:
     inflected: int = 0
     tags: Counter[str] = field(default_factory=Counter)
     topics: Counter[str] = field(default_factory=Counter)
-    named: int = 0
     tied: int = 0
     varying: int = 0
     variants: int = 0
@@ -330,7 +328,6 @@ def count_sense(
         figures: What the pass has added up so far.
         sense: The sense to read.
     """
-    figures.named += bool(sense.get("sense_ids"))
     figures.tied += bool(sense.get("wikidata_ids"))
 
     synonyms = sense.get("synonyms", [])
@@ -742,10 +739,7 @@ def _tied(
     return Table(
         "Ties",
         ("Figure", "Senses", "Share"),
-        (
-            ("Named by Wiktionary", count(figures.named), share(figures.named, senses)),
-            ("Tied to Wikidata", count(figures.tied), share(figures.tied, senses)),
-        ),
+        (("Tied to Wikidata", count(figures.tied), share(figures.tied, senses)),),
     )
 
 

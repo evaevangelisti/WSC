@@ -59,7 +59,6 @@ class Sense(TypedDict):
     topics: NotRequired[list[str]]
     tags: NotRequired[list[str]]
     sentences: NotRequired[list[Sentence]]
-    sense_ids: NotRequired[list[str]]
     wikidata_ids: NotRequired[list[str]]
 
 

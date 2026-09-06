@@ -91,7 +91,6 @@ class Sense:
         topics: Subject fields the sense belongs to, such as mathematics.
         tags: Labels of grammar and register, such as transitive or obsolete.
         sentences: The examples and quotations attached to this sense.
-        sense_ids: What Wiktionary names the sense, such as en:Q23622.
         wikidata_ids: The Wikidata items it was tied to, such as Q23622.
     """
 
@@ -102,7 +101,6 @@ class Sense:
     topics: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
     sentences: list[Sentence] = field(default_factory=list)
-    sense_ids: tuple[str, ...] = ()
     wikidata_ids: tuple[str, ...] = ()
 
     @property
