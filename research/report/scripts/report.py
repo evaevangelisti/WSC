@@ -16,7 +16,7 @@ from statistics import median
 
 from corpus import SENSES, Entry, Sense, WordOffset, read
 
-REPORTS = Path(__file__).resolve().parent / "reports"
+REPORTS = Path(__file__).resolve().parent.parent / "reports"
 """Where the written reports are kept, one file per pass."""
 
 MARKS = str.maketrans({"’": "'", "‘": "'", "‐": "-", "‑": "-", "–": "-"})

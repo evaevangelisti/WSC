@@ -4,12 +4,20 @@ default:
 
 # Report the figures of the collected export.
 report *options:
-    @uv run python -m report.report {{ options }}
+    @uv run python -m report.scripts.report {{ options }}
 
-# Build the Label Studio tasks for the word offset study.
+# Build shared Label Studio tasks for offsets or alignment.
 tasks *options:
-    @uv run python -m annotation.build_tasks {{ options }}
+    @uv run python -m annotation.scripts.build_tasks {{ options }}
 
 # Report on one set of word offset annotations.
 annotations *options:
-    @uv run python -m annotation.report {{ options }}
+    @uv run python -m annotation.scripts.report {{ options }}
+
+# Score model, gloss mode, and instruction combinations on frozen samples.
+experiments *options:
+    @uv run python -m experiments.scripts.run {{ options }}
+
+# Compare cached alignments against manual annotations.
+evaluation *options:
+    @uv run python -m experiments.scripts.report {{ options }}

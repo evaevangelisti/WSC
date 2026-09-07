@@ -1,0 +1,105 @@
+# Compare task framing, inclusion tests, rejection criteria, and demonstrations on development annotations.
+
+[baseline]
+instruction = """
+Task: Evaluate the relation specified under Required relation.
+Inputs: Compare the Wiktionary definition in the query with the candidate text.
+Decision: Accept the requested relation only when the meanings support it. Shared wording or topic is insufficient.
+"""
+
+[baseline.relations]
+translation = "The translation heading expresses the same lexical sense as the Wiktionary definition. It may omit explanatory detail, but must preserve the intended meaning."
+equivalent = "The WordNet definition and the Wiktionary definition describe the same concept. Neither concept is strictly broader than the other."
+wiktionary_narrower = "The Wiktionary concept is strictly narrower than the WordNet concept. Equivalence does not satisfy this relation."
+wiktionary_broader = "The Wiktionary concept is strictly broader than the WordNet concept. Equivalence does not satisfy this relation."
+
+[entailment]
+instruction = """
+Task: Evaluate the meaning and inclusion conditions under Required relation.
+Inputs: S is the meaning of the Wiktionary definition; T is the meaning of the candidate text.
+Decision: Compare the entities, events, or properties described. Distinguish a genuine restriction in meaning from omitted explanatory detail.
+"""
+
+[entailment.relations]
+translation = "T is a translation heading whose meaning is supported by S. It preserves the intended sense despite abbreviation. A heading for a broader or related sense is insufficient."
+equivalent = "T is the WordNet concept. Every instance of S belongs to T, and every instance of T belongs to S. Editorial differences do not change this shared scope."
+wiktionary_narrower = "T is the WordNet concept. Every instance of S belongs to T, but some possible instances of T do not belong to S. Both inclusion and a strict difference in scope must hold."
+wiktionary_broader = "T is the WordNet concept. Every instance of T belongs to S, but some possible instances of S do not belong to T. Both inclusion and a strict difference in scope must hold."
+
+[contrastive]
+instruction = """
+Task: Distinguish the requested relation from plausible semantic confusions.
+Inputs: Compare the Wiktionary definition and candidate text using the supplied headword and part of speech.
+Decision: Apply the acceptance criterion and exclusions under Required relation. Do not infer a match from shared vocabulary or invent missing restrictions.
+"""
+
+[contrastive.relations]
+translation = "Accept a translation heading that preserves this sense despite abbreviation. Reject changes in referent, participant role, defining purpose, or literal versus figurative meaning. Omitted explanation alone is not a mismatch."
+equivalent = "Accept a WordNet definition of the same concept despite paraphrase. Reject strictly broader or narrower concepts, part-whole relations, cause-effect relations, and topical associations. Extra explanation alone does not change conceptual scope."
+wiktionary_narrower = "Accept when Wiktionary adds a defining restriction to the WordNet concept. Reject equivalence, the reverse direction, and part-whole or topical associations. Extra examples or longer wording alone are not defining restrictions."
+wiktionary_broader = "Accept when WordNet adds a defining restriction to the Wiktionary concept. Reject equivalence, the reverse direction, and part-whole or topical associations. Extra examples or longer wording alone are not defining restrictions."
+
+[few_shot]
+instruction = """
+Task: Evaluate Required relation using the labeled examples.
+Inputs: Source denotes the Wiktionary definition; Candidate denotes the text being compared.
+Decision: Apply the distinction illustrated inside <examples> to the current pair. A yes label means the requested relation holds; a no label means it does not. Examples are not the current pair.
+"""
+
+[few_shot.relations]
+translation = """
+The translation heading expresses the same lexical sense despite abbreviation.
+<examples>
+Source: a portable electric light powered by a battery.
+Candidate: portable battery-powered light.
+Label: yes
+
+Source: a device that produces a brief bright light for photography.
+Candidate: a brief sudden recollection.
+Label: no
+</examples>
+"""
+equivalent = """
+The Wiktionary and WordNet definitions describe the same concept, with neither strictly broader than the other.
+<examples>
+Source: a vehicle powered by electricity.
+Candidate: an electrically powered vehicle.
+Label: yes
+
+Source: a vehicle powered by electricity.
+Candidate: a vehicle.
+Label: no
+</examples>
+"""
+wiktionary_narrower = """
+The Wiktionary concept is strictly narrower than the WordNet concept.
+<examples>
+Source: a vehicle powered by electricity.
+Candidate: a vehicle.
+Label: yes
+
+Source: a vehicle.
+Candidate: a vehicle powered by electricity.
+Label: no
+
+Source: a vehicle powered by electricity.
+Candidate: an electrically powered vehicle.
+Label: no
+</examples>
+"""
+wiktionary_broader = """
+The Wiktionary concept is strictly broader than the WordNet concept.
+<examples>
+Source: a vehicle.
+Candidate: a vehicle powered by electricity.
+Label: yes
+
+Source: a vehicle powered by electricity.
+Candidate: a vehicle.
+Label: no
+
+Source: a vehicle powered by electricity.
+Candidate: an electrically powered vehicle.
+Label: no
+</examples>
+"""

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from .base import Writer
+from .formats.tsv import TSVWriter
 
 if TYPE_CHECKING:
     # Typeshed alone declares what a dataclass is known by.
@@ -35,9 +36,9 @@ def _jsonl[T: "DataclassInstance"](
     Returns:
         A writer for that path, not yet open.
     """
-    from .formats.jsonl import JsonlWriter
+    from .formats.jsonl import JSONLWriter
 
-    return JsonlWriter[T](output_path)
+    return JSONLWriter[T](output_path)
 
 
 _WRITERS: dict[str, _Factory] = {
@@ -69,6 +70,7 @@ def open_writer[T: "DataclassInstance"](
 
 
 __all__ = [
+    "TSVWriter",
     "Writer",
     "open_writer",
 ]

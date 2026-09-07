@@ -839,6 +839,29 @@ class TestWordNet:
         assert (cache.wordnet_dir(cache_dir, edition) / cache.WORDNET_NAME).exists()
 
     @given(wordnet_versions)
+    def test_takes_its_edition_from_the_environment(
+        self,
+        workspace: Callable[[], Path],
+        cli: Callable[..., Result],
+        edition: str,
+    ) -> None:
+        """An edition shared with align may come from the environment."""
+        cache_dir = workspace() / "cache"
+
+        with _en_word_net(edition) as server:
+            result = cli(
+                "wordnet",
+                cache_dir=cache_dir,
+                env={"WSC_WORDNET_EDITION": edition},
+            )
+
+            assert [call.request.url for call in server.calls] == [
+                WORDNET_URL.format(version=edition)
+            ]
+
+        assert result.exit_code == 0
+
+    @given(wordnet_versions)
     def test_reads_the_synsets_off_what_it_fetched(
         self,
         workspace: Callable[[], Path],

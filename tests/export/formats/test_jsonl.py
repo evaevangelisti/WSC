@@ -15,7 +15,15 @@ from hypothesis import strategies as st
 from strategies import RawJson, lemmas, words
 
 from wsc.export import Writer, open_writer
-from wsc.models import POS, Lemma, Quotation, Sense, Sentence
+from wsc.models import (
+    POS,
+    Lemma,
+    Quotation,
+    Sense,
+    Sentence,
+    WordNetAlignment,
+    WordNetRelation,
+)
 
 _WRITTEN = st.lists(lemmas, max_size=3)
 
@@ -66,6 +74,11 @@ def _record_of_sense(
     """
     record: RawJson = {"id": sense.id, "glosses": list(sense.glosses)}
 
+    if sense.translations:
+        record["translations"] = {
+            language: sorted(words) for language, words in sense.translations.items()
+        }
+
     if sense.etymology:
         record["etymology"] = sense.etymology
 
@@ -74,11 +87,16 @@ def _record_of_sense(
         ("topics", sense.topics),
         ("tags", sense.tags),
         ("sentences", tuple(map(_record_of_sentence, sense.sentences))),
-        ("sense_ids", sense.sense_ids),
         ("wikidata_ids", sense.wikidata_ids),
     ):
         if held:
             record[key] = list(held)
+
+    if sense.wordnet:
+        record["wordnet"] = [
+            {"synset_id": item.synset_id, "relation": item.relation}
+            for item in sense.wordnet
+        ]
 
     return record
 
@@ -143,7 +161,7 @@ def write(
     return run
 
 
-class TestJsonlWriter:
+class TestJSONLWriter:
     """
     One JSON object per line.
     """
@@ -181,6 +199,29 @@ class TestJsonlWriter:
     ) -> None:
         """Text is written as it stands, rather than escaped."""
         assert headword in write(Lemma(f"{headword}.noun.1", headword, POS.NOUN))
+
+    def test_writes_populated_alignment_fields(
+        self,
+        write: Callable[..., str],
+    ) -> None:
+        """An alignment becomes part of its sense's record."""
+        sense = Sense(
+            "bank.noun.1",
+            ("A financial institution.",),
+            translations={"it": frozenset({"banca"})},
+            wordnet=(WordNetAlignment("i54321", WordNetRelation.EQUIVALENT),),
+        )
+
+        text = write(Lemma("bank.noun", "bank", POS.NOUN, senses=[sense]))
+
+        assert json.loads(text)["senses"] == [
+            {
+                "id": "bank.noun.1",
+                "glosses": ["A financial institution."],
+                "translations": {"it": ["banca"]},
+                "wordnet": [{"synset_id": "i54321", "relation": "equivalent"}],
+            }
+        ]
 
     def test_refuses_to_write_before_it_is_entered(
         self,

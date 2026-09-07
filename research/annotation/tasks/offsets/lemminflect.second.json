@@ -1,0 +1,237 @@
+[
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "here.adv.a9334266#1",
+      "source": "lemminflect",
+      "target": "here (adv)",
+      "text": "The two great generalizations which the veteran Belgian astronomer has brought to bear on physiological and mental science, and which it is proposed to describe popularly here, may be briefly defined:",
+      "marked": "The two great generalizations which the veteran Belgian astronomer has brought to bear on physiological and mental science, and which it is proposed to describe popularly <b>here</b>, may be briefly defined:",
+      "word_offsets": [
+        {
+          "offset": [
+            171,
+            175
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "heavy.adj.ccd14609#0",
+      "source": "lemminflect",
+      "target": "heavy (adj)",
+      "text": "The ovarian response to gonadotropic hormones may be erratic at first, so that irregular or heavy bleeding sometimes occurs",
+      "marked": "The ovarian response to gonadotropic hormones may be erratic at first, so that irregular or <b>heavy</b> bleeding sometimes occurs",
+      "word_offsets": [
+        {
+          "offset": [
+            92,
+            97
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "bibliotaphist.noun.f8f4f993#0",
+      "source": "lemminflect",
+      "target": "bibliotaphist (noun)",
+      "text": "He was in no sense a bibliotaphist. He did not aim to conceal knowledge but to diffuse it.",
+      "marked": "He was in no sense a <b>bibliotaphist</b>. He did not aim to conceal knowledge but to diffuse it.",
+      "word_offsets": [
+        {
+          "offset": [
+            21,
+            34
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "wipe.noun.a745b2f5#0",
+      "source": "lemminflect",
+      "target": "wipe (noun)",
+      "text": "I could not help giving Metcalfe a wipe for his lamentations, observing I should have thought he had enough to attend to at home.",
+      "marked": "I could not help giving Metcalfe a <b>wipe</b> for his lamentations, observing I should have thought he had enough to attend to at home.",
+      "word_offsets": [
+        {
+          "offset": [
+            35,
+            39
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "Eucharistize.verb.c72a0f47#2",
+      "source": "lemminflect",
+      "target": "Eucharistize (verb)",
+      "text": "The affinities between Guroian and Cavanaugh are, perhaps, best summed up in Cavanaugh's declaration that the “point is not to politicize the Eucharist, but to 'Eucharistize' the world.”",
+      "marked": "The affinities between Guroian and Cavanaugh are, perhaps, best summed up in Cavanaugh&#x27;s declaration that the “point is not to politicize the Eucharist, but to <b>&#x27;Eucharistize</b>&#x27; the world.”",
+      "word_offsets": [
+        {
+          "offset": [
+            160,
+            173
+          ],
+          "sources": [
+            "bold"
+          ]
+        },
+        {
+          "offset": [
+            161,
+            173
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "desertful.noun.0d0e6550#2",
+      "source": "lemminflect",
+      "target": "desertful (noun)",
+      "text": "THE COURSE ALSO features lakes and streams that come into play on the majority of the holes and desertsful of sand.",
+      "marked": "THE COURSE ALSO features lakes and streams that come into play on the majority of the holes and <b>desertsful</b> of sand.",
+      "word_offsets": [
+        {
+          "offset": [
+            96,
+            106
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "shore.verb.c1abaab8#1",
+      "source": "lemminflect",
+      "target": "shore (verb)",
+      "text": "[…] the cauld win' louder blew, Shorin' o' drift,[…]",
+      "marked": "[…] the cauld win&#x27; louder blew, <b>Shorin&#x27;</b> o&#x27; drift,[…]",
+      "word_offsets": [
+        {
+          "offset": [
+            32,
+            39
+          ],
+          "sources": [
+            "bold"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "spreath.noun.6030d1f6#0",
+      "source": "lemminflect",
+      "target": "spreath (noun)",
+      "text": "It was then as much the scene of continual spreaths, liftings, reavings, and herriments, as the Border country itself.",
+      "marked": "It was then as much the scene of continual <b>spreaths</b>, liftings, reavings, and herriments, as the Border country itself.",
+      "word_offsets": [
+        {
+          "offset": [
+            43,
+            51
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "end.noun.1f0368f3#3",
+      "source": "lemminflect",
+      "target": "end (noun)",
+      "text": "At the end of the garden there was a beautiful fountain.",
+      "marked": "At the <b>end</b> of the garden there was a beautiful fountain.",
+      "word_offsets": [
+        {
+          "offset": [
+            7,
+            10
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "shauri.noun.0090f8fa#1",
+      "source": "lemminflect",
+      "target": "shauri (noun)",
+      "text": "The poor guide had been sitting through the shauri open-eyed and open-mouthed, intensely puzzled by the whole performance.",
+      "marked": "The poor guide had been sitting through the <b>shauri</b> open-eyed and open-mouthed, intensely puzzled by the whole performance.",
+      "word_offsets": [
+        {
+          "offset": [
+            44,
+            50
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  }
+]

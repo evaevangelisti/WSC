@@ -59,7 +59,16 @@ class Sense(TypedDict):
     topics: NotRequired[list[str]]
     tags: NotRequired[list[str]]
     sentences: NotRequired[list[Sentence]]
+    translations: NotRequired[dict[str, list[str]]]
     wikidata_ids: NotRequired[list[str]]
+    wordnet: NotRequired[list[WordNetAlignment]]
+
+
+class WordNetAlignment(TypedDict):
+    """WordNet concept and its relation to a Wiktionary sense."""
+
+    synset_id: str
+    relation: Literal["equivalent", "wiktionary_narrower", "wiktionary_broader"]
 
 
 class Entry(TypedDict):

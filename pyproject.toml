@@ -17,6 +17,8 @@ dependencies = [
     "kwic[lemminflect,stanza]>=0.2.1",
     "platformdirs>=4.11.2",
     "requests>=2.34.2",
+    "scipy>=1.18.1",
+    "sentence-transformers>=6.0.1",
     "tqdm>=4.70.0",
     "typer>=0.27.1",
     "wiktextract @ git+https://github.com/tatuylonen/wiktextract.git",
@@ -45,6 +47,7 @@ test = [
 
 typing = [
     "basedpyright>=1.39.9",
+    "scipy-stubs>=1.18.1.0",
     "types-requests>=2.32.4",
     "types-tqdm>=4.70.0"
 ]
@@ -125,7 +128,7 @@ addopts = ["--import-mode=importlib", "--strict-markers"]
 
 # The generators and the documents the suite shares are written once, beside
 # the tests drawing from them.
-pythonpath = ["tests"]
+pythonpath = ["tests", "research"]
 
 [tool.coverage.run]
 source = ["src"]

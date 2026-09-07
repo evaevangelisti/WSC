@@ -409,13 +409,17 @@ translations = st.dictionaries(
 )
 """What other languages call a lemma, gathered under the glosses translated."""
 
-lemmas = st.builds(
-    Lemma,
-    identifiers,
-    words,
-    parts_of_speech,
-    st.lists(words, max_size=3).map(frozenset),
-    st.lists(senses, max_size=3),
-    translations,
+lemmas = parts_of_speech.flatmap(
+    lambda pos: st.builds(
+        Lemma,
+        identifiers,
+        words,
+        st.just(pos),
+        st.lists(words, max_size=3).map(
+            lambda spellings: frozenset(f"{spelling}.{pos}" for spelling in spellings)
+        ),
+        st.lists(senses, max_size=3),
+        translations,
+    )
 )
 """One lemma, as an extraction hands it to a writer."""

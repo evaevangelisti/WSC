@@ -1,6 +1,6 @@
 # Wiktionary Sense Collector
 
-Collects every English Wiktionary lemma into one file, with its glosses, synonyms, labels, attesting sentences and translations.
+Collects English Wiktionary senses and aligns them with translations and WordNet synsets.
 
 <!-- installation -->
 
@@ -37,7 +37,7 @@ uv tool install .
 
 ## Usage
 
-Collecting senses takes three steps. Each keeps what it made in a cache, so it is only ever run once, and the next step picks it up from there.
+Collection has three steps. Each caches its output for subsequent commands and reuse.
 
 The options a whole session shares can be set once, through `WSC_DUMP_DATE` and `WSC_CACHE_DIR`.
 
@@ -80,7 +80,9 @@ wsc parse
 
 Reads the senses into a file, one entry per headword and part of speech, the suffix picking the format.
 
-Wiktextract's bold ranges and [kwic](https://github.com/evaevangelisti/kwic) independently place the lemma. Each candidate records whether `bold`, `lemmatizer`, or both support it, preserving disagreements for review. Where the lemmatizer finds nothing, the listed forms are matched.
+Wiktextract's bold ranges and [kwic](https://github.com/evaevangelisti/kwic) independently locate lemmas. Offsets record `bold`, `lemmatizer`, or both, preserving disagreements for review.
+
+When lemmatization finds nothing, the listed forms are matched.
 
 `--gpu` needs CuPy, which kwic offers as an extra named after your CUDA release: `pip install "kwic[cuda13x]"`.
 
@@ -118,3 +120,30 @@ wsc wordnet
 | --- | --- | --- |
 | `--edition` | `latest` | Wordnet edition to use, as `2025` |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
+
+### align
+
+Aligns collected senses with translations and WordNet synsets. Set the threshold variables using manual development evaluation.
+
+```sh
+wsc align senses.jsonl aligned.jsonl \
+  --translation-threshold "$TRANSLATION_THRESHOLD" \
+  --wordnet-threshold "$WORDNET_THRESHOLD"
+```
+
+| Option | Default | |
+| --- | --- | --- |
+| `--task` | both resources | `translations` or `wordnet`; repeat to select both |
+| `--model` | `Qwen/Qwen3-Reranker-8B` | Hugging Face identifier or local model directory |
+| `--revision` | `main` | Model revision |
+| `--translation-threshold` | required for translations | Strict lower boundary on raw scores |
+| `--wordnet-threshold` | required for WordNet | Strict lower boundary on raw scores |
+| `--gloss-mode` | `last` | `last`, `full`, or `context` |
+| `--instructions` | bundled TOML | File containing named instruction profiles |
+| `--instruction-profile` | `baseline` | Profile selected using development annotations |
+| `--device` | automatic | Torch device, such as `cpu` or `cuda` |
+| `--batch-size` | `32` | Candidate pairs per inference batch |
+| `--maximum-length` | `2048` | Token limit per pair |
+| `--reuse` | off | Reapply cached scores without loading the model |
+| `--wordnet-edition` | `latest` | Extracted WordNet edition; also `WSC_WORDNET_EDITION` |
+| `--cache-dir` | platform cache | Also configurable through `WSC_CACHE_DIR` |

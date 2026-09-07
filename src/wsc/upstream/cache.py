@@ -122,3 +122,46 @@ def wordnet_dir(
         The directory, whether or not it exists yet.
     """
     return _root(cache_dir) / _WORDNET / version
+
+
+def fetched_edition(
+    cache_dir: Path | None,
+    edition: str,
+) -> Path | None:
+    """
+    Resolve an extracted WordNet edition without network access.
+
+    Args:
+        cache_dir: Source cache directory, or the platform default.
+        edition: Requested edition or latest extracted edition.
+
+    Returns:
+        Existing synset JSONL path.
+    """
+    if edition != LATEST:
+        path = wordnet_dir(cache_dir, edition) / SYNSETS_NAME
+        if path.is_file():
+            return path
+    else:
+        paths = sorted((_root(cache_dir) / _WORDNET).glob(f"*/{SYNSETS_NAME}"))
+        if paths:
+            return paths[-1]
+
+    return None
+
+
+def alignment_dir(
+    cache_dir: Path | None,
+    key: str,
+) -> Path:
+    """
+    Locate candidate evidence for one inference configuration.
+
+    Args:
+        cache_dir: Source cache directory or platform default.
+        key: Fingerprint of model settings and input resources.
+
+    Returns:
+        Directory holding separate resource TSV files.
+    """
+    return _root(cache_dir) / "alignment" / key

@@ -17,6 +17,8 @@ usage
 reference/models/index
 reference/upstream/index
 reference/extract/index
+reference/alignment
+reference/reading
 reference/export/index
 reference/constants
 reference/files

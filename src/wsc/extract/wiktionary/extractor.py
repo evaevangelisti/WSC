@@ -82,8 +82,7 @@ class WiktionaryExtractor:
             entry: The entry, as wiktextract wrote it.
             lemma: The headword.
             pos: Its part of speech.
-            variants: How else each headword is written, read off the
-            entries pointing at it.
+            variants: Variant lemma identifiers from entries pointing at each headword.
 
         Returns:
             The lemma, or None where no sense of it survived the filters.
@@ -123,7 +122,7 @@ class WiktionaryExtractor:
 
         Args:
             input_path: The wiktextract file to read, compressed or not.
-            variants: How else each headword is written.
+            variants: Variant lemma identifiers grouped by headword and part of speech.
 
         Yields:
             One lemma per entry with a part of speech we keep and a sense,

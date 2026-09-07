@@ -3,8 +3,38 @@ Domain model for the wordnet the senses are aligned with.
 """
 
 from dataclasses import dataclass
+from enum import StrEnum
 
 from ..pos import POS
+
+
+class WordNetRelation(StrEnum):
+    """
+    Semantic relation directed from Wiktionary to WordNet.
+
+    Attributes:
+        EQUIVALENT: Both definitions identify the same concept.
+        WIKTIONARY_NARROWER: Wiktionary identifies a strictly more specific concept.
+        WIKTIONARY_BROADER: Wiktionary identifies a strictly more general concept.
+    """
+
+    EQUIVALENT = "equivalent"
+    WIKTIONARY_NARROWER = "wiktionary_narrower"
+    WIKTIONARY_BROADER = "wiktionary_broader"
+
+
+@dataclass(frozen=True, slots=True)
+class WordNetAlignment:
+    """
+    WordNet concept associated with a Wiktionary sense.
+
+    Attributes:
+        synset_id: Concept identifier within the extracted WordNet edition.
+        relation: Relation directed from Wiktionary to WordNet.
+    """
+
+    synset_id: str
+    relation: WordNetRelation
 
 
 @dataclass(frozen=True, slots=True)

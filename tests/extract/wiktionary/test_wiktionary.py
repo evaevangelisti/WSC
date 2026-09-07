@@ -1132,18 +1132,24 @@ class TestVariants:
     How else a lemma is spelled, which one thing says.
     """
 
-    @given(words, words, st.data())
+    @given(
+        words,
+        st.lists(words, min_size=1, max_size=3).map(".".join),
+        parts_of_speech,
+        st.data(),
+    )
     def test_takes_a_spelling_from_the_entry_pointing_at_it(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
         spelling: str,
+        pos: POS,
         data: st.DataObject,
     ) -> None:
         """Another spelling sits on a page of its own and points back."""
         pointing: RawJson = {
             "word": spelling,
-            "pos": "noun",
+            "pos": pos.value,
             "lang_code": "en",
             "senses": [
                 {
@@ -1154,13 +1160,13 @@ class TestVariants:
             ],
         }
         defined = data.draw(
-            raw_entries(headwords=st.just(headword), pos_codes=st.just("noun"))
+            raw_entries(headwords=st.just(headword), pos_codes=st.just(pos.value))
         )
 
         lemmas = extract([pointing, defined])
 
         assert [lemma.variants for lemma in lemmas] == [
-            frozenset({spelling}) - {headword}
+            frozenset({f"{spelling}.{pos}"}) - {f"{headword}.{pos}"}
         ]
 
     @given(words, words, st.data())

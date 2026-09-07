@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from ..pos import POS
+from .wordnet import WordNetAlignment
 
 type Offset = tuple[int, int]
 """Half-open code-point range."""
@@ -91,7 +92,9 @@ class Sense:
         topics: Subject fields the sense belongs to, such as mathematics.
         tags: Labels of grammar and register, such as transitive or obsolete.
         sentences: The examples and quotations attached to this sense.
+        translations: Words for this sense, grouped by language.
         wikidata_ids: The Wikidata items it was tied to, such as Q23622.
+        wordnet: WordNet concepts and their semantic relations.
     """
 
     id: str
@@ -101,7 +104,9 @@ class Sense:
     topics: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
     sentences: list[Sentence] = field(default_factory=list)
+    translations: dict[str, frozenset[str]] = field(default_factory=dict, kw_only=True)
     wikidata_ids: tuple[str, ...] = ()
+    wordnet: tuple[WordNetAlignment, ...] = field(default=(), kw_only=True)
 
     @property
     def gloss(
@@ -142,8 +147,7 @@ class Lemma:
         id: Identifies the entry, such as bank.noun.
         lemma: The headword.
         pos: Its part of speech.
-        variants: How else the lemma is written, from the entries stating
-        themselves to be a form of it and from its own Alternative forms.
+        variants: Lemma identifiers of alternative spellings, such as colour.noun.
         senses: Its meanings, in the order Wiktionary lists them.
         translations: What other languages call it, hung off the entry rather
         than off a sense, the way Wiktionary writes them.

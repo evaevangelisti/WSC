@@ -2,15 +2,29 @@
 Command line for collecting senses out of Wiktionary.
 """
 
+from contextlib import ExitStack
 from importlib.metadata import version
+from math import isfinite
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from .alignment import (
+    Aligner,
+    CrossEncoderScorer,
+    WordNetCandidates,
+    open_alignment_recorder,
+)
+from .alignment.provenance import build_metadata, cache_key
 from .constants import (
+    ALIGNMENT_BATCH_SIZE,
+    ALIGNMENT_MAXIMUM_LENGTH,
+    ALIGNMENT_MODEL,
     BATCH_SIZE,
     CHUNK_SIZE,
+    DEFAULT_INSTRUCTIONS,
+    INSTRUCTIONS_PATH,
     KAIKKI_URL,
     LANGUAGE_SECTION,
     PROCESSES,
@@ -30,6 +44,14 @@ from .extract import (
     write_off_page_translations,
 )
 from .models import POS, Engine, Lemma, Synset
+from .models.alignment import AlignmentTask, GlossMode
+from .reading import (
+    read_alignments,
+    read_instructions,
+    read_lemmas,
+    read_metadata,
+    read_synsets,
+)
 from .upstream import cache, download, repositories, wiktextract
 
 # Named apart from the signatures, so that the commands asking for the same
@@ -49,6 +71,14 @@ CacheDir = Annotated[
         envvar="WSC_CACHE_DIR",
         help="Where the sources and what is made of them are kept.",
         show_default="your platform's cache directory",
+    ),
+]
+
+WordNetEdition = Annotated[
+    str,
+    typer.Option(
+        envvar="WSC_WORDNET_EDITION",
+        help="WordNet edition to use, as 2025, or latest.",
     ),
 ]
 
@@ -278,12 +308,7 @@ def collect(
 
 @app.command()
 def wordnet(
-    edition: Annotated[
-        str,
-        typer.Option(
-            help="Wordnet edition to use, as 2025, or latest.",
-        ),
-    ] = cache.LATEST,
+    edition: WordNetEdition = cache.LATEST,
     cache_dir: CacheDir = None,
 ) -> None:
     """
@@ -328,3 +353,206 @@ def wordnet(
             writer.write(synset)
 
     typer.echo(f"Read {output_path}")
+
+
+@app.command()
+def align(
+    input_path: Annotated[
+        Path,
+        typer.Argument(
+            metavar="input",
+            help="Collection to align with its translations and WordNet.",
+        ),
+    ],
+    output_path: Annotated[
+        Path,
+        typer.Argument(
+            metavar="output",
+            help="Where to write the aligned collection.",
+        ),
+    ],
+    task: Annotated[
+        list[AlignmentTask] | None,
+        typer.Option(
+            help="Resource to align.",
+        ),
+    ] = None,
+    model: Annotated[
+        str,
+        typer.Option(
+            help="Cross-encoder model or path.",
+        ),
+    ] = ALIGNMENT_MODEL,
+    revision: Annotated[
+        str,
+        typer.Option(
+            help="Model revision.",
+        ),
+    ] = "main",
+    translation_threshold: Annotated[
+        float | None,
+        typer.Option(
+            help="Raw score boundary for translation matches.",
+        ),
+    ] = None,
+    wordnet_threshold: Annotated[
+        float | None,
+        typer.Option(
+            help="Raw score boundary for WordNet relations.",
+        ),
+    ] = None,
+    gloss_mode: Annotated[
+        GlossMode,
+        typer.Option(help="Source definition representation."),
+    ] = GlossMode.LAST,
+    instructions_path: Annotated[
+        Path,
+        typer.Option(
+            "--instructions",
+            help="TOML instruction profiles.",
+        ),
+    ] = INSTRUCTIONS_PATH,
+    instruction_profile: Annotated[
+        str,
+        typer.Option(
+            help="Instruction profile selected by development evaluation.",
+        ),
+    ] = DEFAULT_INSTRUCTIONS.name,
+    device: Annotated[
+        str | None,
+        typer.Option(
+            help="Torch device",
+        ),
+    ] = None,
+    batch_size: Annotated[
+        int,
+        typer.Option(
+            min=1,
+            help="Candidate pairs per inference batch.",
+        ),
+    ] = ALIGNMENT_BATCH_SIZE,
+    maximum_length: Annotated[
+        int,
+        typer.Option(
+            min=1,
+            help="Maximum token count per candidate pair.",
+        ),
+    ] = ALIGNMENT_MAXIMUM_LENGTH,
+    *,
+    reuse: Annotated[
+        bool,
+        typer.Option(
+            "--reuse/--recompute",
+            help="Reuse compatible cached TSV scores without inference.",
+        ),
+    ] = False,
+    wordnet_edition: WordNetEdition = cache.LATEST,
+    cache_dir: CacheDir = None,
+) -> None:
+    """
+    Align a collection with Wiktionary translations and WordNet synsets.
+    """
+    tasks = tuple(dict.fromkeys(task or AlignmentTask))
+
+    supplied_thresholds = {
+        AlignmentTask.TRANSLATIONS: translation_threshold,
+        AlignmentTask.WORDNET: wordnet_threshold,
+    }
+
+    thresholds = {
+        selected: threshold
+        for selected, threshold in supplied_thresholds.items()
+        if selected in tasks and threshold is not None and isfinite(threshold)
+    }
+
+    if len(thresholds) != len(tasks):
+        raise typer.BadParameter(
+            "Supply finite --translation-threshold / --wordnet-threshold values"
+        )
+
+    if input_path.resolve() == output_path.resolve():
+        raise typer.BadParameter("Input and output paths must be different")
+
+    if not input_path.is_file():
+        raise typer.BadParameter(f"No collection at {input_path}")
+
+    profiles = {
+        profile.name: profile for profile in read_instructions(instructions_path)
+    }
+
+    instructions = profiles[instruction_profile]
+
+    synsets_path: Path | None = None
+    candidates = WordNetCandidates(())
+
+    if AlignmentTask.WORDNET in tasks:
+        synsets_path = cache.fetched_edition(cache_dir, wordnet_edition)
+        if not synsets_path:
+            raise typer.BadParameter("WordNet is not cached; run 'wsc wordnet' first.")
+
+        candidates = WordNetCandidates(read_synsets(synsets_path))
+
+    metadata = build_metadata(
+        input_path,
+        model,
+        revision,
+        gloss_mode,
+        maximum_length,
+        synsets_path,
+        instructions,
+    )
+
+    evidence_dir = cache.alignment_dir(cache_dir, cache_key(metadata))
+    evidence_paths = {selected: evidence_dir / f"{selected}.tsv" for selected in tasks}
+
+    if reuse:
+        for path in evidence_paths.values():
+            if not path.is_file() or read_metadata(path) != metadata:
+                raise typer.BadParameter(f"No compatible alignment cache at {path}")
+
+    writer: Writer[Lemma] = open_writer(output_path)
+
+    scorer = (
+        None
+        if reuse
+        else CrossEncoderScorer(
+            model,
+            revision=revision,
+            device=device,
+            batch_size=batch_size,
+            maximum_length=maximum_length,
+            instructions=instructions,
+        )
+    )
+
+    with ExitStack() as stack:
+        _ = stack.enter_context(writer)
+
+        record_scores = (
+            None
+            if reuse
+            else open_alignment_recorder(
+                stack,
+                evidence_paths,
+                metadata,
+            )
+        )
+
+        cached_results = (
+            {
+                selected: read_alignments(path)
+                for selected, path in evidence_paths.items()
+            }
+            if reuse
+            else {}
+        )
+
+        aligner = Aligner(scorer, candidates, thresholds, gloss_mode, instructions)
+        for lemma in aligner.align(
+            read_lemmas(input_path),
+            cached_results=cached_results,
+            scores=record_scores,
+        ):
+            writer.write(lemma)
+
+    typer.echo(f"Aligned {output_path}")

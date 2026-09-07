@@ -14,7 +14,7 @@ from .wiktionary import (
     WordOffset,
     WordOffsetSource,
 )
-from .wordnet import Synset
+from .wordnet import Synset, WordNetAlignment, WordNetRelation
 
 __all__ = [
     "Attestation",
@@ -26,6 +26,8 @@ __all__ = [
     "Sentence",
     "Synset",
     "Translations",
+    "WordNetAlignment",
+    "WordNetRelation",
     "WordOffset",
     "WordOffsetSource",
 ]

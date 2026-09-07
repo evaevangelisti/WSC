@@ -1,0 +1,12 @@
+<View>
+  <Header value="$target"/>
+  <HyperText name="definitions" value="$definitions"/>
+  <Header value="Select every correct association. Each source and target can occur at most once."/>
+  <Choices name="links" toName="definitions" value="$choices" choice="multiple"/>
+  <Choices name="status" toName="definitions" choice="single" required="true">
+    <Choice value="matched"/>
+    <Choice value="no_match"/>
+    <Choice value="uncertain"/>
+  </Choices>
+  <TextArea name="notes" toName="definitions" rows="3" placeholder="Optional observations, ambiguity, or editorial inconsistencies"/>
+</View>

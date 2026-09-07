@@ -1,8 +1,9 @@
 # Exports the studies draw from
 data/
 
-# Reports, one file per pass over an export
+# Reports
 research/report/reports/
+research/annotation/reports/
 
 # Built documentation
 docs/build/

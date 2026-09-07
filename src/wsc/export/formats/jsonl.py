@@ -20,7 +20,7 @@ type Json = (
 )
 
 
-class JsonlWriter[T: "DataclassInstance"](Writer[T]):
+class JSONLWriter[T: "DataclassInstance"](Writer[T]):
     """
     Write dataclasses as JSON objects, one per line.
     """

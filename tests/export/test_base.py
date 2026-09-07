@@ -15,7 +15,7 @@ from hypothesis import strategies as st
 from strategies import lemmas
 
 from wsc.export import Writer, open_writer
-from wsc.export.formats.jsonl import JsonlWriter
+from wsc.export.formats.jsonl import JSONLWriter
 from wsc.models import POS, Lemma
 
 _WRITTEN = st.lists(lemmas, max_size=3)
@@ -45,7 +45,7 @@ def _open(
     return open_writer(output_path)
 
 
-class _UnclosableWriter(JsonlWriter[Lemma]):
+class _UnclosableWriter(JSONLWriter[Lemma]):
     """
     A writer that cannot be closed, however well the writing itself went.
     """

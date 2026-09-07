@@ -1,0 +1,2391 @@
+[
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "undern-time.noun.e0b3cdb1#3",
+      "source": "lemminflect",
+      "target": "undern-time (noun)",
+      "text": "Adam was created at undern-time - about nine in the morning - Eve was made out of his side at midday; they broke the command at once, and were expelled from Paradise at noon; noon having here its original meaning of the ninth hour, which slipped afterwards back to midday with a change of hour in the noon-tide meal.",
+      "marked": "Adam was created at <b>undern-time</b> - about nine in the morning - Eve was made out of his side at midday; they broke the command at once, and were expelled from Paradise at noon; noon having here its original meaning of the ninth hour, which slipped afterwards back to midday with a change of hour in the noon-tide meal.",
+      "word_offsets": [
+        {
+          "offset": [
+            20,
+            31
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "international chess.noun.f263245e#1",
+      "source": "lemminflect",
+      "target": "international chess (noun)",
+      "text": "Chinese chess (Xiangqi), after international chess the most important variety of the game.",
+      "marked": "Chinese chess (Xiangqi), after <b>international chess</b> the most important variety of the game.",
+      "word_offsets": [
+        {
+          "offset": [
+            31,
+            50
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "overlook.verb.341ebbdb#3",
+      "source": "lemminflect",
+      "target": "overlook (verb)",
+      "text": "[…] she saw a figure standing by the rail of the balcony that overlooked the backyard.",
+      "marked": "[…] she saw a figure standing by the rail of the balcony that <b>overlooked</b> the backyard.",
+      "word_offsets": [
+        {
+          "offset": [
+            62,
+            72
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "glizzy guzzler.noun.e1d15ca8#1",
+      "source": "lemminflect",
+      "target": "glizzy guzzler (noun)",
+      "text": "Next, he pulls the straw out of the hotdog and makes sure to suck out any meat chunks that may have gotten stuck in the straw. [...] Another user coined him the \"glizzy guzzler.\"",
+      "marked": "Next, he pulls the straw out of the hotdog and makes sure to suck out any meat chunks that may have gotten stuck in the straw. [...] Another user coined him the &quot;<b>glizzy guzzler</b>.&quot;",
+      "word_offsets": [
+        {
+          "offset": [
+            162,
+            176
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "diminish.verb.d4a76f1f#1",
+      "source": "lemminflect",
+      "target": "diminish (verb)",
+      "text": "[…] this doth nothing diminish their opinion.",
+      "marked": "[…] this doth nothing <b>diminish</b> their opinion.",
+      "word_offsets": [
+        {
+          "offset": [
+            22,
+            30
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "wipe.noun.a745b2f5#0",
+      "source": "lemminflect",
+      "target": "wipe (noun)",
+      "text": "I could not help giving Metcalfe a wipe for his lamentations, observing I should have thought he had enough to attend to at home.",
+      "marked": "I could not help giving Metcalfe a <b>wipe</b> for his lamentations, observing I should have thought he had enough to attend to at home.",
+      "word_offsets": [
+        {
+          "offset": [
+            35,
+            39
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "arcing.noun.14e8cb37#0",
+      "source": "lemminflect",
+      "target": "arcing (noun)",
+      "text": "Whenever the locomotive was working hard there was unmistakable evidence of its higher power than its predecessors in the brilliant and explosive arcing between conductor shoes and the third rail; this was particularly vivid in Quarry Tunnel in the down direction, where the display equalled anything we have seen on the frostiest of nights in an electrified third-rail area.",
+      "marked": "Whenever the locomotive was working hard there was unmistakable evidence of its higher power than its predecessors in the brilliant and explosive <b>arcing</b> between conductor shoes and the third rail; this was particularly vivid in Quarry Tunnel in the down direction, where the display equalled anything we have seen on the frostiest of nights in an electrified third-rail area.",
+      "word_offsets": [
+        {
+          "offset": [
+            146,
+            152
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "personhunt.noun.12844c0f#3",
+      "source": "lemminflect",
+      "target": "personhunt (noun)",
+      "text": "No matter how out of sight the Londonmancers were, obscured by the matter of the city of which they were functions, Billy and Dane were the targets of the greatest personhunt in memory, and they could not risk bringing that sort of attention to the enjarred god.",
+      "marked": "No matter how out of sight the Londonmancers were, obscured by the matter of the city of which they were functions, Billy and Dane were the targets of the greatest <b>personhunt</b> in memory, and they could not risk bringing that sort of attention to the enjarred god.",
+      "word_offsets": [
+        {
+          "offset": [
+            164,
+            174
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "licky.adj.25742fcf#2",
+      "source": "lemminflect",
+      "target": "licky (adj)",
+      "text": "As soon as the dog was safely enclosed within the area of our legs, it became happy and licky. He ran to one then the other. Then he sat on the floor and watched us watching him.",
+      "marked": "As soon as the dog was safely enclosed within the area of our legs, it became happy and <b>licky</b>. He ran to one then the other. Then he sat on the floor and watched us watching him.",
+      "word_offsets": [
+        {
+          "offset": [
+            88,
+            93
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "Semantic Web.name.6322e206#0",
+      "source": "lemminflect",
+      "target": "Semantic Web (name)",
+      "text": "Twine is based on technologies created for the developing semantic Web - foreseen as a smarter Web where machines may someday be able to process the meaning of words and phrases in documents and even routinely answer direct questions.",
+      "marked": "Twine is based on technologies created for the developing <b>semantic Web</b> - foreseen as a smarter Web where machines may someday be able to process the meaning of words and phrases in documents and even routinely answer direct questions.",
+      "word_offsets": [
+        {
+          "offset": [
+            58,
+            70
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "condole.verb.736fdfae#2",
+      "source": "lemminflect",
+      "target": "condole (verb)",
+      "text": "[…] I doubt Madam, your complaints ought to be turned into acknovvledgments, and your Friends vvould have cauſe to rejoyce rather than condole vvith you; […]",
+      "marked": "[…] I doubt Madam, your complaints ought to be turned into acknovvledgments, and your Friends vvould have cauſe to rejoyce rather than <b>condole</b> vvith you; […]",
+      "word_offsets": [
+        {
+          "offset": [
+            135,
+            142
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "whacking.adj.966c8ce2#5",
+      "source": "lemminflect",
+      "target": "whacking (adj)",
+      "text": "If any of you want a whacking lot of experience, lots of thrills to the minute and can pay your own freight, sign up for that trip to the land of the Northern Lights.",
+      "marked": "If any of you want a <b>whacking</b> lot of experience, lots of thrills to the minute and can pay your own freight, sign up for that trip to the land of the Northern Lights.",
+      "word_offsets": [
+        {
+          "offset": [
+            21,
+            29
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "connect the dots.verb.422467b2#0",
+      "source": "lemminflect",
+      "target": "connect the dots (verb)",
+      "text": "If only the Bush team connected the dots, it would see what a nutty war on terrorism it is fighting, explains Mr. Prestowitz.",
+      "marked": "If only the Bush team <b>connected the dots</b>, it would see what a nutty war on terrorism it is fighting, explains Mr. Prestowitz.",
+      "word_offsets": [
+        {
+          "offset": [
+            22,
+            40
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "trash.noun.96d61579#0",
+      "source": "lemminflect",
+      "target": "trash (noun)",
+      "text": "A haunch of venison would be trash to a Brahmin.",
+      "marked": "A haunch of venison would be <b>trash</b> to a Brahmin.",
+      "word_offsets": [
+        {
+          "offset": [
+            29,
+            34
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "panda.noun.752c85b8#0",
+      "source": "lemminflect",
+      "target": "panda (noun)",
+      "text": "The red panda's history in zoos begins some 40 years after its discovery. The first one to be seen outside of its natural range arrived at London Zoo on 22nd May 1869, [...] On arrival at the zoo, the last surviving panda was given into the care of Abraham Bartlett, the superintendent of the zoo. [...] The feeding instructions that came with the panda said it should be given milk, a little rice and grass each day. [...] Bartlett felt that the suggested diet was not adequate and set out to find what the animal would accept; [...] Unfortunately, although it ate well, this first zoo red panda was not destined for a long life, it died suddenly during the night of 12 December 1869, a little over 6 months after its arrival.",
+      "marked": "The red <b>panda</b>&#x27;s history in zoos begins some 40 years after its discovery. The first one to be seen outside of its natural range arrived at London Zoo on 22nd May 1869, [...] On arrival at the zoo, the last surviving <b>panda</b> was given into the care of Abraham Bartlett, the superintendent of the zoo. [...] The feeding instructions that came with the <b>panda</b> said it should be given milk, a little rice and grass each day. [...] Bartlett felt that the suggested diet was not adequate and set out to find what the animal would accept; [...] Unfortunately, although it ate well, this first zoo red <b>panda</b> was not destined for a long life, it died suddenly during the night of 12 December 1869, a little over 6 months after its arrival.",
+      "word_offsets": [
+        {
+          "offset": [
+            8,
+            13
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            216,
+            221
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            348,
+            353
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            591,
+            596
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "crapaudine.noun.52907220#1",
+      "source": "lemminflect",
+      "target": "crapaudine (noun)",
+      "text": "One variety of garden beet, crapaudine ( GBC ) from the compagny Semaphor carries the same Hind III ctDNA profile as the male sterile Owen.",
+      "marked": "One variety of garden beet, <b>crapaudine</b> ( GBC ) from the compagny Semaphor carries the same Hind III ctDNA profile as the male sterile Owen.",
+      "word_offsets": [
+        {
+          "offset": [
+            28,
+            38
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "Sunwui.name.317c599b#1",
+      "source": "lemminflect",
+      "target": "Sunwui (name)",
+      "text": "Within a few months, the regional grapevine carried news of these \"red-haired devils\"—a Chinese term for Caucasians—who restored life and hope to the lepers in the graveyards of Sunwui.",
+      "marked": "Within a few months, the regional grapevine carried news of these &quot;red-haired devils&quot;—a Chinese term for Caucasians—who restored life and hope to the lepers in the graveyards of <b>Sunwui</b>.",
+      "word_offsets": [
+        {
+          "offset": [
+            178,
+            184
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "rive.verb.c400c7ea#1",
+      "source": "lemminflect",
+      "target": "rive (verb)",
+      "text": "Freestone i.e. that rives, splits, and breaks in any direction.",
+      "marked": "Freestone i.e. that <b>rives</b>, splits, and breaks in any direction.",
+      "word_offsets": [
+        {
+          "offset": [
+            20,
+            25
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "easygoingness.noun.9073b01b#0",
+      "source": "lemminflect",
+      "target": "easygoingness (noun)",
+      "text": "Democratic or not, there is a certain easygoingness in Asmara, at least on the surface.",
+      "marked": "Democratic or not, there is a certain <b>easygoingness</b> in Asmara, at least on the surface.",
+      "word_offsets": [
+        {
+          "offset": [
+            38,
+            51
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "shelve.verb.3fc117a4#2",
+      "source": "lemminflect",
+      "target": "shelve (verb)",
+      "text": "Some people use Ecstasy using a method known as \"shafting\" or \"shelving\" which involves inserting a pill or tablet into the anus.",
+      "marked": "Some people use Ecstasy using a method known as &quot;shafting&quot; or &quot;<b>shelving</b>&quot; which involves inserting a pill or tablet into the anus.",
+      "word_offsets": [
+        {
+          "offset": [
+            63,
+            71
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "translator.noun.2034bb67#0",
+      "source": "lemminflect",
+      "target": "translator (noun)",
+      "text": "\"You don't believe the Soviet Union is going to reduce its defense budget, do you?\" Boggs asked.\nPremier Chou didn't wait for the translator to finish. \"Never, never, never,\" he replied in perfect English.",
+      "marked": "&quot;You don&#x27;t believe the Soviet Union is going to reduce its defense budget, do you?&quot; Boggs asked.\nPremier Chou didn&#x27;t wait for the <b>translator</b> to finish. &quot;Never, never, never,&quot; he replied in perfect English.",
+      "word_offsets": [
+        {
+          "offset": [
+            130,
+            140
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "red room.noun.12368027#4",
+      "source": "lemminflect",
+      "target": "red room (noun)",
+      "text": "I sat in what they referred to as the red room, with Jennifer.",
+      "marked": "I sat in what they referred to as the <b>red room</b>, with Jennifer.",
+      "word_offsets": [
+        {
+          "offset": [
+            38,
+            46
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "sponsal.adj.b9d88ae7#1",
+      "source": "lemminflect",
+      "target": "sponsal (adj)",
+      "text": "Boniface Llamera, St. Joseph (Herder, 1961), better preserves the primary character of the sponsal relationship when he writes: \"The entire theology of St. Joseph (Josephology) has one first and principal basis: the marriage which united him to Mary.\"",
+      "marked": "Boniface Llamera, St. Joseph (Herder, 1961), better preserves the primary character of the <b>sponsal</b> relationship when he writes: &quot;The entire theology of St. Joseph (Josephology) has one first and principal basis: the marriage which united him to Mary.&quot;",
+      "word_offsets": [
+        {
+          "offset": [
+            91,
+            98
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "goldie.noun.d781ec61#0",
+      "source": "lemminflect",
+      "target": "goldie (noun)",
+      "text": "Incredibly, the reactions of the dogs differed between the instances. […] \"It's the pursed lips that do it for me,\" said another comment: \"My goldie used to do the same.\"",
+      "marked": "Incredibly, the reactions of the dogs differed between the instances. […] &quot;It&#x27;s the pursed lips that do it for me,&quot; said another comment: &quot;My <b>goldie</b> used to do the same.&quot;",
+      "word_offsets": [
+        {
+          "offset": [
+            142,
+            148
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "intermicronational organisation.noun.4a8b329c#2",
+      "source": "lemminflect",
+      "target": "intermicronational organisation (noun)",
+      "text": "The Organisation de la microfrancophonie, a French-language intermicronational organisation, has hosted three intermicronational summits between its member states—one in 2016, 2018 and most recently in 2022.",
+      "marked": "The Organisation de la microfrancophonie, a French-language <b>intermicronational organisation</b>, has hosted three intermicronational summits between its member states—one in 2016, 2018 and most recently in 2022.",
+      "word_offsets": [
+        {
+          "offset": [
+            60,
+            91
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "weirdo shirt.noun.fc6dff81#5",
+      "source": "lemminflect",
+      "target": "weirdo shirt (noun)",
+      "text": "By 1958, Roth was marketing weirdo shirts at car shows, plus advertising them in Car Craft magazine. The crazy shirt phenomenon turned into a national craze [...] So began the Roth “weirdo shirt,” many hand airbrushed by Ed himself. His most notable creation, of course, was the legendary Rat Fink character, a loathsome yet endearingly gnarly rat.",
+      "marked": "By 1958, Roth was marketing <b>weirdo shirts</b> at car shows, plus advertising them in Car Craft magazine. The crazy shirt phenomenon turned into a national craze [...] So began the Roth “<b>weirdo shirt</b>,” many hand airbrushed by Ed himself. His most notable creation, of course, was the legendary Rat Fink character, a loathsome yet endearingly gnarly rat.",
+      "word_offsets": [
+        {
+          "offset": [
+            28,
+            40
+          ],
+          "sources": [
+            "bold"
+          ]
+        },
+        {
+          "offset": [
+            28,
+            41
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            182,
+            194
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "meniscal.adj.4ff64bd4#0",
+      "source": "lemminflect",
+      "target": "meniscal (adj)",
+      "text": "meniscal injury",
+      "marked": "<b>meniscal</b> injury",
+      "word_offsets": [
+        {
+          "offset": [
+            0,
+            8
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "outname.verb.aee8cee7#0",
+      "source": "lemminflect",
+      "target": "outname (verb)",
+      "text": "And found out one to out-name thy other faults.",
+      "marked": "And found out one to <b>out-name</b> thy other faults.",
+      "word_offsets": [
+        {
+          "offset": [
+            21,
+            29
+          ],
+          "sources": [
+            "bold"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "hyperbike.noun.40bd8b16#1",
+      "source": "lemminflect",
+      "target": "hyperbike (noun)",
+      "text": "KAWASAKI ZZR1400 1400cc, Petrol, 2008, 0 miles. New bike. Kawasaki's headturning hyperbike, Smooth and powerfull ride, Great looking machine",
+      "marked": "KAWASAKI ZZR1400 1400cc, Petrol, 2008, 0 miles. New bike. Kawasaki&#x27;s headturning <b>hyperbike</b>, Smooth and powerfull ride, Great looking machine",
+      "word_offsets": [
+        {
+          "offset": [
+            81,
+            90
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "whiskey.noun.e2d9f8dd#0",
+      "source": "lemminflect",
+      "target": "whiskey (noun)",
+      "text": "The exceſſive drinking of ſpirituous liquours, eſpecially whiſkey, is now become ſo common, that more people are killed by them, than by ſmall-pox, fevers, broken limbs, accidents, and all other diſtempers put together. And we are credibly informed, that in one dram ſhop only in this town, there are 120 gallons of that accurſed ſpirit, whiſkey, ſold.",
+      "marked": "The exceſſive drinking of ſpirituous liquours, eſpecially <b>whiſkey</b>, is now become ſo common, that more people are killed by them, than by ſmall-pox, fevers, broken limbs, accidents, and all other diſtempers put together. And we are credibly informed, that in one dram ſhop only in this town, there are 120 gallons of that accurſed ſpirit, <b>whiſkey</b>, ſold.",
+      "word_offsets": [
+        {
+          "offset": [
+            58,
+            65
+          ],
+          "sources": [
+            "bold"
+          ]
+        },
+        {
+          "offset": [
+            338,
+            345
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "antique.verb.afb339d9#0",
+      "source": "lemminflect",
+      "target": "antique (verb)",
+      "text": "Once our daughter-in-love, Janis, went antiquing with us because she and our firstborn, Matthew, were in the market for some bedroom furniture.",
+      "marked": "Once our daughter-in-love, Janis, went <b>antiquing</b> with us because she and our firstborn, Matthew, were in the market for some bedroom furniture.",
+      "word_offsets": [
+        {
+          "offset": [
+            39,
+            48
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "balls.noun.d4d3fadd#0",
+      "source": "lemminflect",
+      "target": "balls (noun)",
+      "text": "After that shot, his balls were really hurting!",
+      "marked": "After that shot, his <b>balls</b> were really hurting!",
+      "word_offsets": [
+        {
+          "offset": [
+            21,
+            26
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "zorb.verb.11f3d657#2",
+      "source": "lemminflect",
+      "target": "zorb (verb)",
+      "text": "Vieira zorbed — that is, rolled down a hill within an inflatable ball.",
+      "marked": "Vieira <b>zorbed</b> — that is, rolled down a hill within an inflatable ball.",
+      "word_offsets": [
+        {
+          "offset": [
+            7,
+            13
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "Eucharistize.verb.c72a0f47#2",
+      "source": "lemminflect",
+      "target": "Eucharistize (verb)",
+      "text": "The affinities between Guroian and Cavanaugh are, perhaps, best summed up in Cavanaugh's declaration that the “point is not to politicize the Eucharist, but to 'Eucharistize' the world.”",
+      "marked": "The affinities between Guroian and Cavanaugh are, perhaps, best summed up in Cavanaugh&#x27;s declaration that the “point is not to politicize the Eucharist, but to <b>&#x27;Eucharistize</b>&#x27; the world.”",
+      "word_offsets": [
+        {
+          "offset": [
+            160,
+            173
+          ],
+          "sources": [
+            "bold"
+          ]
+        },
+        {
+          "offset": [
+            161,
+            173
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "detaining.noun.3566df35#0",
+      "source": "lemminflect",
+      "target": "detaining (noun)",
+      "text": "The suspect’s detaining lasted several hours.",
+      "marked": "The suspect’s <b>detaining</b> lasted several hours.",
+      "word_offsets": [
+        {
+          "offset": [
+            14,
+            23
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "kipper.verb.7e7a7cf4#2",
+      "source": "lemminflect",
+      "target": "kipper (verb)",
+      "text": "Right there and then, we all vowed to avoid a 'kippering' from Morris. And there was no doubt that we admired Rob for taking the beating and not to be crying his eyes out twelve hours later.",
+      "marked": "Right there and then, we all vowed to avoid a <b>&#x27;kippering</b>&#x27; from Morris. And there was no doubt that we admired Rob for taking the beating and not to be crying his eyes out twelve hours later.",
+      "word_offsets": [
+        {
+          "offset": [
+            46,
+            56
+          ],
+          "sources": [
+            "bold"
+          ]
+        },
+        {
+          "offset": [
+            47,
+            56
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "illegitimate.adj.99a207a4#2",
+      "source": "lemminflect",
+      "target": "illegitimate (adj)",
+      "text": "[…] it is illegitimate to reduce an Equation, by subducting from one Side a Quantity when it is not to be destroyed, or when an equal Quantity is not subducted from the other Side of the Equation:",
+      "marked": "[…] it is <b>illegitimate</b> to reduce an Equation, by subducting from one Side a Quantity when it is not to be destroyed, or when an equal Quantity is not subducted from the other Side of the Equation:",
+      "word_offsets": [
+        {
+          "offset": [
+            10,
+            22
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "abate.verb.6b44351b#0",
+      "source": "lemminflect",
+      "target": "abate (verb)",
+      "text": "[…] the kyng of Scottes […] with all hys hoſte and power entered into Englande (and threw doune pyles) the .xxij. daye of August, and planted hys ſiege before the Caſtell of Norham, and ſore abated the walles.",
+      "marked": "[…] the kyng of Scottes […] with all hys hoſte and power entered into Englande (and threw doune pyles) the .xxij. daye of August, and planted hys ſiege before the Caſtell of Norham, and ſore <b>abated</b> the walles.",
+      "word_offsets": [
+        {
+          "offset": [
+            191,
+            197
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "end.noun.1f0368f3#3",
+      "source": "lemminflect",
+      "target": "end (noun)",
+      "text": "At the end of the garden there was a beautiful fountain.",
+      "marked": "At the <b>end</b> of the garden there was a beautiful fountain.",
+      "word_offsets": [
+        {
+          "offset": [
+            7,
+            10
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "potation.noun.22a6963f#1",
+      "source": "lemminflect",
+      "target": "potation (noun)",
+      "text": "[…] a quiet evening at home, alone with a friend and a pipe or two, and a humble potation of British spirits, […]",
+      "marked": "[…] a quiet evening at home, alone with a friend and a pipe or two, and a humble <b>potation</b> of British spirits, […]",
+      "word_offsets": [
+        {
+          "offset": [
+            81,
+            89
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "hounskull.noun.fa13bade#0",
+      "source": "lemminflect",
+      "target": "hounskull (noun)",
+      "text": "On the counter is a hounskull with aventail (a visored bascinet with mail tippet) with a small plume on the apex. A pair of bell-cuffed gauntlets and an arming sword hang outside.",
+      "marked": "On the counter is a <b>hounskull</b> with aventail (a visored bascinet with mail tippet) with a small plume on the apex. A pair of bell-cuffed gauntlets and an arming sword hang outside.",
+      "word_offsets": [
+        {
+          "offset": [
+            20,
+            29
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "symplectic.noun.f3e8d01b#0",
+      "source": "lemminflect",
+      "target": "symplectic (noun)",
+      "text": "The structure of stable symplectics on finite dimensional spaces has been studied by Krein [8], Gelfand & Lidskii [9], and Moser [10] in work of considerable practical importance.",
+      "marked": "The structure of stable <b>symplectics</b> on finite dimensional spaces has been studied by Krein [8], Gelfand &amp; Lidskii [9], and Moser [10] in work of considerable practical importance.",
+      "word_offsets": [
+        {
+          "offset": [
+            24,
+            35
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "well-wish.noun.c4b4467b#2",
+      "source": "lemminflect",
+      "target": "well-wish (noun)",
+      "text": "Select someone to whom you can at least pretend to send well-wishes.",
+      "marked": "Select someone to whom you can at least pretend to send <b>well-wishes</b>.",
+      "word_offsets": [
+        {
+          "offset": [
+            56,
+            67
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "full-faced.adj.8b8f855c#1",
+      "source": "lemminflect",
+      "target": "full-faced (adj)",
+      "text": "I've come to see she is a voiceless person in her world, and so I try to remember to stop and give her my full-faced attention when I see her.",
+      "marked": "I&#x27;ve come to see she is a voiceless person in her world, and so I try to remember to stop and give her my <b>full-faced</b> attention when I see her.",
+      "word_offsets": [
+        {
+          "offset": [
+            106,
+            116
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "sportsball.noun.baa0f7fa#2",
+      "source": "lemminflect",
+      "target": "sportsball (noun)",
+      "text": "To use a sportsball analogy that might be a metaphor, judicial oversight of executive institutions is roughly the equivalent of policing acts of foul play that could result in a player being ejected from the sportsball game, such as attempted decapitation […]",
+      "marked": "To use a <b>sportsball</b> analogy that might be a metaphor, judicial oversight of executive institutions is roughly the equivalent of policing acts of foul play that could result in a player being ejected from the <b>sportsball</b> game, such as attempted decapitation […]",
+      "word_offsets": [
+        {
+          "offset": [
+            9,
+            19
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            208,
+            218
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "dogpile.verb.0ffedd49#0",
+      "source": "lemminflect",
+      "target": "dogpile (verb)",
+      "text": "He can either take a beating from one man or... be dogpiled by a dozen men.",
+      "marked": "He can either take a beating from one man or... be <b>dogpiled</b> by a dozen men.",
+      "word_offsets": [
+        {
+          "offset": [
+            51,
+            59
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "kopanisti.noun.e327a225#0",
+      "source": "lemminflect",
+      "target": "kopanisti (noun)",
+      "text": "A number of Greek cheeses are not exported to the United States, including soft, raw-milk cheeses like the kopanisti of the Cyclades islands, which, according to Kochilas, are naturally fermented in clay jugs, animal skins or baskets.",
+      "marked": "A number of Greek cheeses are not exported to the United States, including soft, raw-milk cheeses like the <b>kopanisti</b> of the Cyclades islands, which, according to Kochilas, are naturally fermented in clay jugs, animal skins or baskets.",
+      "word_offsets": [
+        {
+          "offset": [
+            107,
+            116
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "ikigai risk.noun.a46b417a#1",
+      "source": "lemminflect",
+      "target": "ikigai risk (noun)",
+      "text": "The concept of \"Ikigai,\" which is deeply rooted in Japanese culture, was a central theme of the lecture. The idea of \"Ikigai risk,\" which emphasizes the need to use AI in a way that does not diminish human purpose and fulfillment, was introduced.",
+      "marked": "The concept of &quot;Ikigai,&quot; which is deeply rooted in Japanese culture, was a central theme of the lecture. The idea of &quot;<b>Ikigai risk</b>,&quot; which emphasizes the need to use AI in a way that does not diminish human purpose and fulfillment, was introduced.",
+      "word_offsets": [
+        {
+          "offset": [
+            118,
+            129
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "eponymous.adj.8f461e7c#0",
+      "source": "lemminflect",
+      "target": "eponymous (adj)",
+      "text": "The American singer-songwriter Madonna released her eponymous album in 1983.",
+      "marked": "The American singer-songwriter Madonna released her <b>eponymous</b> album in 1983.",
+      "word_offsets": [
+        {
+          "offset": [
+            52,
+            61
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "here.adv.a9334266#1",
+      "source": "lemminflect",
+      "target": "here (adv)",
+      "text": "The two great generalizations which the veteran Belgian astronomer has brought to bear on physiological and mental science, and which it is proposed to describe popularly here, may be briefly defined:",
+      "marked": "The two great generalizations which the veteran Belgian astronomer has brought to bear on physiological and mental science, and which it is proposed to describe popularly <b>here</b>, may be briefly defined:",
+      "word_offsets": [
+        {
+          "offset": [
+            171,
+            175
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "flourish.verb.81e5845b#0",
+      "source": "lemminflect",
+      "target": "flourish (verb)",
+      "text": "They flourished the banner as they stormed the palace.",
+      "marked": "They <b>flourished</b> the banner as they stormed the palace.",
+      "word_offsets": [
+        {
+          "offset": [
+            5,
+            15
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "spreath.noun.6030d1f6#0",
+      "source": "lemminflect",
+      "target": "spreath (noun)",
+      "text": "It was then as much the scene of continual spreaths, liftings, reavings, and herriments, as the Border country itself.",
+      "marked": "It was then as much the scene of continual <b>spreaths</b>, liftings, reavings, and herriments, as the Border country itself.",
+      "word_offsets": [
+        {
+          "offset": [
+            43,
+            51
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "pinger.noun.caa427db#0",
+      "source": "lemminflect",
+      "target": "pinger (noun)",
+      "text": "Some people like fancy pingers with extra features, but I always use the default ping application.",
+      "marked": "Some people like fancy <b>pingers</b> with extra features, but I always use the default ping application.",
+      "word_offsets": [
+        {
+          "offset": [
+            23,
+            30
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "bibliotaphist.noun.f8f4f993#0",
+      "source": "lemminflect",
+      "target": "bibliotaphist (noun)",
+      "text": "He was in no sense a bibliotaphist. He did not aim to conceal knowledge but to diffuse it.",
+      "marked": "He was in no sense a <b>bibliotaphist</b>. He did not aim to conceal knowledge but to diffuse it.",
+      "word_offsets": [
+        {
+          "offset": [
+            21,
+            34
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "ethnic.adj.fe272e5f#2",
+      "source": "lemminflect",
+      "target": "ethnic (adj)",
+      "text": "popular music is usually positioned between classical music on the one hand and folk or ethnic music on the other.",
+      "marked": "popular music is usually positioned between classical music on the one hand and folk or <b>ethnic</b> music on the other.",
+      "word_offsets": [
+        {
+          "offset": [
+            88,
+            94
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "square.adj.1762f7aa#3",
+      "source": "lemminflect",
+      "target": "square (adj)",
+      "text": "But the Jays were square again by the end of the inning, as Myers hit a 2-and-0 pitch into the left-center field seats",
+      "marked": "But the Jays were <b>square</b> again by the end of the inning, as Myers hit a 2-and-0 pitch into the left-center field seats",
+      "word_offsets": [
+        {
+          "offset": [
+            18,
+            24
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "rime.noun.bdd1ac67#1",
+      "source": "lemminflect",
+      "target": "rime (noun)",
+      "text": "[T]hough birds have no Epiglottis, yet can they ſo contract the rime or chinck of their Larinx, as to prevent the admiſſion of vvet or dry ingeſted, […]",
+      "marked": "[T]hough birds have no Epiglottis, yet can they ſo contract the <b>rime</b> or chinck of their Larinx, as to prevent the admiſſion of vvet or dry ingeſted, […]",
+      "word_offsets": [
+        {
+          "offset": [
+            64,
+            68
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "discoish.adj.a8074bd3#0",
+      "source": "lemminflect",
+      "target": "discoish (adj)",
+      "text": "Naturally he tried to fly the rather perverse opinion that Roxy's late '70s discoish period was really the best stuff, rather than the avant-pop and math-fizz of their earlier experimental stuff.",
+      "marked": "Naturally he tried to fly the rather perverse opinion that Roxy&#x27;s late &#x27;70s <b>discoish</b> period was really the best stuff, rather than the avant-pop and math-fizz of their earlier experimental stuff.",
+      "word_offsets": [
+        {
+          "offset": [
+            76,
+            84
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "hypocalcic.adj.71cd8d89#1",
+      "source": "lemminflect",
+      "target": "hypocalcic (adj)",
+      "text": "hypocalcic media",
+      "marked": "<b>hypocalcic</b> media",
+      "word_offsets": [
+        {
+          "offset": [
+            0,
+            10
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "exhaustibility.noun.05ce4cd7#0",
+      "source": "lemminflect",
+      "target": "exhaustibility (noun)",
+      "text": "We must accept the exhaustibility of our supply of oil.",
+      "marked": "We must accept the <b>exhaustibility</b> of our supply of oil.",
+      "word_offsets": [
+        {
+          "offset": [
+            19,
+            33
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "martyr.noun.a1bafd2c#1",
+      "source": "lemminflect",
+      "target": "martyr (noun)",
+      "text": "He'd been a martyr to asthma all his life.",
+      "marked": "He&#x27;d been a <b>martyr</b> to asthma all his life.",
+      "word_offsets": [
+        {
+          "offset": [
+            12,
+            18
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "shauri.noun.0090f8fa#1",
+      "source": "lemminflect",
+      "target": "shauri (noun)",
+      "text": "The poor guide had been sitting through the shauri open-eyed and open-mouthed, intensely puzzled by the whole performance.",
+      "marked": "The poor guide had been sitting through the <b>shauri</b> open-eyed and open-mouthed, intensely puzzled by the whole performance.",
+      "word_offsets": [
+        {
+          "offset": [
+            44,
+            50
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "shore.verb.c1abaab8#1",
+      "source": "lemminflect",
+      "target": "shore (verb)",
+      "text": "[…] the cauld win' louder blew, Shorin' o' drift,[…]",
+      "marked": "[…] the cauld win&#x27; louder blew, <b>Shorin&#x27;</b> o&#x27; drift,[…]",
+      "word_offsets": [
+        {
+          "offset": [
+            32,
+            39
+          ],
+          "sources": [
+            "bold"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "neurosupport.noun.b5f29b88#1",
+      "source": "lemminflect",
+      "target": "neurosupport (noun)",
+      "text": "Evidently, prolonged activation responses of glial cells result in the withdrawal of glial neurosupport functions with deficiencies in structural, trophic, bioenergetic, and immune regulatory/phagocytic support.",
+      "marked": "Evidently, prolonged activation responses of glial cells result in the withdrawal of glial <b>neurosupport</b> functions with deficiencies in structural, trophic, bioenergetic, and immune regulatory/phagocytic support.",
+      "word_offsets": [
+        {
+          "offset": [
+            91,
+            103
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "antiapoptotically.adv.dfabba0b#0",
+      "source": "lemminflect",
+      "target": "antiapoptotically (adv)",
+      "text": "proteins which act antiapoptotically",
+      "marked": "proteins which act <b>antiapoptotically</b>",
+      "word_offsets": [
+        {
+          "offset": [
+            19,
+            36
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "desertful.noun.0d0e6550#2",
+      "source": "lemminflect",
+      "target": "desertful (noun)",
+      "text": "THE COURSE ALSO features lakes and streams that come into play on the majority of the holes and desertsful of sand.",
+      "marked": "THE COURSE ALSO features lakes and streams that come into play on the majority of the holes and <b>desertsful</b> of sand.",
+      "word_offsets": [
+        {
+          "offset": [
+            96,
+            106
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "heavy-duty.adj.947e3b67#1",
+      "source": "lemminflect",
+      "target": "heavy-duty (adj)",
+      "text": "Summit still has to ... summit some final steps before it can start crunching heavy-duty science.",
+      "marked": "Summit still has to ... summit some final steps before it can start crunching <b>heavy-duty</b> science.",
+      "word_offsets": [
+        {
+          "offset": [
+            78,
+            88
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "particoloured.adj.def1f653#0",
+      "source": "lemminflect",
+      "target": "particoloured (adj)",
+      "text": "O foolish one! this molded earth is naught;\n This particolored vault of heaven is naught;\n Our sojourn in this seat of life and death\n Is but one breath, and what is that but naught?",
+      "marked": "O foolish one! this molded earth is naught;\n This <b>particolored</b> vault of heaven is naught;\n Our sojourn in this seat of life and death\n Is but one breath, and what is that but naught?",
+      "word_offsets": [
+        {
+          "offset": [
+            50,
+            62
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "skinny dip.noun.60f7dc3d#0",
+      "source": "lemminflect",
+      "target": "skinny dip (noun)",
+      "text": "On the last night of camp, it was tradition for the girls' cabin to sneak down to the lake for a midnight skinny dip.",
+      "marked": "On the last night of camp, it was tradition for the girls&#x27; cabin to sneak down to the lake for a midnight <b>skinny dip</b>.",
+      "word_offsets": [
+        {
+          "offset": [
+            106,
+            116
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "axillobifemoral.adj.55256578#0",
+      "source": "lemminflect",
+      "target": "axillobifemoral (adj)",
+      "text": "Of the cATBAD patients, 68 of 174 (39.0%) were treated medically, 52 (30.0%) were treated with open aortic surgery, 37 (21.3%) were treated with TEVAR, and 17 (9.7%) were treated with other open peripheral vascular procedures such as axillobifemoral bypass and femoral-femoral bypass.",
+      "marked": "Of the cATBAD patients, 68 of 174 (39.0%) were treated medically, 52 (30.0%) were treated with open aortic surgery, 37 (21.3%) were treated with TEVAR, and 17 (9.7%) were treated with other open peripheral vascular procedures such as <b>axillobifemoral</b> bypass and femoral-femoral bypass.",
+      "word_offsets": [
+        {
+          "offset": [
+            234,
+            249
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "gashouse egg.noun.9e5be447#6",
+      "source": "lemminflect",
+      "target": "gashouse egg (noun)",
+      "text": "Later, George Lessey cheers their sagging plans with his recipe for gashouse eggs—eggs fried in bread slices that have had their centers cut out.",
+      "marked": "Later, George Lessey cheers their sagging plans with his recipe for <b>gashouse eggs</b>—eggs fried in bread slices that have had their centers cut out.",
+      "word_offsets": [
+        {
+          "offset": [
+            68,
+            81
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "dicyclohexylurea.noun.c22f4177#0",
+      "source": "lemminflect",
+      "target": "dicyclohexylurea (noun)",
+      "text": "The dicyclohexylurea by-product was filtered off.",
+      "marked": "The <b>dicyclohexylurea</b> by-product was filtered off.",
+      "word_offsets": [
+        {
+          "offset": [
+            4,
+            20
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "palesome.adj.567b5c85#1",
+      "source": "lemminflect",
+      "target": "palesome (adj)",
+      "text": "To see the crimson on her palesome face [...]",
+      "marked": "To see the crimson on her <b>palesome</b> face [...]",
+      "word_offsets": [
+        {
+          "offset": [
+            26,
+            34
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "courtship.noun.358cac5b#0",
+      "source": "lemminflect",
+      "target": "courtship (noun)",
+      "text": "More validitie, / More honourable ſtate, more courtſhip liues / In carrion flyes, than Romeo: they may ſeaze / On the white wonder of faire Iuliets skinne, / And ſteale immortall kiſſes from her lips; / But Romeo may not, he is baniſhed.",
+      "marked": "More validitie, / More honourable ſtate, more <b>courtſhip</b> liues / In carrion flyes, than Romeo: they may ſeaze / On the white wonder of faire Iuliets skinne, / And ſteale immortall kiſſes from her lips; / But Romeo may not, he is baniſhed.",
+      "word_offsets": [
+        {
+          "offset": [
+            46,
+            55
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "briefed.adj.936da898#2",
+      "source": "lemminflect",
+      "target": "briefed (adj)",
+      "text": "No one can accuse the Unionist Party of seeking to make indecent capital out of the folly, the misfortunes and the scandals which have become the chief stock-in-trade of latter-day Radicalism since the great historic Party fell under the auspices of barristers— briefed and briefless.",
+      "marked": "No one can accuse the Unionist Party of seeking to make indecent capital out of the folly, the misfortunes and the scandals which have become the chief stock-in-trade of latter-day Radicalism since the great historic Party fell under the auspices of barristers— <b>briefed</b> and briefless.",
+      "word_offsets": [
+        {
+          "offset": [
+            262,
+            269
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "keen.verb.3390e7c6#0",
+      "source": "lemminflect",
+      "target": "keen (verb)",
+      "text": "Last night he had put down too much Potheen / (A vulgar blend of Methyl and Benzene) / That, at some Wake, he might the better keen. / (Keen—meaning 'brisk'? Nay, here the Language warps: / 'Tis singing bawdy Ballads to a Corpse.)",
+      "marked": "Last night he had put down too much Potheen / (A vulgar blend of Methyl and Benzene) / That, at some Wake, he might the better <b>keen</b>. / (<b>Keen</b>—meaning &#x27;brisk&#x27;? Nay, here the Language warps: / &#x27;Tis singing bawdy Ballads to a Corpse.)",
+      "word_offsets": [
+        {
+          "offset": [
+            127,
+            131
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            136,
+            140
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "antisweet.adj.f589f176#0",
+      "source": "lemminflect",
+      "target": "antisweet (adj)",
+      "text": "an antisweet triterpenoid",
+      "marked": "an <b>antisweet</b> triterpenoid",
+      "word_offsets": [
+        {
+          "offset": [
+            3,
+            12
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "magazinette.noun.28645278#0",
+      "source": "lemminflect",
+      "target": "magazinette (noun)",
+      "text": "The latest of the personal magazinettes to come under our observation is The East Side, a peculiarly New York product, of which Zoe Anderson Norris, of 338 East Fifteenth street, is printer's devil […]",
+      "marked": "The latest of the personal <b>magazinettes</b> to come under our observation is The East Side, a peculiarly New York product, of which Zoe Anderson Norris, of 338 East Fifteenth street, is printer&#x27;s devil […]",
+      "word_offsets": [
+        {
+          "offset": [
+            27,
+            39
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "Typhoid Mary.noun.ece81b80#0",
+      "source": "lemminflect",
+      "target": "Typhoid Mary (noun)",
+      "text": "“[…] Do you know what our great fear has been? That either the grayboys or the Ripley would find a Typhoid Mary, someone who could carry it and spread it without catching it him- or herself.”",
+      "marked": "“[…] Do you know what our great fear has been? That either the grayboys or the Ripley would find a <b>Typhoid Mary</b>, someone who could carry it and spread it without catching it him- or herself.”",
+      "word_offsets": [
+        {
+          "offset": [
+            99,
+            111
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "inkling.noun.32589ad9#4",
+      "source": "lemminflect",
+      "target": "inkling (noun)",
+      "text": "Living organisms had existed on earth, without ever knowing why, for over three thousand million years before the truth finally dawned on one of them. His name was Charles Darwin. To be fair, others had had inklings of the truth, but it was Darwin who first put together a coherent and tenable account of why we exist.",
+      "marked": "Living organisms had existed on earth, without ever knowing why, for over three thousand million years before the truth finally dawned on one of them. His name was Charles Darwin. To be fair, others had had <b>inklings</b> of the truth, but it was Darwin who first put together a coherent and tenable account of why we exist.",
+      "word_offsets": [
+        {
+          "offset": [
+            207,
+            215
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "detethering.noun.04a9210e#0",
+      "source": "lemminflect",
+      "target": "detethering (noun)",
+      "text": "During this 15-year period, 1,176 lumbar spinal surgeries were performed, and the procedures included the following: simple decompression procedures such as micro- or endoscopic discectomy or foraminotomy or decompression of stenosis, arthrodeses (e.g., posterolateral interbody, posterior/transforaminal interbody, and lateral interbody), filum detethering, or syrinx shunting.",
+      "marked": "During this 15-year period, 1,176 lumbar spinal surgeries were performed, and the procedures included the following: simple decompression procedures such as micro- or endoscopic discectomy or foraminotomy or decompression of stenosis, arthrodeses (e.g., posterolateral interbody, posterior/transforaminal interbody, and lateral interbody), filum <b>detethering</b>, or syrinx shunting.",
+      "word_offsets": [
+        {
+          "offset": [
+            346,
+            357
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "solar eclipse.noun.c9973edf#0",
+      "source": "lemminflect",
+      "target": "solar eclipse (noun)",
+      "text": "A solar eclipse is one of nature's most impressive sights.",
+      "marked": "A <b>solar eclipse</b> is one of nature&#x27;s most impressive sights.",
+      "word_offsets": [
+        {
+          "offset": [
+            2,
+            15
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "district.noun.181330e7#0",
+      "source": "lemminflect",
+      "target": "district (noun)",
+      "text": "the Lake District in Cumbria",
+      "marked": "the Lake <b>District</b> in Cumbria",
+      "word_offsets": [
+        {
+          "offset": [
+            9,
+            17
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "millstone.noun.9aa01eb7#0",
+      "source": "lemminflect",
+      "target": "millstone (noun)",
+      "text": "As it is the circular Motion of the Mill-ſtone which brings the Corn out of the Hopper by Jerks, and with a Velocity depending upon that of the Stone, other Grains are always ſucceeding, which raiſe it anew, and the Flower just made being no longer preſs'd is carry'd away into the Boulting Mill by the Circulation of Air that the Mill-ſtone puts into motion, which makes a whirling there.",
+      "marked": "As it is the circular Motion of the <b>Mill-ſtone</b> which brings the Corn out of the Hopper by Jerks, and with a Velocity depending upon that of the Stone, other Grains are always ſucceeding, which raiſe it anew, and the Flower just made being no longer preſs&#x27;d is carry&#x27;d away into the Boulting Mill by the Circulation of Air that the <b>Mill-ſtone</b> puts into motion, which makes a whirling there.",
+      "word_offsets": [
+        {
+          "offset": [
+            36,
+            46
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            331,
+            341
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "intraparty.adj.5416f54a#0",
+      "source": "lemminflect",
+      "target": "intraparty (adj)",
+      "text": "In Israel, intraparty rivalries also intensified, with former Prime Minister Ehud Barak announcing that he would run for the chairmanship of the Labor Party, challenging the current leader and defense minister, Amir Peretz, in primaries on May 24.",
+      "marked": "In Israel, <b>intraparty</b> rivalries also intensified, with former Prime Minister Ehud Barak announcing that he would run for the chairmanship of the Labor Party, challenging the current leader and defense minister, Amir Peretz, in primaries on May 24.",
+      "word_offsets": [
+        {
+          "offset": [
+            11,
+            21
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "gwonbeop.noun.17ffdc8c#0",
+      "source": "lemminflect",
+      "target": "gwonbeop (noun)",
+      "text": "The 18 martial techniques begin with unarmed training, or gwonbeop, including punching, wrestling and kicking , all of which are fundamental to the higher levels of armed training.",
+      "marked": "The 18 martial techniques begin with unarmed training, or <b>gwonbeop</b>, including punching, wrestling and kicking , all of which are fundamental to the higher levels of armed training.",
+      "word_offsets": [
+        {
+          "offset": [
+            58,
+            66
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "semivirgin.adj.c538e7cf#0",
+      "source": "lemminflect",
+      "target": "semivirgin (adj)",
+      "text": "Portland is doing something unprecedented here, extending tracks into virgin or semivirgin land. It's much as New York extended the subway and elevated train lines into Queens and Brooklyn in the early part of this century.",
+      "marked": "Portland is doing something unprecedented here, extending tracks into virgin or <b>semivirgin</b> land. It&#x27;s much as New York extended the subway and elevated train lines into Queens and Brooklyn in the early part of this century.",
+      "word_offsets": [
+        {
+          "offset": [
+            80,
+            90
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "upbind.verb.318feb56#0",
+      "source": "lemminflect",
+      "target": "upbind (verb)",
+      "text": "All these the daughters of old Nereus were, / Which have the sea in charge to them assign'd, / To rule his tides, and surges to uprear, / To bring forth storms, or fast them to upbind, / And sailors save from wrecks of wrathful wind.",
+      "marked": "All these the daughters of old Nereus were, / Which have the sea in charge to them assign&#x27;d, / To rule his tides, and surges to uprear, / To bring forth storms, or fast them to <b>upbind</b>, / And sailors save from wrecks of wrathful wind.",
+      "word_offsets": [
+        {
+          "offset": [
+            177,
+            183
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "grabble.verb.247b4d34#0",
+      "source": "lemminflect",
+      "target": "grabble (verb)",
+      "text": "Ile grable for Gudgeons or fish for Flounders in the Rereward of our eminent temporizing Humorists, sharpe Satyrists, or Ænigmaticall Epigramatists.",
+      "marked": "Ile grable for Gudgeons or fish for Flounders in the Rereward of our eminent temporizing Humorists, sharpe Satyrists, or Ænigmaticall Epigramatists.",
+      "word_offsets": [],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "spit.verb.7c97ecdc#0",
+      "source": "lemminflect",
+      "target": "spit (verb)",
+      "text": "And they ſpit upon him [Jesus Christ], and tooke the reed, and ſmote him on the head.",
+      "marked": "And they <b>ſpit</b> upon him [Jesus Christ], and tooke the reed, and ſmote him on the head.",
+      "word_offsets": [
+        {
+          "offset": [
+            9,
+            13
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "Lisa.name.1490f933#1",
+      "source": "lemminflect",
+      "target": "Lisa (name)",
+      "text": "Elizabeth coloured.\n\"Oh, I don't want the doll called after me, if that is what you mean,\" she said, rather disdainfully.\n\"Nonsense, Lisa!\" laughed her father, \"you ought to consider yourself highly honoured to have such a handsome lady as this for your namesake.\"",
+      "marked": "Elizabeth coloured.\n&quot;Oh, I don&#x27;t want the doll called after me, if that is what you mean,&quot; she said, rather disdainfully.\n&quot;Nonsense, <b>Lisa</b>!&quot; laughed her father, &quot;you ought to consider yourself highly honoured to have such a handsome lady as this for your namesake.&quot;",
+      "word_offsets": [
+        {
+          "offset": [
+            133,
+            137
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "pathetical.adj.66d626f8#0",
+      "source": "lemminflect",
+      "target": "pathetical (adj)",
+      "text": "Not Hermes Prolocutor to the Gods,\nCould vſe perſwaſions more pathetical.",
+      "marked": "Not Hermes Prolocutor to the Gods,\nCould vſe perſwaſions <b>more pathetical</b>.",
+      "word_offsets": [
+        {
+          "offset": [
+            57,
+            72
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        },
+        {
+          "offset": [
+            62,
+            72
+          ],
+          "sources": [
+            "bold"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "icing on the cake.noun.a3afbf1e#5",
+      "source": "lemminflect",
+      "target": "icing on the cake (noun)",
+      "text": "Lewis Hamilton is eyeing a hat-trick after victories at Silverstone in the last two years – he’d become the first to do the British GP treble, all on this historically important track, and he could even leapfrog his Mercedes team-mate Nico Rosberg in the overall standings which would be the sweetest of icings on the cake at his home circuit.",
+      "marked": "Lewis Hamilton is eyeing a hat-trick after victories at Silverstone in the last two years – he’d become the first to do the British GP treble, all on this historically important track, and he could even leapfrog his Mercedes team-mate Nico Rosberg in the overall standings which would be the sweetest of <b>icings on the cake</b> at his home circuit.",
+      "word_offsets": [
+        {
+          "offset": [
+            304,
+            322
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "solebar.noun.1640727d#3",
+      "source": "lemminflect",
+      "target": "solebar (noun)",
+      "text": "[...] the original Chalice built coaches have a deep solebar, while the Keef coaches were much shallower.",
+      "marked": "[...] the original Chalice built coaches have a deep <b>solebar</b>, while the Keef coaches were much shallower.",
+      "word_offsets": [
+        {
+          "offset": [
+            53,
+            60
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "equicide.noun.53e0bd23#6",
+      "source": "lemminflect",
+      "target": "equicide (noun)",
+      "text": "The final four stories in New Adventures were conceived and written as a series. In each of them Ellery [Queen] solves a crime—homicide, attempted equicide, jewel theft—that is connected with a major sporting event.",
+      "marked": "The final four stories in New Adventures were conceived and written as a series. In each of them Ellery [Queen] solves a crime—homicide, attempted <b>equicide</b>, jewel theft—that is connected with a major sporting event.",
+      "word_offsets": [
+        {
+          "offset": [
+            147,
+            155
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "Schrödinger's cat.noun.5afa0c9e#0",
+      "source": "lemminflect",
+      "target": "Schrödinger's cat (noun)",
+      "text": "To see how, let us consider a nested system of Schrödinger's cats.",
+      "marked": "To see how, let us consider a nested system of <b>Schrödinger&#x27;s cats</b>.",
+      "word_offsets": [
+        {
+          "offset": [
+            47,
+            65
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "overdo.verb.801f80c3#1",
+      "source": "lemminflect",
+      "target": "overdo (verb)",
+      "text": "Good God! hovv poore a thing is vvretched man? / So fraile, that let him ſtriue the beſt he can, / VVith euery little blaſt hee’s ouerdon.",
+      "marked": "Good God! hovv poore a thing is vvretched man? / So fraile, that let him ſtriue the beſt he can, / VVith euery little blaſt hee’s <b>ouerdon</b>.",
+      "word_offsets": [
+        {
+          "offset": [
+            130,
+            137
+          ],
+          "sources": [
+            "bold"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "heavy.adj.ccd14609#0",
+      "source": "lemminflect",
+      "target": "heavy (adj)",
+      "text": "The ovarian response to gonadotropic hormones may be erratic at first, so that irregular or heavy bleeding sometimes occurs",
+      "marked": "The ovarian response to gonadotropic hormones may be erratic at first, so that irregular or <b>heavy</b> bleeding sometimes occurs",
+      "word_offsets": [
+        {
+          "offset": [
+            92,
+            97
+          ],
+          "sources": [
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "rubber match.noun.2408002f#0",
+      "source": "lemminflect",
+      "target": "rubber match (noun)",
+      "text": "The Red Sox, having lost the opener and won the second game, lost the rubber match against the Twins.",
+      "marked": "The Red Sox, having lost the opener and won the second game, lost the <b>rubber match</b> against the Twins.",
+      "word_offsets": [
+        {
+          "offset": [
+            70,
+            82
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  },
+  {
+    "data": {
+      "task": "offsets",
+      "item_id": "dithyramb.noun.e1b91d12#0",
+      "source": "lemminflect",
+      "target": "dithyramb (noun)",
+      "text": "Now of the numerical constitution of the chorus before Aeschylus we know nothing; but to him, in the Suppliant Maidens at least, it was a happy coincidence that the myth gave to Danaüs fifty daughters, a number exactly equal to that of the chorus of the dithyramb, from which tragedy itself had sprung.",
+      "marked": "Now of the numerical constitution of the chorus before Aeschylus we know nothing; but to him, in the Suppliant Maidens at least, it was a happy coincidence that the myth gave to Danaüs fifty daughters, a number exactly equal to that of the chorus of the <b>dithyramb</b>, from which tragedy itself had sprung.",
+      "word_offsets": [
+        {
+          "offset": [
+            254,
+            263
+          ],
+          "sources": [
+            "bold",
+            "lemmatizer"
+          ]
+        }
+      ],
+      "seed": 0
+    }
+  }
+]

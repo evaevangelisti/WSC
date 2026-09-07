@@ -1,0 +1,14 @@
+<View>
+  <Header value="$target"/>
+  <HyperText name="definitions" value="$definitions"/>
+  <Header value="Select every valid association, with one relation per candidate."/>
+  <Header value="wiktionary_narrower: Wiktionary is more specific. wiktionary_broader: Wiktionary is more general."/>
+  <Choices name="links" toName="definitions" value="$choices" choice="multiple"/>
+  <Choices name="status" toName="definitions" choice="single" required="true">
+    <Choice value="matched"/>
+    <Choice value="no_match"/>
+    <Choice value="uncertain"/>
+    <Choice value="candidate_missing"/>
+  </Choices>
+  <TextArea name="notes" toName="definitions" rows="3" placeholder="Optional observations or the missing ILI"/>
+</View>
