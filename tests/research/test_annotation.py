@@ -3,7 +3,7 @@ Shared sampling and manual alignment reference contracts.
 """
 
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import cast
 
@@ -249,3 +249,20 @@ def test_shared_sampling_and_splits_are_reproducible() -> None:
     splits = split_queries([*queries, extra], 41)
 
     assert splits["other"] == splits["entry1"]
+
+
+@pytest.mark.parametrize("task", list(AlignmentTask))
+def test_removed_candidate_status_cannot_enter_gold(
+    tmp_path: Path,
+    task: AlignmentTask,
+) -> None:
+    """Removed decisions require manual revision rather than automatic relabeling."""
+    sample = replace(query(), task=task)
+    path = tmp_path / "labels.json"
+    _ = path.write_text(
+        json.dumps([annotated_task(sample, [], "candidate_missing")]),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Unknown judgement"):
+        _ = read_judgements([path])

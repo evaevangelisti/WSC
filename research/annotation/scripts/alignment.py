@@ -196,7 +196,6 @@ def _validate_judgement(judgement: Judgement) -> None:
         "matched",
         "no_match",
         "uncertain",
-        "candidate_missing",
     }:
         raise ValueError(
             f"Unknown judgement for {query.alignment_id}: {judgement.status}"
@@ -224,7 +223,6 @@ def _validate_judgement(judgement: Judgement) -> None:
     if query.task == AlignmentTask.TRANSLATIONS and (
         len({source for source, _, _ in judgement.links}) != len(judgement.links)
         or len({target for _, target, _ in judgement.links}) != len(judgement.links)
-        or judgement.status == "candidate_missing"
     ):
         raise ValueError(
             f"Translation judgement violates one-to-one alignment: {query.alignment_id}"

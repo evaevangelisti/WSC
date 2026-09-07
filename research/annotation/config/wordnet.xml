@@ -8,7 +8,6 @@
     <Choice value="matched"/>
     <Choice value="no_match"/>
     <Choice value="uncertain"/>
-    <Choice value="candidate_missing"/>
   </Choices>
-  <TextArea name="notes" toName="definitions" rows="3" placeholder="Optional observations or the missing ILI"/>
+  <TextArea name="notes" toName="definitions" rows="3" placeholder="Optional observations"/>
 </View>

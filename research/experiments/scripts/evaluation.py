@@ -42,7 +42,7 @@ def evaluate(
         threshold: Model-specific abstention boundary.
 
     Returns:
-        Independent observations excluding uncertain and candidate-missing tasks.
+        Independent observations excluding uncertain tasks.
 
     Raises:
         ValueError: If predictions lack a reference task or use different candidates.

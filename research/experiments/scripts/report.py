@@ -412,14 +412,13 @@ def build_report(
         (
             f"Unique resolved annotations: {len(gold.judgements)}. "
             f"Uncertain: {statuses['uncertain']}. "
-            f"Missing candidate: {statuses['candidate_missing']}. "
             f"Unresolved disagreements: {len(gold.conflicts)}."
         ),
         "",
         f"Independent agreement before adjudication: {gold.agreed}/{gold.repeated}.",
         "",
         (
-            "Link metrics exclude uncertain, unresolved, and candidate-missing tasks. "
+            "Link metrics exclude uncertain and unresolved tasks. "
             "Recall is conditional on candidates, not end-to-end WordNet recall."
         ),
         "",
@@ -429,14 +428,6 @@ def build_report(
         ),
         "",
     ]
-    if statuses["matched"] + statuses["candidate_missing"]:
-        availability = statuses["matched"] / (
-            statuses["matched"] + statuses["candidate_missing"]
-        )
-        lines += [
-            f"Candidate availability among tasks needing a match: {availability:.1%}.",
-            "",
-        ]
     winner = select_run(runs)
     lines += _write_comparisons(runs, "development")
     lines += [
