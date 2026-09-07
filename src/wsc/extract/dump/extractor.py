@@ -1,6 +1,4 @@
-"""
-Extraction of the translations wiktextract leaves behind.
-"""
+"""Extraction of the translations wiktextract leaves behind."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -8,7 +6,6 @@ from pathlib import Path
 from .pages import read_pages
 from .translations import SUBPAGE_SUFFIX, PageTranslations, read_page
 
-# What tells a page worth reading from the millions that are not.
 _POINTER = "{{trans-see"
 _POINTER_IN_TABLE = "{{trans-top-see"
 
@@ -28,8 +25,7 @@ class DumpExtractor:
         Set which language's sections are read.
 
         Args:
-            language_section: What the edition heads its own language with,
-            such as English.
+            language_section: Language section heading, such as English.
         """
         self._language_section: str = language_section
 

@@ -1,6 +1,4 @@
-"""
-Model-blind alignment tasks and validated manual reference associations.
-"""
+"""Model-blind alignment tasks and validated manual reference associations."""
 
 import json
 from collections import defaultdict
@@ -10,9 +8,9 @@ from html import escape
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
-from wsc.constants import TRANSLATION_RELATION
-from wsc.models import WordNetRelation
-from wsc.models.alignment import AlignmentQuery, AlignmentTask
+from wsc.alignment import render_definition
+from wsc.alignment.tasks import TASK_HANDLERS
+from wsc.models.alignment import AlignmentQuery, AlignmentTask, GlossMode
 from wsc.reading import QueryRecord, parse_query
 
 from .sampling import repeat_items, split_queries, write_json
@@ -65,7 +63,7 @@ class Judgement:
     Attributes:
         query: Original model-blind task.
         annotator: Label Studio annotator identity.
-        status: Matched, absent, uncertain, or missing candidate.
+        status: Matched, absent, or uncertain annotation.
         links: Explicitly accepted directed associations.
         notes: Optional qualitative observations.
     """
@@ -95,7 +93,9 @@ class GoldSample:
     agreed: int
 
 
-def annotator_id(value: int | str | dict[str, object]) -> str:
+def annotator_id(
+    value: int | str | dict[str, object],
+) -> str:
     """
     Identify the same annotator across compact and expanded Label Studio exports.
 
@@ -108,7 +108,9 @@ def annotator_id(value: int | str | dict[str, object]) -> str:
     return str(value["id"] if isinstance(value, dict) else value)
 
 
-def build_task(query: AlignmentQuery) -> dict[str, object]:
+def build_task(
+    query: AlignmentQuery,
+) -> dict[str, object]:
     """
     Present every candidate link without revealing model predictions.
 
@@ -119,21 +121,20 @@ def build_task(query: AlignmentQuery) -> dict[str, object]:
         Label Studio task with dynamic choices and original context.
     """
     sources = "".join(
-        f"<li><b>S{position}</b>: {escape(' > '.join(source.glosses))}</li>"
+        (
+            f"<li><b>S{position}</b>: "
+            f"{escape(render_definition(source, GlossMode.FULL))}</li>"
+        )
         for position, source in enumerate(query.source_definitions, 1)
     )
     targets = "".join(
         (
-            f"<li><b>T{position}</b> ({escape(target.id)}): "
-            f"{escape(target.glosses[-1])}</li>"
+            f"<li><b>T{position}</b>: "
+            f"{escape(render_definition(target, GlossMode.LAST))}</li>"
         )
         for position, target in enumerate(query.target_definitions, 1)
     )
-    relations = (
-        (TRANSLATION_RELATION,)
-        if query.task == AlignmentTask.TRANSLATIONS
-        else tuple(WordNetRelation)
-    )
+    relations = TASK_HANDLERS[query.task].relations
     choices = [
         {
             "value": json.dumps([source.id, target.id, relation], ensure_ascii=False),
@@ -159,7 +160,11 @@ def build_task(query: AlignmentQuery) -> dict[str, object]:
     }
 
 
-def write_tasks(queries: list[AlignmentQuery], output_dir: Path, seed: int) -> None:
+def write_tasks(
+    queries: list[AlignmentQuery],
+    output_dir: Path,
+    seed: int,
+) -> None:
     """
     Write shared primary tasks and independent second assignments.
 
@@ -181,7 +186,9 @@ def write_tasks(queries: list[AlignmentQuery], output_dir: Path, seed: int) -> N
     )
 
 
-def _validate_judgement(judgement: Judgement) -> None:
+def _validate_judgement(
+    judgement: Judgement,
+) -> None:
     """
     Reject contradictory labels before they become reference data.
 
@@ -192,6 +199,7 @@ def _validate_judgement(judgement: Judgement) -> None:
         ValueError: If decisions violate candidate identity, relation, or cardinality.
     """
     query = judgement.query
+
     if judgement.status not in {
         "matched",
         "no_match",
@@ -200,26 +208,27 @@ def _validate_judgement(judgement: Judgement) -> None:
         raise ValueError(
             f"Unknown judgement for {query.alignment_id}: {judgement.status}"
         )
+
     if (judgement.status == "matched" and not judgement.links) or (
         judgement.status in {"no_match", "uncertain"} and judgement.links
     ):
         raise ValueError(
             f"Matched status and selected links disagree: {query.alignment_id}"
         )
-    relations = (
-        {TRANSLATION_RELATION}
-        if query.task == AlignmentTask.TRANSLATIONS
-        else set(WordNetRelation)
-    )
+
+    relations = TASK_HANDLERS[query.task].relations
     sources = {source.id for source in query.source_definitions}
     targets = {target.id for target in query.target_definitions}
+
     for source, target, relation in judgement.links:
         if source not in sources or target not in targets or relation not in relations:
             raise ValueError(f"Unknown candidate or relation: {query.alignment_id}")
+
     if len({(source, target) for source, target, _ in judgement.links}) != len(
         judgement.links
     ):
         raise ValueError(f"Multiple relations for one pair: {query.alignment_id}")
+
     if query.task == AlignmentTask.TRANSLATIONS and (
         len({source for source, _, _ in judgement.links}) != len(judgement.links)
         or len({target for _, target, _ in judgement.links}) != len(judgement.links)
@@ -229,7 +238,9 @@ def _validate_judgement(judgement: Judgement) -> None:
         )
 
 
-def read_judgements(paths: Sequence[Path]) -> list[Judgement]:
+def read_judgements(
+    paths: Sequence[Path],
+) -> list[Judgement]:
     """
     Import completed Label Studio annotations, including optional notes.
 
@@ -243,29 +254,37 @@ def read_judgements(paths: Sequence[Path]) -> list[Judgement]:
         ValueError: If required decisions or valid candidate links are missing.
     """
     judgements: list[Judgement] = []
+
     for path in paths:
         tasks = cast(list[AnnotatedTask], json.loads(path.read_text(encoding="utf-8")))
+
         for task in tasks:
             query = parse_query(task["data"]["query"])
+
             for annotation in task["annotations"]:
                 if annotation.get("was_cancelled", False):
                     continue
+
                 results = {
                     item["from_name"]: item["value"] for item in annotation["result"]
                 }
                 statuses = results.get("status", {}).get("choices", [])
+
                 if len(statuses) != 1:
                     raise ValueError(
                         f"Exactly one status is required: {query.alignment_id}"
                     )
+
                 values = [
                     cast(list[str], json.loads(value))
                     for value in results.get("links", {}).get("choices", [])
                 ]
+
                 if any(len(value) != 3 for value in values):
                     raise ValueError(
                         f"Incomplete source, target, or relation: {query.alignment_id}"
                     )
+
                 judgement = Judgement(
                     query,
                     annotator_id(annotation["completed_by"]),
@@ -297,30 +316,40 @@ def consolidate(
         ValueError: If task contexts differ or adjudications are ambiguous.
     """
     groups: defaultdict[tuple[AlignmentTask, str], list[Judgement]] = defaultdict(list)
+
     for judgement in judgements:
         groups[judgement.query.task, judgement.query.alignment_id].append(judgement)
+
     resolved = {
         (item.query.task, item.query.alignment_id): item for item in adjudications
     }
+
     if len(resolved) != len(adjudications) or not resolved.keys() <= groups.keys():
         raise ValueError("Adjudications must uniquely identify existing tasks")
+
     gold: list[Judgement] = []
     conflicts: list[str] = []
     repeated = agreed = 0
+
     for key, readings in groups.items():
         first = readings[0]
+
         if any(item.query != first.query for item in readings):
             raise ValueError(f"Task context changed: {key}")
+
         signatures = {(item.status, item.links) for item in readings}
         independent = len({item.annotator for item in readings}) > 1
         repeated += independent
         agreed += independent and len(signatures) == 1
         final = resolved.get(key)
+
         if final is not None and final.query != first.query:
             raise ValueError(f"Adjudication context changed: {key}")
+
         if final is None and len(signatures) > 1:
             conflicts.append(first.query.alignment_id)
             continue
+
         decision = final or first
         notes = tuple(
             dict.fromkeys(note for item in (*readings, decision) for note in item.notes)

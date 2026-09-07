@@ -1,49 +1,48 @@
-"""
-Semantic alignment defaults and relation instructions.
-"""
+"""Define language model defaults and alignment record fields."""
 
 from pathlib import Path
 
-from ..reading.instructions import read_instructions
+from ..reading.prompts import read_prompts
 
 ALIGNMENT_FIELDS = (
     "alignment_id",
     "source_id",
     "target_id",
     "relation",
-    "score",
+    "reason",
+    "response",
     "context",
 )
-"""Columns preserving alignment evidence and inference metadata in tabular exports."""
+"""Preserve decisions, generated responses, and query context in TSV records."""
 
-ALIGNMENT_MODEL = "Qwen/Qwen3-Reranker-8B"
-"""Default cross-encoder used to score semantic relations."""
+ALIGNMENT_MODEL = "Qwen/Qwen3-8B"
+"""Select the default served model identifier."""
 
-ALIGNMENT_MODELS = (
-    ALIGNMENT_MODEL,
-    "Qwen/Qwen3-Reranker-4B",
-    "zeroentropy/zerank-2-reranker",
-    "cross-encoder/ettin-reranker-1b-v1",
-)
-"""Cross-encoders compared on the shared annotation sample."""
+ALIGNMENT_MAXIMUM_TOKENS = 4096
+"""Limit the generated response length."""
 
-ALIGNMENT_BATCH_SIZE = 32
-"""Number of definition pairs scored per inference batch."""
+ALIGNMENT_TEMPERATURE = 0.0
+"""Request zero-temperature generation."""
 
-ALIGNMENT_MAXIMUM_LENGTH = 2048
-"""Maximum token count for each encoded definition pair."""
+ALIGNMENT_TIMEOUT = 300
+"""Limit each API request to five minutes."""
 
-INSTRUCTIONS_PATH = Path(__file__).with_name("instructions.toml")
-"""Bundled profiles available to commands and experiments."""
+PROMPTS_PATH = Path(__file__).with_name("prompts.toml")
+"""Locate the bundled task prompt templates."""
 
-DEFAULT_INSTRUCTIONS = read_instructions(INSTRUCTIONS_PATH)[0]
-"""Baseline profile used unless another profile is selected."""
-
-ALIGNMENT_INSTRUCTION = DEFAULT_INSTRUCTIONS.instruction
-"""Default general instruction, defined in the bundled TOML."""
+DEFAULT_PROMPTS = read_prompts(PROMPTS_PATH)
+"""Load one default prompt template per task."""
 
 TRANSLATION_RELATION = "translation"
-"""Relation identifying the translation gloss associated with a sense."""
+"""Identify a translation association."""
 
-RELATION_INSTRUCTIONS = DEFAULT_INSTRUCTIONS.relations
-"""Default relation hypotheses, defined in the bundled TOML."""
+ALIGNMENT_SCHEMA = "5"
+"""Version the decision-based cache independently of reranker scores."""
+
+ALIGNMENT_URL = "http://localhost:8000/v1"
+"""Address the default vLLM server."""
+
+HIERARCHY_CONSTRAINT = (
+    "- Read each '>' hierarchy from general context to the final specific sense."
+)
+"""Explain the full Wiktionary gloss representation."""

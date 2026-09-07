@@ -1,6 +1,4 @@
-"""
-Tests for src/wsc/upstream/repositories/wordnet.py.
-"""
+"""Tests for src/wsc/upstream/repositories/wordnet.py."""
 
 import pytest
 import requests
@@ -20,23 +18,19 @@ _EDITIONS = st.lists(wordnet_versions, min_size=1, max_size=4, unique=True)
 
 
 class TestUrl:
-    """
-    Where one edition of the wordnet sits.
-    """
+    """Where one edition of the wordnet sits."""
 
     def test_names_the_file_after_the_edition(
         self,
     ) -> None:
-        """The address is built rather than discovered, so it is built here in full."""
+        """The generated address includes the requested edition and filename."""
         assert wordnet.url("2025") == (
             "https://en-word.net/downloads/english-wordnet-2025.xml.gz"
         )
 
 
 class TestLatestVersion:
-    """
-    The most recent edition of the wordnet.
-    """
+    """The most recent edition of the wordnet."""
 
     @given(_EDITIONS)
     def test_takes_the_newest_the_index_lists(

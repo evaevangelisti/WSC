@@ -1,6 +1,4 @@
-"""
-Extraction of synsets from a wordnet published in WN-LMF.
-"""
+"""Extraction of synsets from a wordnet published in WN-LMF."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -12,7 +10,7 @@ from tqdm import tqdm
 from ..files import open_compressed
 from ..models import POS, Synset
 
-# WordNet's own codes. A satellite adjective is an adjective all the same.
+# WordNet satellite adjectives share the adjective part of speech.
 _POS_BY_CODE = {
     "n": POS.NOUN,
     "v": POS.VERB,
@@ -26,8 +24,8 @@ class WordNetExtractor:
     """
     Reads synsets out of a wordnet published in WN-LMF.
 
-    The filter is settled once, on the extractor, the way the Wiktionary side
-    settles its own.
+    The filter is settled once, on the extractor, the way the Wiktionary side settles
+    its own.
     """
 
     def __init__(
@@ -58,6 +56,7 @@ class WordNetExtractor:
             The synset, or None if its part of speech is not one we keep.
         """
         pos = _POS_BY_CODE.get(element.get("partOfSpeech", ""))
+
         if pos is None:
             return None
 
@@ -89,9 +88,8 @@ class WordNetExtractor:
         """
         Read synsets from a WN-LMF file, one at a time.
 
-        Lexical entries are listed before the synsets naming them as members,
-        so one pass is enough. Only the outer elements are cleared, since
-        clearing a child would empty it before its parent is read.
+        Lexical entries precede their synsets. Parent elements retain children
+        until processing completes.
 
         Args:
             input_path: The wordnet to read, compressed or not.
@@ -102,8 +100,6 @@ class WordNetExtractor:
         written_forms: dict[str, str] = {}
 
         with open_compressed(input_path, "rb") as file:
-            # iterparse is typed loosely; an end event carries the element
-            # that ended.
             elements = cast(
                 Iterator[tuple[str, ElementTree.Element]],
                 ElementTree.iterparse(file, events=("end",)),
@@ -111,7 +107,6 @@ class WordNetExtractor:
 
             for _, element in tqdm(elements, desc=input_path.name, unit=" element"):
                 if element.tag == "LexicalEntry":
-                    # WN-LMF gives every entry a lemma, and gives it one only.
                     lemma = cast(ElementTree.Element, element.find("Lemma"))
 
                     written_forms[element.get("id", "")] = lemma.get("writtenForm", "")

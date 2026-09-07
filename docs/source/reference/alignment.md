@@ -7,10 +7,13 @@
 .. automodule:: wsc.alignment.candidates
    :members:
 
-.. automodule:: wsc.alignment.encoder
+.. automodule:: wsc.alignment.client
    :members:
 
-.. automodule:: wsc.alignment.scoring
+.. automodule:: wsc.alignment.decisions
+   :members:
+
+.. automodule:: wsc.alignment.tasks
    :members:
 
 .. automodule:: wsc.alignment.records

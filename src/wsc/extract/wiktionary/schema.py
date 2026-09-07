@@ -1,9 +1,8 @@
 """
 The slice of the wiktextract schema the collector reads.
 
-Every key is optional: this describes someone else's JSON, and an entry
-carries only what the page it was made from happened to say.
-
+Every key is optional: this describes someone else's JSON, and an entry carries only
+what the page it was made from happened to say.
 """
 
 from collections.abc import Mapping
@@ -107,8 +106,7 @@ class RawEntry(TypedDict, total=False):
         word: The headword.
         pos: Its part of speech.
         lang_code: The language the headword belongs to.
-        etymology_number: Which etymology of the page it sits under, left
-        out where the page states only one.
+        etymology_number: Optional etymology number within the page.
         forms: The shapes the headword takes.
         senses: Its meanings.
         translations: What other languages call it.
@@ -123,7 +121,6 @@ class RawEntry(TypedDict, total=False):
     translations: list[RawTranslation]
 
 
-# What each record keeps, read off the declarations above.
 _ENTRY_KEYS = frozenset(RawEntry.__optional_keys__)
 _SENSE_KEYS = frozenset(RawSense.__optional_keys__)
 _FORM_KEYS = frozenset(RawForm.__optional_keys__)
@@ -132,7 +129,6 @@ _TARGET_KEYS = frozenset(RawTarget.__optional_keys__)
 _SYNONYM_KEYS = frozenset(RawSynonym.__optional_keys__)
 _TRANSLATION_KEYS = frozenset(RawTranslation.__optional_keys__)
 
-# Which keys of a sense hold records of their own, and what each is cut to.
 _SENSE_LISTS = {
     "examples": _EXAMPLE_KEYS,
     "alt_of": _TARGET_KEYS,
@@ -188,8 +184,7 @@ def narrow(
     """
     Cut one entry down to what this module declares.
 
-    An extraction carries every field wiktextract can write; few are
-    read.
+    An extraction carries every field wiktextract can write; few are read.
 
     Args:
         entry: One entry, as the extraction wrote it.

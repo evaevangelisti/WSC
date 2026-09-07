@@ -1,6 +1,4 @@
-"""
-Shared sampling and manual alignment reference contracts.
-"""
+"""Shared sampling and manual alignment reference contracts."""
 
 import json
 from dataclasses import asdict, replace
@@ -97,6 +95,7 @@ def test_offset_samples_share_identities_but_preserve_engine_proposals(
     """All engines receive identical sentences and independent repeat identities."""
     data = tmp_path / "data"
     data.mkdir()
+
     for position, export in enumerate(EXPORTS):
         records = [
             {
@@ -123,11 +122,14 @@ def test_offset_samples_share_identities_but_preserve_engine_proposals(
             }
             for index in range(130)
         ]
+
         if position == 2:
             records.reverse()
+
         _ = (data / export).write_text(
             "\n".join(json.dumps(record) for record in records), encoding="utf-8"
         )
+
     output = tmp_path / "tasks"
     build_offsets(data, output, 100, 31)
     tasks: list[list[dict[str, dict[str, object]]]] = [
@@ -170,7 +172,7 @@ def test_frozen_alignment_tasks_have_no_model_predictions(tmp_path: Path) -> Non
 def test_annotation_import_deduplicates_agreement_and_preserves_notes(
     tmp_path: Path,
 ) -> None:
-    """Repeated readings affect agreement, not reference sample size."""
+    """Repeated readings contribute to agreement statistics."""
     path = tmp_path / "labels.json"
     sample = query()
     _ = path.write_text(
@@ -256,7 +258,7 @@ def test_removed_candidate_status_cannot_enter_gold(
     tmp_path: Path,
     task: AlignmentTask,
 ) -> None:
-    """Removed decisions require manual revision rather than automatic relabeling."""
+    """Removed decisions require manual revision."""
     sample = replace(query(), task=task)
     path = tmp_path / "labels.json"
     _ = path.write_text(

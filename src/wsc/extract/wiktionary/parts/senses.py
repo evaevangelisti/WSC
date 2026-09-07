@@ -1,6 +1,4 @@
-"""
-The meanings an entry holds.
-"""
+"""The meanings an entry holds."""
 
 from ....models import Sense
 from ..identifiers import sense_id
@@ -9,8 +7,6 @@ from ..schema import RawSense
 from .sentences import parse_sentences
 from .synonyms import parse_synonyms
 
-# Tags marking a sense that states a form rather than a meaning, which is
-# a third of what Wiktionary writes.
 _FORM_TAGS = frozenset({"form-of", "alt-of"})
 
 
@@ -40,12 +36,14 @@ def parse_senses(
 
     for raw_sense in raw_senses:
         tags = tuple(raw_sense.get("tags", []))
+
         if not _FORM_TAGS.isdisjoint(tags):
             continue
 
         glosses = tuple(
             gloss.strip() for gloss in raw_sense.get("glosses", []) if gloss.strip()
         )
+
         if not glosses or any(carries_markup(gloss) for gloss in glosses):
             continue
 

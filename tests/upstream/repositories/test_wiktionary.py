@@ -1,6 +1,4 @@
-"""
-Tests for src/wsc/upstream/repositories/wiktionary.py.
-"""
+"""Tests for src/wsc/upstream/repositories/wiktionary.py."""
 
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
@@ -19,8 +17,6 @@ from wsc.upstream.repositories import wiktionary
 TIMEOUT = (1, 1)
 USER_AGENT = "wsc/0.1.0 (https://example.invalid)"
 
-# What one dump answers when asked how far along it is: the state of the job
-# the collector waits on, or nothing readable at all.
 _REPORTS = st.sampled_from(
     ["done", "in-progress", "waiting", "skipped", "missing", "unreadable"]
 )
@@ -42,13 +38,11 @@ def _wikimedia(
     """
     Answer in Wikimedia's place, for the whole of what a resolution may ask.
 
-    A resolution stops at the first dump it finds finished, so what it never
-    asks about is registered all the same and left unasked.
+    A resolution stops at the first dump it finds finished, so what it never asks about
+    is registered all the same and left unasked.
 
     Args:
-        reports: What each dump reports, by the day it began: the state of
-            its job, or missing for one answering nothing and unreadable for
-            one answering something other than a report.
+        reports: Dump dates mapped to job states or invalid response markers.
         times: How often the index lists each dump.
 
     Yields:
@@ -92,14 +86,12 @@ def _finished(
 
 
 class TestUrl:
-    """
-    Where the archive of pages for one dump sits.
-    """
+    """Where the archive of pages for one dump sits."""
 
     def test_names_the_archive_after_the_date(
         self,
     ) -> None:
-        """The address is built rather than discovered, so it is built here in full."""
+        """The generated address includes the requested edition and filename."""
         assert wiktionary.url("20260801") == (
             "https://dumps.wikimedia.org/enwiktionary/20260801/"
             "enwiktionary-20260801-pages-articles.xml.bz2"
@@ -107,9 +99,7 @@ class TestUrl:
 
 
 class TestLatestDate:
-    """
-    The most recent dump that has finished being built.
-    """
+    """The most recent dump that has finished being built."""
 
     @given(_LISTINGS, st.data())
     def test_takes_the_newest_dump_that_is_done(

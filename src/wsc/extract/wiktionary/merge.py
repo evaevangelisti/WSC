@@ -1,6 +1,4 @@
-"""
-Gathering the entries Wiktionary splits by etymology into one.
-"""
+"""Gathering the entries Wiktionary splits by etymology into one."""
 
 from collections.abc import Iterable, Iterator
 from dataclasses import replace
@@ -92,8 +90,8 @@ def merge_senses(
     """
     Gather the senses of one entry that say the same thing into one.
 
-    Wiktionary writes a gloss twice often enough that a name settled by its
-    meaning cannot tell the two apart.
+    Wiktionary writes a gloss twice often enough that a name settled by its meaning
+    cannot tell the two apart.
 
     Args:
         senses: The senses of one entry, in the order they were read.
@@ -129,12 +127,10 @@ def merge_lemmas(
     Nothing downstream reads the etymology split.
 
     Args:
-        queried_lemmas: The entries read, each with what to search its
-        sentences for.
+        queried_lemmas: Collected entries and their sentence search queries.
 
     Yields:
-        One entry per headword and part of speech, in the order the first of
-        its etymologies was read.
+        Merged entries in their first occurrence order.
     """
     gathered_lemmas: dict[str, tuple[Lemma, Query]] = {}
 
@@ -152,7 +148,7 @@ def merge_lemmas(
 
         add_translations(kept_lemma.translations, lemma.translations)
 
-        # Each etymology inflects the headword its own way.
+        # Etymologies can provide different inflection forms for the same headword.
         gathered_lemmas[lemma.id] = (
             kept_lemma,
             replace(kept_query, forms=kept_query.forms | query.forms),

@@ -1,8 +1,7 @@
 """
 Generators the properties are drawn from.
 
-A generator says what a source may write rather than what it usually writes,
-so the alphabets reach past ASCII and the lists reach down to empty.
+Generators cover Unicode text, empty collections, and source-format boundaries.
 """
 
 import string
@@ -24,12 +23,8 @@ from wsc.models import (
 type RawJson = dict[str, object]
 """One decoded JSON object, as wiktextract writes them."""
 
-# Letters as far as Latin Extended-B, whose case Python's re folds the way
-# str does.
 _LETTERS = st.characters(categories=("Ll", "Lu"), max_codepoint=0x24F)
 
-# How a reference names a date, the year aside. Wiktionary writes one in more
-# ways than these, and the year opens each.
 _REFERENCE_SHAPES = [
     "{year}, A Book",
     "{year}s, A Song",
@@ -37,7 +32,6 @@ _REFERENCE_SHAPES = [
     "{year} August 11, A Newspaper",
 ]
 
-# Prose holding no digit, so that no year is read off it.
 _UNDATED = string.ascii_letters + " ,.'"
 
 words = st.text(alphabet=_LETTERS, min_size=1, max_size=8)
@@ -51,14 +45,15 @@ texts = st.text(
     min_size=1,
     max_size=60,
 ).filter(lambda text: bool(text.strip()))
-"""The sentence an example or a quotation carries, on one line: a break is
-where a quotation carrying its own source divides the two."""
+"""
+Single-line attestation text.
+"""
 
 sentence_kinds = st.sampled_from(["example", "quotation"])
 """What wiktextract calls a sentence, where it says which kind it read."""
 
 form_tags = st.sampled_from(["form-of", "alt-of"])
-"""A tag marking a sense that inflects a headword rather than defining it."""
+"""Identify tags marking inflected forms."""
 
 blanks = st.text(alphabet=" \t\n", min_size=1, max_size=3)
 """What reads as nothing at all once it has been stripped."""
@@ -99,8 +94,6 @@ unknown_pos_codes = st.text(
 ).filter(lambda code: code not in {pos.value for pos in POS})
 """A part of speech Wiktionary describes and the collector does not keep."""
 
-# What a builder falls back on when a test has nothing to say about that
-# part of an entry, drawn rather than left empty.
 
 _OFFSETS = st.integers(min_value=0, max_value=60)
 
@@ -155,8 +148,7 @@ def _dotted(
     Join the parts of an identifier the way an extraction joins them.
 
     Args:
-        parts: The headword, its part of speech and the ordinal telling it
-            from the entries sharing both.
+        parts: Headword, part of speech, and disambiguating ordinal.
 
     Returns:
         The identifier, as bank.noun.2.
@@ -238,8 +230,7 @@ def raw_senses(
     """
     Draw one sense of an entry.
 
-    A key holding nothing is left out rather than written empty, since
-    wiktextract leaves it out and the two have to read alike.
+    Generated records omit empty keys to match wiktextract output.
 
     Args:
         draw: Turns a strategy into one of its values.
@@ -367,9 +358,6 @@ def raw_entries(
 
     return raw
 
-
-# The models an export is handed, their text drawn wider than an extraction
-# would hand over: quotation marks, newlines and the rest.
 
 _LABEL_LISTS = st.lists(st.text(max_size=10), max_size=2).map(tuple)
 

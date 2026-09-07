@@ -1,8 +1,7 @@
 """
 What each source publishes, written the way that source writes it.
 
-A document is laid out in full rather than cut down, so a pattern that fits
-a shorter page is caught by the page it will meet.
+Complete source documents exercise realistic parsing boundaries.
 """
 
 import json
@@ -31,7 +30,6 @@ _WORDNET_LINK = (
     '<li><a href="/downloads/english-wordnet-{version}.{suffix}">{suffix}</a></li>\n'
 )
 
-# Every edition is offered in each of these, and one of them is read.
 _WORDNET_SUFFIXES = ("ttl.gz", "xml.gz", "zip")
 
 _LEXICON = """<?xml version="1.0" encoding="UTF-8"?>
@@ -206,9 +204,7 @@ def lexicon(
 
 WORDNET = (lexical_entry(), synset())
 """
-The least a wordnet can hold and still be read. What a command is served and
-what it is expected to have read are stated against this one, so they cannot
-drift apart.
+Minimal WordNet document shared by command fixtures and expected results.
 """
 
 

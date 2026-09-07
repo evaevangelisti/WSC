@@ -14,10 +14,6 @@ tasks *options:
 annotations *options:
     @uv run python -m annotation.scripts.report {{ options }}
 
-# Score model, gloss mode, and instruction combinations on frozen samples.
+# Run the alignment configuration grid and generate manual-reference reports.
 experiments *options:
     @uv run python -m experiments.scripts.run {{ options }}
-
-# Compare cached alignments against manual annotations.
-evaluation *options:
-    @uv run python -m experiments.scripts.report {{ options }}

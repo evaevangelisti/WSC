@@ -1,6 +1,4 @@
-"""
-Source locations and download defaults.
-"""
+"""Source locations and download defaults."""
 
 DUMP_INDEX_URL = "https://dumps.wikimedia.org/enwiktionary/"
 """Where the edition lists its dumps, one directory per day one began."""
@@ -24,7 +22,7 @@ USER_AGENT = "wsc/{version} (https://github.com/evaevangelisti/WSC)"
 """How a request names itself, Wikimedia asking that it name someone."""
 
 TIMEOUT = (10, 60)
-"""Seconds to wait for the connection, then for a read; not for the download."""
+"""Timeout in seconds for each connection and read operation."""
 
 CHUNK_SIZE = 1024 * 1024
 """How much of a download is held in memory before it reaches the disk."""

@@ -1,16 +1,12 @@
-"""
-Link-level evaluation and development-only threshold selection.
-"""
+"""Evaluate generated associations against independent manual annotations."""
 
 import random
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from math import nextafter
 
 from annotation.scripts.alignment import Judgement, Link
 
-from wsc.alignment import select_links
 from wsc.models.alignment import AlignmentResult
 
 
@@ -31,7 +27,6 @@ class Observation:
 def evaluate(
     results: dict[str, AlignmentResult],
     judgements: Sequence[Judgement],
-    threshold: float,
 ) -> list[Observation]:
     """
     Compare complete link sets on determinate, candidate-present tasks.
@@ -39,7 +34,6 @@ def evaluate(
     Args:
         results: Complete semantic evidence indexed by task identifier.
         judgements: Consolidated manual references.
-        threshold: Model-specific abstention boundary.
 
     Returns:
         Independent observations excluding uncertain tasks.
@@ -48,15 +42,20 @@ def evaluate(
         ValueError: If predictions lack a reference task or use different candidates.
     """
     observations: list[Observation] = []
+
     for judgement in judgements:
         identifier = judgement.query.alignment_id
+
         if identifier not in results or results[identifier].query != judgement.query:
             raise ValueError(
                 f"Prediction context differs from annotation: {identifier}"
             )
+
         if judgement.status not in {"matched", "no_match"}:
             continue
-        selected = select_links(results[identifier], threshold)
+
+        result = results[identifier]
+        selected = result.links
         observations.append(
             Observation(
                 judgement,
@@ -69,7 +68,10 @@ def evaluate(
     return observations
 
 
-def _ratio(numerator: int, denominator: int) -> float | None:
+def _ratio(
+    numerator: int,
+    denominator: int,
+) -> float | None:
     """
     Preserve undefined metrics when their denominator is zero.
 
@@ -83,7 +85,9 @@ def _ratio(numerator: int, denominator: int) -> float | None:
     return numerator / denominator if denominator else None
 
 
-def summarize(observations: Sequence[Observation]) -> dict[str, float | None]:
+def summarize(
+    observations: Sequence[Observation],
+) -> dict[str, float | None]:
     """
     Aggregate association quality separately from source and target coverage.
 
@@ -107,12 +111,16 @@ def summarize(observations: Sequence[Observation]) -> dict[str, float | None]:
         len({target for _, target, _ in item.predicted}) for item in observations
     )
     grouped: defaultdict[str, list[Observation]] = defaultdict(list)
+
     for item in observations:
         grouped[item.gold.query.lemma.casefold()].append(item)
+
     macro: list[float] = []
+
     for items in grouped.values():
         hits = sum(len(item.predicted & item.gold.links) for item in items)
         total = sum(len(item.predicted) + len(item.gold.links) for item in items)
+
         if total:
             macro.append(2 * hits / total)
 
@@ -129,99 +137,10 @@ def summarize(observations: Sequence[Observation]) -> dict[str, float | None]:
             len(observations),
         ),
         "No-match recall": _ratio(
-            sum(not item.predicted for item in no_match), len(no_match)
+            sum(not item.predicted for item in no_match),
+            len(no_match),
         ),
     }
-
-
-def threshold_curve(
-    results: dict[str, AlignmentResult],
-    judgements: Sequence[Judgement],
-) -> list[tuple[float, dict[str, float | None]]]:
-    """
-    Sweep development evidence without reading test labels.
-
-    Args:
-        results: Candidate scores for the shared sample.
-        judgements: Development references only.
-
-    Returns:
-        At most 102 thresholds and their measured metrics.
-
-    Raises:
-        ValueError: If development has no determinate manually annotated tasks.
-    """
-    determinate = [
-        item for item in judgements if item.status in {"matched", "no_match"}
-    ]
-    if not determinate:
-        raise ValueError(
-            "Threshold selection requires determinate development annotations"
-        )
-    scores = sorted(
-        {
-            score.score
-            for item in determinate
-            for score in results[item.query.alignment_id].scores
-        }
-    )
-    thresholds = (
-        [0.0]
-        if not scores
-        else [
-            nextafter(scores[0], float("-inf")),
-            *(
-                scores[index]
-                for index in sorted(
-                    {position * (len(scores) - 1) // 100 for position in range(101)}
-                )
-            ),
-        ]
-    )
-
-    return [
-        (threshold, summarize(evaluate(results, determinate, threshold)))
-        for threshold in thresholds
-    ]
-
-
-def select_threshold(
-    curve: Sequence[tuple[float, dict[str, float | None]]],
-    minimum_precision: float,
-) -> tuple[float, bool]:
-    """
-    Maximize development recall subject to the requested empirical precision.
-
-    Args:
-        curve: Development-only operating points.
-        minimum_precision: Required empirical precision between zero and one.
-
-    Returns:
-        Chosen threshold and whether a nonempty operating point satisfies the target.
-
-    Raises:
-        ValueError: If precision is outside its probability range.
-    """
-    if not 0 <= minimum_precision <= 1:
-        raise ValueError("Minimum precision must lie between zero and one")
-    eligible = [
-        (threshold, metrics)
-        for threshold, metrics in curve
-        if metrics["Precision"] is not None
-        and metrics["Precision"] >= minimum_precision
-    ]
-    if not eligible:
-        return curve[-1][0], False
-    selected = max(
-        eligible,
-        key=lambda point: (
-            point[1]["Recall"] or 0.0,
-            point[1]["Precision"] or 0.0,
-            point[0],
-        ),
-    )
-
-    return selected[0], True
 
 
 def confidence_intervals(
@@ -241,13 +160,17 @@ def confidence_intervals(
         Percentile intervals for defined metrics.
     """
     grouped: defaultdict[str, list[Observation]] = defaultdict(list)
+
     for item in observations:
         grouped[item.gold.query.lemma.casefold()].append(item)
+
     pools = list(grouped.values())
     rng = random.Random(seed)
     values: defaultdict[str, list[float]] = defaultdict(list)
+
     for _ in range(repetitions):
         sample = [item for group in rng.choices(pools, k=len(pools)) for item in group]
+
         for metric, value in summarize(sample).items():
             if value is not None:
                 values[metric].append(value)

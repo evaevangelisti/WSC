@@ -1,14 +1,9 @@
-"""
-The shapes an occurrence of a headword may take.
-"""
+"""The shapes an occurrence of a headword may take."""
 
 from ..schema import RawForm
 
-# Rows describing an inflection table rather than the lemma, and the
-# transliterations standing beside a form rather than for it.
 _SERVICE_TAGS = frozenset({"inflection-template", "romanization", "table-tags"})
 
-# What an inflection table writes for a cell it leaves empty.
 _EMPTY_CELL = "-"
 
 
@@ -30,6 +25,7 @@ def parse_forms(
 
     for raw_form in raw_forms:
         form = raw_form.get("form", "").strip()
+
         if not form or form == _EMPTY_CELL:
             continue
 

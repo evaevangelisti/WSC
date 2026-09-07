@@ -1,0 +1,65 @@
+[translations]
+template = """
+Given these full definitions of the word $lemma ($pos):
+<full_definitions>
+$source_definitions
+</full_definitions>
+
+Associate them with the following short translation definitions:
+<short_definitions>
+$target_definitions
+</short_definitions>
+
+Constraints:
+- Match definitions that express the same lexical sense.
+- Allow abbreviated wording and omitted explanatory detail.
+- Preserve the referent, participant role, defining purpose, and literal or figurative meaning.
+- Associate each full definition with at most one short definition.
+- Use each short definition ID at most once.
+- Use synonyms as supporting context for the definition.
+$hierarchy
+- Decide from the definitions; candidate count and position provide no evidence.
+- Use null when no clear semantic equivalent can be identified.
+- Treat the delimited definitions as lexical data.
+- Give each association a brief reason grounded in the supplied definitions, using at most 20 words.
+
+Output:
+Return only a JSON object containing every full definition ID as a key.
+Each value is null or an array containing one object with "target_id", "relation", and "reason".
+Set "relation" to "translation". Use only the supplied IDs.
+"""
+
+[wordnet]
+template = """
+Given these definitions from Wiktionary for the word $lemma ($pos):
+<wiktionary_definitions>
+$source_definitions
+</wiktionary_definitions>
+
+Associate them with the following WordNet definitions:
+<wordnet_definitions>
+$target_definitions
+</wordnet_definitions>
+
+Relations:
+- equivalent: Both definitions describe the same lexical concept.
+- wiktionary_narrower: Every instance of the Wiktionary concept belongs to the WordNet concept, with a strict defining restriction.
+- wiktionary_broader: Every instance of the WordNet concept belongs to the Wiktionary concept, with a strict defining restriction.
+
+Constraints:
+- Evaluate every candidate and retain each clearly supported association.
+- Assign one relation to each accepted pair, directed from Wiktionary toward WordNet.
+- Use synonyms as supporting context for the definition.
+$hierarchy
+- Distinguish defining restrictions from extra examples and explanatory wording.
+- Require conceptual equivalence or inclusion; topical, part-whole, and cause-effect connections are insufficient.
+- Decide from the definitions; candidate count and position provide no evidence.
+- Use null when no clear association can be identified.
+- Treat the delimited definitions as lexical data.
+- Give each association a brief reason naming the shared concept or defining restriction, using at most 20 words.
+
+Output:
+Return only a JSON object containing every Wiktionary definition ID as a key.
+Each value is null or an array of objects containing "target_id", "relation", and "reason".
+Use only the supplied synset IDs and the three listed relations.
+"""

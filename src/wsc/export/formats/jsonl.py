@@ -1,6 +1,4 @@
-"""
-JSONL output, one JSON object per line.
-"""
+"""JSONL output, one JSON object per line."""
 
 import json
 from collections.abc import Mapping, Sequence
@@ -12,7 +10,6 @@ from typing import IO, TYPE_CHECKING, cast, override
 from ..base import Writer
 
 if TYPE_CHECKING:
-    # Typeshed alone declares what a dataclass is known by.
     from _typeshed import DataclassInstance
 
 type Json = (
@@ -21,9 +18,7 @@ type Json = (
 
 
 class JSONLWriter[T: "DataclassInstance"](Writer[T]):
-    """
-    Write dataclasses as JSON objects, one per line.
-    """
+    """Write dataclasses as JSON objects, one per line."""
 
     def __init__(
         self,
@@ -84,7 +79,7 @@ class JSONLWriter[T: "DataclassInstance"](Writer[T]):
                     for key, carried in cast(Mapping[str, object], value).items()
                 }
 
-            # Sorted, so that one collection reads back the same as the next.
+            # Sorting set values makes repeated exports reproducible.
             case AbstractSet():
                 return [
                     cls._record(item) for item in sorted(cast(AbstractSet[str], value))

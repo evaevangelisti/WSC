@@ -1,8 +1,8 @@
 """
 Reading the export the studies draw from.
 
-The schema below is the one the JSONL writer produces, declared once so that
-every study reads it the same way. A key the writer prunes is optional.
+The schema below is the one the JSONL writer produces, declared once so that every study
+reads it the same way. A key the writer prunes is optional.
 """
 
 import json
@@ -37,8 +37,8 @@ class Sentence(TypedDict):
     """
     A sentence Wiktionary hangs off a sense.
 
-    A reference makes it a quotation, and its absence an example. Offsets are
-    left out where the headword is not spelled in the sentence.
+    A reference makes it a quotation, and its absence an example. Offsets are left out
+    where the headword is not spelled in the sentence.
     """
 
     text: str
@@ -48,9 +48,7 @@ class Sentence(TypedDict):
 
 
 class Sense(TypedDict):
-    """
-    One meaning of an entry, with the sentences illustrating it.
-    """
+    """One meaning of an entry, with the sentences illustrating it."""
 
     id: str
     glosses: list[str]
@@ -72,9 +70,7 @@ class WordNetAlignment(TypedDict):
 
 
 class Entry(TypedDict):
-    """
-    One lemma, holding every sense it carries and what it is called elsewhere.
-    """
+    """One lemma, holding every sense it carries and what it is called elsewhere."""
 
     id: str
     lemma: str
@@ -104,6 +100,4 @@ def read(
 
     with path.open(encoding="utf-8") as file:
         for line in file:
-            # A decoder knows nothing of what it decodes. The export comes out
-            # of the writer and is read back against its own models.
             yield cast(Entry, json.loads(line))

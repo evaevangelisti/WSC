@@ -1,6 +1,4 @@
-"""
-Writing of extracted data to disk.
-"""
+"""Writing of extracted data to disk."""
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -9,14 +7,11 @@ from .base import Writer
 from .formats.tsv import TSVWriter
 
 if TYPE_CHECKING:
-    # Typeshed alone declares what a dataclass is known by.
     from _typeshed import DataclassInstance
 
 
 class _Factory(Protocol):
-    """
-    Builds the writer of one format, generic where a plain callable is not.
-    """
+    """Builds the writer of one format, generic where a plain callable is not."""
 
     def __call__[T: "DataclassInstance"](
         self,
@@ -62,6 +57,7 @@ def open_writer[T: "DataclassInstance"](
         ValueError: If the suffix names no known format.
     """
     factory = _WRITERS.get(output_path.suffix.lower())
+
     if factory is None:
         known = ", ".join(sorted(_WRITERS))
         raise ValueError(f"Unknown format {output_path.suffix!r}; try one of {known}")

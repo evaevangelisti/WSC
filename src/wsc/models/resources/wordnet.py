@@ -1,6 +1,4 @@
-"""
-Domain model for the wordnet the senses are aligned with.
-"""
+"""Domain model for the wordnet the senses are aligned with."""
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -47,10 +45,8 @@ class Synset:
         ili: Names the same meaning across releases, such as i54321.
         pos: Its part of speech.
         definition: The gloss WordNet writes for it.
-        members: The words expressing it, which is what makes it a candidate
-        for a lemma.
-        hypernyms: The synsets it is a kind of, by identifier. Nouns and verbs
-        alone are arranged that way.
+        members: Lexical forms expressing the concept.
+        hypernyms: Immediate hypernym identifiers for nouns and verbs.
         examples: The sentences WordNet gives for it.
     """
 

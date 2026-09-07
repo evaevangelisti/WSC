@@ -1,6 +1,4 @@
-"""
-What the wordnet's repository holds, and where.
-"""
+"""What the wordnet's repository holds, and where."""
 
 import re
 
@@ -8,8 +6,6 @@ import requests
 
 from ...constants import WORDNET_INDEX_URL, WORDNET_URL
 
-# The index links one file per edition and format, named after the year the
-# edition came out.
 _VERSION_PATTERN = re.compile(r'href="[^"]*english-wordnet-(\d{4})\.xml\.gz"')
 
 
@@ -35,8 +31,7 @@ def latest_version(
     """
     Find the most recent edition of the wordnet.
 
-    An edition is published whole or not at all, so unlike a dump there is
-    nothing to ask about whether it finished.
+    Published editions contain complete WordNet releases.
 
     Args:
         user_agent: How the client names itself to the server.
@@ -56,8 +51,8 @@ def latest_version(
     )
     response.raise_for_status()
 
-    # findall is typed loosely; one group means one string per match.
     versions: list[str] = _VERSION_PATTERN.findall(response.text)
+
     if not versions:
         raise RuntimeError("No wordnet edition to be found")
 

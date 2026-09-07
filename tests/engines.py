@@ -1,8 +1,8 @@
 """
 The engine the suite reads with, so that no property waits on a model.
 
-How a real pipeline tags and lemmatises is kwic's to test; what the suite
-needs is a reading that never varies.
+How a real pipeline tags and lemmatises is kwic's to test; what the suite needs is a
+reading that never varies.
 """
 
 import re
@@ -15,9 +15,7 @@ _WORD = re.compile(r"\S+")
 
 
 class WhitespaceEngine(Engine):
-    """
-    Cuts a context on whitespace and reads every word as the noun it spells.
-    """
+    """Cuts a context on whitespace and reads every word as the noun it spells."""
 
     @override
     def analyse_all(

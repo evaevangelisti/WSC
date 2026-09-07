@@ -1,18 +1,17 @@
-"""
-Data structures passed around the pipeline.
-"""
+"""Data structures passed around the pipeline."""
 
 from .alignment import (
-    AlignmentInstructions,
+    AlignmentDecision,
+    AlignmentLink,
+    AlignmentPrompts,
     AlignmentQuery,
     AlignmentResult,
-    AlignmentScore,
     AlignmentTask,
-    Comparison,
     Definition,
     GlossMode,
-    Reranker,
-    Scorer,
+    LanguageModel,
+    ModelRequest,
+    ModelSettings,
 )
 from .engine import Engine
 from .pos import POS
@@ -34,22 +33,23 @@ from .resources import (
 
 __all__ = [
     "POS",
-    "AlignmentInstructions",
+    "AlignmentDecision",
+    "AlignmentLink",
+    "AlignmentPrompts",
     "AlignmentQuery",
     "AlignmentResult",
-    "AlignmentScore",
     "AlignmentTask",
     "Attestation",
-    "Comparison",
     "Definition",
     "Engine",
     "Example",
     "GlossMode",
+    "LanguageModel",
     "Lemma",
+    "ModelRequest",
+    "ModelSettings",
     "Offset",
     "Quotation",
-    "Reranker",
-    "Scorer",
     "Sense",
     "Sentence",
     "Synset",

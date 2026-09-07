@@ -1,6 +1,4 @@
-"""
-Build offset judgements for identical sentences across extraction engines.
-"""
+"""Build offset judgements for identical sentences across extraction engines."""
 
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
@@ -68,13 +66,16 @@ def mark(sentence: Sentence) -> str:
         Escaped HTML with the proposed character union in bold.
     """
     ranges: list[tuple[int, int]] = []
+
     for start, end, _ in sorted(sentence.offsets):
         if ranges and start <= ranges[-1][1]:
             ranges[-1] = (ranges[-1][0], max(ranges[-1][1], end))
         else:
             ranges.append((start, end))
+
     pieces: list[str] = []
     position = 0
+
     for start, end in ranges:
         pieces.extend(
             (
@@ -83,6 +84,7 @@ def mark(sentence: Sentence) -> str:
             )
         )
         position = end
+
     pieces.append(escape(sentence.text[position:]))
 
     return "".join(pieces)
@@ -103,6 +105,7 @@ def build_offsets(data_dir: Path, output_dir: Path, count: int, seed: int) -> No
     """
     reference = sample_items(walk(read(data_dir / EXPORTS[0])), count, seed)
     identities = {sentence.key: sentence for sentence in reference}
+
     for export in EXPORTS:
         selected = (
             identities
@@ -113,11 +116,15 @@ def build_offsets(data_dir: Path, output_dir: Path, count: int, seed: int) -> No
                 if sentence.key in identities
             }
         )
+
         if selected.keys() != identities.keys():
             raise ValueError(f"{export} lacks sampled sentences")
+
         tasks: list[dict[str, object]] = []
+
         for original in reference:
             sentence = selected[original.key]
+
             if (sentence.text, sentence.lemma, sentence.pos) != (
                 original.text,
                 original.lemma,
@@ -126,6 +133,7 @@ def build_offsets(data_dir: Path, output_dir: Path, count: int, seed: int) -> No
                 raise ValueError(
                     f"Sentence identity differs in {export}: {sentence.key}"
                 )
+
             tasks.append(
                 {
                     "data": {
@@ -143,6 +151,7 @@ def build_offsets(data_dir: Path, output_dir: Path, count: int, seed: int) -> No
                     }
                 }
             )
+
         stem = Path(export).stem
         write_json(output_dir / f"{stem}.json", tasks)
         write_json(output_dir / f"{stem}.second.json", repeat_items(tasks, seed))

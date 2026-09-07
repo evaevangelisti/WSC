@@ -1,6 +1,4 @@
-"""
-Language selection and extraction defaults.
-"""
+"""Language selection and extraction defaults."""
 
 LANGUAGE = "en"
 """Wiktionary's code for the edition read, and for the language kept in it."""

@@ -1,6 +1,4 @@
-"""
-Inference provenance and compatibility fingerprints.
-"""
+"""Fingerprint model settings, prompts, and lexical inputs."""
 
 import hashlib
 import json
@@ -8,49 +6,41 @@ from collections.abc import Mapping
 from dataclasses import asdict
 from pathlib import Path
 
-from ..constants import DEFAULT_INSTRUCTIONS
-from ..models.alignment import AlignmentInstructions
+from ..constants import ALIGNMENT_SCHEMA, DEFAULT_PROMPTS
+from ..models.alignment import AlignmentPrompts, GlossMode, ModelSettings
 
 
 def build_metadata(
     input_path: Path,
-    model: str,
-    revision: str,
-    mode: str,
-    maximum_length: int,
+    settings: ModelSettings,
+    mode: GlossMode,
     synsets_path: Path | None = None,
-    instructions: AlignmentInstructions = DEFAULT_INSTRUCTIONS,
+    prompts: AlignmentPrompts = DEFAULT_PROMPTS,
 ) -> dict[str, str]:
     """
-    Record settings that affect semantic evidence.
+    Record the configuration that produced alignment decisions.
 
     Args:
         input_path: Collection or frozen research sample.
-        model: Cross-encoder identifier.
-        revision: Requested model revision.
-        mode: Source gloss representation.
-        maximum_length: Token truncation boundary.
-        synsets_path: Cached WordNet source, when used.
-        instructions: Complete instruction profile used during inference.
+        settings: Model runtime and generation configuration.
+        mode: Wiktionary gloss representation.
+        synsets_path: Cached WordNet source.
+        prompts: Complete task prompt templates.
 
     Returns:
-        Content fingerprints and inference settings, excluding decision thresholds.
+        Content fingerprints and reproducible inference settings.
     """
-    instruction_text = json.dumps(
-        asdict(instructions),
-        sort_keys=True,
-    )
+    prompt_text = json.dumps(asdict(prompts), sort_keys=True)
 
     return {
-        "schema": "3",
+        "schema": ALIGNMENT_SCHEMA,
         "input": fingerprint(input_path),
-        "model": model,
-        "revision": revision,
+        "model": settings.model,
+        "settings": json.dumps(asdict(settings), sort_keys=True),
         "gloss_mode": mode,
-        "maximum_length": str(maximum_length),
-        "instruction_profile": instructions.name,
-        "instruction_text": instruction_text,
-        "instructions": hashlib.sha256(instruction_text.encode()).hexdigest(),
+        "prompt": prompts.name,
+        "prompt_text": prompt_text,
+        "prompts": hashlib.sha256(prompt_text.encode()).hexdigest(),
         "wordnet": fingerprint(synsets_path) if synsets_path else "",
     }
 
@@ -59,7 +49,7 @@ def fingerprint(
     path: Path,
 ) -> str:
     """
-    Identify an input by content rather than filesystem timestamps.
+    Compute a file content fingerprint.
 
     Args:
         path: Source artifact.
@@ -77,13 +67,13 @@ def cache_key(
     metadata: Mapping[str, str],
 ) -> str:
     """
-    Identify compatible evidence independently of assignment thresholds.
+    Identify a model run by its configuration and inputs.
 
     Args:
-        metadata: Model, input, resource, and representation settings.
+        metadata: Model settings, prompts, and source fingerprints.
 
     Returns:
-        Stable cache directory name.
+        A stable cache directory name.
     """
     content = json.dumps(dict(metadata), sort_keys=True).encode()
 

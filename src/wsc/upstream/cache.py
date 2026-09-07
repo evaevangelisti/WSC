@@ -1,6 +1,4 @@
-"""
-Where the sources and what is made of them are kept.
-"""
+"""Where the sources and what is made of them are kept."""
 
 from pathlib import Path
 
@@ -44,7 +42,7 @@ def _edition_dir(
         cache_dir: Where the sources are kept, or None for the usual place.
 
     Returns:
-        The directory, whether or not it exists yet.
+        The requested cache directory path.
     """
     return _root(cache_dir) / _WIKTIONARY
 
@@ -61,7 +59,7 @@ def dump_dir(
         date: The day that dump began.
 
     Returns:
-        The directory, whether or not it exists yet.
+        The requested cache directory path.
     """
     return _edition_dir(cache_dir) / date
 
@@ -73,8 +71,8 @@ def fetched_date(
     """
     Settle which fetched dump to work on, without asking Wikimedia.
 
-    A dump is known by the directory it sits in, so "latest" is answered from
-    the cache alone, and a machine without a network runs all the same.
+    A dump is known by the directory it sits in, so "latest" is answered from the cache
+    alone, and a machine without a network runs all the same.
 
     Args:
         cache_dir: Where the sources are kept, or None for the usual place.
@@ -119,7 +117,7 @@ def wordnet_dir(
         version: The edition of the wordnet, as 2025.
 
     Returns:
-        The directory, whether or not it exists yet.
+        The requested cache directory path.
     """
     return _root(cache_dir) / _WORDNET / version
 
@@ -140,10 +138,12 @@ def fetched_edition(
     """
     if edition != LATEST:
         path = wordnet_dir(cache_dir, edition) / SYNSETS_NAME
+
         if path.is_file():
             return path
     else:
         paths = sorted((_root(cache_dir) / _WORDNET).glob(f"*/{SYNSETS_NAME}"))
+
         if paths:
             return paths[-1]
 

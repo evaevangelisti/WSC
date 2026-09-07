@@ -39,7 +39,7 @@ uv tool install .
 
 Collection has three steps. Each caches its output for subsequent commands and reuse.
 
-The options a whole session shares can be set once, through `WSC_DUMP_DATE` and `WSC_CACHE_DIR`.
+The options a whole session shares can be set once, through `WSC_DUMP_DATE`, `WSC_WORDNET_EDITION` and `WSC_CACHE_DIR`.
 
 Run `wsc <command> --help` for the whole of it.
 
@@ -61,8 +61,6 @@ wsc fetch
 Reads the dump with [wiktextract](https://github.com/tatuylonen/wiktextract), which turns Wiktionary's markup into entries, keeping the fields the collector reads.
 
 Parsing runs for hours. `--archive` downloads what [kaikki.org](https://kaikki.org) holds instead, whatever that site currently publishes.
-
-The dump is then walked for the translations wiktextract misses: a table on a subpage, a meaning another headword translates.
 
 ```sh
 wsc parse
@@ -123,27 +121,24 @@ wsc wordnet
 
 ### align
 
-Aligns collected senses with translations and WordNet synsets. Set the threshold variables using manual development evaluation.
+Aligns collected senses with translations and WordNet synsets through a [vLLM](https://vllm.ai/) server.
 
 ```sh
-wsc align senses.jsonl aligned.jsonl \
-  --translation-threshold "$TRANSLATION_THRESHOLD" \
-  --wordnet-threshold "$WORDNET_THRESHOLD"
+wsc align senses.jsonl aligned.jsonl
 ```
 
 | Option | Default | |
 | --- | --- | --- |
 | `--task` | both resources | `translations` or `wordnet`; repeat to select both |
-| `--model` | `Qwen/Qwen3-Reranker-8B` | Hugging Face identifier or local model directory |
-| `--revision` | `main` | Model revision |
-| `--translation-threshold` | required for translations | Strict lower boundary on raw scores |
-| `--wordnet-threshold` | required for WordNet | Strict lower boundary on raw scores |
-| `--gloss-mode` | `last` | `last`, `full`, or `context` |
-| `--instructions` | bundled TOML | File containing named instruction profiles |
-| `--instruction-profile` | `baseline` | Profile selected using development annotations |
-| `--device` | automatic | Torch device, such as `cpu` or `cuda` |
-| `--batch-size` | `32` | Candidate pairs per inference batch |
-| `--maximum-length` | `2048` | Token limit per pair |
-| `--reuse` | off | Reapply cached scores without loading the model |
+| `--model` | `Qwen/Qwen3-8B` | Model identifier exposed by the server |
+| `--url` | `http://localhost:8000/v1` | OpenAI-compatible server endpoint |
+| `--gloss-mode` | `last` | Last gloss or full hierarchy joined with ` > ` |
+| `--prompts` | bundled `prompts.toml` | One customizable template per task |
+| `--temperature` | `0.0` | Sampling temperature |
+| `--maximum-tokens` | `4096` | Generated token limit |
+| `--reasoning-effort` | unset | Reasoning setting supported by the server |
+| `--reuse` | off | Reapply cached decisions without contacting the model |
 | `--wordnet-edition` | `latest` | Extracted WordNet edition; also `WSC_WORDNET_EDITION` |
 | `--cache-dir` | platform cache | Also configurable through `WSC_CACHE_DIR` |
+
+Run vLLM separately. Set `OPENAI_API_KEY` when the endpoint requires authentication.

@@ -1,6 +1,4 @@
-"""
-Atomic writing, shared by every output format.
-"""
+"""Atomic writing, shared by every output format."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -12,8 +10,8 @@ class Writer[T](ABC):
     """
     A sink for items of one kind, writing atomically.
 
-    Output goes to a sibling .part file, moved into place only once writing
-    finishes. A run that fails leaves neither behind.
+    Output goes to a sibling .part file, moved into place only once writing finishes. A
+    run that fails leaves neither behind.
     """
 
     def __init__(
@@ -49,15 +47,13 @@ class Writer[T](ABC):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        """
-        Move the .part file into place, or remove it if anything went wrong.
-        """
+        """Move the .part file into place, or remove it if anything went wrong."""
         succeeded = exc_type is None
 
         try:
             self._close()
         except Exception:
-            # Closing is where buffered output reaches the disk.
+            # Closing flushes buffered output before the atomic rename.
             succeeded = False
             raise
         finally:

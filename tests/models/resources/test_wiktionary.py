@@ -1,8 +1,7 @@
 """
 Tests for src/wsc/models/resources/wiktionary.py.
 
-A sense reading its own gloss chain is stated here rather than downstream:
-nothing else in the collector asks a sense what it means.
+These tests exercise the public gloss properties of a sense.
 """
 
 from hypothesis import given
@@ -15,9 +14,7 @@ _CHAINS = st.lists(glosses, min_size=1, max_size=4)
 
 
 class TestSense:
-    """
-    One meaning, read off its gloss chain.
-    """
+    """One meaning, read off its gloss chain."""
 
     @given(identifiers, _CHAINS)
     def test_closes_on_its_own_gloss(
@@ -25,7 +22,7 @@ class TestSense:
         identifier: str,
         chain: list[str],
     ) -> None:
-        """A sub-sense means what its own gloss says, not what its parent does."""
+        """A sub-sense exposes its own final gloss."""
         sense = Sense(identifier, tuple(chain))
 
         assert sense.gloss == chain[-1]

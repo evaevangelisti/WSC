@@ -1,6 +1,4 @@
-"""
-Parsing of a Wiktionary dump with wiktextract, and taking a parse already made.
-"""
+"""Parsing of a Wiktionary dump with wiktextract, and taking a parse already made."""
 
 import json
 import subprocess
@@ -14,7 +12,6 @@ from tqdm import tqdm
 from ..constants import COMPRESSION_LEVEL, LANGUAGE
 from ..files import open_compressed, partial_file
 
-# What the bar says while nothing has come back yet.
 _READING = "Reading the dump"
 _NARROWING = "Narrowing the extraction"
 
@@ -48,8 +45,7 @@ def _write(
         tqdm(desc=description, unit=" entry") as pbar,
     ):
         for line in lines:
-            # wiktextract reports itself down the same stream as the entries,
-            # so what does not open an object is not one.
+            # Wiktextract interleaves reporting messages with JSON entries.
             if not line.startswith(b"{"):
                 skipped_lines += 1
                 continue
@@ -57,7 +53,7 @@ def _write(
             try:
                 entry = cast(object, json.loads(line))
             except json.JSONDecodeError:
-                # A stream cut short leaves an entry that opens and no more.
+                # Interrupted extraction can leave an incomplete JSON entry.
                 skipped_lines += 1
                 continue
 
@@ -86,13 +82,10 @@ def parse(
         output_path: Where the compressed JSONL is placed.
         processes: How many processes wiktextract may run, at 4 GB each.
         narrow: Cuts one entry down to the fields that will be read of it.
-        database_path: Where the pages extracted from the dump are kept, or
-        None for a temporary file. One already built lets the run work
-        offline.
+        database_path: Existing page database or None for a temporary database.
 
     Returns:
-        How many lines of wiktextract's own reporting were set aside. Far
-        more than a few hundred means something went wrong.
+        Number of discarded wiktextract reporting lines.
 
     Raises:
         subprocess.CalledProcessError: If wiktextract answers with an error.
@@ -127,10 +120,8 @@ def parse(
         if process.stdout is None:
             raise RuntimeError("wiktextract offered no output to read")
 
-        # Popen carries bytes; typeshed types its streams loosely.
         stdout: IO[bytes] = process.stdout
 
-        # The pages are read before the first entry comes back.
         skipped_lines, written_entries = _write(
             stdout,
             partial_path,
@@ -139,6 +130,7 @@ def parse(
         )
 
         return_code = process.wait()
+
         if return_code != 0:
             raise subprocess.CalledProcessError(return_code, command)
 

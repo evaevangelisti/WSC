@@ -1,6 +1,4 @@
-"""
-Build shared annotation samples for offsets and semantic alignments.
-"""
+"""Build shared annotation samples for offsets and semantic alignments."""
 
 import argparse
 from pathlib import Path
@@ -45,19 +43,23 @@ def main() -> None:
     _ = parser.add_argument("--cache-dir", type=Path)
     arguments = parser.parse_args(namespace=Arguments())
     output = arguments.output or HERE / "tasks" / arguments.task
+
     if arguments.task == "offsets":
         build_offsets(arguments.data_dir, output, arguments.count, arguments.seed)
     else:
         task = AlignmentTask(arguments.task)
         index = WordNetCandidates(())
+
         if task == AlignmentTask.WORDNET:
             synsets_path = cache.fetched_edition(
                 arguments.cache_dir, arguments.wordnet_edition
             )
+
             if synsets_path is None:
                 parser.error("WordNet is not cached; run 'wsc wordnet' first.")
 
             index = WordNetCandidates(read_synsets(synsets_path))
+
         queries = (
             query
             for lemma in read_lemmas(arguments.input)

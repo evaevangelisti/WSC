@@ -1,6 +1,4 @@
-"""
-The translation tables Wiktionary writes away from the entry they belong to.
-"""
+"""The translation tables Wiktionary writes away from the entry they belong to."""
 
 import re
 from collections import defaultdict
@@ -10,8 +8,6 @@ from dataclasses import dataclass, field
 from ...models import POS, Translations
 from .markup import arguments, plain
 
-# What Wiktionary heads a section with, and what it calls the parts of speech
-# the collector keeps.
 _HEADING = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$")
 
 _POS_BY_HEADING: dict[str, POS] = {
@@ -22,19 +18,15 @@ _POS_BY_HEADING: dict[str, POS] = {
     "Adverb": POS.ADVERB,
 }
 
-# A table is headed with the gloss wiktextract reads off one left in place.
 _TOP = re.compile(r"\{\{trans-top(?:-also)?\s*\|([^{}]*)\}\}")
 _BOTTOM = re.compile(r"\{\{trans-bottom\s*\}\}")
 
-# One translation. A check still names a language and a word.
 _TRANSLATION = re.compile(
     r"\{\{(?:t|t\+|tt|tt\+|t-check|t\+check|t-simple)\|([^{}]*)\}\}"
 )
 
-# A pointer at the entry holding the translations of a meaning.
 _SEE = re.compile(r"\{\{trans-(?:see|top-see)\s*\|([^{}]*)\}\}")
 
-# What names a translation subpage, and so the headword it belongs to.
 SUBPAGE_SUFFIX = "/translations"
 
 
@@ -70,15 +62,17 @@ def _read_pointers(
     """
     for found_pointer in _SEE.finditer(line):
         positional_arguments, _ = arguments(found_pointer.group(1))
+
         if not positional_arguments:
             continue
 
         gloss = plain(positional_arguments[0])
+
         if not gloss:
             continue
 
-        # Written with one argument, the meaning doubles as the headword
-        # translating it.
+        # Single-argument templates use the same value for meaning and target headword.
+
         pointed_lemmas = tuple(plain(name) for name in positional_arguments[1:])
 
         yield gloss, pointed_lemmas or (gloss,)
@@ -98,6 +92,7 @@ def _read_translations(
     """
     for found_translation in _TRANSLATION.finditer(line):
         positional_arguments, _ = arguments(found_translation.group(1))
+
         if len(positional_arguments) < 2:
             continue
 
@@ -140,6 +135,7 @@ def _sections(
             pos = None
 
         found_pos = _POS_BY_HEADING.get(heading)
+
         if found_pos is not None:
             pos = found_pos
 
@@ -177,11 +173,11 @@ def read_page(
         pointers[pos].update(_read_pointers(line))
 
         found_top = _TOP.search(line)
+
         if found_top:
             positional_arguments, _ = arguments(found_top.group(1))
             headed = plain(positional_arguments[0]) if positional_arguments else ""
 
-            # A table headed with no meaning attaches to no sense.
             gloss = headed or None
 
         if _BOTTOM.search(line):

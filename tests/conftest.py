@@ -1,8 +1,8 @@
 """
 Fixtures the whole suite shares.
 
-A feature is exercised from outside, over what the generators draw, and the
-test tree mirrors the package.
+A feature is exercised from outside, over what the generators draw, and the test tree
+mirrors the package.
 """
 
 import bz2
@@ -23,8 +23,7 @@ from strategies import RawJson
 from wsc.extract import write_off_page_translations
 from wsc.upstream import cache
 
-# A property reaching the disk is timed by the machine it runs on, and the
-# fixtures below hand out a directory per call rather than per test.
+# Filesystem properties use isolated directories for each generated example.
 settings.register_profile(
     "wsc",
     deadline=None,
@@ -44,8 +43,7 @@ def workspace(
         tmp_path: The directory pytest set aside for this test.
 
     Returns:
-        A builder handing back an empty directory, so that a property drawing
-        a hundred examples writes each of them somewhere else.
+        A builder creating an isolated directory for each generated example.
     """
     directories = count()
 
@@ -64,8 +62,7 @@ def write_entries() -> Callable[[Path, Iterable[RawJson]], Path]:
     Write raw entries where a reader expects to find them.
 
     Returns:
-        A writer picking its compression off the suffix of the path, so that
-        a test names the format it means by naming the file.
+        A writer selecting compression from the file suffix.
     """
 
     def write(
@@ -99,9 +96,7 @@ def fetch_dump() -> Callable[..., Path]:
     Stand in for a finished fetch, without the network.
 
     Returns:
-        A builder placing a dump where the fetch command would have. It holds
-        a whole one, since a parse goes on to walk it for the translations
-        Wiktionary keeps away from the entry.
+        A builder placing a complete dump in the fetch cache.
     """
 
     def build(
@@ -124,9 +119,7 @@ def fetch_wordnet() -> Callable[..., Path]:
     Stand in for a finished fetch of the wordnet, without the network.
 
     Returns:
-        A builder placing the wordnet where the wordnet command would have.
-        It holds a whole one, gzipped as the release publishes it, since the
-        command goes on to read what it fetched.
+        A builder placing a gzipped WordNet release in the source cache.
     """
 
     def build(

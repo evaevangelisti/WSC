@@ -1,6 +1,4 @@
-"""
-What each source is read into, one module apiece.
-"""
+"""What each source is read into, one module apiece."""
 
 from .wiktionary import (
     Attestation,

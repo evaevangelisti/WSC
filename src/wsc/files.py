@@ -1,6 +1,4 @@
-"""
-How the pipeline reads and writes the files it keeps.
-"""
+"""How the pipeline reads and writes the files it keeps."""
 
 import bz2
 import gzip
@@ -35,8 +33,7 @@ def open_compressed(
 
     Args:
         input_path: The file to read.
-        mode: Binary where a parser reads the encoding off the file itself,
-        text otherwise.
+        mode: Binary or text reading mode.
 
     Returns:
         The open file.
@@ -66,8 +63,7 @@ def partial_file(
     """
     Hand over a sibling .part file, moved into place once the block ends well.
 
-    A resumable transfer keeps what was written instead, since that is what
-    resumes it.
+    Resumable transfers retain partial output after failure.
 
     Args:
         output_path: Where the finished file is placed.

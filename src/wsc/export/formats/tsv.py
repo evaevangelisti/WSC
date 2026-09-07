@@ -1,6 +1,4 @@
-"""
-TSV output with caller-defined columns and rows.
-"""
+"""TSV output with caller-defined columns and rows."""
 
 import csv
 from collections.abc import Mapping, Sequence

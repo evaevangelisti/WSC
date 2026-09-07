@@ -1,13 +1,8 @@
-"""
-The wiki markup wiktextract now and then leaves unexpanded.
-"""
+"""The wiki markup wiktextract now and then leaves unexpanded."""
 
 import re
 
-# A template or a link, both known by the pipe that parts their arguments.
-# The pipe is what tells them from what a text writes for itself: an editorial
-# ellipsis reads [[…]], a nested aside [P[eter] S[imon]], and a page quoting
-# a template language reads {{ post.title|title }}, none of them markup.
+# Markup matching preserves literal brackets and template-language examples.
 _MARKUP = re.compile(r"\{\{[a-z][a-z0-9-]*\||\{\{\||\[\[[^\]|]*\|")
 
 

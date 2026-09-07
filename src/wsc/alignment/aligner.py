@@ -1,53 +1,55 @@
-"""
-Apply semantic associations to collected senses.
-"""
+"""Apply generated lexical associations to collected senses."""
 
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import replace
 
-from ..constants import DEFAULT_INSTRUCTIONS
-from ..models import Lemma, Sense, WordNetAlignment, WordNetRelation
+from ..constants import DEFAULT_PROMPTS
+from ..models import Lemma
 from ..models.alignment import (
-    AlignmentInstructions,
+    AlignmentPrompts,
     AlignmentQuery,
     AlignmentResult,
-    AlignmentScore,
     AlignmentTask,
     GlossMode,
-    Scorer,
+    LanguageModel,
 )
-from .candidates import WordNetCandidates, build_queries
-from .scoring import score_query, select_links
+from .candidates import WordNetCandidates
+from .decisions import align_query, validate_result
+from .tasks import TASK_HANDLERS, build_queries
 
 
 class Aligner:
-    """Align collected resources using model inference or persisted candidate scores."""
+    """Align resources through language model decisions or cached results."""
 
     def __init__(
         self,
-        scorer: Scorer | None,
+        model: LanguageModel | None,
         candidates: WordNetCandidates,
-        thresholds: Mapping[AlignmentTask, float],
+        tasks: Iterable[AlignmentTask] = (
+            AlignmentTask.TRANSLATIONS,
+            AlignmentTask.WORDNET,
+        ),
         mode: GlossMode = GlossMode.LAST,
-        instructions: AlignmentInstructions = DEFAULT_INSTRUCTIONS,
+        prompts: AlignmentPrompts = DEFAULT_PROMPTS,
     ) -> None:
         """
-        Configure semantic scoring and resource-specific abstention.
+        Configure the model and requested alignment tasks.
 
         Args:
-            scorer: Semantic model, or None when replaying cached scores.
+            model: Generation boundary, or None during cache replay.
             candidates: WordNet candidate index.
-            thresholds: Requested resources and their raw score thresholds.
-            mode: Source definition representation.
-            instructions: Semantic hypotheses matching the configured scorer.
+            tasks: Resources to align.
+            mode: Wiktionary definition representation.
+            prompts: Named task prompt templates.
         """
-        self._scorer: Scorer | None = scorer
+        self._model: LanguageModel | None = model
 
         self._candidates: WordNetCandidates = candidates
 
-        self._thresholds: dict[AlignmentTask, float] = dict(thresholds)
+        self._tasks: tuple[AlignmentTask, ...] = tuple(dict.fromkeys(tasks))
+
         self._mode: GlossMode = mode
-        self._instructions: AlignmentInstructions = instructions
+        self._prompts: AlignmentPrompts = prompts
 
     def _evaluate(
         self,
@@ -55,86 +57,53 @@ class Aligner:
         cached_results: Mapping[AlignmentTask, Iterator[AlignmentResult]],
     ) -> AlignmentResult:
         """
-        Retrieve compatible cached evidence or evaluate the semantic model.
+        Retrieve cached decisions or generate new associations.
 
         Args:
-            query: Current candidate definitions.
-            cached_results: Cached result streams selected explicitly by the caller.
+            query: Current candidate context.
+            cached_results: Explicitly selected cached streams.
 
         Returns:
-            Complete candidate scores.
+            Validated decisions for the query.
 
         Raises:
-            ValueError: If cached inputs differ or inference has no model.
+            ValueError: If cache context differs or the model is unavailable.
         """
         if query.task in cached_results:
             result = next(cached_results[query.task], None)
+
             if result is None or result.query != query:
                 raise ValueError(f"Cached candidates differ for {query.alignment_id}")
 
+            validate_result(result)
+
             return result
 
-        if self._scorer is None:
-            raise ValueError("Uncached alignment requires a semantic scorer")
+        if self._model is None:
+            raise ValueError("Uncached alignment requires a language model")
 
-        return score_query(query, self._scorer, self._mode, self._instructions)
-
-    @staticmethod
-    def _apply_links(
-        lemma: Lemma,
-        senses: dict[str, Sense],
-        query: AlignmentQuery,
-        links: tuple[AlignmentScore, ...],
-    ) -> None:
-        """
-        Transfer accepted associations into copied senses.
-
-        Args:
-            lemma: Original collection entry supplying translations.
-            senses: Copied senses receiving the associations.
-            query: Candidate definitions and alignment resource.
-            links: Associations accepted after thresholding and assignment.
-        """
-        match query.task:
-            case AlignmentTask.TRANSLATIONS:
-                for source_definition in query.source_definitions:
-                    senses[source_definition.id].translations = {}
-
-                target_definitions = {
-                    target.id: target.glosses[-1] for target in query.target_definitions
-                }
-
-                for link in links:
-                    senses[link.source_id].translations = dict(
-                        lemma.translations[target_definitions[link.target_id]]
-                    )
-
-            case AlignmentTask.WORDNET:
-                senses[query.source_definitions[0].id].wordnet = tuple(
-                    WordNetAlignment(link.target_id, WordNetRelation(link.relation))
-                    for link in links
-                )
+        return align_query(query, self._model, self._mode, self._prompts)
 
     def align(
         self,
         lemmas: Iterable[Lemma],
         *,
         cached_results: Mapping[AlignmentTask, Iterator[AlignmentResult]] | None = None,
-        scores: Callable[[AlignmentResult], None] | None = None,
+        recorder: Callable[[AlignmentResult], None] | None = None,
     ) -> Iterator[Lemma]:
         """
-        Stream aligned copies while retaining the original collection.
+        Stream aligned copies of collected entries.
 
         Args:
-            lemmas: Collected entries.
-            cached_results: Optional resource-specific score streams for replay.
-            scores: Optional sink retaining unfiltered semantic evidence.
+            lemmas: Original collected entries.
+            cached_results: Task-specific decision streams for replay.
+            recorder: Optional callback persisting generated decisions.
 
         Yields:
             Aligned entries with processed lemma-level translations removed.
 
         Raises:
-            ValueError: If cached evidence differs from the collection.
+            ValueError: If cached decisions differ from the collection.
         """
         streams = cached_results or {}
 
@@ -144,27 +113,25 @@ class Aligner:
                 for sense in lemma.senses
             }
 
-            for task, threshold in self._thresholds.items():
+            for task in self._tasks:
                 for query in build_queries(lemma, task, self._candidates):
                     result = self._evaluate(query, streams)
 
-                    if scores is not None:
-                        scores(result)
+                    if recorder is not None:
+                        recorder(result)
 
-                    links = select_links(result, threshold)
-
-                    self._apply_links(lemma, senses, query, links)
+                    TASK_HANDLERS[task].apply(lemma, senses, query, result.links)
 
             yield replace(
                 lemma,
                 senses=list(senses.values()),
                 translations=(
                     {}
-                    if AlignmentTask.TRANSLATIONS in self._thresholds
+                    if AlignmentTask.TRANSLATIONS in self._tasks
                     else lemma.translations
                 ),
             )
 
         for task, stream in streams.items():
             if next(stream, None) is not None:
-                raise ValueError(f"Unused cached {task} scores remain")
+                raise ValueError(f"Unused cached {task} decisions remain")

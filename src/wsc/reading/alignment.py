@@ -1,33 +1,33 @@
-"""
-Read alignment queries and persisted TSV evidence.
-"""
+"""Read alignment queries and persisted language model decisions."""
 
 import csv
 import json
 from collections.abc import Iterator
 from itertools import groupby
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import NotRequired, TypedDict, cast
 
 from ..models import POS
 from ..models.alignment import (
+    AlignmentDecision,
+    AlignmentLink,
     AlignmentQuery,
     AlignmentResult,
-    AlignmentScore,
     AlignmentTask,
     Definition,
 )
 
 
 class DefinitionRecord(TypedDict):
-    """Serialized candidate definition."""
+    """Represent a serialized lexical definition."""
 
     id: str
     glosses: list[str]
+    synonyms: NotRequired[list[str]]
 
 
 class QueryRecord(TypedDict):
-    """Serialized alignment input retained alongside scores and annotations."""
+    """Represent an alignment query in caches and annotation exports."""
 
     task: str
     alignment_id: str
@@ -42,13 +42,13 @@ def parse_query(
     record: QueryRecord,
 ) -> AlignmentQuery:
     """
-    Restore persisted candidate definitions.
+    Restore definitions from a stored alignment query.
 
     Args:
-        record: Serialized alignment query.
+        record: Serialized source and candidate context.
 
     Returns:
-        Complete candidate sets with stable identifiers.
+        Complete definitions with stable identifiers.
     """
     return AlignmentQuery(
         AlignmentTask(record["task"]),
@@ -57,11 +57,19 @@ def parse_query(
         record["lemma"],
         POS(record["pos"]),
         tuple(
-            Definition(item["id"], tuple(item["glosses"]))
+            Definition(
+                item["id"],
+                tuple(item["glosses"]),
+                tuple(item.get("synonyms", ())),
+            )
             for item in record["source_definitions"]
         ),
         tuple(
-            Definition(item["id"], tuple(item["glosses"]))
+            Definition(
+                item["id"],
+                tuple(item["glosses"]),
+                tuple(item.get("synonyms", ())),
+            )
             for item in record["target_definitions"]
         ),
     )
@@ -71,13 +79,13 @@ def read_metadata(
     path: Path,
 ) -> dict[str, str]:
     """
-    Read inference settings without loading candidate scores.
+    Read inference settings from a cached alignment table.
 
     Args:
-        path: Cached alignment TSV.
+        path: Alignment TSV file.
 
     Returns:
-        Settings persisted with the inference run.
+        Persisted inference settings.
     """
     with path.open(encoding="utf-8", newline="") as stream:
         row = next(csv.DictReader(stream, delimiter="\t"))
@@ -89,38 +97,63 @@ def read_alignments(
     path: Path,
 ) -> Iterator[AlignmentResult]:
     """
-    Stream candidate evidence from a resource-specific TSV.
+    Stream validated decisions from an alignment table.
 
     Args:
-        path: Completed cached alignment file.
+        path: Completed language model alignment TSV.
 
     Yields:
-        Candidate scores grouped by original query.
+        Decisions grouped by their original query.
 
     Raises:
-        ValueError: If an evidence row has inconsistent query identity.
+        ValueError: If the cache schema or decisions are incompatible.
     """
+    from ..alignment.decisions import validate_result
+    from ..constants import ALIGNMENT_SCHEMA
+
     with path.open(encoding="utf-8", newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
 
-        _ = next(reader)
+        metadata = cast(dict[str, str], json.loads(next(reader)["context"]))
+        if metadata.get("schema") != ALIGNMENT_SCHEMA:
+            raise ValueError("Alignment cache requires the language model schema")
 
         for alignment_id, rows in groupby(reader, key=lambda row: row["alignment_id"]):
-            first = next(rows)
+            records = list(rows)
+            first = records[0]
 
             query = parse_query(cast(QueryRecord, json.loads(first["context"])))
             if query.alignment_id != alignment_id:
                 raise ValueError(f"Evidence identity differs: {alignment_id}")
 
-            scores = tuple(
-                AlignmentScore(
-                    row["source_id"],
-                    row["target_id"],
-                    row["relation"],
-                    float(row["score"]),
-                )
-                for row in (first, *rows)
-                if row["source_id"]
-            )
+            decisions: list[AlignmentDecision] = []
 
-            yield AlignmentResult(query, scores)
+            for source_id, source_rows in groupby(
+                records,
+                key=lambda row: row["source_id"],
+            ):
+                if not source_id:
+                    continue
+
+                source_records = list(source_rows)
+
+                decisions.append(
+                    AlignmentDecision(
+                        source_id,
+                        tuple(
+                            AlignmentLink(
+                                source_id,
+                                row["target_id"],
+                                row["relation"],
+                                row["reason"],
+                            )
+                            for row in source_records
+                            if row["target_id"]
+                        ),
+                    )
+                )
+
+            result = AlignmentResult(query, tuple(decisions), first["response"])
+            validate_result(result)
+
+            yield result

@@ -1,136 +1,69 @@
-"""
-Public TSV persistence and collection-reading contracts.
-"""
+"""Exercise decision persistence and cache provenance."""
 
 import json
-from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
 
-from wsc.alignment import serialize_alignment
+from wsc.alignment import parse_response, serialize_alignment
+from wsc.alignment.provenance import build_metadata, cache_key
 from wsc.constants import ALIGNMENT_FIELDS
-from wsc.export import TSVWriter, Writer, open_writer
-from wsc.models import (
-    POS,
-    Lemma,
-    Quotation,
-    Sense,
-    WordNetAlignment,
-    WordNetRelation,
-    WordOffset,
-    WordOffsetSource,
-)
-from wsc.models.alignment import (
-    AlignmentQuery,
-    AlignmentResult,
-    AlignmentScore,
-    AlignmentTask,
-    Definition,
-)
-from wsc.reading import read_alignments, read_lemmas, read_metadata
+from wsc.export import TSVWriter
+from wsc.models.alignment import GlossMode, ModelSettings
+from wsc.reading import read_alignments, read_metadata
+
+from .test_aligner import decision, query
 
 
-@given(
-    st.text(min_size=1, max_size=60),
-    st.floats(min_value=-100, max_value=100, allow_nan=False),
-)
-def test_tsv_round_trip_preserves_arbitrary_text_and_empty_candidates(
-    workspace: Callable[[], Path],
-    text: str,
-    score: float,
-) -> None:
-    """Tabs, quotes, newlines, Unicode, and empty candidate sets survive TSV replay."""
-    path = workspace() / "wordnet.tsv"
-    query = AlignmentQuery(
-        AlignmentTask.WORDNET,
-        "id",
-        "lemma",
-        text,
-        POS.NOUN,
-        (Definition("s", (text,)),),
-        (Definition("i1", (text,)),),
-    )
-    empty = AlignmentQuery(
-        AlignmentTask.WORDNET,
-        "empty",
-        "lemma",
-        text,
-        POS.NOUN,
-        (Definition("s2", (text,)),),
-        (),
-    )
-    results = [
-        AlignmentResult(query, (AlignmentScore("s", "i1", "equivalent", score),)),
-        AlignmentResult(empty, ()),
-    ]
-    with TSVWriter(path, ALIGNMENT_FIELDS) as writer:
-        writer.write({"context": json.dumps({"model": text}, ensure_ascii=False)})
-        for result in results:
-            for row in serialize_alignment(result):
-                writer.write(row)
-
-    assert read_metadata(path) == {"model": text}
-    assert list(read_alignments(path)) == results
-
-
-def test_failed_cache_write_preserves_previous_completed_file(tmp_path: Path) -> None:
-    """Interrupted inference never replaces completed evidence."""
-    path = tmp_path / "translations.tsv"
-    _ = path.write_text("previous", encoding="utf-8")
-
-    with (
-        pytest.raises(RuntimeError, match="inference failed"),
-        TSVWriter(path, ALIGNMENT_FIELDS) as _writer,
-    ):
-        raise RuntimeError("inference failed")
-
-    assert path.read_text(encoding="utf-8") == "previous"
-    assert not path.with_name("translations.tsv.part").exists()
-
-
-def test_collection_round_trip_preserves_source_fields_and_relations(
+def test_cache_round_trip_preserves_decisions_response_and_synonyms(
     tmp_path: Path,
 ) -> None:
-    """Alignment reading retains source fields and existing associations."""
-    lemma = Lemma(
-        "word.noun",
-        "word",
-        POS.NOUN,
-        variants=frozenset({"words.noun"}),
-        senses=[
-            Sense(
-                "s",
-                ("parent", "leaf"),
-                etymology="origin",
-                topics=("topic",),
-                tags=("tag",),
-                synonyms=("term",),
-                sentences=[
-                    Quotation(
-                        "a word",
-                        "reference",
-                        1900,
-                        word_offsets=(
-                            WordOffset(
-                                (2, 6),
-                                (WordOffsetSource.BOLD, WordOffsetSource.LEMMATIZER),
-                            ),
-                        ),
-                    )
-                ],
-                translations={"it": frozenset({"parola"})},
-                wikidata_ids=("Q1",),
-                wordnet=(WordNetAlignment("i1", WordNetRelation.WIKTIONARY_NARROWER),),
-            )
-        ],
+    """TSV replay retains tabs, Unicode, synonyms, and explicit abstentions."""
+    sample = replace(query(), lemma='café\t"quoted"\nentry')
+    response = json.dumps(
+        {"s1": decision("t1"), "s2": None},
+        ensure_ascii=False,
+        indent=2,
     )
-    path = tmp_path / "collection.jsonl"
-    writer: Writer[Lemma] = open_writer(path)
-    with writer:
-        writer.write(lemma)
+    result = parse_response(sample, response)
+    source = tmp_path / "sample.json"
+    _ = source.write_text("{}", encoding="utf-8")
+    settings = ModelSettings("model")
+    metadata = build_metadata(source, settings, GlossMode.FULL)
+    path = tmp_path / "translations.tsv"
 
-    assert list(read_lemmas(path)) == [lemma]
-    assert "translations" not in json.loads(path.read_text(encoding="utf-8"))
+    with TSVWriter(path, ALIGNMENT_FIELDS) as writer:
+        writer.write({"context": json.dumps(metadata)})
+
+        for row in serialize_alignment(result):
+            writer.write(row)
+
+    assert tuple(read_alignments(path)) == (result,)
+    assert read_metadata(path) == metadata
+
+    for changed in (
+        replace(settings, model="other"),
+        replace(settings, temperature=0.5),
+        replace(settings, maximum_tokens=100),
+        replace(
+            settings,
+            url="http://localhost:9000/v1",
+        ),
+    ):
+        assert cache_key(build_metadata(source, changed, GlossMode.FULL)) != cache_key(
+            metadata
+        )
+
+
+def test_reranker_caches_require_explicit_migration(
+    tmp_path: Path,
+) -> None:
+    """Old score tables cannot be interpreted as generated decisions."""
+    path = tmp_path / "old.tsv"
+
+    with TSVWriter(path, ALIGNMENT_FIELDS) as writer:
+        writer.write({"context": json.dumps({"schema": "3"})})
+
+    with pytest.raises(ValueError, match="language model schema"):
+        _ = list(read_alignments(path))

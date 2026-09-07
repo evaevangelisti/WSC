@@ -1,6 +1,4 @@
-"""
-General tabular export independent of lexical resources.
-"""
+"""General tabular export independent of lexical resources."""
 
 import csv
 from collections.abc import Callable
@@ -36,6 +34,7 @@ def test_arbitrary_rows_preserve_values_and_column_order(
 ) -> None:
     """Arbitrary text, absent cells, and scalars follow the standard CSV contract."""
     path = workspace() / "inventory.tsv"
+
     with TSVWriter(path, fields) as writer:
         for row in rows:
             writer.write(row)
@@ -72,6 +71,7 @@ def test_writes_require_an_open_context(tmp_path: Path) -> None:
     """Writing before entry or after closure fails without changing output."""
     path = tmp_path / "inventory.tsv"
     writer = TSVWriter(path, ("name",))
+
     with pytest.raises(RuntimeError, match="context manager"):
         writer.write({"name": "before"})
 
@@ -79,6 +79,7 @@ def test_writes_require_an_open_context(tmp_path: Path) -> None:
         writer.write({"name": "during"})
 
     original = path.read_bytes()
+
     with pytest.raises(RuntimeError, match="context manager"):
         writer.write({"name": "after"})
 

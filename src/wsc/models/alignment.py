@@ -1,73 +1,90 @@
-"""
-Inputs and associations shared by alignment and research.
-"""
+"""Define inputs, decisions, and model contracts for lexical alignment."""
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal, Protocol, SupportsFloat
+from typing import Protocol
 
 from .pos import POS
 
 
 class AlignmentTask(StrEnum):
-    """Resources compared by an alignment."""
+    """Identify the resource aligned with Wiktionary."""
 
     TRANSLATIONS = "translations"
     WORDNET = "wordnet"
 
 
 class GlossMode(StrEnum):
-    """Representations compared by the gloss experiment."""
+    """Select the Wiktionary definition representation."""
 
     LAST = "last"
     FULL = "full"
-    CONTEXT = "context"
 
 
 @dataclass(frozen=True, slots=True)
-class AlignmentInstructions:
+class ModelSettings:
     """
-    Named semantic instructions shared by inference and experiments.
+    Configure language model inference.
 
     Attributes:
-        name: Profile identifier within its TOML file.
-        instruction: General cross-encoder instruction.
-        relations: Hypotheses keyed by translation or directed WordNet relation.
+        model: Model identifier exposed by the server.
+        temperature: Sampling temperature.
+        maximum_tokens: Maximum number of generated tokens.
+        url: OpenAI-compatible server endpoint.
+        reasoning_effort: Optional reasoning setting supported by the server.
+    """
+
+    model: str
+    temperature: float = 0.0
+    maximum_tokens: int = 4096
+    url: str = "http://localhost:8000/v1"
+    reasoning_effort: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AlignmentPrompts:
+    """
+    Store one prompt template for each alignment task.
+
+    Attributes:
+        name: Prompt file label.
+        tasks: Prompt templates indexed by alignment task.
     """
 
     name: str
-    instruction: str
-    relations: Mapping[str, str]
+    tasks: Mapping[str, str]
 
 
 @dataclass(frozen=True, slots=True)
 class Definition:
     """
-    One candidate in an alignment task.
+    Represent a lexical sense and its context.
 
     Attributes:
         id: Identifier within its side of the task.
         glosses: Definitions ordered from ancestor to leaf.
+        synonyms: Lexical forms expressing this sense.
     """
 
     id: str
     glosses: tuple[str, ...]
+    synonyms: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
 class AlignmentQuery:
     """
-    Complete candidate sets for one annotation task.
+    Store the complete candidate sets for an alignment.
 
     Attributes:
         task: Resource being aligned with Wiktionary.
         alignment_id: Stable task identifier.
-        lemma_id: Group preventing lemma leakage between experimental splits.
+        lemma_id: Entry identifier used for experimental grouping.
         lemma: Headword providing lexical context.
         pos: Wiktionary part of speech.
         source_definitions: Wiktionary senses.
-        target_definitions: Translation groups or WordNet concepts.
+        target_definitions: Candidate definitions.
     """
 
     task: AlignmentTask
@@ -80,91 +97,88 @@ class AlignmentQuery:
 
 
 @dataclass(frozen=True, slots=True)
-class Comparison:
+class AlignmentLink:
     """
-    Semantic hypothesis evaluated against a candidate definition.
-
-    Attributes:
-        query: Source definition and requested relation.
-        document: Candidate definition.
-    """
-
-    query: str
-    document: str
-
-
-class Reranker(Protocol):
-    """Text-only cross-encoder prediction contract used by the inference adapter."""
-
-    def predict(
-        self,
-        inputs: Sequence[tuple[str, str]],
-        *,
-        batch_size: int,
-        show_progress_bar: bool,
-        convert_to_numpy: Literal[True],
-    ) -> Iterable[SupportsFloat]:
-        """
-        Predict one scalar score per text pair.
-
-        Args:
-            inputs: Ordered query and document pairs.
-            batch_size: Number of pairs evaluated together.
-            show_progress_bar: Whether inference displays progress.
-            convert_to_numpy: Select array output for single-score predictions.
-
-        Returns:
-            Numeric scores convertible to Python floats.
-        """
-        ...
-
-
-class Scorer(Protocol):
-    """Model boundary allowing offline tests of the complete pipeline."""
-
-    def score(
-        self,
-        pairs: Sequence[Comparison],
-    ) -> list[float]:
-        """
-        Score hypotheses in input order.
-
-        Args:
-            pairs: Hypotheses and candidate definitions.
-
-        Returns:
-            One finite, uncalibrated score per pair; larger means stronger support.
-        """
-        ...
-
-
-@dataclass(frozen=True, slots=True)
-class AlignmentScore:
-    """
-    Semantic evidence retained before assignment or abstention.
+    Identify an accepted semantic association.
 
     Attributes:
         source_id: Wiktionary sense identifier.
-        target_id: Translation group identifier or WordNet synset identifier.
-        relation: Translation association or directed WordNet relation.
-        score: Uncalibrated model score.
+        target_id: Candidate identifier.
+        relation: Semantic relation directed from Wiktionary to the candidate.
+        reason: Brief evidence supporting the association.
     """
 
     source_id: str
     target_id: str
     relation: str
-    score: float
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class AlignmentDecision:
+    """
+    Record a source decision and its accepted associations.
+
+    Attributes:
+        source_id: Wiktionary sense identifier.
+        links: Accepted links for this source.
+    """
+
+    source_id: str
+    links: tuple[AlignmentLink, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
 class AlignmentResult:
     """
-    Candidate evidence sufficient to repeat assignment without inference.
+    Retain decisions and the original model response.
 
     Attributes:
-        query: Complete annotation input.
-        scores: Scores for every candidate relation.
+        query: Complete model input.
+        decisions: One decision per source sense.
+        response: Original generated JSON retained for review.
     """
 
     query: AlignmentQuery
-    scores: tuple[AlignmentScore, ...]
+    decisions: tuple[AlignmentDecision, ...]
+    response: str = ""
+
+    @property
+    def links(
+        self,
+    ) -> tuple[AlignmentLink, ...]:
+        """Return accepted associations in source order."""
+        return tuple(link for decision in self.decisions for link in decision.links)
+
+
+@dataclass(frozen=True, slots=True)
+class ModelRequest:
+    """
+    Provide the prompt and its structured response schema.
+
+    Attributes:
+        prompt: Complete lexical alignment instructions and definitions.
+        schema: JSON schema accepted by structured-output providers.
+    """
+
+    prompt: str
+    schema: dict[str, object]
+
+
+class LanguageModel(Protocol):
+    """Generate structured alignment decisions."""
+
+    def generate(
+        self,
+        request: ModelRequest,
+    ) -> str:
+        """
+        Generate a response for one alignment request.
+
+        Args:
+            request: Prompt and response schema.
+
+        Returns:
+            Generated JSON text.
+        """
+        ...

@@ -30,25 +30,20 @@ extensions = [
 
 exclude_patterns = []
 
-# A page cut out of the README opens on the heading it was cut at, which is a
-# second-level one. Docutils makes a title of it all the same, so the page
-# comes out right and only the source looks headless.
+# README excerpts start at second-level headings, which Docutils renders as titles.
 suppress_warnings = ["myst.header"]
 
 # -- Docstrings --------------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
-# Google is the style the docstrings are written in; NumPy's is not read, so
-# that one written in it fails rather than being half understood.
+# Parse the project's Google-style docstrings.
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
-# An Attributes section describes the fields autodoc has already found, so it
-# is rendered beside them rather than as a second entry for the same name.
+# Render attribute descriptions beside the fields discovered by autodoc.
 napoleon_use_ivar = True
 
-# The order of a module is the order it was written in, and the annotations
-# are already on every signature: they read better beside what they describe.
+# Preserve source order and display annotations beside their descriptions.
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 

@@ -1,8 +1,8 @@
 """
 Tests for src/wsc/extract/offsets.py.
 
-Whether a pipeline reads a sentence rightly is kwic's to answer; what is asked
-here is the query, the fallback, and the order the ranges come back in.
+Whether a pipeline reads a sentence rightly is kwic's to answer; what is asked here is
+the query, the fallback, and the order the ranges come back in.
 """
 
 from itertools import pairwise
@@ -20,8 +20,6 @@ _FORMS = st.lists(words, max_size=4).map(frozenset)
 
 _PARTS_OF_SPEECH = st.sampled_from(POS)
 
-# The tagset every engine reports, stated here as it is stated in the source:
-# what a reader is handed is worth writing down twice.
 _UNIVERSAL_TAGS = {
     POS.NOUN: UNIVERSAL_POS.NOUN,
     POS.NAME: UNIVERSAL_POS.PROPN,
@@ -32,9 +30,7 @@ _UNIVERSAL_TAGS = {
 
 
 class TestQueries:
-    """
-    What one entry is looked for by.
-    """
+    """What one entry is looked for by."""
 
     @given(words, _PARTS_OF_SPEECH, _FORMS)
     def test_carries_the_headword_and_every_form_collected(
@@ -61,9 +57,7 @@ class TestQueries:
 
 
 class TestSearches:
-    """
-    What comes back for a batch of sentences.
-    """
+    """What comes back for a batch of sentences."""
 
     @given(st.lists(words, max_size=6))
     def test_answers_every_sentence_it_was_handed(
@@ -118,9 +112,7 @@ class TestSearches:
 
 
 class TestFallback:
-    """
-    Matching the listed forms where the reading found nothing.
-    """
+    """Matching the listed forms where the reading found nothing."""
 
     @given(words)
     def test_matches_a_form_the_reading_passed_over(

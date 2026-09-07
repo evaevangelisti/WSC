@@ -1,8 +1,8 @@
 """
 Tests for src/wsc/upstream/wiktextract.py.
 
-Wiktextract itself is never run: what is tested is the plumbing around it,
-a stand-in subprocess keeping real streams and real exit codes.
+Wiktextract itself is never run: what is tested is the plumbing around it, a stand-in
+subprocess keeping real streams and real exit codes.
 """
 
 import json
@@ -22,16 +22,12 @@ from hypothesis import strategies as st
 from wsc.constants import LANGUAGE
 from wsc.upstream import wiktextract
 
-# One entry, as wiktextract writes it: a JSON object, and so a line opening
-# on a brace.
 _ENTRY_LINES = st.dictionaries(
     st.text(alphabet=string.ascii_letters, min_size=1, max_size=5),
     st.text(alphabet=string.ascii_letters, max_size=5),
     max_size=3,
 ).map(json.dumps)
 
-# What wiktextract writes about itself down the same stream, in the ASCII the
-# stand-in can carry whatever the machine's encoding.
 _REPORT_LINES = st.text(
     alphabet=f"{string.digits}{string.ascii_letters}{string.punctuation} ",
     max_size=20,
@@ -84,9 +80,7 @@ class _MutePopen:
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        """
-        Stand in for a process left, which has nothing to release.
-        """
+        """Stand in for a process left, which has nothing to release."""
 
 
 @pytest.fixture
@@ -100,8 +94,7 @@ def stub_wiktextract(
         monkeypatch: Puts the stand-in in place, and takes it away after.
 
     Returns:
-        A builder taking the lines to write and the code to exit with, and
-        handing back the commands that one run was asked for.
+        A builder recording commands with configured output and exit codes.
     """
     real_popen = subprocess.Popen
 
@@ -165,9 +158,7 @@ def read(
 
 
 class TestParse:
-    """
-    Turning a dump into the compressed JSONL wiktextract makes of it.
-    """
+    """Turning a dump into the compressed JSONL wiktextract makes of it."""
 
     @_SPAWNS
     @given(st.lists(_ENTRY_LINES | _REPORT_LINES, max_size=8), _ENTRY_LINES, st.data())
@@ -206,9 +197,8 @@ class TestParse:
         """
         The command is compared whole, since it settles what the data is.
 
-        The edition and the language to keep are the same one, and --examples,
-        --translations, --linkages and --etymologies are what put those in
-        the output at all.
+        The parser receives the edition language and flags enabling every
+        collected resource.
         """
         commands = stub_wiktextract(['{"word": "bank"}'])
 
@@ -247,8 +237,8 @@ class TestParse:
         """
         The tail of the command is what is read, the head being settled above.
 
-        A database is asked for by option, so it goes before the dump, which
-        wiktextract takes as the one argument that stands on its own.
+        A database is asked for by option, so it goes before the dump, which wiktextract
+        takes as the one argument that stands on its own.
         """
         commands = stub_wiktextract(['{"word": "bank"}'])
 
@@ -330,7 +320,7 @@ class TestParse:
         dump_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """A process with no stream to read is reported, not read from anyway."""
+        """A missing output stream raises an explicit error."""
 
         def popen(
             _command: list[str],

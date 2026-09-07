@@ -1,8 +1,8 @@
 """
 Tests for src/wsc/export/__init__.py.
 
-Only the choosing is tested here. What each format writes is tested beside
-that format, which is where a format added later is tested too.
+Only the choosing is tested here. What each format writes is tested beside that format,
+which is where a format added later is tested too.
 """
 
 import string
@@ -16,8 +16,6 @@ from hypothesis import strategies as st
 from wsc.export import Writer, open_writer
 from wsc.models import Lemma
 
-# The formats the collector offers. A format added later is added here, and
-# brings a file of its own under formats/.
 _KNOWN = [".jsonl"]
 
 _CASES = st.lists(st.booleans(), min_size=5, max_size=5).map(
@@ -35,9 +33,7 @@ _UNKNOWN = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=6).filt
 
 
 class TestOpenWriter:
-    """
-    Picking a format off the suffix of the path.
-    """
+    """Picking a format off the suffix of the path."""
 
     @pytest.mark.parametrize("suffix", _KNOWN)
     def test_every_format_the_collector_offers_opens_a_writer(
@@ -67,7 +63,7 @@ class TestOpenWriter:
         workspace: Callable[[], Path],
         suffix: str,
     ) -> None:
-        """The file is opened when the writer is entered, not when it is built."""
+        """Entering the writer opens the file."""
         directory = workspace()
 
         _: Writer[Lemma] = open_writer(directory / f"senses{suffix}")

@@ -1,6 +1,4 @@
-"""
-Read extracted WordNet concepts from the source cache.
-"""
+"""Read extracted WordNet concepts from the source cache."""
 
 import json
 from collections.abc import Iterator

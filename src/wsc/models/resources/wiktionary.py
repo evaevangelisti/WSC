@@ -1,6 +1,4 @@
-"""
-Domain model for Wiktionary entries parsed by wiktextract.
-"""
+"""Domain model for Wiktionary entries parsed by wiktextract."""
 
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -55,9 +53,7 @@ class Attestation:
 
 @dataclass(frozen=True, slots=True)
 class Example(Attestation):
-    """
-    A usage example written by a Wiktionary editor.
-    """
+    """A usage example written by a Wiktionary editor."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,9 +81,8 @@ class Sense:
 
     Attributes:
         id: Identifies the sense, such as bank.noun.3f9c1a2b.
-        glosses: The gloss chain, outermost first. Never empty.
-        etymology: Which etymology of the entry it belongs to, empty where
-        the page states only one.
+        glosses: Nonempty gloss chain ordered from ancestor to leaf.
+        etymology: Etymology identifier, empty for entries with one etymology.
         synonyms: Other words standing for this meaning alone.
         topics: Subject fields the sense belongs to, such as mathematics.
         tags: Labels of grammar and register, such as transitive or obsolete.
@@ -131,8 +126,9 @@ class Sense:
 
 
 type Translations = dict[str, dict[str, frozenset[str]]]
-"""What other languages call an entry: the gloss a translation table heads,
-then the language, then the words it offers."""
+"""
+Translation groups indexed by heading and language.
+"""
 
 
 @dataclass(slots=True)
@@ -140,8 +136,7 @@ class Lemma:
     """
     A written form with a part of speech.
 
-    Wiktionary splits an entry by etymology, which the senses carry
-    instead.
+    Wiktionary splits an entry by etymology, which the senses carry instead.
 
     Attributes:
         id: Identifies the entry, such as bank.noun.
@@ -149,8 +144,7 @@ class Lemma:
         pos: Its part of speech.
         variants: Lemma identifiers of alternative spellings, such as colour.noun.
         senses: Its meanings, in the order Wiktionary lists them.
-        translations: What other languages call it, hung off the entry rather
-        than off a sense, the way Wiktionary writes them.
+        translations: Translation groups indexed by heading and language.
     """
 
     id: str

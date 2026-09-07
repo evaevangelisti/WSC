@@ -1,6 +1,4 @@
-"""
-What other languages call an entry.
-"""
+"""What other languages call an entry."""
 
 from collections import defaultdict
 
@@ -8,9 +6,7 @@ from ....models import Translations
 from ..merge import add_translations
 from ..schema import RawTranslation
 
-# What a translation table is headed with where nobody wrote a gloss. Matched
-# whole rather than by prefix: "translation studies" is a meaning, and so is
-# "translation of source code into object code by a compiler".
+# Placeholder headings require full matches to preserve meaningful glosses.
 _PLACEHOLDER_GLOSSES = frozenset(
     {
         "translations",
@@ -29,12 +25,11 @@ def parse_translations(
     """
     Gather an entry's translations under the glosses heading them.
 
-    Wiktionary hangs a table off the entry, not off a sense.
+    Wiktionary stores translation tables at entry level.
 
     Args:
         raw_translations: What wiktextract listed under the entry.
-        off_page_translations: What the dump holds away from the entry, or
-        None where the dump was not walked for it.
+        off_page_translations: Optional translations from linked pages.
 
     Returns:
         The words each language offers for each gloss translated.

@@ -1,8 +1,8 @@
 """
 Reporting on one set of word offset annotations.
 
-A reading names the export it judged, so several passes may sit in one
-project and still be scored apart.
+A reading names the export it judged, so several passes may sit in one project and still
+be scored apart.
 """
 
 import argparse
@@ -24,9 +24,7 @@ COVERAGES = ("nothing missing", "something missing")
 
 
 class Reading(TypedDict):
-    """
-    One judgement of how an export marked one sentence.
-    """
+    """One judgement of how an export marked one sentence."""
 
     item_id: str
     source: str
@@ -65,25 +63,31 @@ def read_offsets(paths: list[Path]) -> list[Reading]:
         ValueError: If a task lacks either required judgement.
     """
     readings: list[Reading] = []
+
     for path in paths:
         tasks: list[OffsetTask] = read_json(path)
+
         for task in tasks:
             for annotation in task["annotations"]:
                 if annotation.get("was_cancelled", False):
                     continue
+
                 results = {
                     item["from_name"]: item["value"] for item in annotation["result"]
                 }
                 marking = results.get("marking", {}).get("choices", [])
                 coverage = results.get("coverage", {}).get("choices", [])
+
                 if len(marking) != 1 or len(coverage) != 1:
                     raise ValueError(
                         f"Incomplete offset judgement: {task['data']['item_id']}"
                     )
+
                 if marking[0] not in MARKINGS or coverage[0] not in COVERAGES:
                     raise ValueError(
                         f"Unknown offset judgement: {task['data']['item_id']}"
                     )
+
                 readings.append(
                     {
                         "item_id": task["data"]["item_id"],
@@ -109,6 +113,7 @@ def resolve_readings(readings: list[Reading]) -> list[Reading]:
         One reading per agreed sentence.
     """
     grouped: defaultdict[str, list[Reading]] = defaultdict(list)
+
     for reading in readings:
         grouped[reading["item_id"]].append(reading)
 
@@ -140,8 +145,8 @@ def score(
     """
     Add up what one export was found to have done.
 
-    Precision is asked of the sentences it marked at all, and recall of every
-    sentence, a miss counting whether or not anything was marked.
+    Precision is asked of the sentences it marked at all, and recall of every sentence,
+    a miss counting whether or not anything was marked.
 
     Args:
         readings: Every judgement of that export.
@@ -188,10 +193,12 @@ def agreement(
         )
 
     annotators: defaultdict[tuple[str, str], set[str]] = defaultdict(set)
+
     for reading in readings:
         annotators[reading["source"], reading["item_id"]].add(
             reading.get("annotator", "")
         )
+
     repeated = [
         judged for key, judged in judgements.items() if len(annotators[key]) > 1
     ]
@@ -313,12 +320,14 @@ def to_markdown(
         "| Export | Sentence | Notes |",
         "| --- | --- | --- |",
     ]
+
     for name in names:
         notes = {
             (reading["item_id"], note)
             for reading in grouped[name]
             for note in reading.get("notes", [])
         }
+
         for identifier, note in sorted(notes):
             text = note.replace("|", "\\|").replace("\n", "<br>")
             lines.append(f"| {name} | {identifier} | {text} |")
@@ -346,9 +355,7 @@ def read_arguments() -> list[Path]:
 
 
 def main() -> None:
-    """
-    Score every export the set judged, and write the report beside it.
-    """
+    """Score every export the set judged, and write the report beside it."""
     annotations = read_arguments()
 
     readings = read_offsets(annotations)

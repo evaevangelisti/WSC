@@ -1,13 +1,10 @@
-"""
-How a lemma and its senses are named.
-"""
+"""How a lemma and its senses are named."""
 
 from collections.abc import Iterable
 from hashlib import blake2b
 
 from ...models import POS
 
-# A digest tells apart the senses of one headword, never those of the dump.
 _DIGEST_SIZE = 4
 
 
@@ -15,7 +12,7 @@ def _digest(
     *written: str,
 ) -> str:
     """
-    Name something after what it says rather than after where it was read.
+    Generate a stable identifier from source content.
 
     Args:
         written: The strings to name it by.
@@ -51,12 +48,11 @@ def sense_id(
     """
     Name one sense after its gloss chain and the etymology holding it.
 
-    The chain alone does not tell etymologies apart.
+    Etymology distinguishes senses sharing a gloss chain.
 
     Args:
         lemma_id: What the entry is named.
-        etymology: Which etymology holds the sense, empty where the page
-        states only one.
+        etymology: Etymology identifier, empty for entries with one etymology.
         glosses: The gloss chain, outermost first.
 
     Returns:

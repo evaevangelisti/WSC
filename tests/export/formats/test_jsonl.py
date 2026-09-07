@@ -1,8 +1,7 @@
 """
 Tests for src/wsc/export/formats/jsonl.py.
 
-What was written is compared whole rather than reached into, so a key that
-appears where none was expected is caught along with one that went missing.
+Complete document comparisons detect missing and unexpected fields.
 """
 
 import json
@@ -141,8 +140,7 @@ def write(
         workspace: Sets aside a directory for the file being written.
 
     Returns:
-        A writer handing back the text that landed, newlines and all, since
-        the format is as much about the lines as about what is on them.
+        A writer returning the complete serialized text.
     """
 
     def run(
@@ -162,9 +160,7 @@ def write(
 
 
 class TestJSONLWriter:
-    """
-    One JSON object per line.
-    """
+    """One JSON object per line."""
 
     @given(_WRITTEN)
     def test_writes_one_line_per_lemma(
@@ -197,7 +193,7 @@ class TestJSONLWriter:
         write: Callable[..., str],
         headword: str,
     ) -> None:
-        """Text is written as it stands, rather than escaped."""
+        """Serialized text preserves Unicode characters."""
         assert headword in write(Lemma(f"{headword}.noun.1", headword, POS.NOUN))
 
     def test_writes_populated_alignment_fields(
@@ -237,7 +233,7 @@ class TestJSONLWriter:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """Closing lets go of the file, rather than leaving a closed one behind."""
+        """Closing releases the file handle."""
         writer: Writer[Lemma] = open_writer(workspace() / "senses.jsonl")
         lemma = Lemma("bank.noun.1", "bank", POS.NOUN)
 

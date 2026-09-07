@@ -1,10 +1,7 @@
-"""
-Public alignment behavior under conflicting, missing, and randomized evidence.
-"""
+"""Exercise generated decisions through the public alignment API."""
 
-from collections.abc import Sequence
+import json
 from dataclasses import replace
-from itertools import product
 
 import pytest
 from hypothesis import given
@@ -13,264 +10,293 @@ from hypothesis import strategies as st
 from wsc.alignment import (
     Aligner,
     WordNetCandidates,
+    align_query,
     build_queries,
-    score_query,
-    select_links,
+    build_request,
+    parse_response,
 )
-from wsc.models import POS, Example, Lemma, Sense, Synset, WordNetRelation
+from wsc.models import POS, Lemma, Sense, Synset, WordNetAlignment, WordNetRelation
 from wsc.models.alignment import (
     AlignmentQuery,
-    AlignmentResult,
-    AlignmentScore,
     AlignmentTask,
-    Comparison,
     Definition,
     GlossMode,
+    ModelRequest,
 )
 
 
-class Scores:
-    """Deterministic model substitute leaving assignment and serialization intact."""
+class Model:
+    """Return configured responses and retain the generated requests."""
 
-    def __init__(self, values: list[float]) -> None:
+    def __init__(
+        self,
+        responses: list[str],
+    ) -> None:
         """
-        Retain scores in query order.
+        Store generated responses.
 
         Args:
-            values: Scores supplied by the test.
+            responses: Model responses in request order.
         """
-        self.values: list[float] = values
-        self.pairs: list[Comparison] = []
+        self.responses: list[str] = list(responses)
+        self.requests: list[ModelRequest] = []
 
-    def score(self, pairs: Sequence[Comparison]) -> list[float]:
+    def generate(
+        self,
+        request: ModelRequest,
+    ) -> str:
         """
-        Record model inputs and return the next configured scores.
+        Record a request and return its response.
 
         Args:
-            pairs: Actual semantic hypotheses constructed by the pipeline.
+            request: Actual rendered model request.
 
         Returns:
-            Configured scores matching the next batch length.
+            The next configured response.
         """
-        self.pairs.extend(pairs)
-        selected, self.values = self.values[: len(pairs)], self.values[len(pairs) :]
+        self.requests.append(request)
 
-        return selected
-
-
-@given(
-    st.integers(1, 4),
-    st.integers(1, 4),
-    st.lists(st.integers(-5, 8), min_size=16, max_size=16),
-    st.integers(-3, 4),
-)
-def test_matching_maximizes_partial_assignment(
-    rows: int,
-    columns: int,
-    values: list[int],
-    threshold: int,
-) -> None:
-    """Random matrices match an exhaustive independent assignment oracle."""
-    query = AlignmentQuery(
-        AlignmentTask.TRANSLATIONS,
-        "entry",
-        "entry",
-        "word",
-        POS.NOUN,
-        tuple(Definition(str(index), ("sense",)) for index in range(rows)),
-        tuple(Definition(str(index), ("gloss",)) for index in range(columns)),
-    )
-    scores = tuple(
-        AlignmentScore(
-            str(row), str(column), "translation", float(values[row * columns + column])
-        )
-        for row in range(rows)
-        for column in range(columns)
-    )
-    selected = select_links(AlignmentResult(query, scores), threshold)
-    actual = sum(link.score - threshold for link in selected)
-    expected = max(
-        sum(
-            values[row * columns + column] - threshold
-            for row, column in enumerate(assignment)
-            if column >= 0
-        )
-        for assignment in product(range(-1, columns), repeat=rows)
-        if len({column for column in assignment if column >= 0})
-        == sum(column >= 0 for column in assignment)
-    )
-
-    assert actual == expected
-    assert len({link.source_id for link in selected}) == len(selected)
-    assert len({link.target_id for link in selected}) == len(selected)
-    assert all(link.score > threshold for link in selected)
+        return self.responses.pop(0)
 
 
-def test_alignment_transfers_only_accepted_translations_and_preserves_input() -> None:
-    """Global assignment resolves collisions while preserving source data."""
-    senses = [
-        Sense("s1", ("first",), sentences=[Example("example")]),
-        Sense("s2", ("second",)),
-    ]
-    lemma = Lemma(
+def query(
+    task: AlignmentTask = AlignmentTask.TRANSLATIONS,
+) -> AlignmentQuery:
+    """
+    Build a two-source query with overlapping contextual vocabulary.
+
+    Args:
+        task: Resource being aligned.
+
+    Returns:
+        Complete source and candidate definitions.
+    """
+    return AlignmentQuery(
+        task,
+        "word.noun",
         "word.noun",
         "word",
         POS.NOUN,
-        senses=senses,
-        translations={
-            "group1": {"it": frozenset({"uno"})},
-            "group2": {"it": frozenset({"due"})},
-            "unrelated": {"it": frozenset({"altro"})},
+        (
+            Definition("s1", ("parent", "first sense"), ("synonym",)),
+            Definition("s2", ("second sense",)),
+        ),
+        (
+            Definition("t1", ("first heading",), ("target synonym",)),
+            Definition("t2", ("second heading",)),
+        ),
+    )
+
+
+def decision(
+    target: str | None,
+    relation: str = "translation",
+) -> list[dict[str, str]] | None:
+    """
+    Build a generated association or abstention.
+
+    Args:
+        target: Accepted candidate identifier.
+        relation: Directed semantic relation.
+
+    Returns:
+        A supported association or null.
+    """
+    if target is None:
+        return None
+
+    return [
+        {
+            "target_id": target,
+            "relation": relation,
+            "reason": "The definitions express the same concept.",
         },
+    ]
+
+
+@given(targets=st.permutations(("t1", "t2")), abstain=st.booleans())
+def test_translation_decisions_preserve_one_to_one_associations(
+    targets: tuple[str, ...],
+    *,
+    abstain: bool,
+) -> None:
+    """Generated assignments retain explicit omissions and distinct targets."""
+    response = json.dumps(
+        {"s1": decision(targets[0]), "s2": decision(None if abstain else targets[1])}
     )
-    aligner = Aligner(
-        Scores([10, 9, -5, 8, 0, -5]),
-        WordNetCandidates(()),
-        {AlignmentTask.TRANSLATIONS: 1},
-    )
-    aligned = next(aligner.align([lemma]))
+    result = align_query(query(), Model([response]))
 
-    assert aligned.senses[0].translations == {"it": frozenset({"due"})}
-    assert aligned.senses[1].translations == {"it": frozenset({"uno"})}
-    assert not aligned.translations
-    assert len(lemma.translations) == 3
-    assert not senses[0].translations
-    assert aligned.senses[0].sentences == senses[0].sentences
+    assert result.response == response
+    assert result.decisions[0].links[0].target_id == targets[0]
+    assert len(result.links) == (1 if abstain else 2)
+    assert len({link.target_id for link in result.links}) == len(result.links)
 
 
-def test_single_pair_can_abstain_and_still_calls_semantic_model() -> None:
-    """A one-by-one entry receives no automatic association."""
-    scorer = Scores([-1])
-    lemma = Lemma(
-        "word.noun",
-        "word",
-        POS.NOUN,
-        senses=[Sense("s", ("meaning",))],
-        translations={"meaning": {"it": frozenset({"parola"})}},
-    )
-    result = next(
-        Aligner(scorer, WordNetCandidates(()), {AlignmentTask.TRANSLATIONS: 0}).align(
-            [lemma]
-        )
-    )
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"s1": decision("t1")},
+        {"s1": decision("t1"), "s2": decision("t1")},
+        {"s1": decision("unknown"), "s2": decision(None)},
+        {"s1": decision("t1", "equivalent"), "s2": decision(None)},
+        {"s1": {"status": "matched", "links": []}, "s2": decision(None)},
+        {
+            "s1": {
+                "status": "uncertain",
+                "links": [{"target_id": "t1", "relation": "translation"}],
+            },
+            "s2": decision(None),
+        },
+    ],
+)
+def test_invalid_model_assignments_are_rejected(
+    response: dict[str, object],
+) -> None:
+    """Missing, contradictory, and invented associations fail validation."""
+    with pytest.raises(ValueError, match=r"Expected|Invalid|One-to-one"):
+        _ = align_query(query(), Model([json.dumps(response)]))
 
-    assert len(scorer.pairs) == 1
-    assert not result.senses[0].translations
-    assert not result.translations
+
+@pytest.mark.parametrize("response", ["null", "[]", "```json\n{}\n```", "{"])
+def test_invalid_model_json_is_rejected(
+    response: str,
+) -> None:
+    """Malformed model responses remain visible failures."""
+    with pytest.raises(ValueError, match=r"Expected|Expecting"):
+        _ = parse_response(query(), response)
 
 
-def test_wordnet_preserves_many_to_many_relations() -> None:
-    """Senses and synsets retain many-to-many associations."""
-    index = WordNetCandidates(
-        [
-            Synset("wn1", "i1", POS.NOUN, "concept one", ("Word",)),
-            Synset("wn2", "i2", POS.NOUN, "concept two", ("Word",)),
-        ]
-    )
+def test_empty_candidates_avoid_model_inference() -> None:
+    """Empty candidate sets produce explicit empty decisions."""
+    model = Model([])
+    empty = align_query(replace(query(), target_definitions=()), model)
+
+    assert all(not item.links for item in empty.decisions)
+    assert len(empty.decisions) == len(query().source_definitions)
+    assert not model.requests
+
+
+def test_alignment_applies_decisions_and_preserves_collection() -> None:
+    """Translations move to copied senses while source entries remain intact."""
     lemma = Lemma(
         "word.noun",
         "word",
         POS.NOUN,
         senses=[Sense("s1", ("first",)), Sense("s2", ("second",))],
+        translations={
+            "first heading": {"it": frozenset({"uno"})},
+            "second heading": {"it": frozenset({"due"})},
+        },
     )
-    scorer = Scores([1, 2, 8, 1, 2, 7, 9, 2, 1, -1, -2, -3])
-    result = next(Aligner(scorer, index, {AlignmentTask.WORDNET: 5}).align([lemma]))
-
-    assert [(item.synset_id, item.relation) for item in result.senses[0].wordnet] == [
-        ("wn1", WordNetRelation.WIKTIONARY_BROADER),
-        ("wn2", WordNetRelation.WIKTIONARY_BROADER),
-    ]
-    assert result.senses[1].wordnet[0].synset_id == "wn1"
-    assert result.senses[1].wordnet[0].relation == WordNetRelation.EQUIVALENT
-
-
-@given(st.text(alphabet="abcABCé .", max_size=15))
-def test_candidates_include_variants_and_map_proper_names_to_nouns(
-    prefix: str,
-) -> None:
-    """Variant identifiers preserve dotted spellings and retrieve nominal candidates."""
-    spelling = f"{prefix}New_York"
-    index = WordNetCandidates(
-        [
-            Synset("one", "i1", POS.NOUN, "name", (spelling, spelling.lower())),
-            Synset("two", "i2", POS.VERB, "verb", (spelling,)),
-        ]
+    model = Model(
+        [json.dumps({"s1": decision("translation:1"), "s2": decision("translation:0")})]
     )
-    lemma = Lemma(
-        "NY.name",
-        "NY",
-        POS.NAME,
-        variants=frozenset({f"{spelling.upper().replace('_', ' ')}.name"}),
-        senses=[Sense("s", ("city",))],
-    )
+    aligner = Aligner(model, WordNetCandidates(()), (AlignmentTask.TRANSLATIONS,))
+    (aligned,) = aligner.align([lemma])
 
-    assert [item.ili for item in index.candidates(lemma)] == ["i1"]
+    assert aligned.senses[0].translations == {"it": frozenset({"due"})}
+    assert aligned.senses[1].translations == {"it": frozenset({"uno"})}
+    assert not aligned.translations
+    assert lemma.translations
+    assert all(not sense.translations for sense in lemma.senses)
 
 
-@given(st.integers(min_value=1, max_value=15), st.sampled_from(("in", "", "i1")))
-def test_synset_identity_preserves_candidates_sharing_an_ili(
-    count: int,
-    ili: str,
-) -> None:
-    """Repeated or absent ILI values never merge distinct WordNet candidates."""
-    identifiers = {f"wn-{position:02}" for position in range(count)}
-    candidates = WordNetCandidates(
-        Synset(identifier, ili, POS.NOUN, identifier, ("word",))
-        for identifier in sorted(identifiers)
-    )
+def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:
+    """A source retains equivalent and broader WordNet candidates."""
     lemma = Lemma("word.noun", "word", POS.NOUN, senses=[Sense("s", ("sense",))])
-    aligner = Aligner(
-        Scores([10, 0, 0] * count), candidates, {AlignmentTask.WORDNET: 1}
+    synsets = (
+        Synset("wn1", "i1", POS.NOUN, "specific", ("word", "synonym")),
+        Synset("wn2", "i2", POS.NOUN, "general", ("word",)),
     )
-    aligned = next(aligner.align([lemma]))
+    response = json.dumps(
+        {
+            "s": [
+                {
+                    "target_id": "wn1",
+                    "relation": "equivalent",
+                    "reason": "Same concept.",
+                },
+                {
+                    "target_id": "wn2",
+                    "relation": "wiktionary_narrower",
+                    "reason": "The source adds a defining restriction.",
+                },
+            ],
+        }
+    )
+    model = Model([response])
+    aligner = Aligner(model, WordNetCandidates(synsets), (AlignmentTask.WORDNET,))
+    (aligned,) = aligner.align([lemma])
 
-    assert {item.id for item in candidates.candidates(lemma)} == identifiers
-    assert {item.synset_id for item in aligned.senses[0].wordnet} == identifiers
+    assert aligned.senses[0].wordnet == (
+        WordNetAlignment("wn1", WordNetRelation.EQUIVALENT),
+        WordNetAlignment("wn2", WordNetRelation.WIKTIONARY_NARROWER),
+    )
+    assert "wn1 (word, synonym) specific" in model.requests[0].prompt
+    assert not lemma.senses[0].wordnet
 
 
 @pytest.mark.parametrize("mode", list(GlossMode))
-def test_representation_changes_only_model_input(mode: GlossMode) -> None:
-    """Ablations retain task identities and original hierarchical definitions."""
-    query = AlignmentQuery(
-        AlignmentTask.TRANSLATIONS,
-        "id",
-        "lemma",
-        "mouse",
-        POS.NOUN,
-        (Definition("s", ("ancestor marker", "leaf marker")),),
-        (Definition("t", ("candidate",)),),
+def test_prompts_render_identifiers_synonyms_and_hierarchy(
+    mode: GlossMode,
+) -> None:
+    """Prompt definitions retain their identity and selected context."""
+    prompt = build_request(query(), mode).prompt
+
+    assert (
+        "s1 (synonym) parent > first sense"
+        if mode == GlossMode.FULL
+        else "s1 (synonym) first sense"
+    ) in prompt
+    assert "t1 (target synonym) first heading" in prompt
+    assert "s2 second sense" in prompt
+    assert ("Read each" in prompt) == (mode == GlossMode.FULL)
+    assert '"status"' not in prompt
+    assert tuple(GlossMode) == (GlossMode.LAST, GlossMode.FULL)
+
+
+def test_candidates_include_variants_and_sense_synonyms() -> None:
+    """Variant lookup preserves dotted forms and sense-specific synonyms."""
+    lemma = Lemma(
+        "alias.name",
+        "alias",
+        POS.NAME,
+        variants=frozenset({"a.b.noun"}),
+        senses=[Sense("s", ("sense",), synonyms=("variant",))],
     )
-    scorer = Scores([4])
-    result = score_query(query, scorer, mode)
+    candidates = WordNetCandidates(
+        [Synset("wn", "ili", POS.NOUN, "definition", ("a.b",))]
+    )
+    (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
 
-    assert result.query == query
-    assert "leaf marker" in scorer.pairs[0].query
-    assert ("ancestor marker" in scorer.pairs[0].query) == (mode != GlossMode.LAST)
+    assert result.source_definitions[0].synonyms == ("variant",)
+    assert result.target_definitions[0].id == "wn"
+    assert result.target_definitions[0].synonyms == ("a.b",)
 
 
-def test_cached_alignment_replays_without_model_and_rejects_changed_definitions() -> (
-    None
-):
-    """Cached replay rejects changed source definitions."""
+def test_replay_rejects_context_drift_and_extra_results() -> None:
+    """Cached decisions must cover the current collection exactly."""
     lemma = Lemma(
         "word.noun",
         "word",
         POS.NOUN,
-        senses=[Sense("s", ("meaning",))],
-        translations={"translation": {"it": frozenset({"parola"})}},
+        senses=[Sense("s1", ("first",))],
+        translations={"heading": {"it": frozenset({"uno"})}},
     )
-    query = next(
-        build_queries(lemma, AlignmentTask.TRANSLATIONS, WordNetCandidates(()))
-    )
-    result = score_query(query, Scores([5]))
-    aligner = Aligner(None, WordNetCandidates(()), {AlignmentTask.TRANSLATIONS: 6})
-    aligned = next(
-        aligner.align(
-            [lemma], cached_results={AlignmentTask.TRANSLATIONS: iter([result])}
+    candidates = WordNetCandidates(())
+    (sample,) = build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates)
+    result = parse_response(sample, json.dumps({"s1": decision("translation:0")}))
+    aligner = Aligner(None, candidates, (AlignmentTask.TRANSLATIONS,))
+
+    with pytest.raises(ValueError, match="Unused cached"):
+        _ = list(
+            aligner.align(
+                [lemma],
+                cached_results={AlignmentTask.TRANSLATIONS: iter([result, result])},
+            )
         )
-    )
-    assert not aligned.senses[0].translations
-    changed = replace(lemma, senses=[Sense("s", ("different",))])
+
+    changed = replace(lemma, senses=[Sense("s1", ("changed",))])
 
     with pytest.raises(ValueError, match="Cached candidates differ"):
         _ = list(
@@ -278,20 +304,3 @@ def test_cached_alignment_replays_without_model_and_rejects_changed_definitions(
                 [changed], cached_results={AlignmentTask.TRANSLATIONS: iter([result])}
             )
         )
-
-
-@pytest.mark.parametrize("values", [[], [float("nan")], [float("inf")]])
-def test_invalid_model_evidence_is_rejected(values: list[float]) -> None:
-    """Missing and nonfinite model results never reach the matching algorithm."""
-    query = AlignmentQuery(
-        AlignmentTask.TRANSLATIONS,
-        "id",
-        "lemma",
-        "x",
-        POS.NOUN,
-        (Definition("s", ("a",)),),
-        (Definition("t", ("b",)),),
-    )
-
-    with pytest.raises(ValueError, match="finite score"):
-        _ = score_query(query, Scores(values))

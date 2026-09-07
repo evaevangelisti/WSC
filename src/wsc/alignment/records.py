@@ -1,6 +1,4 @@
-"""
-Serialize alignment records and manage their resource-specific outputs.
-"""
+"""Serialize alignment decisions into resource-specific tables."""
 
 import json
 from collections.abc import Callable, Iterator
@@ -17,31 +15,38 @@ def serialize_alignment(
     result: AlignmentResult,
 ) -> Iterator[dict[str, str]]:
     """
-    Serialize candidate scores while retaining queries without candidates.
+    Serialize accepted links and abstentions with their source context.
 
     Args:
-        result: Complete evidence for one alignment query.
+        result: Validated model decisions.
 
     Yields:
-        Tabular records with definitions stored on the first query row.
+        Records containing query context and raw response on the first row.
     """
     context = json.dumps(asdict(result.query), ensure_ascii=False)
+    response = result.response
 
-    if not result.scores:
+    if not result.decisions:
         yield {
             "alignment_id": result.query.alignment_id,
+            "response": response,
             "context": context,
         }
 
-    for position, score in enumerate(result.scores):
-        yield {
-            "alignment_id": result.query.alignment_id,
-            "source_id": score.source_id,
-            "target_id": score.target_id,
-            "relation": score.relation,
-            "score": repr(score.score),
-            "context": context if position == 0 else "",
-        }
+    for decision in result.decisions:
+        for link in decision.links or (None,):
+            yield {
+                "alignment_id": result.query.alignment_id,
+                "source_id": decision.source_id,
+                "target_id": link.target_id if link else "",
+                "relation": link.relation if link else "",
+                "reason": link.reason if link else "",
+                "response": response,
+                "context": context,
+            }
+
+            context = ""
+            response = ""
 
 
 def open_alignment_recorder(
@@ -50,33 +55,34 @@ def open_alignment_recorder(
     metadata: dict[str, str],
 ) -> Callable[[AlignmentResult], None]:
     """
-    Open resource-specific tables and prepare their score recorder.
+    Open task-specific writers and return their decision recorder.
 
     Args:
-        stack: Context owning the atomic output writers.
-        paths: Destination for each requested alignment task.
-        metadata: Inference settings persisted before candidate scores.
+        stack: Context managing atomic output writers.
+        paths: Destination for each requested task.
+        metadata: Model settings and input fingerprints.
 
     Returns:
-        Callback serializing scores into the corresponding resource table.
+        A callback persisting each alignment result.
     """
     writers = {
         task: stack.enter_context(TSVWriter(path, ALIGNMENT_FIELDS))
         for task, path in paths.items()
     }
+
     for writer in writers.values():
         writer.write({"context": json.dumps(metadata, ensure_ascii=False)})
 
-    def record_scores(
+    def record_decisions(
         result: AlignmentResult,
     ) -> None:
         """
-        Persist scores under their resource.
+        Persist decisions in the corresponding task table.
 
         Args:
-            result: Complete candidate evidence.
+            result: Complete alignment result.
         """
         for row in serialize_alignment(result):
             writers[result.query.task].write(row)
 
-    return record_scores
+    return record_decisions

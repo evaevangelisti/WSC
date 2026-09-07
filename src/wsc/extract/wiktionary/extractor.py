@@ -1,6 +1,4 @@
-"""
-Extraction of lemmas from wiktextract output.
-"""
+"""Extraction of lemmas from wiktextract output."""
 
 from collections.abc import Iterator, Sequence
 from dataclasses import replace
@@ -24,8 +22,6 @@ from .parts import (
 )
 from .schema import RawEntry
 
-# What the bar says while the other spellings of a headword are gathered,
-# and while the sentences are read.
 _GATHERING_VARIANTS = "Gathering variants"
 _LOCATING = "Locating the lemmas"
 
@@ -34,8 +30,8 @@ class WiktionaryExtractor:
     """
     Reads lemmas out of what wiktextract made of a Wiktionary dump.
 
-    The filters are settled once, on the extractor, since every level of an
-    entry reads them.
+    The filters are settled once, on the extractor, since every level of an entry reads
+    them.
     """
 
     def __init__(
@@ -54,8 +50,7 @@ class WiktionaryExtractor:
             minimum_year: Oldest quotation to keep, or None for no bound.
             maximum_year: Newest quotation to keep, or None for no bound.
             locator: The search the lemma is located with.
-            off_page_translations: What each entry is translated by elsewhere, or None
-            where the dump was not walked for it.
+            off_page_translations: Optional translations from linked pages.
         """
         self._allowed_pos: frozenset[POS] | None = allowed_pos
 
@@ -97,6 +92,7 @@ class WiktionaryExtractor:
             self._minimum_year,
             self._maximum_year,
         )
+
         if not senses:
             return None
 
@@ -125,28 +121,27 @@ class WiktionaryExtractor:
             variants: Variant lemma identifiers grouped by headword and part of speech.
 
         Yields:
-            One lemma per entry with a part of speech we keep and a sense,
-            and what its sentences are to be searched for.
+            Retained entries and their sentence search queries.
         """
         for entry in read_entries(input_path, input_path.name):
-            # A dump holds every language Wiktionary describes.
             if entry.get("lang_code") != LANGUAGE:
                 continue
 
             lemma = entry.get("word", "").strip()
+
             if not lemma:
                 continue
 
             try:
                 pos = POS(entry.get("pos", ""))
             except ValueError:
-                # Wiktionary knows far more parts of speech than are kept.
                 continue
 
             if self._allowed_pos is not None and pos not in self._allowed_pos:
                 continue
 
             parsed_entry = self._parse_entry(entry, lemma, pos, variants)
+
             if parsed_entry is None:
                 continue
 
@@ -161,16 +156,13 @@ class WiktionaryExtractor:
         """
         Say where the lemma falls in every sentence of every entry read.
 
-        Every sentence goes to the search at once, so the model reads one long
-        stream and pipes it as it sees fit rather than an entry at a time.
+        Sentence searches share a stream for model batching.
 
         Args:
-            queried_lemmas: The entries read, each with what to search its
-            sentences for.
+            queried_lemmas: Collected entries and their sentence search queries.
 
         Yields:
-            The same entries, their sentences carrying the ranges the lemma
-            occupies.
+            The same entries, their sentences carrying the ranges the lemma occupies.
         """
         sentences = sum(
             len(sense.sentences)
@@ -188,12 +180,9 @@ class WiktionaryExtractor:
             ),
         )
 
-        # Held open, so that a run cut short leaves no bar behind it.
         with tqdm(total=sentences, desc=_LOCATING, unit=" sentence") as progress:
             for lemma, _ in queried_lemmas:
                 for sense in lemma.senses:
-                    # Walked in the order the searches went out, so a sense
-                    # takes as many ranges off the stream as it has sentences.
                     sense.sentences = [
                         replace(
                             sentence,
@@ -224,8 +213,7 @@ class WiktionaryExtractor:
             input_path: The wiktextract file to read, compressed or not.
 
         Yields:
-            One lemma per headword and part of speech we keep, carrying the
-            senses of every etymology the page states.
+            Entries combining retained senses across etymologies.
         """
         variants = gather_variants(
             read_entries(

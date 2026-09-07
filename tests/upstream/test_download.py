@@ -1,6 +1,4 @@
-"""
-Tests for src/wsc/upstream/download.py.
-"""
+"""Tests for src/wsc/upstream/download.py."""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -21,7 +19,6 @@ _BODIES = st.binary(max_size=64)
 
 _CHUNK_SIZES = st.integers(min_value=1, max_value=32)
 
-# What a server answers with when it will not serve the file.
 _REFUSALS = st.sampled_from([400, 403, 404, 429, 500, 503])
 
 
@@ -40,9 +37,7 @@ def fetch(
 
 
 class TestDownload:
-    """
-    Retrieval through a .part file, so a failed attempt can be resumed.
-    """
+    """Retrieval through a .part file, so a failed attempt can be resumed."""
 
     @given(_BODIES, _CHUNK_SIZES)
     def test_writes_the_file(

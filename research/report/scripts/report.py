@@ -1,8 +1,7 @@
 """
 Reporting the figures of a collected export.
 
-What the pipeline produced is counted here rather than judged; whether a
-record is faithful is a question for the annotation study.
+The report measures pipeline output. Annotation studies assess record accuracy.
 """
 
 import argparse
@@ -20,8 +19,9 @@ REPORTS = Path(__file__).resolve().parent.parent / "reports"
 """Where the written reports are kept, one file per pass."""
 
 MARKS = str.maketrans({"’": "'", "‘": "'", "‐": "-", "‑": "-", "–": "-"})
-"""Punctuation Wiktionary sets typographically, unified before a near miss is
-looked for."""
+"""
+Punctuation Wiktionary sets typographically, unified before a near miss is looked for.
+"""
 
 WORD = re.compile(r"\w", re.UNICODE)
 """One word character, which is what an offset may not be flanked by."""
@@ -63,8 +63,7 @@ class Section:
     """
     One part of the report, holding the tables that speak to one thing.
 
-    Figures on the same subject are read against one another, so they are
-    kept together.
+    Figures on the same subject are read against one another, so they are kept together.
 
     Attributes:
         title: What the tables have in common.
@@ -149,8 +148,8 @@ def shape_of(
     """
     Say what a headword looks like, where no occurrence of it was found.
 
-    The first class that fits wins, so a headword is counted once. A plain
-    one is the interesting case: nothing about it explains the miss.
+    The first class that fits wins, so a headword is counted once. A plain one is the
+    interesting case: nothing about it explains the miss.
 
     Args:
         lemma: The headword.
@@ -180,8 +179,8 @@ def spelled_in(
     """
     Say whether a sentence spells a headword the extractor did not find.
 
-    Case and typographic punctuation are unified first. Word boundaries are
-    kept, so a headword inside a longer word still does not count.
+    Case and typographic punctuation are unified first. Word boundaries are kept, so a
+    headword inside a longer word still does not count.
 
     Args:
         lemma: The headword.
@@ -210,8 +209,7 @@ def check(
     """
     Hold one sentence's offsets against what the extractor promises.
 
-    A failure here is a defect rather than a shortfall, and nothing
-    downstream re-checks what the extractor promises.
+    These checks identify violations of the extractor's offset contract.
 
     Args:
         text: The sentence the offsets index.
@@ -300,11 +298,13 @@ def count_entry(
         entry: The entry to read.
     """
     variants = entry.get("variants", [])
+
     if variants:
         figures.varying += 1
         figures.variants += len(variants)
 
     translations = entry.get("translations", {})
+
     if not translations:
         return
 
@@ -331,6 +331,7 @@ def count_sense(
     figures.tied += bool(sense.get("wikidata_ids"))
 
     synonyms = sense.get("synonyms", [])
+
     if synonyms:
         figures.synonymised += 1
         figures.sense_synonyms += len(synonyms)
@@ -373,6 +374,7 @@ def tally(
             count_sense(figures, sense)
 
             sentences = sense.get("sentences", [])
+
             if not sentences:
                 figures.barren += 1
 
@@ -531,8 +533,8 @@ def _dated(
     """
     Lay out how many quotations name the year they were written in.
 
-    A quotation either names a year, and so is counted among the years, or
-    names none, which is what the two rows divide.
+    A quotation either names a year, and so is counted among the years, or names none,
+    which is what the two rows divide.
     """
     dated = len(figures.years)
     quotations = dated + figures.undated
@@ -886,8 +888,7 @@ def _section(
 
     Args:
         title: What the tables have in common.
-        tables: The tables, a missing one standing for a figure this export
-            gave no occasion to write, such as a promise broken.
+        tables: Tables available in the generated report.
 
     Returns:
         The section.
@@ -983,7 +984,7 @@ def write(
     """
     Write the report to a directory, named after the export it read.
 
-    One export has one report, so a rerun overwrites rather than piling up.
+    Each export has one report, which subsequent runs replace.
 
     Args:
         sections: The sections to write.
@@ -1056,8 +1057,8 @@ def sampling_note(
     """
     Say what part of the export a pass read, where it read only part of it.
 
-    A sampled report holds the same figures as a whole one, and nothing on
-    its face says how much of the export they came from.
+    A sampled report holds the same figures as a whole one, and nothing on its face says
+    how much of the export they came from.
 
     Args:
         every: How much was read, one entry in this many.
@@ -1074,9 +1075,7 @@ def sampling_note(
 
 
 def main() -> None:
-    """
-    Walk the export and write what it adds up to.
-    """
+    """Walk the export and write what it adds up to."""
     arguments = read_arguments()
 
     figures = tally(read(arguments.export), arguments.every)

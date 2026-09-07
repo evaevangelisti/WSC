@@ -1,6 +1,4 @@
-"""
-Tests for src/wsc/extract/wiktionary/.
-"""
+"""Tests for src/wsc/extract/wiktionary/."""
 
 import json
 from collections.abc import Callable, Iterable
@@ -44,8 +42,6 @@ from wsc.models import (
     WordOffsetSource,
 )
 
-# json.loads is typed loosely; whether a line decodes at all is the whole of
-# what is asked of it here.
 _loads: Callable[[str], object] = json.loads
 
 
@@ -90,8 +86,6 @@ def _padded(
 _PADDED_HEADWORDS = words.flatmap(_padded)
 
 
-# The three ways an entry may fail to be one: a headword that is whitespace,
-# a part of speech the collector does not keep, and senses defining nothing.
 _UNREADABLE = st.one_of(
     raw_entries(headwords=st.just("") | blanks),
     raw_entries(pos_codes=unknown_pos_codes),
@@ -100,8 +94,6 @@ _UNREADABLE = st.one_of(
     ),
 )
 
-# What a wiktextract file holds beside the entries: prose, JSON that is no
-# entry, and an entry a dump cut short left unfinished.
 _REPORTS = st.one_of(
     st.text(
         alphabet=st.characters(codec="utf-8", exclude_characters="\n\r"),
@@ -123,11 +115,8 @@ _REPORTS = st.one_of(
     ),
 ).filter(lambda line: not _reads_as_an_entry(line))
 
-# Rows describing an inflection table rather than the lemma, and the
-# transliterations standing beside a form rather than for it.
 _SERVICE_TAGS = st.sampled_from(["inflection-template", "romanization", "table-tags"])
 
-# What an inflection table writes for a cell it leaves empty.
 _EMPTY_CELLS = st.sampled_from(["-", ""]) | blanks
 
 _PADDING = blanks | st.just("")
@@ -163,8 +152,7 @@ def extract(
         locator: The search the extraction locates the lemma with.
 
     Returns:
-        A runner taking the entries and the filters, and handing back the
-        lemmas that came through.
+        A runner extracting lemmas under the supplied filters.
     """
 
     def run(
@@ -201,8 +189,7 @@ def extract_lines(
         locator: The search the extraction locates the lemma with.
 
     Returns:
-        A runner taking the lines and handing back the lemmas read out of
-        those that were entries.
+        A runner extracting entries from supplied JSONL lines.
     """
 
     def run(
@@ -227,8 +214,7 @@ def attest(
         extract: Runs the extraction.
 
     Returns:
-        A runner taking raw examples, the headword they attest, its forms and
-        the year bounds, and handing back the sentences that survive them.
+        A runner filtering examples by headword, forms, and quotation years.
     """
 
     def run(
@@ -259,9 +245,7 @@ def attest(
 
 
 class TestOpening:
-    """
-    Reading the file however it was compressed.
-    """
+    """Reading the file however it was compressed."""
 
     @given(st.lists(raw_entries(), max_size=3))
     def test_reads_the_same_entries_whatever_the_suffix_names(
@@ -277,9 +261,7 @@ class TestOpening:
 
 
 class TestEntries:
-    """
-    Which entries are read at all.
-    """
+    """Which entries are read at all."""
 
     @given(st.data())
     def test_keeps_english_alone(
@@ -287,7 +269,7 @@ class TestEntries:
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
     ) -> None:
-        """A dump holds every language Wiktionary describes, not English alone."""
+        """The extractor keeps English entries from multilingual dumps."""
         editions = data.draw(
             st.lists(languages, min_size=1, max_size=3, unique=True).map(
                 lambda drawn: [*drawn, LANGUAGE]
@@ -374,9 +356,7 @@ class TestEntries:
 
 
 class TestIdentifiers:
-    """
-    How a lemma and its senses are named.
-    """
+    """How a lemma and its senses are named."""
 
     @given(st.lists(raw_entries(), max_size=5))
     def test_opens_an_identifier_with_the_headword_and_part_of_speech(
@@ -428,9 +408,7 @@ class TestIdentifiers:
 
 
 class TestSenses:
-    """
-    What a sense carries over.
-    """
+    """What a sense carries over."""
 
     @given(st.lists(st.one_of(glosses, blanks), min_size=1, max_size=4), st.data())
     def test_keeps_the_gloss_chain_outermost_first(
@@ -463,7 +441,6 @@ class TestSenses:
         senses: list[RawJson] = [{"glosses": chain} for chain in chains]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
-        # Two chains reading alike are one meaning, and are gathered as one.
         gathered = list(
             dict.fromkeys(
                 tuple(gloss.strip() for gloss in chain if gloss.strip())
@@ -501,9 +478,7 @@ class TestSenses:
 
 
 class TestPseudoSenses:
-    """
-    Leaving out the senses that inflect a headword rather than define it.
-    """
+    """Exclude senses describing inflected forms."""
 
     @given(form_tags, st.data())
     def test_drops_a_sense_that_only_inflects_the_headword(
@@ -512,7 +487,7 @@ class TestPseudoSenses:
         tag: str,
         data: st.DataObject,
     ) -> None:
-        """A form is stated, not a meaning, and the meanings sit elsewhere."""
+        """Inflection senses point to definitions under another entry."""
         senses: list[RawJson] = [{"glosses": ["Plural of bank."], "tags": [tag]}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
@@ -576,7 +551,7 @@ class TestPseudoSenses:
         tags: list[str],
         data: st.DataObject,
     ) -> None:
-        """Only the two tags rule a sense out, not every label it carries."""
+        """Only the two inflection tags exclude a sense."""
         senses: list[RawJson] = [{"glosses": ["A meaning."], "tags": tags}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
@@ -584,9 +559,7 @@ class TestPseudoSenses:
 
 
 class TestSentences:
-    """
-    The sentences illustrating a sense.
-    """
+    """The sentences illustrating a sense."""
 
     @given(st.lists(raw_examples(), max_size=4))
     def test_a_sentence_with_no_reference_is_an_example(
@@ -637,9 +610,7 @@ class TestSentences:
 
 
 class TestKinds:
-    """
-    Reading a sentence as the kind wiktextract says it is.
-    """
+    """Reading a sentence as the kind wiktextract says it is."""
 
     @given(st.data())
     def test_wiktextract_settles_the_kind_over_a_reference_it_withheld(
@@ -766,9 +737,7 @@ class TestKinds:
 
 
 class TestPointers:
-    """
-    Passing over what stands in for a sentence without being one.
-    """
+    """Passing over what stands in for a sentence without being one."""
 
     @given(words)
     def test_drops_a_pointer_to_the_citations_page(
@@ -800,7 +769,7 @@ class TestPointers:
         headword: str,
         data: st.DataObject,
     ) -> None:
-        """The template is matched whole, not guessed at from its first words."""
+        """Pointer detection requires the complete template."""
         written = f"For quotations {data.draw(texts)}"
 
         found = attest({"text": written}, headword=headword)
@@ -809,9 +778,7 @@ class TestPointers:
 
 
 class TestYears:
-    """
-    Reading a year off a reference, and filtering on it.
-    """
+    """Reading a year off a reference, and filtering on it."""
 
     @given(st.data())
     def test_reads_the_year_the_reference_names(
@@ -964,9 +931,7 @@ class TestYears:
 
 
 class TestWordOffsets:
-    """
-    Where the lemma occurs in the sentences attesting it.
-    """
+    """Where the lemma occurs in the sentences attesting it."""
 
     @given(words, st.data())
     def test_a_sentence_carries_where_the_lemma_occurs(
@@ -1128,9 +1093,7 @@ class TestWordOffsets:
 
 
 class TestVariants:
-    """
-    How else a lemma is spelled, which one thing says.
-    """
+    """How else a lemma is spelled, which one thing says."""
 
     @given(
         words,
@@ -1177,7 +1140,7 @@ class TestVariants:
         spelling: str,
         data: st.DataObject,
     ) -> None:
-        """A plural bends the lemma rather than spelling it another way."""
+        """Plural forms are excluded from spelling variants."""
         pointing: RawJson = {
             "word": spelling,
             "pos": "noun",
@@ -1249,9 +1212,7 @@ class TestVariants:
 
 
 class TestTranslations:
-    """
-    What other languages call the entry, which Wiktionary hangs off the entry.
-    """
+    """What other languages call the entry, which Wiktionary hangs off the entry."""
 
     @given(words, languages, glosses, st.data())
     def test_gathers_a_translation_under_the_gloss_and_the_language(
@@ -1337,9 +1298,7 @@ class TestTranslations:
 
 
 class TestSynonyms:
-    """
-    Other words standing for what a sense means.
-    """
+    """Other words standing for what a sense means."""
 
     @given(words, words, st.data())
     def test_ties_a_synonym_to_the_sense_that_names_it(
@@ -1358,8 +1317,6 @@ class TestSynonyms:
 
         (lemma,) = extract([entry])
 
-        # A word offered as a synonym of itself is left out, headword and
-        # synonym being drawn from the same words and free to coincide.
         assert lemma.senses[0].synonyms == (() if synonym == headword else (synonym,))
 
     @given(words, words, words, st.data())
@@ -1380,10 +1337,9 @@ class TestSynonyms:
 
         (lemma,) = extract([entry])
 
-        # first and second may coincide with the headword or with each other,
-        # the three being drawn from the same words; a repeat counts once,
-        # kept where it was first listed.
+        # Generated words may coincide; deduplication preserves their first occurrence.
         expected: dict[str, None] = {}
+
         for word in (first, second):
             if word != headword:
                 expected[word] = None
@@ -1424,9 +1380,7 @@ class TestSynonyms:
 
 
 class TestStrayReferences:
-    """
-    Passing over a reference left standing where a sentence belongs.
-    """
+    """Passing over a reference left standing where a sentence belongs."""
 
     @given(years)
     def test_leaves_out_a_reference_nobody_split_off(
@@ -1455,7 +1409,7 @@ class TestStrayReferences:
         year: int,
         data: st.DataObject,
     ) -> None:
-        """A break means the sentence is under the reference, not missing."""
+        """A line break separates the reference from its sentence."""
         written = f"{year}, A Book\n{data.draw(texts)}"
 
         assert attest({"text": written, "type": "quotation"})[0].text

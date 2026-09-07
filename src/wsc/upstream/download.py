@@ -1,6 +1,4 @@
-"""
-Retrieval of remote files.
-"""
+"""Retrieval of remote files."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -37,6 +35,7 @@ def download(
         downloaded_bytes = partial_path.stat().st_size if partial_path.exists() else 0
 
         headers = {"User-Agent": user_agent}
+
         if downloaded_bytes:
             headers["Range"] = f"bytes={downloaded_bytes}-"
 
@@ -48,12 +47,13 @@ def download(
         ) as response:
             response.raise_for_status()
 
-            # 200 rather than 206 means the range was ignored.
+            # A 200 response means the server ignored the requested byte range.
+
             if response.status_code == 200:
                 downloaded_bytes = 0
 
-            # A 206 reports the requested range alone, so the whole file is
-            # what came before plus it.
+            # A partial response reports only the remaining transfer size.
+
             content_length = int(response.headers.get("content-length") or 0)
             total_bytes = downloaded_bytes + content_length if content_length else None
 
@@ -67,7 +67,6 @@ def download(
                     initial=downloaded_bytes,
                 ) as pbar,
             ):
-                # iter_content is typed loosely.
                 chunks: Iterator[bytes] = response.iter_content(chunk_size=chunk_size)
 
                 for chunk in chunks:

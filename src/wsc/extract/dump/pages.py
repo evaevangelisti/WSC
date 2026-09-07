@@ -1,6 +1,4 @@
-"""
-Walking the pages a Wiktionary dump holds, in the markup they were written in.
-"""
+"""Walking the pages a Wiktionary dump holds, in the markup they were written in."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -11,8 +9,6 @@ from tqdm import tqdm
 
 from ...files import open_compressed
 
-# The namespace holding the articles, every other one describing the wiki
-# rather than the language.
 _ARTICLES = 0
 
 
@@ -44,8 +40,6 @@ def read_pages(
         The title and the markup of every page in the article namespace.
     """
     with open_compressed(input_path, "rb") as file:
-        # iterparse is typed loosely; an end event carries the element that
-        # ended.
         elements = cast(
             Iterator[tuple[str, ElementTree.Element]],
             ElementTree.iterparse(file, events=("end",)),

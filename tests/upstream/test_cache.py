@@ -1,6 +1,4 @@
-"""
-Tests for src/wsc/upstream/cache.py.
-"""
+"""Tests for src/wsc/upstream/cache.py."""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -17,9 +15,7 @@ _FETCHED = st.lists(dump_dates, min_size=1, max_size=4, unique=True)
 
 
 class TestDumpDir:
-    """
-    Naming the directory one dump sits in.
-    """
+    """Naming the directory one dump sits in."""
 
     @given(dump_dates)
     def test_names_the_directory_after_the_date(
@@ -57,9 +53,7 @@ class TestDumpDir:
 
 
 class TestFetchedDate:
-    """
-    Settling which fetched dump to work on.
-    """
+    """Settling which fetched dump to work on."""
 
     @given(_FETCHED)
     def test_accepts_every_date_that_was_fetched(

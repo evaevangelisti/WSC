@@ -1,6 +1,4 @@
-"""
-Walking the entries of a wiktextract file.
-"""
+"""Walking the entries of a wiktextract file."""
 
 import json
 from collections.abc import Iterator
@@ -29,12 +27,10 @@ def read_entries(
     """
     with open_compressed(input_path, "rt") as file:
         for line in tqdm(file, desc=description, unit=" entry"):
-            # wiktextract carries its reporting among the entries.
             if not line.startswith("{"):
                 continue
 
             try:
                 yield cast(RawEntry, json.loads(line))
             except json.JSONDecodeError:
-                # A dump cut short leaves an entry that opens and no more.
                 continue

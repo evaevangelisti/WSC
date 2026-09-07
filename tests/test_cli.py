@@ -1,8 +1,7 @@
 """
 Tests for src/wsc/cli.py.
 
-A command is tested for what it settles and what it refuses, not for what
-the modules under it already answer for.
+Tests exercise command behavior through its public interface.
 """
 
 import bz2
@@ -63,7 +62,6 @@ _SYNSET_RECORD = {
     "members": ["bank"],
 }
 
-# A suffix naming no format the collector writes.
 _SUFFIXES = st.text(
     alphabet=string.ascii_lowercase,
     min_size=1,
@@ -81,9 +79,7 @@ def _said(
         result: What the run handed back.
 
     Returns:
-        The output as a single line, since where a refusal is broken across
-        lines, and what border it is broken around, is the terminal's
-        business rather than the command's.
+        Command output normalized to one line.
     """
     return " ".join(result.output.replace("│", " ").split())
 
@@ -148,8 +144,7 @@ def _wikimedia(
         date: The day the dump it holds began.
 
     Yields:
-        The server, for the calls it took to be read back off. A command that
-        was told which dump to fetch leaves the index unasked.
+        A server fixture recording requests for the selected dump.
     """
     with responses.RequestsMock(assert_all_requests_are_fired=False) as server:
         _ = server.get(DUMP_INDEX_URL, body=dump_index(date))
@@ -173,8 +168,7 @@ def _en_word_net(
         version: The edition it holds.
 
     Yields:
-        The server, for the calls it took to be read back off. A command that
-        was told which edition to fetch leaves the index unasked.
+        A server fixture recording requests for the selected edition.
     """
     with responses.RequestsMock(assert_all_requests_are_fired=False) as server:
         _ = server.get(WORDNET_INDEX_URL, body=wordnet_index(version))
@@ -194,8 +188,8 @@ def cli(
     """
     Run a command against the cache the caller set aside.
 
-    The search is the one exception to running a command as shipped: loading
-    a real pipeline per invocation is what a suite cannot afford.
+    The search is the one exception to running a command as shipped: loading a real
+    pipeline per invocation is what a suite cannot afford.
 
     Args:
         locator: The search every collection reads with.
@@ -245,8 +239,7 @@ def stub_parse(
         monkeypatch: Puts the stand-in in place, and takes it away after.
 
     Returns:
-        A builder taking the lines to report as set aside, and handing back
-        the calls one run went on to make.
+        A builder recording parse calls and discarded reporting lines.
     """
 
     def build(
@@ -263,8 +256,8 @@ def stub_parse(
         ) -> int:
             calls.append((dump_path, output_path, processes, database_path))
 
-            # The command reads back what it wrote, to answer the pointers.
             output_path.parent.mkdir(parents=True, exist_ok=True)
+
             with zstd.open(output_path, "wt", encoding="utf-8") as file:
                 _ = file.write("")
 
@@ -283,8 +276,7 @@ def collected() -> Callable[[Path], list[RawJson]]:
     Read back what a collection wrote.
 
     Returns:
-        A reader handing back one decoded object per line, splitting where
-        JSON Lines splits and nowhere else.
+        A reader decoding each JSONL record.
     """
 
     def read(
@@ -298,9 +290,7 @@ def collected() -> Callable[[Path], list[RawJson]]:
 
 
 class TestFetch:
-    """
-    Downloading a dump, and settling which one that is.
-    """
+    """Downloading a dump, and settling which one that is."""
 
     @given(dump_dates)
     def test_resolves_latest_against_wikimedia(
@@ -391,9 +381,7 @@ class TestFetch:
 
 
 class TestParse:
-    """
-    What a parse settles, wiktextract standing in for itself.
-    """
+    """What a parse settles, wiktextract standing in for itself."""
 
     @given(dump_dates, st.integers(min_value=1, max_value=16))
     def test_points_wiktextract_at_what_the_command_settled(
@@ -472,6 +460,7 @@ class TestParse:
         cache_dir = workspace() / "cache"
 
         calls = stub_parse()
+
         for date in dates:
             _ = fetch_dump(cache_dir, date)
 
@@ -565,9 +554,7 @@ class TestParse:
 
 
 class TestCollect:
-    """
-    Collecting the senses of a parsed dump into a file.
-    """
+    """Collecting the senses of a parsed dump into a file."""
 
     @given(st.lists(raw_entries(), max_size=4))
     def test_writes_what_the_extractor_read(
@@ -742,7 +729,7 @@ class TestCollect:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
     ) -> None:
-        """An empty cache is reported rather than tripped over."""
+        """An empty cache produces an explicit error."""
         directory = workspace()
 
         result = cli(
@@ -777,9 +764,7 @@ class TestCollect:
 
 
 class TestHelp:
-    """
-    What the command line says about itself.
-    """
+    """What the command line says about itself."""
 
     def test_says_where_the_cache_goes_by_default(
         self,
@@ -791,9 +776,7 @@ class TestHelp:
 
 
 class TestWordNet:
-    """
-    Downloading the wordnet, reading it, and settling which edition that is.
-    """
+    """Downloading the wordnet, reading it, and settling which edition that is."""
 
     @given(wordnet_versions)
     def test_resolves_latest_against_the_index(

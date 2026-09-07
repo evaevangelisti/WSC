@@ -1,10 +1,7 @@
-"""
-Command line for collecting senses out of Wiktionary.
-"""
+"""Command line for collecting senses out of Wiktionary."""
 
 from contextlib import ExitStack
 from importlib.metadata import version
-from math import isfinite
 from pathlib import Path
 from typing import Annotated
 
@@ -12,22 +9,22 @@ import typer
 
 from .alignment import (
     Aligner,
-    CrossEncoderScorer,
     WordNetCandidates,
     open_alignment_recorder,
 )
+from .alignment.client import open_model
 from .alignment.provenance import build_metadata, cache_key
 from .constants import (
-    ALIGNMENT_BATCH_SIZE,
-    ALIGNMENT_MAXIMUM_LENGTH,
+    ALIGNMENT_MAXIMUM_TOKENS,
     ALIGNMENT_MODEL,
+    ALIGNMENT_TEMPERATURE,
+    ALIGNMENT_URL,
     BATCH_SIZE,
     CHUNK_SIZE,
-    DEFAULT_INSTRUCTIONS,
-    INSTRUCTIONS_PATH,
     KAIKKI_URL,
     LANGUAGE_SECTION,
     PROCESSES,
+    PROMPTS_PATH,
     TIMEOUT,
     USER_AGENT,
 )
@@ -44,18 +41,15 @@ from .extract import (
     write_off_page_translations,
 )
 from .models import POS, Engine, Lemma, Synset
-from .models.alignment import AlignmentTask, GlossMode
+from .models.alignment import AlignmentTask, GlossMode, ModelSettings
 from .reading import (
     read_alignments,
-    read_instructions,
     read_lemmas,
     read_metadata,
+    read_prompts,
     read_synsets,
 )
 from .upstream import cache, download, repositories, wiktextract
-
-# Named apart from the signatures, so that the commands asking for the same
-# option share one.
 
 DumpDate = Annotated[
     str,
@@ -93,19 +87,20 @@ def fetch(
     dump_date: DumpDate = cache.LATEST,
     cache_dir: CacheDir = None,
 ) -> None:
-    """
-    Download a Wiktionary dump. Needs the network.
-    """
+    """Download a Wiktionary dump. Needs the network."""
     user_agent = USER_AGENT.format(version=version("wsc"))
 
     date = dump_date
+
     if date == cache.LATEST:
         date = repositories.wiktionary.latest_date(user_agent, TIMEOUT)
         typer.echo(f"Resolved latest to {date}")
 
     dump_path = cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
+
     if dump_path.exists():
         typer.echo(f"Already fetched {dump_path}")
+
         return
 
     download(
@@ -159,6 +154,7 @@ def parse(
     dump_dir = cache.dump_dir(cache_dir, date)
 
     dump_path = dump_dir / cache.DUMP_NAME
+
     if not dump_path.exists():
         raise typer.BadParameter(f"No dump at {dump_path}; fetch it first")
 
@@ -167,6 +163,7 @@ def parse(
 
     if output_path.exists() and off_page_translations_path.exists():
         typer.echo(f"Already parsed {output_path}")
+
         return
 
     if not output_path.exists():
@@ -268,9 +265,7 @@ def collect(
     ] = False,
     cache_dir: CacheDir = None,
 ) -> None:
-    """
-    Collect the senses of a parsed dump into a file.
-    """
+    """Collect the senses of a parsed dump into a file."""
     try:
         date = cache.fetched_date(cache_dir, dump_date)
     except FileNotFoundError as error:
@@ -279,6 +274,7 @@ def collect(
     dump_dir = cache.dump_dir(cache_dir, date)
 
     input_path = dump_dir / cache.WIKTEXTRACT_NAME
+
     if not input_path.exists():
         raise typer.BadParameter(f"Nothing parsed at {input_path}; parse it first")
 
@@ -325,6 +321,7 @@ def wordnet(
     wordnet_dir = cache.wordnet_dir(cache_dir, edition)
 
     wordnet_path = wordnet_dir / cache.WORDNET_NAME
+
     if wordnet_path.exists():
         typer.echo(f"Already fetched {wordnet_path}")
     else:
@@ -339,11 +336,12 @@ def wordnet(
         typer.echo(f"Fetched {wordnet_path}")
 
     output_path = wordnet_dir / cache.SYNSETS_NAME
+
     if output_path.exists():
         typer.echo(f"Already read {output_path}")
+
         return
 
-    # A cache answering to a filter is one the next run cannot trust.
     extractor = WordNetExtractor(None)
 
     writer: Writer[Synset] = open_writer(output_path)
@@ -361,114 +359,78 @@ def align(
         Path,
         typer.Argument(
             metavar="input",
-            help="Collection to align with its translations and WordNet.",
+            help="Collected entries to align.",
         ),
     ],
     output_path: Annotated[
         Path,
         typer.Argument(
             metavar="output",
-            help="Where to write the aligned collection.",
+            help="Destination for aligned entries.",
         ),
     ],
     task: Annotated[
         list[AlignmentTask] | None,
         typer.Option(
-            help="Resource to align.",
+            help="Resource to align; repeat to select multiple tasks.",
         ),
     ] = None,
     model: Annotated[
         str,
         typer.Option(
-            help="Cross-encoder model or path.",
+            help="Model identifier served by the endpoint.",
         ),
     ] = ALIGNMENT_MODEL,
-    revision: Annotated[
+    url: Annotated[
         str,
         typer.Option(
-            help="Model revision.",
+            help="OpenAI-compatible API endpoint.",
         ),
-    ] = "main",
-    translation_threshold: Annotated[
-        float | None,
-        typer.Option(
-            help="Raw score boundary for translation matches.",
-        ),
-    ] = None,
-    wordnet_threshold: Annotated[
-        float | None,
-        typer.Option(
-            help="Raw score boundary for WordNet relations.",
-        ),
-    ] = None,
+    ] = ALIGNMENT_URL,
     gloss_mode: Annotated[
         GlossMode,
-        typer.Option(help="Source definition representation."),
+        typer.Option(
+            help="Wiktionary definition representation.",
+        ),
     ] = GlossMode.LAST,
-    instructions_path: Annotated[
+    prompts_path: Annotated[
         Path,
+        typer.Option("--prompts", help="Custom task prompt templates."),
+    ] = PROMPTS_PATH,
+    temperature: Annotated[
+        float,
         typer.Option(
-            "--instructions",
-            help="TOML instruction profiles.",
+            min=0.0,
+            max=2.0,
+            help="Generation temperature.",
         ),
-    ] = INSTRUCTIONS_PATH,
-    instruction_profile: Annotated[
-        str,
+    ] = ALIGNMENT_TEMPERATURE,
+    maximum_tokens: Annotated[
+        int,
         typer.Option(
-            help="Instruction profile selected by development evaluation.",
+            min=1,
+            help="Maximum generated tokens per request.",
         ),
-    ] = DEFAULT_INSTRUCTIONS.name,
-    device: Annotated[
+    ] = ALIGNMENT_MAXIMUM_TOKENS,
+    reasoning_effort: Annotated[
         str | None,
         typer.Option(
-            help="Torch device",
+            help="Reasoning setting supported by the API model.",
         ),
     ] = None,
-    batch_size: Annotated[
-        int,
-        typer.Option(
-            min=1,
-            help="Candidate pairs per inference batch.",
-        ),
-    ] = ALIGNMENT_BATCH_SIZE,
-    maximum_length: Annotated[
-        int,
-        typer.Option(
-            min=1,
-            help="Maximum token count per candidate pair.",
-        ),
-    ] = ALIGNMENT_MAXIMUM_LENGTH,
     *,
     reuse: Annotated[
         bool,
         typer.Option(
             "--reuse/--recompute",
-            help="Reuse compatible cached TSV scores without inference.",
+            help="Replay compatible cached decisions without model inference.",
         ),
     ] = False,
     wordnet_edition: WordNetEdition = cache.LATEST,
     cache_dir: CacheDir = None,
 ) -> None:
-    """
-    Align a collection with Wiktionary translations and WordNet synsets.
-    """
+    """Align collected senses with language model decisions."""
     tasks = tuple(dict.fromkeys(task or AlignmentTask))
-
-    supplied_thresholds = {
-        AlignmentTask.TRANSLATIONS: translation_threshold,
-        AlignmentTask.WORDNET: wordnet_threshold,
-    }
-
-    thresholds = {
-        selected: threshold
-        for selected, threshold in supplied_thresholds.items()
-        if selected in tasks and threshold is not None and isfinite(threshold)
-    }
-
-    if len(thresholds) != len(tasks):
-        raise typer.BadParameter(
-            "Supply finite --translation-threshold / --wordnet-threshold values"
-        )
 
     if input_path.resolve() == output_path.resolve():
         raise typer.BadParameter("Input and output paths must be different")
@@ -476,17 +438,22 @@ def align(
     if not input_path.is_file():
         raise typer.BadParameter(f"No collection at {input_path}")
 
-    profiles = {
-        profile.name: profile for profile in read_instructions(instructions_path)
-    }
+    prompts = read_prompts(prompts_path)
 
-    instructions = profiles[instruction_profile]
+    settings = ModelSettings(
+        model=model,
+        temperature=temperature,
+        maximum_tokens=maximum_tokens,
+        url=url,
+        reasoning_effort=reasoning_effort,
+    )
 
     synsets_path: Path | None = None
     candidates = WordNetCandidates(())
 
     if AlignmentTask.WORDNET in tasks:
         synsets_path = cache.fetched_edition(cache_dir, wordnet_edition)
+
         if not synsets_path:
             raise typer.BadParameter("WordNet is not cached; run 'wsc wordnet' first.")
 
@@ -494,12 +461,10 @@ def align(
 
     metadata = build_metadata(
         input_path,
-        model,
-        revision,
+        settings,
         gloss_mode,
-        maximum_length,
         synsets_path,
-        instructions,
+        prompts,
     )
 
     evidence_dir = cache.alignment_dir(cache_dir, cache_key(metadata))
@@ -510,32 +475,14 @@ def align(
             if not path.is_file() or read_metadata(path) != metadata:
                 raise typer.BadParameter(f"No compatible alignment cache at {path}")
 
+    language_model = None if reuse else open_model(settings)
     writer: Writer[Lemma] = open_writer(output_path)
-
-    scorer = (
-        None
-        if reuse
-        else CrossEncoderScorer(
-            model,
-            revision=revision,
-            device=device,
-            batch_size=batch_size,
-            maximum_length=maximum_length,
-            instructions=instructions,
-        )
-    )
 
     with ExitStack() as stack:
         _ = stack.enter_context(writer)
 
-        record_scores = (
-            None
-            if reuse
-            else open_alignment_recorder(
-                stack,
-                evidence_paths,
-                metadata,
-            )
+        recorder = (
+            None if reuse else open_alignment_recorder(stack, evidence_paths, metadata)
         )
 
         cached_results = (
@@ -547,11 +494,18 @@ def align(
             else {}
         )
 
-        aligner = Aligner(scorer, candidates, thresholds, gloss_mode, instructions)
+        aligner = Aligner(
+            language_model,
+            candidates,
+            tasks,
+            gloss_mode,
+            prompts,
+        )
+
         for lemma in aligner.align(
             read_lemmas(input_path),
             cached_results=cached_results,
-            scores=record_scores,
+            recorder=recorder,
         ):
             writer.write(lemma)
 

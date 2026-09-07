@@ -1,6 +1,4 @@
-"""
-Read collected JSONL records without repeating extraction.
-"""
+"""Read collected JSONL records without repeating extraction."""
 
 import json
 from collections.abc import Iterator

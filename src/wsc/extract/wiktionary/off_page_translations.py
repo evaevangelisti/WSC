@@ -26,7 +26,7 @@ def _flatten_translations(
     """
     Gather every table of an entry into one, whatever gloss headed it.
 
-    A pointer names a headword, not a table.
+    Pointers identify entries containing translation tables.
 
     Args:
         translations: What the entry pointed at carries.
@@ -52,8 +52,7 @@ def _read_pointed_translations(
     """
     Read the translations of the entries some pointer names.
 
-    One name gathers every etymology, which wiktextract writes as an entry
-    apiece.
+    One name gathers every etymology, which wiktextract writes as an entry apiece.
 
     Args:
         entries: The parsed extraction, walked once.
@@ -71,6 +70,7 @@ def _read_pointed_translations(
             continue
 
         pointed_id = lemma_id(entry.get("word", "").strip(), pos)
+
         if pointed_id not in pointed_ids:
             continue
 

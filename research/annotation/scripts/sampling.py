@@ -1,6 +1,4 @@
-"""
-Reproducible samples and independent second annotation assignments.
-"""
+"""Reproducible samples and independent second annotation assignments."""
 
 import json
 import random
@@ -34,17 +32,22 @@ def sample_items[Item](items: Iterable[Item], count: int, seed: int) -> list[Ite
     """
     if count < 1:
         raise ValueError("Sample count must be positive")
+
     rng = random.Random(seed)
     drawn: list[Item] = []
+
     for position, item in enumerate(items):
         if position < count:
             drawn.append(item)
         else:
             replacement = rng.randrange(position + 1)
+
             if replacement < count:
                 drawn[replacement] = item
+
     if len(drawn) != count:
         raise ValueError(f"Requested {count} items; only {len(drawn)} available")
+
     rng.shuffle(drawn)
 
     return drawn

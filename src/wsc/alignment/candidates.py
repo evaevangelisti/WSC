@@ -1,12 +1,9 @@
-"""
-Candidate construction independent of model predictions.
-"""
+"""Candidate construction independent of model predictions."""
 
 from collections import defaultdict
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 
 from ..models import POS, Lemma, Synset
-from ..models.alignment import AlignmentQuery, AlignmentTask, Definition
 
 
 class WordNetCandidates:
@@ -70,57 +67,3 @@ class WordNetCandidates:
             found_synsets.update(self._members.get((self._normalize(form), pos), {}))
 
         return tuple(found_synsets[identifier] for identifier in sorted(found_synsets))
-
-
-def build_queries(
-    lemma: Lemma,
-    task: AlignmentTask,
-    candidates: WordNetCandidates,
-) -> Iterator[AlignmentQuery]:
-    """
-    Expose complete candidate sets without semantic filtering.
-
-    Args:
-        lemma: Collected entry.
-        task: Resource to align.
-        candidates: Cached WordNet candidate index.
-
-    Yields:
-        One translation entry or one task per WordNet source sense.
-    """
-    source_definitions = tuple(
-        Definition(sense.id, sense.glosses) for sense in lemma.senses
-    )
-
-    if task == AlignmentTask.TRANSLATIONS:
-        if lemma.translations and source_definitions:
-            yield AlignmentQuery(
-                task,
-                lemma.id,
-                lemma.id,
-                lemma.lemma,
-                lemma.pos,
-                source_definitions,
-                tuple(
-                    Definition(f"translation:{position}", (gloss,))
-                    for position, gloss in enumerate(lemma.translations)
-                ),
-            )
-
-        return
-
-    target_definitions = tuple(
-        Definition(synset.id, (synset.definition,))
-        for synset in candidates.candidates(lemma)
-    )
-
-    for source_definition in source_definitions:
-        yield AlignmentQuery(
-            task,
-            source_definition.id,
-            lemma.id,
-            lemma.lemma,
-            lemma.pos,
-            (source_definition,),
-            target_definitions,
-        )

@@ -1,8 +1,8 @@
 """
 Tests for src/wsc/export/base.py.
 
-The atomicity every format inherits is tested through the writer open_writer
-hands back, so no format written only for a test has to exist.
+The atomicity every format inherits is tested through the writer open_writer hands back,
+so no format written only for a test has to exist.
 """
 
 from collections.abc import Callable, Iterable
@@ -33,8 +33,7 @@ def _open(
     """
     Open the writer these properties are stated through.
 
-    Atomicity is not generic the way the writer is, so lemmas are named here
-    once rather than by every property.
+    Lemma fixtures exercise atomic writer behavior.
 
     Args:
         output_path: Where the finished file is placed.
@@ -46,9 +45,7 @@ def _open(
 
 
 class _UnclosableWriter(JSONLWriter[Lemma]):
-    """
-    A writer that cannot be closed, however well the writing itself went.
-    """
+    """A writer that cannot be closed, however well the writing itself went."""
 
     @override
     def _close(
@@ -103,9 +100,7 @@ def _write_then_fail(
 
 
 class TestWriter:
-    """
-    Writing through a .part file, so a run cut short leaves nothing.
-    """
+    """Writing through a .part file, so a run cut short leaves nothing."""
 
     @given(_DIRECTORIES, _WRITTEN)
     def test_creates_the_parent_directory(
@@ -194,8 +189,8 @@ class TestWriter:
         """
         Closing is where buffered output reaches the disk.
 
-        A failure there leaves the file short of what was written to it, so
-        it counts as a run that failed.
+        A failure there leaves the file short of what was written to it, so it counts as
+        a run that failed.
         """
         directory = workspace()
 

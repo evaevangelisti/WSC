@@ -1,6 +1,4 @@
-"""
-Tests for src/wsc/extract/wordnet.py.
-"""
+"""Tests for src/wsc/extract/wordnet.py."""
 
 import gzip
 import string
@@ -16,24 +14,20 @@ from strategies import parts_of_speech
 from wsc.extract import WordNetExtractor
 from wsc.models import POS, Synset
 
-# WordNet's own codes. A satellite adjective is an adjective all the same.
+# WordNet satellite adjectives share the adjective part of speech.
 _POS_CODES = st.sampled_from(["n", "v", "a", "s", "r"])
 
-# A code some other wordnet writes, which this one does not.
 _UNKNOWN_POS_CODES = st.text(alphabet=string.ascii_lowercase, max_size=3).filter(
     lambda code: code not in ("n", "v", "a", "s", "r")
 )
 
-# What names an entry, a synset or the meaning behind one, spelled the way a
-# release spells it.
 _IDENTIFIERS = st.text(
     alphabet=f"{string.ascii_lowercase}{string.digits}-_",
     min_size=1,
     max_size=12,
 )
 
-# XML holds no control character, and normalises the ends of the lines it
-# does hold, so a definition carrying one is not a definition WordNet wrote.
+# XML excludes control characters and normalizes line endings.
 _TEXTS = st.text(
     alphabet=st.characters(
         codec="utf-8",
@@ -42,12 +36,10 @@ _TEXTS = st.text(
     max_size=40,
 )
 
-# WN-LMF writes a score of relations, and an alignment reads the one.
 _RELATION_TYPES = st.sampled_from(
     ["hypernym", "hyponym", "mero_part", "similar", "also"]
 )
 
-# A synset stands on its own unless a test spells out the entries naming it.
 _NO_MEMBERS: st.SearchStrategy[tuple[str, ...]] = st.just(())
 
 
@@ -92,8 +84,7 @@ def extract(
         workspace: Sets aside a directory for the file being read.
 
     Returns:
-        A runner taking the elements and the filter, and handing back the
-        synsets that came through.
+        A runner extracting synsets under the supplied filter.
     """
 
     def run(
@@ -115,9 +106,7 @@ def extract(
 
 
 class TestOpening:
-    """
-    Reading the file however it was compressed.
-    """
+    """Reading the file however it was compressed."""
 
     @given(st.lists(_synsets(), max_size=3))
     def test_reads_the_same_wordnet_whatever_the_suffix_names(
@@ -133,9 +122,7 @@ class TestOpening:
 
 
 class TestSynsets:
-    """
-    What a synset carries over.
-    """
+    """What a synset carries over."""
 
     def test_reads_what_the_alignment_will_need(
         self,
@@ -201,9 +188,7 @@ class TestSynsets:
 
 
 class TestExamples:
-    """
-    The sentences a synset is given, which read alongside its definition.
-    """
+    """The sentences a synset is given, which read alongside its definition."""
 
     @given(st.lists(_TEXTS, max_size=4))
     def test_keeps_them_in_the_order_they_were_written(
@@ -220,9 +205,7 @@ class TestExamples:
 
 
 class TestHypernyms:
-    """
-    What a synset hangs under, which is how far apart two of them are.
-    """
+    """What a synset hangs under, which is how far apart two of them are."""
 
     @given(st.lists(st.tuples(_RELATION_TYPES, _IDENTIFIERS), max_size=5))
     def test_keeps_every_synset_it_is_a_kind_of_and_nothing_else(
@@ -239,9 +222,7 @@ class TestHypernyms:
 
 
 class TestPartsOfSpeech:
-    """
-    Reading WordNet's codes onto the ones the collector keeps.
-    """
+    """Reading WordNet's codes onto the ones the collector keeps."""
 
     @pytest.mark.parametrize(
         ("code", "expected"),

@@ -1,6 +1,4 @@
-"""
-Locating a lemma inside the sentences that attest it.
-"""
+"""Locating a lemma inside the sentences that attest it."""
 
 import re
 from collections.abc import Iterable, Iterator
@@ -13,8 +11,7 @@ from kwic import Locator, Query
 from ..constants import BATCH_SIZE, PROCESSES, SPACY_PIPELINE
 from ..models import POS, Engine, Offset
 
-# Universal Dependencies names the tags every engine reports, whatever the
-# tagset its model was trained on.
+# Engine outputs use Universal Dependencies part-of-speech tags.
 _UNIVERSAL_TAGS = {
     POS.NOUN: UNIVERSAL_POS.NOUN,
     POS.NAME: UNIVERSAL_POS.PROPN,
@@ -23,8 +20,7 @@ _UNIVERSAL_TAGS = {
     POS.ADVERB: UNIVERSAL_POS.ADV,
 }
 
-# A form stands on its own, never inside a longer word. \b would fall on the
-# wrong side of one opening or closing with an apostrophe or a hyphen.
+# Lookarounds preserve boundaries for forms containing apostrophes and hyphens.
 _BOUNDED = r"(?<!\w)(?:{alternation})(?!\w)"
 
 
@@ -44,8 +40,7 @@ def open_locator(
         engine: Which analyser to read with.
         processes: How many processes it may run.
         batch_size: How many sentences it takes at a time.
-        gpu: Whether to read on the graphics card, which raises where none
-        answers rather than falling back on the processor.
+        gpu: Whether to require GPU inference.
 
     Returns:
         The search, its model loaded on the first sentence.
@@ -81,8 +76,8 @@ def build_query(
     """
     Say what is to be looked for in the sentences of one entry.
 
-    The part of speech narrows a one-word lemma, and the listed forms take an
-    occurrence the engine lemmatised as something else.
+    The part of speech narrows a one-word lemma, and the listed forms take an occurrence
+    the engine lemmatised as something else.
 
     Args:
         lemma: The headword.
@@ -102,8 +97,8 @@ def _compile_forms(
     """
     Compile the forms of one lemma into the pattern they are matched by.
 
-    Sentences are searched an entry at a time, so holding the last pattern
-    alone compiles once per entry.
+    Sentences are searched an entry at a time, so holding the last pattern alone
+    compiles once per entry.
 
     Args:
         forms: The headword and its inflections.
@@ -111,8 +106,7 @@ def _compile_forms(
     Returns:
         The pattern matching any of them, whatever the case.
     """
-    # The longest form first, so that give up wins over give. Ties are broken
-    # alphabetically, a frozenset having no order of its own.
+    # Longest-first matching preserves multiword forms; lexical sorting stabilizes ties.
     alternation = "|".join(
         re.escape(form) for form in sorted(forms, key=lambda form: (-len(form), form))
     )
@@ -144,16 +138,15 @@ def find_word_offsets(
     """
     Locate the lemma of every sentence handed over.
 
-    A reading tells a word from its homograph and takes an inflection nobody
-    listed; the listed forms are matched only where it found nothing at all.
+    A reading tells a word from its homograph and takes an inflection nobody listed; the
+    listed forms are matched only where it found nothing at all.
 
     Args:
         locator: The search to read with.
         searches: A sentence and the lemma to look for in it, in pairs.
 
     Yields:
-        The ranges the lemma occupies in one sentence, leftmost first, in the
-        order the sentences came in.
+        Lemma ranges in sentence order, sorted from left to right.
     """
     reading_searches, matching_searches = tee(searches)
 
@@ -164,8 +157,7 @@ def find_word_offsets(
         matching_searches,
         strict=True,
     ):
-        # A range is missing only where words were handed over in place of a
-        # text, which is not what a sentence is.
+        # String-based sentence queries always provide character offsets.
         word_offsets = tuple(
             match.offsets for match in matches if match.offsets is not None
         )

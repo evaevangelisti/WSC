@@ -1,16 +1,12 @@
-"""
-The little of Wikitext a translation table is written in.
-"""
+"""The little of Wikitext a translation table is written in."""
 
 import re
 
-# Bold and italics, which a gloss uses to name a species or a title.
 _EMPHASIS = re.compile(r"'{2,5}")
 
-# A link, whose label is what a reader sees where one is written.
 _LINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]|]*)\]\]")
 
-# A gloss may hold an equals sign, so a name is a bare word before one.
+# Gloss values can contain equals signs.
 _NAMED = re.compile(r"^([A-Za-z0-9_-]+)=(.*)$", re.DOTALL)
 
 

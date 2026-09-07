@@ -10,6 +10,6 @@
 .. automodule:: wsc.reading.alignment
    :members:
 
-.. automodule:: wsc.reading.instructions
+.. automodule:: wsc.reading.prompts
    :members:
 ```

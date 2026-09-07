@@ -1,6 +1,4 @@
-"""
-Reading of source dictionaries into models.
-"""
+"""Reading of source dictionaries into models."""
 
 from .dump import DumpExtractor
 from .offsets import build_query, find_word_offsets, match_forms, open_locator
