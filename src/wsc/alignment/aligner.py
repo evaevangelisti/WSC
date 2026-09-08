@@ -3,6 +3,8 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import replace
 
+from tqdm import tqdm
+
 from ..constants import DEFAULT_PROMPTS
 from ..models import Lemma
 from ..models.alignment import (
@@ -107,7 +109,7 @@ class Aligner:
         """
         streams = cached_results or {}
 
-        for lemma in lemmas:
+        for lemma in tqdm(lemmas, desc="Aligning the senses", unit=" lemma"):
             senses = {
                 sense.id: replace(sense, translations=dict(sense.translations))
                 for sense in lemma.senses
