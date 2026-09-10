@@ -1,9 +1,10 @@
 """Command line for collecting senses out of Wiktionary."""
 
+import json
 from contextlib import ExitStack
 from importlib.metadata import version
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 import typer
 
@@ -18,7 +19,6 @@ from .constants import (
     ALIGNMENT_MAXIMUM_TOKENS,
     ALIGNMENT_MODEL,
     ALIGNMENT_TEMPERATURE,
-    ALIGNMENT_URL,
     BATCH_SIZE,
     CHUNK_SIZE,
     KAIKKI_URL,
@@ -353,6 +353,32 @@ def wordnet(
     typer.echo(f"Read {output_path}")
 
 
+def _parse_engine_option(option: str) -> tuple[str, object]:
+    """
+    Parse a single ``key=value`` engine option.
+
+    Args:
+        option: Raw ``--engine-option`` argument.
+
+    Returns:
+        The option name and its parsed value.
+
+    Raises:
+        BadParameter: If the argument is not in ``key=value`` form.
+    """
+    name, separator, raw_value = option.partition("=")
+
+    if not separator:
+        raise typer.BadParameter(f"Expected key=value, got {option!r}")
+
+    try:
+        value = cast(object, json.loads(raw_value))
+    except json.JSONDecodeError:
+        value = raw_value
+
+    return name, value
+
+
 @app.command()
 def align(
     input_path: Annotated[
@@ -381,12 +407,6 @@ def align(
             help="Model identifier served by the endpoint.",
         ),
     ] = ALIGNMENT_MODEL,
-    url: Annotated[
-        str,
-        typer.Option(
-            help="OpenAI-compatible API endpoint.",
-        ),
-    ] = ALIGNMENT_URL,
     gloss_mode: Annotated[
         GlossMode,
         typer.Option(
@@ -395,7 +415,10 @@ def align(
     ] = GlossMode.LAST,
     prompts_path: Annotated[
         Path,
-        typer.Option("--prompts", help="Custom task prompt templates."),
+        typer.Option(
+            "--prompts",
+            help="Custom task prompt templates.",
+        ),
     ] = PROMPTS_PATH,
     temperature: Annotated[
         float,
@@ -416,6 +439,15 @@ def align(
         str | None,
         typer.Option(
             help="Reasoning setting supported by the API model.",
+        ),
+    ] = None,
+    engine_option: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--engine-option",
+            "-o",
+            metavar="KEY=VALUE",
+            help="Additional vLLM engine parameter; repeat to set multiple.",
         ),
     ] = None,
     *,
@@ -444,8 +476,13 @@ def align(
         model=model,
         temperature=temperature,
         maximum_tokens=maximum_tokens,
-        url=url,
         reasoning_effort=reasoning_effort,
+        engine_options=tuple(
+            sorted(
+                (_parse_engine_option(item) for item in engine_option or ()),
+                key=lambda pair: pair[0],
+            )
+        ),
     )
 
     synsets_path: Path | None = None

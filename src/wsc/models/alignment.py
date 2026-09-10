@@ -31,15 +31,15 @@ class ModelSettings:
         model: Model identifier exposed by the server.
         temperature: Sampling temperature.
         maximum_tokens: Maximum number of generated tokens.
-        url: OpenAI-compatible server endpoint.
         reasoning_effort: Optional reasoning setting supported by the server.
+        engine_options: Additional keyword arguments forwarded to the engine.
     """
 
     model: str
     temperature: float = 0.0
     maximum_tokens: int = 4096
-    url: str = "http://localhost:8000/v1"
     reasoning_effort: str | None = None
+    engine_options: tuple[tuple[str, object], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

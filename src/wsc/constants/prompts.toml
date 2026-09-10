@@ -49,6 +49,7 @@ Relations:
 Constraints:
 - Evaluate every candidate and retain each clearly supported association.
 - Assign one relation to each accepted pair, directed from Wiktionary toward WordNet.
+- Restrict equivalent to the strongest match per synset and per Wiktionary definition; assign narrower or broader to the rest.
 - Use synonyms as supporting context for the definition.
 $hierarchy
 - Distinguish defining restrictions from extra examples and explanatory wording.

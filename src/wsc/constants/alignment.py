@@ -24,9 +24,6 @@ ALIGNMENT_MAXIMUM_TOKENS = 4096
 ALIGNMENT_TEMPERATURE = 0.0
 """Request zero-temperature generation."""
 
-ALIGNMENT_TIMEOUT = 300
-"""Limit each API request to five minutes."""
-
 PROMPTS_PATH = Path(__file__).with_name("prompts.toml")
 """Locate the bundled task prompt templates."""
 
@@ -38,9 +35,6 @@ TRANSLATION_RELATION = "translation"
 
 ALIGNMENT_SCHEMA = "5"
 """Version the decision-based cache independently of reranker scores."""
-
-ALIGNMENT_URL = "http://localhost:8000/v1"
-"""Address the default vLLM server."""
 
 HIERARCHY_CONSTRAINT = (
     "- Read each '>' hierarchy from general context to the final specific sense."
