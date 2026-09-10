@@ -130,12 +130,12 @@ wsc align senses.jsonl aligned.jsonl
 | Option | Default | |
 | --- | --- | --- |
 | `--task` | both resources | `translations` or `wordnet`; repeat to select both |
-| `--model` | `Qwen/Qwen3-8B` | Model identifier exposed by the server |
+| `--model` | `Qwen/Qwen3-8B` | Model identifier |
 | `--gloss-mode` | `last` | Last gloss or full hierarchy joined with ` > ` |
 | `--prompts` | bundled `prompts.toml` | One customizable template per task |
 | `--temperature` | `0.0` | Sampling temperature |
 | `--maximum-tokens` | `4096` | Generated token limit |
-| `--reasoning-effort` | unset | Reasoning setting supported by the server |
+| `--reasoning-effort` | unset | Reasoning setting |
 | `--engine-option`, `-o` | unset | Additional vLLM engine parameter; repeat to set multiple |
 | `--reuse` | off | Reapply cached decisions without contacting the model |
 | `--wordnet-edition` | `latest` | Extracted WordNet edition; also `WSC_WORDNET_EDITION` |
