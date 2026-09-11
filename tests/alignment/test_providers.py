@@ -29,6 +29,37 @@ class FakeStructuredOutputsParams:
         self.values = kwargs
 
 
+class FakeTokenizer:
+    """Decode fake completion token identifiers."""
+
+    def decode(self, token_ids: list[int]) -> str:
+        """Return the configured final response."""
+        del token_ids
+        return FakeLLM.response
+
+
+class FakeReasoningParser:
+    """Extract the final content from fake GPT-OSS output tokens."""
+
+    def __init__(self, *, tokenizer: FakeTokenizer) -> None:
+        """Store the tokenizer used by the parser."""
+        self.tokenizer = tokenizer
+
+    def extract_content_ids(self, token_ids: list[int]) -> list[int]:
+        """Return token identifiers for the final response."""
+        return token_ids
+
+
+class FakeReasoningParserManager:
+    """Resolve the fake GPT-OSS reasoning parser."""
+
+    @staticmethod
+    def get_reasoning_parser(name: str) -> type[FakeReasoningParser]:
+        """Return the parser for the configured model format."""
+        assert name == "openai_gptoss"
+        return FakeReasoningParser
+
+
 class FakeLLM:
     """Return one configured vLLM completion without loading a model."""
 
@@ -41,6 +72,10 @@ class FakeLLM:
         self.settings = kwargs
         self.requests: list[dict[str, object]] = []
         self.__class__.instances.append(self)
+
+    def get_tokenizer(self) -> FakeTokenizer:
+        """Return the fake tokenizer used by the reasoning parser."""
+        return FakeTokenizer()
 
     def chat(
         self,
@@ -63,6 +98,7 @@ class FakeLLM:
                     SimpleNamespace(
                         finish_reason=self.finish_reason,
                         text=self.response,
+                        token_ids=[1, 2, 3],
                     )
                 ]
             )
@@ -79,12 +115,18 @@ def fake_vllm_modules(monkeypatch: pytest.MonkeyPatch) -> None:
     vllm.LLM = FakeLLM  # type: ignore[attr-defined]
     vllm.SamplingParams = FakeSamplingParams  # type: ignore[attr-defined]
 
+    reasoning = ModuleType("vllm.reasoning")
+    reasoning.ReasoningParserManager = (  # type: ignore[attr-defined]
+        FakeReasoningParserManager
+    )
+
     sampling_params = ModuleType("vllm.sampling_params")
     sampling_params.StructuredOutputsParams = (  # type: ignore[attr-defined]
         FakeStructuredOutputsParams
     )
 
     monkeypatch.setitem(sys.modules, "vllm", vllm)
+    monkeypatch.setitem(sys.modules, "vllm.reasoning", reasoning)
     monkeypatch.setitem(sys.modules, "vllm.sampling_params", sampling_params)
 
 

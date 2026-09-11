@@ -1,6 +1,17 @@
 """Generate decisions through offline vLLM batch inference."""
 
+from collections.abc import Sequence
+from typing import Protocol
+
 from ..models.alignment import LanguageModel, ModelRequest, ModelSettings
+
+
+class Completion(Protocol):
+    """Provide the vLLM completion fields used by the adapter."""
+
+    finish_reason: str | None
+    text: str
+    token_ids: Sequence[int]
 
 
 class ChatModel:
@@ -18,6 +29,7 @@ class ChatModel:
         """
         try:
             from vllm import LLM
+            from vllm.reasoning import ReasoningParserManager
         except ImportError as error:
             raise RuntimeError(
                 "Offline alignment requires vLLM; install the platform backend first"
@@ -28,7 +40,38 @@ class ChatModel:
             **dict(settings.engine_options),
         )
 
+        self._tokenizer = self._llm.get_tokenizer()
+
+        parser = ReasoningParserManager.get_reasoning_parser("openai_gptoss")
+        self._reasoning_parser = parser(tokenizer=self._tokenizer)
+
         self._settings: ModelSettings = settings
+
+    def _parse_reasoning(
+        self,
+        completion: Completion,
+    ) -> str:
+        """
+        Extract and decode the final response from a reasoning completion.
+
+        Args:
+            completion: vLLM completion containing generated token IDs.
+
+        Returns:
+            The decoded final response without reasoning content.
+
+        Raises:
+            ValueError: If the completion has no final response.
+        """
+        token_ids = completion.token_ids
+        content_ids = self._reasoning_parser.extract_content_ids(token_ids)
+
+        text = self._tokenizer.decode(content_ids).strip()
+
+        if not text:
+            raise ValueError(f"Empty final model response: text={completion.text!r}")
+
+        return text
 
     def generate(
         self,
@@ -71,16 +114,15 @@ class ChatModel:
         )
 
         completion = output.outputs[0]
-        text = completion.text.strip()
 
-        if completion.finish_reason != "stop" or not text:
+        if completion.finish_reason != "stop":
             raise ValueError(
                 "Incomplete model response: "
                 + f"finish_reason={completion.finish_reason!r}, "
                 + f"text={completion.text!r}"
             )
 
-        return text
+        return self._parse_reasoning(completion)
 
 
 def open_model(
