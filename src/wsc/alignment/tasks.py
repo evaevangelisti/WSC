@@ -161,7 +161,7 @@ class WordNetHandler:
             candidates: WordNet candidate index.
 
         Yields:
-            One query for each source sense.
+            One query containing all source senses and candidates.
         """
         targets = tuple(
             Definition(
@@ -172,14 +172,16 @@ class WordNetHandler:
             for synset in candidates.candidates(lemma)
         )
 
-        for source in build_definitions(lemma):
+        sources = build_definitions(lemma)
+
+        if sources:
             yield AlignmentQuery(
                 AlignmentTask.WORDNET,
-                query_id(AlignmentTask.WORDNET, source.id),
+                query_id(AlignmentTask.WORDNET, lemma.id),
                 lemma.id,
                 lemma.lemma,
                 lemma.pos,
-                (source,),
+                sources,
                 targets,
             )
 

@@ -318,9 +318,10 @@ def test_candidates_include_variants_and_sense_synonyms() -> None:
     (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
 
     assert result.source_definitions[0].synonyms == ("variant",)
+    assert len(result.source_definitions) == 1
     assert result.target_definitions[0].id == "wn"
     assert result.target_definitions[0].synonyms == ("a.b",)
-    assert result.alignment_id == "wordnet:s"
+    assert result.alignment_id == "wordnet:alias.name"
 
 
 def test_candidates_exclude_the_queried_lemma_from_synonyms() -> None:
@@ -337,7 +338,33 @@ def test_candidates_exclude_the_queried_lemma_from_synonyms() -> None:
 
     (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
 
+    assert len(result.source_definitions) == 1
+    assert result.alignment_id == "wordnet:word.noun"
     assert result.target_definitions[0].synonyms == ("term", "word_form")
+
+
+def test_wordnet_query_contains_all_source_senses() -> None:
+    """WordNet compares every Wiktionary sense in one model request."""
+    lemma = Lemma(
+        "word.noun",
+        "word",
+        POS.NOUN,
+        senses=[
+            Sense("s1", ("first sense",)),
+            Sense("s2", ("second sense",)),
+        ],
+    )
+
+    (result,) = build_queries(
+        lemma,
+        AlignmentTask.WORDNET,
+        WordNetCandidates(
+            [Synset("wn", "ili", POS.NOUN, "definition", ("word",))]
+        ),
+    )
+
+    assert tuple(source.id for source in result.source_definitions) == ("s1", "s2")
+    assert result.alignment_id == "wordnet:word.noun"
 
 
 def test_replay_rejects_context_drift_and_extra_results() -> None:
