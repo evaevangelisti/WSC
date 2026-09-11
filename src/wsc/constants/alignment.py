@@ -15,7 +15,7 @@ ALIGNMENT_FIELDS = (
 )
 """Preserve decisions, generated responses, and query context in TSV records."""
 
-ALIGNMENT_MODEL = "Qwen/Qwen3-8B"
+ALIGNMENT_MODEL = "openai/gpt-oss-120b"
 """Select the default served model identifier."""
 
 ALIGNMENT_MAXIMUM_TOKENS = 4096

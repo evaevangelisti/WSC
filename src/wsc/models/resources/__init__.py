@@ -8,7 +8,7 @@ from .wiktionary import (
     Quotation,
     Sense,
     Sentence,
-    Translations,
+    TranslationTable,
     WordOffset,
     WordOffsetSource,
 )
@@ -23,7 +23,7 @@ __all__ = [
     "Sense",
     "Sentence",
     "Synset",
-    "Translations",
+    "TranslationTable",
     "WordNetAlignment",
     "WordNetRelation",
     "WordOffset",

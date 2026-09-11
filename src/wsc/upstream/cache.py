@@ -7,9 +7,12 @@ from platformdirs import user_cache_dir
 LATEST = "latest"
 
 DUMP_NAME = "dump.xml.bz2"
+
 ARCHIVE_NAME = "archive.jsonl.gz"
 WIKTEXTRACT_NAME = "wiktextract.jsonl.zst"
+
 OFF_PAGE_TRANSLATIONS_NAME = "off-page-translations.json"
+
 WORDNET_NAME = "wordnet.xml.gz"
 SYNSETS_NAME = "synsets.jsonl"
 

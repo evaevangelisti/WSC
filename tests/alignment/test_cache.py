@@ -48,7 +48,7 @@ def test_cache_round_trip_preserves_decisions_response_and_synonyms(
         replace(settings, maximum_tokens=100),
         replace(
             settings,
-            url="http://localhost:9000/v1",
+            engine_options=(("dtype", "float16"),),
         ),
     ):
         assert cache_key(build_metadata(source, changed, GlossMode.FULL)) != cache_key(

@@ -13,6 +13,7 @@ from ..models import (
     Quotation,
     Sense,
     Sentence,
+    TranslationTable,
     WordNetAlignment,
     WordNetRelation,
     WordOffset,
@@ -58,6 +59,14 @@ class SenseRecord(TypedDict):
     wordnet: NotRequired[list[AlignmentRecord]]
 
 
+class TranslationTableRecord(TypedDict):
+    """Serialized collected translation table."""
+
+    id: str
+    gloss: str
+    translations: dict[str, list[str]]
+
+
 class LemmaRecord(TypedDict):
     """Serialized collected lemma."""
 
@@ -66,7 +75,7 @@ class LemmaRecord(TypedDict):
     pos: str
     variants: NotRequired[list[str]]
     senses: NotRequired[list[SenseRecord]]
-    translations: NotRequired[dict[str, dict[str, list[str]]]]
+    translation_tables: NotRequired[list[TranslationTableRecord]]
 
 
 def _parse_sentence(
@@ -145,10 +154,17 @@ def parse_lemma(
             )
             for sense in record.get("senses", [])
         ],
-        translations={
-            gloss: {language: frozenset(words) for language, words in languages.items()}
-            for gloss, languages in record.get("translations", {}).items()
-        },
+        translation_tables=tuple(
+            TranslationTable(
+                table["id"],
+                table["gloss"],
+                {
+                    language: frozenset(words)
+                    for language, words in table["translations"].items()
+                },
+            )
+            for table in record.get("translation_tables", [])
+        ),
     )
 
 

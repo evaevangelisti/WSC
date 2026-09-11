@@ -9,19 +9,19 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
 
-from ...models import POS, Translations
+from ...models import POS, TranslationTable
 from ..dump import PageTranslations
-from .identifiers import lemma_id
+from ..identifiers import lemma_id
 from .merge import add_translations
 from .parts import parse_translations
 from .schema import RawEntry
 
-type OffPageTranslations = dict[str, Translations]
+type OffPageTranslations = dict[str, tuple[TranslationTable, ...]]
 """What each entry is translated by elsewhere, by the name of the entry."""
 
 
 def _flatten_translations(
-    translations: Translations,
+    translations: tuple[TranslationTable, ...],
 ) -> dict[str, frozenset[str]]:
     """
     Gather every table of an entry into one, whatever gloss headed it.
@@ -36,8 +36,8 @@ def _flatten_translations(
     """
     flattened_words: dict[str, frozenset[str]] = {}
 
-    for translated_words in translations.values():
-        for language, words in translated_words.items():
+    for table in translations:
+        for language, words in table.translations.items():
             flattened_words[language] = (
                 flattened_words.get(language, frozenset()) | words
             )
@@ -75,7 +75,10 @@ def _read_pointed_translations(
             continue
 
         kept_words = pointed_translations.setdefault(pointed_id, {})
-        pointed_tables = parse_translations(entry.get("translations", []))
+        pointed_tables = parse_translations(
+            entry.get("translations", []),
+            lemma_id=pointed_id,
+        )
 
         for language, words in _flatten_translations(pointed_tables).items():
             kept_words[language] = kept_words.get(language, frozenset()) | words
@@ -114,9 +117,13 @@ def build_off_page_translations(
 
     for page in translated_pages:
         page_id = lemma_id(page.lemma, page.pos)
-        entry_translations = off_page_translations.setdefault(page_id, {})
+        entry_translations = off_page_translations.setdefault(page_id, ())
 
-        add_translations(entry_translations, page.translations)
+        entry_translations = add_translations(
+            entry_translations,
+            page.translations,
+            page_id,
+        )
 
         for gloss, pointed_lemmas in page.pointers.items():
             for pointed_lemma in pointed_lemmas:
@@ -125,7 +132,19 @@ def build_off_page_translations(
                 )
 
                 if pointed_words:
-                    add_translations(entry_translations, {gloss: pointed_words})
+                    entry_translations = add_translations(
+                        entry_translations,
+                        (
+                            TranslationTable(
+                                "",
+                                gloss,
+                                pointed_words,
+                            ),
+                        ),
+                        page_id,
+                    )
+
+        off_page_translations[page_id] = entry_translations
 
     return {
         entry_id: tables for entry_id, tables in off_page_translations.items() if tables
@@ -146,12 +165,17 @@ def write_off_page_translations(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     written = {
-        entry_id: {
-            gloss: {
-                language: sorted(words) for language, words in translated_words.items()
+        entry_id: [
+            {
+                "id": table.id,
+                "gloss": table.gloss,
+                "translations": {
+                    language: sorted(words)
+                    for language, words in table.translations.items()
+                },
             }
-            for gloss, translated_words in tables.items()
-        }
+            for table in tables
+        ]
         for entry_id, tables in sorted(off_page.items())
     }
 
@@ -173,17 +197,23 @@ def read_off_page_translations(
         The tables to add to each entry, by the name of the entry.
     """
     read = cast(
-        dict[str, dict[str, dict[str, list[str]]]],
+        dict[str, list[dict[str, object]]],
         json.loads(input_path.read_text(encoding="utf-8")),
     )
 
     return {
-        entry_id: {
-            gloss: {
-                language: frozenset(words)
-                for language, words in translated_words.items()
-            }
-            for gloss, translated_words in tables.items()
-        }
+        entry_id: tuple(
+            TranslationTable(
+                str(table["id"]),
+                str(table["gloss"]),
+                {
+                    language: frozenset(words)
+                    for language, words in cast(
+                        dict[str, list[str]], table["translations"]
+                    ).items()
+                },
+            )
+            for table in tables
+        )
         for entry_id, tables in read.items()
     }

@@ -14,7 +14,7 @@ from ..models import POS, Engine, Offset
 # Engine outputs use Universal Dependencies part-of-speech tags.
 _UNIVERSAL_TAGS = {
     POS.NOUN: UNIVERSAL_POS.NOUN,
-    POS.NAME: UNIVERSAL_POS.PROPN,
+    POS.PROPN: UNIVERSAL_POS.PROPN,
     POS.VERB: UNIVERSAL_POS.VERB,
     POS.ADJECTIVE: UNIVERSAL_POS.ADJ,
     POS.ADVERB: UNIVERSAL_POS.ADV,

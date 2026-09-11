@@ -8,10 +8,10 @@ from kwic import Locator, Query
 from tqdm import tqdm
 
 from ...constants import LANGUAGE
-from ...models import POS, Lemma, Translations
+from ...models import POS, Lemma, TranslationTable
+from ..identifiers import lemma_id
 from ..offsets import build_query, find_word_offsets
 from .entries import read_entries
-from .identifiers import lemma_id
 from .merge import merge_lemmas, merge_word_offsets
 from .parts import (
     Variants,
@@ -40,7 +40,7 @@ class WiktionaryExtractor:
         minimum_year: int | None,
         maximum_year: int | None,
         locator: Locator,
-        off_page_translations: dict[str, Translations] | None = None,
+        off_page_translations: dict[str, tuple[TranslationTable, ...]] | None = None,
     ) -> None:
         """
         Set the filters every extraction will answer to.
@@ -59,7 +59,7 @@ class WiktionaryExtractor:
 
         self._locator: Locator = locator
 
-        self._off_page_translations: dict[str, Translations] = (
+        self._off_page_translations: dict[str, tuple[TranslationTable, ...]] = (
             off_page_translations or {}
         )
 
@@ -105,6 +105,7 @@ class WiktionaryExtractor:
             parse_translations(
                 entry.get("translations", []),
                 self._off_page_translations.get(entry_id),
+                entry_id,
             ),
         )
 

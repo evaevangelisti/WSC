@@ -107,7 +107,7 @@ def build_request(
         "additionalProperties": False,
     }
 
-    return ModelRequest(prompt, schema)
+    return ModelRequest(prompts.system, prompt, schema)
 
 
 def validate_result(

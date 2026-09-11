@@ -120,11 +120,22 @@ def _record_of_lemma(
     if lemma.variants:
         record["variants"] = sorted(lemma.variants)
 
-    if lemma.translations:
-        record["translations"] = {
-            gloss: {language: sorted(words) for language, words in translated.items()}
-            for gloss, translated in lemma.translations.items()
-        }
+    if lemma.translation_tables:
+        record["translation_tables"] = [
+            {
+                key: value
+                for key, value in {
+                    "id": table.id,
+                    "gloss": table.gloss,
+                    "translations": {
+                        language: sorted(words)
+                        for language, words in table.translations.items()
+                    },
+                }.items()
+                if value not in ("", {})
+            }
+            for table in lemma.translation_tables
+        ]
 
     return record
 

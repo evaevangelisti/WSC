@@ -1,7 +1,7 @@
 """The meanings an entry holds."""
 
 from ....models import Sense
-from ..identifiers import sense_id
+from ...identifiers import sense_id
 from ..markup import carries_markup
 from ..schema import RawSense
 from .sentences import parse_sentences

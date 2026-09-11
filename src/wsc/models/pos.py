@@ -12,7 +12,7 @@ class POS(StrEnum):
     """
 
     NOUN = "noun"
-    NAME = "name"
+    PROPN = "propn"
     VERB = "verb"
     ADJECTIVE = "adj"
     ADVERB = "adv"

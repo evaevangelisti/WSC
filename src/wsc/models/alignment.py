@@ -49,10 +49,12 @@ class AlignmentPrompts:
 
     Attributes:
         name: Prompt file label.
+        system: Shared system prompt.
         tasks: Prompt templates indexed by alignment task.
     """
 
     name: str
+    system: str
     tasks: Mapping[str, str]
 
 
@@ -157,10 +159,12 @@ class ModelRequest:
     Provide the prompt and its structured response schema.
 
     Attributes:
+        system: Shared system instructions.
         prompt: Complete lexical alignment instructions and definitions.
         schema: JSON schema accepted by structured-output providers.
     """
 
+    system: str
     prompt: str
     schema: dict[str, object]
 

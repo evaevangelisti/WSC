@@ -125,10 +125,20 @@ class Sense:
         return len(self.glosses)
 
 
-type Translations = dict[str, dict[str, frozenset[str]]]
-"""
-Translation groups indexed by heading and language.
-"""
+@dataclass(frozen=True, slots=True)
+class TranslationTable:
+    """
+    One Wiktionary translation table.
+
+    Attributes:
+        id: Stable identifier derived from the owning lemma and table gloss.
+        gloss: Meaning heading attached to the table.
+        translations: Words grouped by language.
+    """
+
+    id: str
+    gloss: str
+    translations: dict[str, frozenset[str]]
 
 
 @dataclass(slots=True)
@@ -144,7 +154,7 @@ class Lemma:
         pos: Its part of speech.
         variants: Lemma identifiers of alternative spellings, such as colour.noun.
         senses: Its meanings, in the order Wiktionary lists them.
-        translations: Translation groups indexed by heading and language.
+        translation_tables: Translation tables attached to the entry.
     """
 
     id: str
@@ -152,4 +162,4 @@ class Lemma:
     pos: POS
     variants: frozenset[str] = frozenset()
     senses: list[Sense] = field(default_factory=list)
-    translations: Translations = field(default_factory=dict)
+    translation_tables: tuple[TranslationTable, ...] = ()

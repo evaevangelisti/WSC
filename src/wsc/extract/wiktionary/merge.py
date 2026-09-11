@@ -9,28 +9,47 @@ from ...models import (
     Lemma,
     Offset,
     Sense,
-    Translations,
+    TranslationTable,
     WordOffset,
     WordOffsetSource,
 )
+from ..identifiers import translation_table_id
 
 
 def add_translations(
-    kept_translations: Translations,
-    added_translations: Translations,
-) -> None:
+    kept_translations: tuple[TranslationTable, ...],
+    added_translations: tuple[TranslationTable, ...],
+    lemma_id: str,
+) -> tuple[TranslationTable, ...]:
     """
     Add one set of translation tables to another, gloss by gloss.
 
     Args:
         kept_translations: What is kept already, added to in place.
         added_translations: What to add to it.
+        lemma_id: The entry identifier used to name merged tables.
     """
-    for gloss, added_words in added_translations.items():
-        kept_words = kept_translations.setdefault(gloss, {})
+    gathered = {
+        table.gloss: {
+            language: set(words)
+            for language, words in table.translations.items()
+        }
+        for table in kept_translations
+    }
 
-        for language, words in added_words.items():
-            kept_words[language] = kept_words.get(language, frozenset()) | words
+    for table in added_translations:
+        kept_words = gathered.setdefault(table.gloss, {})
+        for language, words in table.translations.items():
+            kept_words.setdefault(language, set()).update(words)
+
+    return tuple(
+        TranslationTable(
+            translation_table_id(lemma_id, gloss),
+            gloss,
+            {language: frozenset(words) for language, words in translated.items()},
+        )
+        for gloss, translated in gathered.items()
+    )
 
 
 def merge_word_offsets(
@@ -146,7 +165,11 @@ def merge_lemmas(
         kept_lemma.variants |= lemma.variants
         kept_lemma.senses += lemma.senses
 
-        add_translations(kept_lemma.translations, lemma.translations)
+        kept_lemma.translation_tables = add_translations(
+            kept_lemma.translation_tables,
+            lemma.translation_tables,
+            kept_lemma.id,
+        )
 
         # Etymologies can provide different inflection forms for the same headword.
         gathered_lemmas[lemma.id] = (

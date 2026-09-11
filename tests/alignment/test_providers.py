@@ -1,184 +1,139 @@
-"""Exercise SDK requests through the public alignment API."""
+"""Exercise the offline vLLM model boundary without loading model weights."""
 
 import json
-from collections.abc import Iterator
-from dataclasses import dataclass, field
-from typing import cast
+import sys
+from types import ModuleType, SimpleNamespace
+from typing import ClassVar
 
-import httpx2
 import pytest
-from openai import APIStatusError, OpenAI
 
-from wsc.alignment import align_query, client
+from wsc.alignment import align_query
 from wsc.models.alignment import ModelSettings
 
 from .test_aligner import decision, query
 
 
-@dataclass
-class Server:
-    """Retain mocked server responses and captured HTTP requests."""
+class FakeSamplingParams:
+    """Capture generation settings passed to vLLM."""
 
-    content: str | None = '{"s1": null, "s2": null}'
-    finish_reason: str = "stop"
-    status: int = 200
-    requests: list[httpx2.Request] = field(default_factory=list)
+    def __init__(self, **kwargs: object) -> None:
+        """Store the sampling settings."""
+        self.values = kwargs
 
 
-@pytest.fixture
-def server(
-    monkeypatch: pytest.MonkeyPatch,
-) -> Iterator[Server]:
-    """
-    Attach a local transport to the real OpenAI SDK.
+class FakeGuidedDecodingParams:
+    """Capture the structured-output schema passed to vLLM."""
 
-    Args:
-        monkeypatch: Test-local client replacement.
+    def __init__(self, **kwargs: object) -> None:
+        """Store the guided decoding settings."""
+        self.values = kwargs
 
-    Yields:
-        Mutable responses and captured requests.
-    """
-    state = Server()
 
-    def respond(
-        request: httpx2.Request,
-    ) -> httpx2.Response:
-        """
-        Capture the request and return the configured completion.
+class FakeLLM:
+    """Return one configured vLLM completion without loading a model."""
 
-        Args:
-            request: Serialized SDK request.
+    response = json.dumps({"s1": decision("t1"), "s2": None})
+    finish_reason = "stop"
+    instances: ClassVar[list[FakeLLM]] = []
 
-        Returns:
-            Configured completion or error response.
-        """
-        state.requests.append(request)
+    def __init__(self, **kwargs: object) -> None:
+        """Store engine settings without loading model weights."""
+        self.settings = kwargs
+        self.requests: list[dict[str, object]] = []
+        self.__class__.instances.append(self)
 
-        payload = {
-            "id": "test",
-            "object": "chat.completion",
-            "created": 0,
-            "model": "served-model",
-            "choices": [
-                {
-                    "index": 0,
-                    "finish_reason": state.finish_reason,
-                    "message": {"role": "assistant", "content": state.content},
-                },
-            ],
-        }
-
-        return httpx2.Response(
-            state.status,
-            json=payload if state.status == 200 else {"error": {"message": "Rejected"}},
+    def chat(
+        self,
+        *,
+        messages: list[dict[str, str]],
+        sampling_params: FakeSamplingParams,
+        chat_template_kwargs: dict[str, str] | None,
+    ) -> list[object]:
+        """Return the configured completion and retain the request."""
+        self.requests.append(
+            {
+                "messages": messages,
+                "sampling_params": sampling_params,
+                "chat_template_kwargs": chat_template_kwargs,
+            }
         )
-
-    with httpx2.Client(transport=httpx2.MockTransport(respond)) as transport:
-
-        def connect(
-            *,
-            api_key: str,
-            base_url: str,
-            timeout: float,
-            max_retries: int,
-        ) -> OpenAI:
-            """
-            Construct the SDK client with the test transport.
-
-            Args:
-                api_key: Configured authentication token.
-                base_url: Configured server endpoint.
-                timeout: Request timeout in seconds.
-                max_retries: SDK retry limit.
-
-            Returns:
-                Real SDK client with an isolated HTTP transport.
-            """
-            return OpenAI(
-                api_key=api_key,
-                base_url=base_url,
-                timeout=timeout,
-                max_retries=max_retries,
-                http_client=transport,
+        return [
+            SimpleNamespace(
+                outputs=[
+                    SimpleNamespace(
+                        finish_reason=self.finish_reason,
+                        text=self.response,
+                    )
+                ]
             )
-
-        monkeypatch.setattr(client, "OpenAI", connect)
-
-        yield state
+        ]
 
 
-@pytest.mark.parametrize("effort", [None, "none", "low", "high"])
-def test_sdk_preserves_generation_options_and_structured_output(
-    server: Server,
-    monkeypatch: pytest.MonkeyPatch,
-    effort: str | None,
-) -> None:
-    """The real SDK serializes temperature, effort, schemas, and authentication."""
-    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+@pytest.fixture(name="_vllm_modules")
+def fake_vllm_modules(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Provide a fake vLLM package for the lazy provider imports."""
+    FakeLLM.instances.clear()
+    FakeLLM.finish_reason = "stop"
 
-    server.content = json.dumps({"s1": decision("t1"), "s2": None})
-    settings = ModelSettings("served-model", reasoning_effort=effort)
+    vllm = ModuleType("vllm")
+    vllm.LLM = FakeLLM  # type: ignore[attr-defined]
+    vllm.SamplingParams = FakeSamplingParams  # type: ignore[attr-defined]
 
-    result = align_query(query(), client.open_model(settings))
-    request = server.requests[0]
-    payload = cast(dict[str, object], json.loads(request.content))
+    sampling_params = ModuleType("vllm.sampling_params")
+    sampling_params.GuidedDecodingParams = FakeGuidedDecodingParams  # type: ignore[attr-defined]
 
-    assert len(server.requests) == 1
-    assert str(request.url) == "http://localhost:8000/v1/chat/completions"
-    assert request.headers["Authorization"] == "Bearer test-key"
-    assert payload["temperature"] == 0.0
-    assert payload["max_completion_tokens"] == 4096
-    assert payload["model"] == "served-model"
-    assert payload["response_format"]
-    assert payload.get("reasoning_effort") == effort
-    assert ("reasoning_effort" in payload) == (effort is not None)
-    assert result.response == server.content
+    monkeypatch.setitem(sys.modules, "vllm", vllm)
+    monkeypatch.setitem(sys.modules, "vllm.sampling_params", sampling_params)
+
+
+@pytest.mark.usefixtures("_vllm_modules")
+def test_offline_model_preserves_generation_contract() -> None:
+    """The vLLM adapter forwards settings and returns validated JSON."""
+    from wsc.alignment.client import open_model
+
+    settings = ModelSettings(
+        "local-model",
+        reasoning_effort="low",
+        engine_options=(("dtype", "float16"),),
+    )
+    result = align_query(query(), open_model(settings))
+
+    model = FakeLLM.instances[0]
+    request = model.requests[0]
+    sampling = request["sampling_params"]
+    assert model.settings == {"model": "local-model", "dtype": "float16"}
+    assert isinstance(sampling, FakeSamplingParams)
+    assert sampling.values["temperature"] == 0.0
+    assert sampling.values["max_tokens"] == 4096
+    guided = sampling.values["guided_decoding"]
+    assert isinstance(guided, FakeGuidedDecodingParams)
+    schema = guided.values["json"]
+    assert isinstance(schema, dict)
+    assert schema["required"] == ["s1", "s2"]
+    assert request["chat_template_kwargs"] == {"reasoning_effort": "low"}
+    assert result.response == FakeLLM.response
     assert result.links[0].reason == "The definitions express the same concept."
 
 
-@pytest.mark.parametrize("finish_reason", ["length", "content_filter", "tool_calls"])
-def test_incomplete_model_outputs_remain_failures(
-    server: Server,
-    finish_reason: str,
-) -> None:
-    """Incomplete responses raise an explicit generation error."""
-    server.finish_reason = finish_reason
+@pytest.mark.parametrize("finish_reason", ["length", "content_filter"])
+@pytest.mark.usefixtures("_vllm_modules")
+def test_incomplete_model_outputs_remain_failures(finish_reason: str) -> None:
+    """Incomplete offline completions raise an explicit generation error."""
+    from wsc.alignment.client import open_model
+
+    FakeLLM.finish_reason = finish_reason
 
     with pytest.raises(ValueError, match="Incomplete model response"):
-        _ = align_query(query(), client.open_model(ModelSettings("served-model")))
+        _ = align_query(query(), open_model(ModelSettings("local-model")))
 
 
-def test_hosted_endpoint_uses_the_same_chat_protocol(
-    server: Server,
+def test_missing_vllm_is_reported_at_model_construction(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """An explicit hosted endpoint receives the selected model and prompt."""
-    settings = ModelSettings("hosted-model", url="https://api.openai.com/v1")
-    result = align_query(query(), client.open_model(settings))
+    """Importing the package remains possible when the optional backend is absent."""
+    monkeypatch.setitem(sys.modules, "vllm", None)
 
-    assert str(server.requests[0].url) == "https://api.openai.com/v1/chat/completions"
-    assert not result.links
-    assert len(result.decisions) == 2
+    from wsc.alignment.client import open_model
 
-
-@pytest.mark.parametrize("status", [400, 429, 500])
-def test_http_errors_preserve_provider_failures(
-    server: Server,
-    status: int,
-) -> None:
-    """Rejected requests propagate SDK errors after one attempt."""
-    server.status = status
-
-    with pytest.raises(APIStatusError, match="Rejected"):
-        _ = align_query(query(), client.open_model(ModelSettings("served-model")))
-
-    assert len(server.requests) == 1
-
-
-def test_refusals_remain_generation_failures(
-    server: Server,
-) -> None:
-    """A missing completion remains distinct from a lexical null decision."""
-    server.content = None
-
-    with pytest.raises(ValueError, match="Incomplete model response"):
-        _ = align_query(query(), client.open_model(ModelSettings("served-model")))
+    with pytest.raises(RuntimeError, match="requires vLLM"):
+        _ = open_model(ModelSettings("local-model"))

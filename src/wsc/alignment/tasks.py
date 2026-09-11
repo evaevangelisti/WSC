@@ -93,7 +93,7 @@ class TranslationHandler:
 
         sources = build_definitions(lemma)
 
-        if lemma.translations and sources:
+        if lemma.translation_tables and sources:
             yield AlignmentQuery(
                 AlignmentTask.TRANSLATIONS,
                 lemma.id,
@@ -102,8 +102,8 @@ class TranslationHandler:
                 lemma.pos,
                 sources,
                 tuple(
-                    Definition(f"translation:{position}", (gloss,))
-                    for position, gloss in enumerate(lemma.translations)
+                    Definition(table.id, (table.gloss,))
+                    for table in lemma.translation_tables
                 ),
             )
 
@@ -126,13 +126,11 @@ class TranslationHandler:
         for source in query.source_definitions:
             senses[source.id].translations = {}
 
-        headings = {
-            target.id: target.glosses[-1] for target in query.target_definitions
-        }
+        tables = {table.id: table for table in lemma.translation_tables}
 
         for link in links:
             senses[link.source_id].translations = dict(
-                lemma.translations[headings[link.target_id]]
+                tables[link.target_id].translations
             )
 
 
@@ -158,7 +156,11 @@ class WordNetHandler:
             One query for each source sense.
         """
         targets = tuple(
-            Definition(synset.id, (synset.definition,), synset.members)
+            Definition(
+                synset.id,
+                (synset.definition,),
+                candidates.synonyms(lemma, synset),
+            )
             for synset in candidates.candidates(lemma)
         )
 

@@ -16,7 +16,6 @@ from annotation.scripts.alignment import (
 from annotation.scripts.offsets import build_offsets
 from annotation.scripts.report import read_json
 from annotation.scripts.sampling import EXPORTS, sample_items, split_queries
-from experiments.scripts.run import SampleRecord
 
 from wsc.models import POS
 from wsc.models.alignment import AlignmentQuery, AlignmentTask, Definition
@@ -160,7 +159,7 @@ def test_frozen_alignment_tasks_have_no_model_predictions(tmp_path: Path) -> Non
     repeats: list[dict[str, dict[str, object]]] = read_json(
         tmp_path / "tasks.second.json"
     )
-    sample: SampleRecord = read_json(tmp_path / "sample.json")
+    sample = read_json(tmp_path / "sample.json")
 
     assert len(tasks) == 100
     assert len(repeats) == 10

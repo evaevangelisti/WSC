@@ -16,6 +16,7 @@ from wsc.models import (
     Quotation,
     Sense,
     Sentence,
+    TranslationTable,
     WordOffset,
     WordOffsetSource,
 )
@@ -407,7 +408,16 @@ lemmas = parts_of_speech.flatmap(
             lambda spellings: frozenset(f"{spelling}.{pos}" for spelling in spellings)
         ),
         st.lists(senses, max_size=3),
-        translations,
+        translations.map(
+            lambda tables: tuple(
+                TranslationTable(
+                    f"lemma.noun.tr.{index}",
+                    gloss,
+                    languages,
+                )
+                for index, (gloss, languages) in enumerate(tables.items())
+            )
+        ),
     )
 )
 """One lemma, as an extraction hands it to a writer."""

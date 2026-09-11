@@ -28,7 +28,7 @@ WORD = re.compile(r"\w", re.UNICODE)
 
 PARTS_OF_SPEECH = {
     "noun": "Noun",
-    "name": "Proper noun",
+    "propn": "Proper noun",
     "verb": "Verb",
     "adj": "Adjective",
     "adv": "Adverb",
@@ -303,15 +303,18 @@ def count_entry(
         figures.varying += 1
         figures.variants += len(variants)
 
-    translations = entry.get("translations", {})
+    translation_tables = entry.get("translation_tables", [])
 
-    if not translations:
+    if not translation_tables:
         return
 
     figures.translated += 1
-    figures.glosses_translated += len(translations)
+    figures.glosses_translated += len(translation_tables)
 
-    for offered in translations.values():
+    for table in translation_tables:
+        offered = table.get("translations", {})
+        if not isinstance(offered, dict):
+            continue
         for language, words in offered.items():
             figures.languages[language] += len(words)
             figures.translations += len(words)

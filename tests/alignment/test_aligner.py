@@ -15,7 +15,16 @@ from wsc.alignment import (
     build_request,
     parse_response,
 )
-from wsc.models import POS, Lemma, Sense, Synset, WordNetAlignment, WordNetRelation
+from wsc.extract.identifiers import translation_table_id
+from wsc.models import (
+    POS,
+    Lemma,
+    Sense,
+    Synset,
+    TranslationTable,
+    WordNetAlignment,
+    WordNetRelation,
+)
 from wsc.models.alignment import (
     AlignmentQuery,
     AlignmentTask,
@@ -183,21 +192,36 @@ def test_alignment_applies_decisions_and_preserves_collection() -> None:
         "word",
         POS.NOUN,
         senses=[Sense("s1", ("first",)), Sense("s2", ("second",))],
-        translations={
-            "first heading": {"it": frozenset({"uno"})},
-            "second heading": {"it": frozenset({"due"})},
-        },
+        translation_tables=(
+            TranslationTable(
+                translation_table_id("word.noun", "first heading"),
+                "first heading",
+                {"it": frozenset({"uno"})},
+            ),
+            TranslationTable(
+                translation_table_id("word.noun", "second heading"),
+                "second heading",
+                {"it": frozenset({"due"})},
+            ),
+        ),
     )
     model = Model(
-        [json.dumps({"s1": decision("translation:1"), "s2": decision("translation:0")})]
+        [
+            json.dumps(
+                {
+                    "s1": decision(translation_table_id("word.noun", "second heading")),
+                    "s2": decision(translation_table_id("word.noun", "first heading")),
+                }
+            )
+        ]
     )
     aligner = Aligner(model, WordNetCandidates(()), (AlignmentTask.TRANSLATIONS,))
     (aligned,) = aligner.align([lemma])
 
     assert aligned.senses[0].translations == {"it": frozenset({"due"})}
     assert aligned.senses[1].translations == {"it": frozenset({"uno"})}
-    assert not aligned.translations
-    assert lemma.translations
+    assert not aligned.translation_tables
+    assert lemma.translation_tables
     assert all(not sense.translations for sense in lemma.senses)
 
 
@@ -232,7 +256,7 @@ def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:
         WordNetAlignment("wn1", WordNetRelation.EQUIVALENT),
         WordNetAlignment("wn2", WordNetRelation.WIKTIONARY_NARROWER),
     )
-    assert "wn1 (word, synonym) specific" in model.requests[0].prompt
+    assert "wn1 (synonym) specific" in model.requests[0].prompt
     assert not lemma.senses[0].wordnet
 
 
@@ -260,7 +284,7 @@ def test_candidates_include_variants_and_sense_synonyms() -> None:
     lemma = Lemma(
         "alias.name",
         "alias",
-        POS.NAME,
+        POS.PROPN,
         variants=frozenset({"a.b.noun"}),
         senses=[Sense("s", ("sense",), synonyms=("variant",))],
     )
@@ -274,6 +298,23 @@ def test_candidates_include_variants_and_sense_synonyms() -> None:
     assert result.target_definitions[0].synonyms == ("a.b",)
 
 
+def test_candidates_exclude_the_queried_lemma_from_synonyms() -> None:
+    """Candidate context does not repeat the lemma as a WordNet synonym."""
+    lemma = Lemma(
+        "word.noun",
+        "word",
+        POS.NOUN,
+        senses=[Sense("s", ("sense",))],
+    )
+    candidates = WordNetCandidates(
+        [Synset("wn", "ili", POS.NOUN, "definition", ("word", "term", "word_form"))]
+    )
+
+    (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
+
+    assert result.target_definitions[0].synonyms == ("term", "word_form")
+
+
 def test_replay_rejects_context_drift_and_extra_results() -> None:
     """Cached decisions must cover the current collection exactly."""
     lemma = Lemma(
@@ -281,11 +322,22 @@ def test_replay_rejects_context_drift_and_extra_results() -> None:
         "word",
         POS.NOUN,
         senses=[Sense("s1", ("first",))],
-        translations={"heading": {"it": frozenset({"uno"})}},
+        translation_tables=(
+            TranslationTable(
+                translation_table_id("word.noun", "heading"),
+                "heading",
+                {"it": frozenset({"uno"})},
+            ),
+        ),
     )
     candidates = WordNetCandidates(())
     (sample,) = build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates)
-    result = parse_response(sample, json.dumps({"s1": decision("translation:0")}))
+    result = parse_response(
+        sample,
+        json.dumps(
+            {"s1": decision(translation_table_id("word.noun", "heading"))}
+        ),
+    )
     aligner = Aligner(None, candidates, (AlignmentTask.TRANSLATIONS,))
 
     with pytest.raises(ValueError, match="Unused cached"):

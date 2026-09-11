@@ -7,6 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from wsc import cli
+from wsc.extract.identifiers import translation_table_id
 from wsc.models.alignment import (
     AlignmentTask,
     LanguageModel,
@@ -38,7 +39,11 @@ class Model:
             if "short translation definitions" in request.prompt
             else "equivalent"
         )
-        target = "translation:0" if relation == "translation" else "wordnet-sense"
+        target = (
+            translation_table_id("word.noun", "gloss")
+            if relation == "translation"
+            else "wordnet-sense"
+        )
 
         return json.dumps(
             {
@@ -68,7 +73,13 @@ def test_command_replays_decisions_without_loading_model(
                 "lemma": "word",
                 "pos": "noun",
                 "senses": [{"id": "s", "glosses": ["meaning"], "synonyms": ["term"]}],
-                "translations": {"gloss": {"it": ["parola"]}},
+                "translation_tables": [
+                    {
+                        "id": translation_table_id("word.noun", "gloss"),
+                        "gloss": "gloss",
+                        "translations": {"it": ["parola"]},
+                    }
+                ],
             }
         )
         + "\n"
@@ -123,7 +134,7 @@ def test_command_replays_decisions_without_loading_model(
     assert first.exit_code == 0, first.output
     output = next(read_lemmas(tmp_path / "output.jsonl"))
     assert output.senses[0].translations == {"it": frozenset({"parola"})}
-    assert not output.translations
+    assert not output.translation_tables
 
     if AlignmentTask.WORDNET in tasks:
         assert output.senses[0].wordnet[0].synset_id == "wordnet-sense"
@@ -170,7 +181,7 @@ def test_command_exposes_generation_options_without_score_thresholds() -> None:
 
     assert result.exit_code == 0
     assert "temperature" in output
-    assert "url" in output
+    assert "engine-option" in output
     assert "provider-temperature" not in output
     assert "threshold" not in output
     assert "context" not in output

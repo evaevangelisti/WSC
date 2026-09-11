@@ -127,10 +127,10 @@ class Aligner:
             yield replace(
                 lemma,
                 senses=list(senses.values()),
-                translations=(
-                    {}
+                translation_tables=(
+                    ()
                     if AlignmentTask.TRANSLATIONS in self._tasks
-                    else lemma.translations
+                    else lemma.translation_tables
                 ),
             )
 

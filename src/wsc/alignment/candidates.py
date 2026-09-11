@@ -55,7 +55,7 @@ class WordNetCandidates:
         Returns:
             Unique candidates sorted by synset identifier.
         """
-        pos = POS.NOUN if lemma.pos == POS.NAME else lemma.pos
+        pos = POS.NOUN if lemma.pos == POS.PROPN else lemma.pos
 
         found_synsets: dict[str, Synset] = {}
 
@@ -67,3 +67,24 @@ class WordNetCandidates:
             found_synsets.update(self._members.get((self._normalize(form), pos), {}))
 
         return tuple(found_synsets[identifier] for identifier in sorted(found_synsets))
+
+    def synonyms(
+        self,
+        lemma: Lemma,
+        synset: Synset,
+    ) -> tuple[str, ...]:
+        """
+        Return synset members other than the queried lemma.
+
+        Args:
+            lemma: Entry whose candidates are being described.
+            synset: Candidate WordNet concept.
+
+        Returns:
+            Other lexical members, retaining WordNet order.
+        """
+        return tuple(
+            member
+            for member in synset.members
+            if self._normalize(member) != self._normalize(lemma.lemma)
+        )

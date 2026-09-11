@@ -26,9 +26,14 @@ def read_prompts(
         Prompt templates shared by inference and experiments.
     """
     with path.open("rb") as stream:
-        records = cast(dict[str, PromptRecord], tomllib.load(stream))
+        records = cast(dict[str, object], tomllib.load(stream))
 
     return AlignmentPrompts(
         path.stem,
-        {task: record["template"] for task, record in records.items()},
+        cast(str, records["system"]),
+        {
+            task: cast(PromptRecord, record)["template"]
+            for task, record in records.items()
+            if task != "system"
+        },
     )

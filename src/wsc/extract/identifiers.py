@@ -3,7 +3,7 @@
 from collections.abc import Iterable
 from hashlib import blake2b
 
-from ...models import POS
+from ..models import POS
 
 _DIGEST_SIZE = 4
 
@@ -59,3 +59,20 @@ def sense_id(
         The identifier, as bank.noun.3f9c1a2b.
     """
     return f"{lemma_id}.{_digest(etymology, *glosses)}"
+
+
+def translation_table_id(
+    lemma_id: str,
+    gloss: str,
+) -> str:
+    """
+    Name a translation table after its owning lemma and gloss.
+
+    Args:
+        lemma_id: What the entry is named.
+        gloss: The table's meaning heading.
+
+    Returns:
+        The identifier, as bank.noun.tr.3f9c1a2b.
+    """
+    return f"{lemma_id}.tr.{_digest(gloss)}"

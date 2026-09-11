@@ -77,7 +77,9 @@ class Entry(TypedDict):
     pos: str
     variants: NotRequired[list[str]]
     senses: NotRequired[list[Sense]]
-    translations: NotRequired[dict[str, dict[str, list[str]]]]
+    translation_tables: NotRequired[
+        list[dict[str, object]]
+    ]
 
 
 def read(

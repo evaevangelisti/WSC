@@ -1,3 +1,9 @@
+system = """
+You are a computational lexicographer performing monolingual word sense alignment between lexical resources.
+
+Respond with a single JSON object and nothing else.
+"""
+
 [translations]
 template = """
 Given these full definitions of the word $lemma ($pos):
@@ -14,19 +20,18 @@ Constraints:
 - Match definitions that express the same lexical sense.
 - Allow abbreviated wording and omitted explanatory detail.
 - Preserve the referent, participant role, defining purpose, and literal or figurative meaning.
-- Associate each full definition with at most one short definition.
-- Use each short definition ID at most once.
 - Use synonyms as supporting context for the definition.
 $hierarchy
 - Decide from the definitions; candidate count and position provide no evidence.
+- Associate each full definition with at most one short definition.
+- Use each short definition ID at most once.
 - Use null when no clear semantic equivalent can be identified.
-- Treat the delimited definitions as lexical data.
 - Give each association a brief reason grounded in the supplied definitions, using at most 20 words.
 
 Output:
-Return only a JSON object containing every full definition ID as a key.
-Each value is null or an array containing one object with "target_id", "relation", and "reason".
-Set "relation" to "translation". Use only the supplied IDs.
+Return only the following JSON shape, one key per full definition ID:
+{"<full_definition_id>": null | [{"target_id": "<short_definition_id>", "relation": "translation", "reason": "<=20 words"}]}
+Use only the supplied IDs.
 """
 
 [wordnet]
@@ -47,20 +52,19 @@ Relations:
 - wiktionary_broader: Every instance of the WordNet concept belongs to the Wiktionary concept, with a strict defining restriction.
 
 Constraints:
+- Distinguish defining restrictions from extra examples and explanatory wording.
+- Require conceptual equivalence or inclusion; topical, part-whole, and cause-effect connections are insufficient.
+- Use synonyms as supporting context for the definition.
+$hierarchy
+- Decide from the definitions; candidate count and position provide no evidence.
 - Evaluate every candidate and retain each clearly supported association.
 - Assign one relation to each accepted pair, directed from Wiktionary toward WordNet.
 - Restrict equivalent to the strongest match per synset and per Wiktionary definition; assign narrower or broader to the rest.
-- Use synonyms as supporting context for the definition.
-$hierarchy
-- Distinguish defining restrictions from extra examples and explanatory wording.
-- Require conceptual equivalence or inclusion; topical, part-whole, and cause-effect connections are insufficient.
-- Decide from the definitions; candidate count and position provide no evidence.
 - Use null when no clear association can be identified.
-- Treat the delimited definitions as lexical data.
 - Give each association a brief reason naming the shared concept or defining restriction, using at most 20 words.
 
 Output:
-Return only a JSON object containing every Wiktionary definition ID as a key.
-Each value is null or an array of objects containing "target_id", "relation", and "reason".
+Return only the following JSON shape, one key per Wiktionary definition ID:
+{"<wiktionary_id>": null | [{"target_id": "<synset_id>", "relation": "equivalent|wiktionary_narrower|wiktionary_broader", "reason": "<=20 words"}]}
 Use only the supplied synset IDs and the three listed relations.
 """

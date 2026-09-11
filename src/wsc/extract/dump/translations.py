@@ -5,14 +5,15 @@ from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
-from ...models import POS, Translations
+from ...models import POS, TranslationTable
+from ..identifiers import lemma_id, translation_table_id
 from .markup import arguments, plain
 
 _HEADING = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$")
 
 _POS_BY_HEADING: dict[str, POS] = {
     "Noun": POS.NOUN,
-    "Proper noun": POS.NAME,
+    "Proper noun": POS.PROPN,
     "Verb": POS.VERB,
     "Adjective": POS.ADJECTIVE,
     "Adverb": POS.ADVERB,
@@ -38,13 +39,13 @@ class PageTranslations:
     Attributes:
         lemma: The headword the translations belong to.
         pos: Its part of speech.
-        translations: What a subpage of the entry holds, by gloss.
+        translations: What a subpage of the entry holds.
         pointers: Which headwords translate a gloss, by gloss.
     """
 
     lemma: str
     pos: POS
-    translations: Translations = field(default_factory=dict)
+    translations: tuple[TranslationTable, ...] = ()
     pointers: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
@@ -160,7 +161,7 @@ def read_page(
     """
     subpage = title.endswith(SUBPAGE_SUFFIX)
 
-    tables: defaultdict[POS, Translations] = defaultdict(dict)
+    tables: defaultdict[POS, dict[str, dict[str, frozenset[str]]]] = defaultdict(dict)
     pointers: defaultdict[POS, dict[str, tuple[str, ...]]] = defaultdict(dict)
 
     previous_pos: POS | None = None
@@ -186,21 +187,26 @@ def read_page(
         if not subpage or gloss is None:
             continue
 
-        translated_words = tables[pos].setdefault(gloss, {})
+        translations = tables[pos].setdefault(gloss, {})
 
         for language, word in _read_translations(line):
-            translated_words[language] = translated_words.get(language, frozenset()) | {
-                word
-            }
+            translations[language] = translations.get(language, frozenset()) | {word}
 
     for part_of_speech in sorted(tables.keys() | pointers.keys()):
         yield PageTranslations(
             title.removesuffix(SUBPAGE_SUFFIX),
             part_of_speech,
-            {
-                gloss: translated_words
-                for gloss, translated_words in tables.get(part_of_speech, {}).items()
-                if translated_words
-            },
+            tuple(
+                TranslationTable(
+                    translation_table_id(
+                        lemma_id(title.removesuffix(SUBPAGE_SUFFIX), part_of_speech),
+                        gloss,
+                    ),
+                    gloss,
+                    translations,
+                )
+                for gloss, translations in tables.get(part_of_speech, {}).items()
+                if translations
+            ),
             dict(pointers.get(part_of_speech, {})),
         )

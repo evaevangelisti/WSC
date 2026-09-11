@@ -1,8 +1,9 @@
-# pyright: reportMissingImports=false, reportUnknownVariableType=false, reportUnknownMemberType=false
 """Generate decisions through offline vLLM batch inference."""
 
-from vllm import LLM, SamplingParams
-from vllm.sampling_params import GuidedDecodingParams
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from vllm import LLM
 
 from ..models.alignment import LanguageModel, ModelRequest, ModelSettings
 
@@ -20,6 +21,13 @@ class ChatModel:
         Args:
             settings: Model and generation configuration.
         """
+        try:
+            from vllm import LLM
+        except ImportError as error:
+            raise RuntimeError(
+                "Offline alignment requires vLLM; install the platform backend first"
+            ) from error
+
         self._llm: LLM = LLM(
             model=settings.model,
             **dict(settings.engine_options),
@@ -43,6 +51,9 @@ class ChatModel:
         Raises:
             ValueError: If generation is incomplete or has no text.
         """
+        from vllm import SamplingParams
+        from vllm.sampling_params import GuidedDecodingParams
+
         sampling_params = SamplingParams(
             temperature=self._settings.temperature,
             max_tokens=self._settings.maximum_tokens,
@@ -56,7 +67,10 @@ class ChatModel:
         )
 
         [output] = self._llm.chat(
-            messages=[{"role": "user", "content": request.prompt}],
+            messages=[
+                {"role": "system", "content": request.system},
+                {"role": "user", "content": request.prompt},
+            ],
             sampling_params=sampling_params,
             chat_template_kwargs=chat_template_kwargs,
         )

@@ -1235,8 +1235,9 @@ class TestTranslations:
 
         (lemma,) = extract([entry])
 
-        assert lemma.translations == {
-            gloss.strip(): {language: frozenset({translation})}
+        assert lemma.translation_tables[0].gloss == gloss.strip()
+        assert lemma.translation_tables[0].translations == {
+            language: frozenset({translation})
         }
 
     @given(words, words, languages, glosses, st.data())
@@ -1264,7 +1265,10 @@ class TestTranslations:
 
         (lemma,) = extract([entry])
 
-        assert lemma.translations[gloss.strip()][language] == frozenset({first, second})
+        table = next(
+            table for table in lemma.translation_tables if table.gloss == gloss.strip()
+        )
+        assert table.translations[language] == frozenset({first, second})
 
     @given(st.sampled_from(("word", "lang_code", "sense")), st.data())
     def test_leaves_out_a_translation_missing_what_keys_it(
@@ -1281,7 +1285,7 @@ class TestTranslations:
 
         (lemma,) = extract([entry])
 
-        assert lemma.translations == {}
+        assert not lemma.translation_tables
 
     @given(st.data())
     def test_carries_none_where_the_entry_lists_none(
@@ -1294,7 +1298,7 @@ class TestTranslations:
 
         (lemma,) = extract([entry])
 
-        assert lemma.translations == {}
+        assert not lemma.translation_tables
 
 
 class TestSynonyms:

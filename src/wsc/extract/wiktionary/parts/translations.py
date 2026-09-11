@@ -2,7 +2,8 @@
 
 from collections import defaultdict
 
-from ....models import Translations
+from ....models import TranslationTable
+from ...identifiers import translation_table_id
 from ..merge import add_translations
 from ..schema import RawTranslation
 
@@ -20,8 +21,9 @@ _PLACEHOLDER_GLOSSES = frozenset(
 
 def parse_translations(
     raw_translations: list[RawTranslation],
-    off_page_translations: Translations | None = None,
-) -> Translations:
+    off_page_translations: tuple[TranslationTable, ...] | None = None,
+    lemma_id: str = "",
+) -> tuple[TranslationTable, ...]:
     """
     Gather an entry's translations under the glosses heading them.
 
@@ -30,6 +32,7 @@ def parse_translations(
     Args:
         raw_translations: What wiktextract listed under the entry.
         off_page_translations: Optional translations from linked pages.
+        lemma_id: The entry identifier used to name tables.
 
     Returns:
         The words each language offers for each gloss translated.
@@ -51,12 +54,20 @@ def parse_translations(
 
         gathered_translations[gloss][language].add(word)
 
-    translations: Translations = {
-        gloss: {language: frozenset(words) for language, words in translated.items()}
+    translations = tuple(
+        TranslationTable(
+            translation_table_id(lemma_id, gloss),
+            gloss,
+            {language: frozenset(words) for language, words in translated.items()},
+        )
         for gloss, translated in gathered_translations.items()
-    }
+    )
 
     if off_page_translations:
-        add_translations(translations, off_page_translations)
+        translations = add_translations(
+            translations,
+            off_page_translations,
+            lemma_id,
+        )
 
     return translations
