@@ -124,6 +124,12 @@ class Aligner:
                     for query in build_queries(lemma, task, self._candidates):
                         result = self._evaluate(query, streams)
 
+                        if task not in streams:
+                            tqdm.write(
+                                f"Generated response for {query.alignment_id}: "
+                                + f"{result.response}"
+                            )
+
                         if recorder is not None:
                             recorder(result)
 
