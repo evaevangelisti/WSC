@@ -10,10 +10,8 @@ ALIGNMENT_FIELDS = (
     "target_id",
     "relation",
     "reason",
-    "response",
-    "context",
 )
-"""Preserve decisions, generated responses, and query context in TSV records."""
+"""Store one tabular row for each source decision."""
 
 ALIGNMENT_MODEL = "openai/gpt-oss-120b"
 """Select the default served model identifier."""

@@ -3,7 +3,6 @@
 import json
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack
-from dataclasses import asdict
 from pathlib import Path
 
 from ..constants import ALIGNMENT_FIELDS
@@ -23,16 +22,6 @@ def serialize_alignment(
     Yields:
         Records containing query context and raw response on the first row.
     """
-    context = json.dumps(asdict(result.query), ensure_ascii=False)
-    response = result.response
-
-    if not result.decisions:
-        yield {
-            "alignment_id": result.query.alignment_id,
-            "response": response,
-            "context": context,
-        }
-
     for decision in result.decisions:
         for link in decision.links or (None,):
             yield {
@@ -41,12 +30,7 @@ def serialize_alignment(
                 "target_id": link.target_id if link else "",
                 "relation": link.relation if link else "",
                 "reason": link.reason if link else "",
-                "response": response,
-                "context": context,
             }
-
-            context = ""
-            response = ""
 
 
 def open_alignment_recorder(
@@ -70,8 +54,11 @@ def open_alignment_recorder(
         for task, path in paths.items()
     }
 
-    for writer in writers.values():
-        writer.write({"context": json.dumps(metadata, ensure_ascii=False)})
+    metadata_path = next(iter(paths.values())).with_name("metadata.json")
+    _ = metadata_path.write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=4) + "\n",
+        encoding="utf-8",
+    )
 
     def record_decisions(
         result: AlignmentResult,

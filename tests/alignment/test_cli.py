@@ -14,7 +14,7 @@ from wsc.models.alignment import (
     ModelRequest,
     ModelSettings,
 )
-from wsc.reading import read_alignments, read_lemmas
+from wsc.reading import read_lemmas
 from wsc.upstream import cache
 
 
@@ -141,7 +141,12 @@ def test_command_replays_decisions_without_loading_model(
 
     paths = list((tmp_path / "cache").glob("alignment/*/*.tsv"))
     assert {path.stem for path in paths} == set(tasks)
-    assert all(next(read_alignments(path)).response for path in paths)
+    assert list((tmp_path / "cache").glob("alignment/*/metadata.json"))
+    assert all(
+        path.read_text(encoding="utf-8").splitlines()[0]
+        == "alignment_id\tsource_id\ttarget_id\trelation\treason"
+        for path in paths
+    )
     evidence = {path: path.read_bytes() for path in paths}
 
     def reject_model(

@@ -47,6 +47,7 @@ from .reading import (
     read_lemmas,
     read_metadata,
     read_prompts,
+    read_queries,
     read_synsets,
 )
 from .upstream import cache, download, repositories, wiktextract
@@ -522,9 +523,13 @@ def align(
             None if reuse else open_alignment_recorder(stack, evidence_paths, metadata)
         )
 
+        queries = {}
+        if reuse:
+            queries = read_queries(input_path, tasks, candidates)
+
         cached_results = (
             {
-                selected: read_alignments(path)
+                selected: read_alignments(path, queries)
                 for selected, path in evidence_paths.items()
             }
             if reuse

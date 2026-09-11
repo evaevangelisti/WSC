@@ -7,6 +7,8 @@ from itertools import groupby
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
+from ..alignment.candidates import WordNetCandidates
+from ..alignment.tasks import build_queries
 from ..models import POS
 from ..models.alignment import (
     AlignmentDecision,
@@ -16,6 +18,7 @@ from ..models.alignment import (
     AlignmentTask,
     Definition,
 )
+from .wiktionary import read_lemmas
 
 
 class DefinitionRecord(TypedDict):
@@ -87,20 +90,48 @@ def read_metadata(
     Returns:
         Persisted inference settings.
     """
-    with path.open(encoding="utf-8", newline="") as stream:
-        row = next(csv.DictReader(stream, delimiter="\t"))
+    return cast(
+        dict[str, str],
+        json.loads(path.with_name("metadata.json").read_text(encoding="utf-8")),
+    )
 
-    return cast(dict[str, str], json.loads(row["context"]))
+
+def read_queries(
+    input_path: Path,
+    tasks: tuple[AlignmentTask, ...],
+    candidates: WordNetCandidates,
+) -> dict[str, AlignmentQuery]:
+    """
+    Rebuild alignment queries needed to replay cached decisions.
+
+    Args:
+        input_path: Collected entries used for the original alignment.
+        tasks: Alignment resources represented by the cache.
+        candidates: WordNet candidate index.
+
+    Returns:
+        Queries indexed by their stable alignment identifier.
+    """
+    queries: dict[str, AlignmentQuery] = {}
+
+    for lemma in read_lemmas(input_path):
+        for task in tasks:
+            for query in build_queries(lemma, task, candidates):
+                queries[query.alignment_id] = query
+
+    return queries
 
 
 def read_alignments(
     path: Path,
+    queries: dict[str, AlignmentQuery],
 ) -> Iterator[AlignmentResult]:
     """
     Stream validated decisions from an alignment table.
 
     Args:
-        path: Completed language model alignment TSV.
+    path: Completed language model alignment TSV.
+    queries: Queries indexed by alignment identifier.
 
     Yields:
         Decisions grouped by their original query.
@@ -109,22 +140,17 @@ def read_alignments(
         ValueError: If the cache schema or decisions are incompatible.
     """
     from ..alignment.decisions import validate_result
-    from ..constants import ALIGNMENT_SCHEMA
 
     with path.open(encoding="utf-8", newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
 
-        metadata = cast(dict[str, str], json.loads(next(reader)["context"]))
-        if metadata.get("schema") != ALIGNMENT_SCHEMA:
-            raise ValueError("Alignment cache requires the language model schema")
-
         for alignment_id, rows in groupby(reader, key=lambda row: row["alignment_id"]):
             records = list(rows)
-            first = records[0]
 
-            query = parse_query(cast(QueryRecord, json.loads(first["context"])))
-            if query.alignment_id != alignment_id:
-                raise ValueError(f"Evidence identity differs: {alignment_id}")
+            try:
+                query = queries[alignment_id]
+            except KeyError as error:
+                raise ValueError(f"Unknown cached alignment: {alignment_id}") from error
 
             decisions: list[AlignmentDecision] = []
 
@@ -153,7 +179,7 @@ def read_alignments(
                     )
                 )
 
-            result = AlignmentResult(query, tuple(decisions), first["response"])
+            result = AlignmentResult(query, tuple(decisions))
             validate_result(result)
 
             yield result
