@@ -5,10 +5,8 @@ import json
 from collections.abc import Iterator
 from itertools import groupby
 from pathlib import Path
-from typing import NotRequired, TypedDict, cast
+from typing import TYPE_CHECKING, NotRequired, TypedDict, cast
 
-from ..alignment.candidates import WordNetCandidates
-from ..alignment.tasks import build_queries
 from ..models import POS
 from ..models.alignment import (
     AlignmentDecision,
@@ -18,7 +16,9 @@ from ..models.alignment import (
     AlignmentTask,
     Definition,
 )
-from .wiktionary import read_lemmas
+
+if TYPE_CHECKING:
+    from ..alignment.candidates import WordNetCandidates
 
 
 class DefinitionRecord(TypedDict):
@@ -112,6 +112,9 @@ def read_queries(
     Returns:
         Queries indexed by their stable alignment identifier.
     """
+    from ..alignment.tasks import build_queries
+    from .wiktionary import read_lemmas
+
     queries: dict[str, AlignmentQuery] = {}
 
     for lemma in read_lemmas(input_path):
