@@ -1,5 +1,7 @@
 """Read alignment queries and persisted language model decisions."""
 
+from __future__ import annotations
+
 import csv
 import json
 from collections.abc import Iterator
