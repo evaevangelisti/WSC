@@ -243,7 +243,10 @@ def test_invalid_model_response_skips_the_lemma() -> None:
     model = Model(["not JSON"])
     aligner = Aligner(model, WordNetCandidates(()), (AlignmentTask.TRANSLATIONS,))
 
-    assert tuple(aligner.align([lemma])) == ()
+    (aligned,) = tuple(aligner.align([lemma]))
+
+    assert aligned.id == lemma.id
+    assert not aligned.translation_tables
 
 
 def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:

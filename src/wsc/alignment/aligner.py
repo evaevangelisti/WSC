@@ -130,7 +130,6 @@ class Aligner:
                         TASK_HANDLERS[task].apply(lemma, senses, query, result.links)
             except InvalidModelResponseError as error:
                 tqdm.write(f"Skipping {lemma.id}: {error}")
-                continue
 
             yield replace(
                 lemma,

@@ -71,11 +71,16 @@ class ChatModel:
         )
 
         completion = output.outputs[0]
+        text = completion.text.strip()
 
-        if completion.finish_reason != "stop" or not completion.text:
-            raise ValueError(f"Incomplete model response: {completion.finish_reason}")
+        if completion.finish_reason != "stop" or not text:
+            raise ValueError(
+                "Incomplete model response: "
+                + f"finish_reason={completion.finish_reason!r}, "
+                + f"text={completion.text!r}"
+            )
 
-        return completion.text
+        return text
 
 
 def open_model(

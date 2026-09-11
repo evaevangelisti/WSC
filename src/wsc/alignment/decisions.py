@@ -157,6 +157,8 @@ def validate_result(
                 or not link.reason.strip()
             ):
                 raise ValueError(f"Invalid association: {decision.source_id}")
+
+
 def _parse_link(
     source_id: str,
     value: object,
@@ -281,7 +283,10 @@ def align_query(
 
     try:
         return parse_response(query, response)
+    except InvalidModelResponseError:
+        raise
     except ValueError as error:
         raise InvalidModelResponseError(
-            f"Invalid model response for {query.alignment_id}: {error}"
+            f"Invalid model response for {query.alignment_id}:"
+            + f"{error}; response={response!r}"
         ) from error
