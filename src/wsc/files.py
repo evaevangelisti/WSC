@@ -3,7 +3,6 @@
 import bz2
 import gzip
 from collections.abc import Generator
-from compression import zstd
 from contextlib import contextmanager
 from io import BufferedIOBase
 from pathlib import Path
@@ -48,6 +47,8 @@ def open_compressed(
             return bz2.open(input_path, mode, encoding=encoding)
 
         case ".zst":
+            from compression import zstd
+
             return zstd.open(input_path, mode, encoding=encoding)
 
         case _:

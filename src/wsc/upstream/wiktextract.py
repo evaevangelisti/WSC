@@ -3,7 +3,6 @@
 import json
 import subprocess
 from collections.abc import Callable, Iterable
-from compression import zstd
 from pathlib import Path
 from typing import IO, cast
 
@@ -37,6 +36,8 @@ def _write(
     Returns:
         How many lines were set aside, and how many entries were written.
     """
+    from compression import zstd
+
     skipped_lines = 0
     written_entries = 0
 
