@@ -215,7 +215,8 @@ def parse_response(
         decoded = cast(object, json.loads(response))
     except json.JSONDecodeError as error:
         raise InvalidModelResponseError(
-            f"Invalid JSON response for {query.alignment_id}: {error}"
+            f"Invalid JSON response for {query.alignment_id}: "
+            + f"{error}; response={response!r}"
         ) from error
 
     if not isinstance(decoded, dict):
