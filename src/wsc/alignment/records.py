@@ -36,7 +36,7 @@ def serialize_alignment(
 def open_alignment_recorder(
     stack: ExitStack,
     paths: dict[AlignmentTask, Path],
-    metadata: dict[str, str],
+    metadata: dict[str, object],
 ) -> Callable[[AlignmentResult], None]:
     """
     Open task-specific writers and return their decision recorder.

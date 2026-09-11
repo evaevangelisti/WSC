@@ -81,7 +81,7 @@ class AlignmentQuery:
 
     Attributes:
         task: Resource being aligned with Wiktionary.
-        alignment_id: Stable task identifier.
+        alignment_id: Stable task-scoped identifier for the model query.
         lemma_id: Entry identifier used for experimental grouping.
         lemma: Headword providing lexical context.
         pos: Wiktionary part of speech.

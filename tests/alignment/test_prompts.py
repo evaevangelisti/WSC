@@ -31,4 +31,6 @@ def test_prompt_edits_change_requests_and_cache_identity(
     assert original.system.startswith("You are a computational lexicographer")
     assert build_request(query(), prompts=changed).prompt.startswith("Custom prompt:")
     assert cache_key(first) != cache_key(second)
-    assert "Custom prompt" in second["prompt_text"]
+    prompts = second["prompts"]
+    assert isinstance(prompts, dict)
+    assert "Custom prompt" in prompts["text"]

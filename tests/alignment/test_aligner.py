@@ -320,6 +320,7 @@ def test_candidates_include_variants_and_sense_synonyms() -> None:
     assert result.source_definitions[0].synonyms == ("variant",)
     assert result.target_definitions[0].id == "wn"
     assert result.target_definitions[0].synonyms == ("a.b",)
+    assert result.alignment_id == "wordnet:s"
 
 
 def test_candidates_exclude_the_queried_lemma_from_synonyms() -> None:
@@ -356,6 +357,7 @@ def test_replay_rejects_context_drift_and_extra_results() -> None:
     )
     candidates = WordNetCandidates(())
     (sample,) = build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates)
+    assert sample.alignment_id == "translations:word.noun"
     result = parse_response(
         sample,
         json.dumps(

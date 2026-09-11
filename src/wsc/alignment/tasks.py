@@ -9,6 +9,14 @@ from ..models.alignment import AlignmentLink, AlignmentQuery, AlignmentTask, Def
 from .candidates import WordNetCandidates
 
 
+def query_id(
+    task: AlignmentTask,
+    identifier: str,
+) -> str:
+    """Build a task-scoped identifier for an alignment query."""
+    return f"{task.value}:{identifier}"
+
+
 class AlignmentHandler(Protocol):
     """Define the extension points for an alignment task."""
 
@@ -96,7 +104,7 @@ class TranslationHandler:
         if lemma.translation_tables and sources:
             yield AlignmentQuery(
                 AlignmentTask.TRANSLATIONS,
-                lemma.id,
+                query_id(AlignmentTask.TRANSLATIONS, lemma.id),
                 lemma.id,
                 lemma.lemma,
                 lemma.pos,
@@ -167,7 +175,7 @@ class WordNetHandler:
         for source in build_definitions(lemma):
             yield AlignmentQuery(
                 AlignmentTask.WORDNET,
-                source.id,
+                query_id(AlignmentTask.WORDNET, source.id),
                 lemma.id,
                 lemma.lemma,
                 lemma.pos,

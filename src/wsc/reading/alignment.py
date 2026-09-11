@@ -82,7 +82,7 @@ def parse_query(
 
 def read_metadata(
     path: Path,
-) -> dict[str, str]:
+) -> dict[str, object]:
     """
     Read inference settings from a cached alignment table.
 
@@ -93,7 +93,7 @@ def read_metadata(
         Persisted inference settings.
     """
     return cast(
-        dict[str, str],
+        dict[str, object],
         json.loads(path.with_name("metadata.json").read_text(encoding="utf-8")),
     )
 

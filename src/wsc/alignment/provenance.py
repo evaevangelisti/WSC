@@ -9,6 +9,8 @@ from pathlib import Path
 from ..constants import ALIGNMENT_SCHEMA, DEFAULT_PROMPTS
 from ..models.alignment import AlignmentPrompts, GlossMode, ModelSettings
 
+type Metadata = dict[str, object]
+
 
 def build_metadata(
     input_path: Path,
@@ -16,7 +18,7 @@ def build_metadata(
     mode: GlossMode,
     synsets_path: Path | None = None,
     prompts: AlignmentPrompts = DEFAULT_PROMPTS,
-) -> dict[str, str]:
+) -> Metadata:
     """
     Record the configuration that produced alignment decisions.
 
@@ -38,9 +40,11 @@ def build_metadata(
         "model": settings.model,
         "settings": json.dumps(asdict(settings), sort_keys=True),
         "gloss_mode": mode,
-        "prompt": prompts.name,
-        "prompt_text": prompt_text,
-        "prompts": hashlib.sha256(prompt_text.encode()).hexdigest(),
+        "prompts": {
+            "name": prompts.name,
+            "text": prompt_text,
+            "fingerprint": hashlib.sha256(prompt_text.encode()).hexdigest(),
+        },
         "wordnet": fingerprint(synsets_path) if synsets_path else "",
     }
 
@@ -64,7 +68,7 @@ def fingerprint(
 
 
 def cache_key(
-    metadata: Mapping[str, str],
+    metadata: Mapping[str, object],
 ) -> str:
     """
     Identify a model run by its configuration and inputs.
