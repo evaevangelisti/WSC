@@ -1,10 +1,5 @@
 """Generate decisions through offline vLLM batch inference."""
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from vllm import LLM
-
 from ..models.alignment import LanguageModel, ModelRequest, ModelSettings
 
 
@@ -52,12 +47,12 @@ class ChatModel:
             ValueError: If generation is incomplete or has no text.
         """
         from vllm import SamplingParams
-        from vllm.sampling_params import GuidedDecodingParams
+        from vllm.sampling_params import StructuredOutputsParams
 
         sampling_params = SamplingParams(
             temperature=self._settings.temperature,
             max_tokens=self._settings.maximum_tokens,
-            guided_decoding=GuidedDecodingParams(json=request.schema),
+            structured_outputs=StructuredOutputsParams(json=request.schema),
         )
 
         chat_template_kwargs = (

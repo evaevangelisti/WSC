@@ -21,7 +21,7 @@ class FakeSamplingParams:
         self.values = kwargs
 
 
-class FakeGuidedDecodingParams:
+class FakeStructuredOutputsParams:
     """Capture the structured-output schema passed to vLLM."""
 
     def __init__(self, **kwargs: object) -> None:
@@ -80,7 +80,9 @@ def fake_vllm_modules(monkeypatch: pytest.MonkeyPatch) -> None:
     vllm.SamplingParams = FakeSamplingParams  # type: ignore[attr-defined]
 
     sampling_params = ModuleType("vllm.sampling_params")
-    sampling_params.GuidedDecodingParams = FakeGuidedDecodingParams  # type: ignore[attr-defined]
+    sampling_params.StructuredOutputsParams = (  # type: ignore[attr-defined]
+        FakeStructuredOutputsParams
+    )
 
     monkeypatch.setitem(sys.modules, "vllm", vllm)
     monkeypatch.setitem(sys.modules, "vllm.sampling_params", sampling_params)
@@ -105,9 +107,9 @@ def test_offline_model_preserves_generation_contract() -> None:
     assert isinstance(sampling, FakeSamplingParams)
     assert sampling.values["temperature"] == 0.0
     assert sampling.values["max_tokens"] == 4096
-    guided = sampling.values["guided_decoding"]
-    assert isinstance(guided, FakeGuidedDecodingParams)
-    schema = guided.values["json"]
+    structured_outputs = sampling.values["structured_outputs"]
+    assert isinstance(structured_outputs, FakeStructuredOutputsParams)
+    schema = structured_outputs.values["json"]
     assert isinstance(schema, dict)
     assert schema["required"] == ["s1", "s2"]
     assert request["chat_template_kwargs"] == {"reasoning_effort": "low"}
