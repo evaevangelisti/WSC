@@ -225,6 +225,27 @@ def test_alignment_applies_decisions_and_preserves_collection() -> None:
     assert all(not sense.translations for sense in lemma.senses)
 
 
+def test_invalid_model_response_skips_the_lemma() -> None:
+    """A malformed generation does not stop the remaining alignment stream."""
+    lemma = Lemma(
+        "word.noun",
+        "word",
+        POS.NOUN,
+        senses=[Sense("s", ("sense",))],
+        translation_tables=(
+            TranslationTable(
+                translation_table_id("word.noun", "heading"),
+                "heading",
+                {"it": frozenset({"uno"})},
+            ),
+        ),
+    )
+    model = Model(["not JSON"])
+    aligner = Aligner(model, WordNetCandidates(()), (AlignmentTask.TRANSLATIONS,))
+
+    assert tuple(aligner.align([lemma])) == ()
+
+
 def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:
     """A source retains equivalent and broader WordNet candidates."""
     lemma = Lemma("word.noun", "word", POS.NOUN, senses=[Sense("s", ("sense",))])

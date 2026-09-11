@@ -6,6 +6,7 @@ from dataclasses import replace
 from tqdm import tqdm
 
 from ..constants import DEFAULT_PROMPTS
+from ..errors import InvalidModelResponseError
 from ..models import Lemma
 from ..models.alignment import (
     AlignmentPrompts,
@@ -16,7 +17,10 @@ from ..models.alignment import (
     LanguageModel,
 )
 from .candidates import WordNetCandidates
-from .decisions import align_query, validate_result
+from .decisions import (
+    align_query,
+    validate_result,
+)
 from .tasks import TASK_HANDLERS, build_queries
 
 
@@ -115,14 +119,18 @@ class Aligner:
                 for sense in lemma.senses
             }
 
-            for task in self._tasks:
-                for query in build_queries(lemma, task, self._candidates):
-                    result = self._evaluate(query, streams)
+            try:
+                for task in self._tasks:
+                    for query in build_queries(lemma, task, self._candidates):
+                        result = self._evaluate(query, streams)
 
-                    if recorder is not None:
-                        recorder(result)
+                        if recorder is not None:
+                            recorder(result)
 
-                    TASK_HANDLERS[task].apply(lemma, senses, query, result.links)
+                        TASK_HANDLERS[task].apply(lemma, senses, query, result.links)
+            except InvalidModelResponseError as error:
+                tqdm.write(f"Skipping {lemma.id}: {error}")
+                continue
 
             yield replace(
                 lemma,

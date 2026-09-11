@@ -5,6 +5,7 @@ from string import Template
 from typing import cast
 
 from ..constants import DEFAULT_PROMPTS, HIERARCHY_CONSTRAINT
+from ..errors import InvalidModelResponseError
 from ..models.alignment import (
     AlignmentDecision,
     AlignmentLink,
@@ -156,8 +157,6 @@ def validate_result(
                 or not link.reason.strip()
             ):
                 raise ValueError(f"Invalid association: {decision.source_id}")
-
-
 def _parse_link(
     source_id: str,
     value: object,
@@ -210,7 +209,12 @@ def parse_response(
     Raises:
         ValueError: If the response contains invalid JSON or associations.
     """
-    decoded = cast(object, json.loads(response))
+    try:
+        decoded = cast(object, json.loads(response))
+    except json.JSONDecodeError as error:
+        raise InvalidModelResponseError(
+            f"Invalid JSON response for {query.alignment_id}: {error}"
+        ) from error
 
     if not isinstance(decoded, dict):
         raise ValueError(f"Expected a JSON object: {query.alignment_id}")
@@ -268,4 +272,16 @@ def align_query(
 
     request = build_request(query, mode, prompts)
 
-    return parse_response(query, model.generate(request))
+    try:
+        response = model.generate(request)
+    except ValueError as error:
+        raise InvalidModelResponseError(
+            f"Model generation failed for {query.alignment_id}: {error}"
+        ) from error
+
+    try:
+        return parse_response(query, response)
+    except ValueError as error:
+        raise InvalidModelResponseError(
+            f"Invalid model response for {query.alignment_id}: {error}"
+        ) from error
