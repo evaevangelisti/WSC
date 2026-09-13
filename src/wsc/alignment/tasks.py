@@ -4,17 +4,10 @@ from collections.abc import Iterator
 from typing import Protocol
 
 from ..constants import TRANSLATION_RELATION
+from ..identifiers import query_id
 from ..models import Lemma, Sense, WordNetAlignment, WordNetRelation
 from ..models.alignment import AlignmentLink, AlignmentQuery, AlignmentTask, Definition
 from .candidates import WordNetCandidates
-
-
-def query_id(
-    task: AlignmentTask,
-    identifier: str,
-) -> str:
-    """Build a task-scoped identifier for an alignment query."""
-    return f"{task.value}:{identifier}"
 
 
 class AlignmentHandler(Protocol):
@@ -232,6 +225,6 @@ def build_queries(
         candidates: Cached WordNet candidate index.
 
     Yields:
-        One translation entry or one task per WordNet source sense.
+        One query containing all source senses for the requested resource.
     """
     yield from TASK_HANDLERS[task].queries(lemma, candidates)

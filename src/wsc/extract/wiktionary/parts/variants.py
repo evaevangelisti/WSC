@@ -4,8 +4,8 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator
 
 from ....constants import LANGUAGE
+from ....identifiers import lemma_id
 from ....models import POS
-from ...identifiers import lemma_id
 from ..schema import RawEntry, RawSense
 
 _ALT_OF = "alt-of"

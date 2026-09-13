@@ -8,8 +8,8 @@ from kwic import Locator, Query
 from tqdm import tqdm
 
 from ...constants import LANGUAGE
+from ...identifiers import lemma_id
 from ...models import POS, Lemma, TranslationTable
-from ..identifiers import lemma_id
 from ..offsets import build_query, find_word_offsets
 from .entries import read_entries
 from .merge import merge_lemmas, merge_word_offsets

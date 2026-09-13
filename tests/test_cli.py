@@ -486,7 +486,7 @@ class TestParse:
 
         result = cli("parse", cache_dir=cache_dir)
 
-        assert f"Set aside {skipped_lines} lines" in _said(result)
+        assert f"WARNING wsc.cli: Skipped {skipped_lines} lines" in _said(result)
 
     def test_says_nothing_when_no_line_was_set_aside(
         self,

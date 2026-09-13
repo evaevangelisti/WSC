@@ -215,8 +215,9 @@ def parse_response(
         decoded = cast(object, json.loads(response))
     except json.JSONDecodeError as error:
         raise InvalidModelResponseError(
-            f"Invalid JSON response for {query.alignment_id}: "
-            + f"{error}; response={response!r}"
+            f"Invalid JSON response for {query.alignment_id}\n"
+            + f"{error.msg} at line {error.lineno}, column {error.colno}\n\n"
+            + f"Response\n{response}"
         ) from error
 
     if not isinstance(decoded, dict):
@@ -279,7 +280,7 @@ def align_query(
         response = model.generate(request)
     except ValueError as error:
         raise InvalidModelResponseError(
-            f"Model generation failed for {query.alignment_id}: {error}"
+            f"Model generation failed for {query.alignment_id}\n\n{error}"
         ) from error
 
     try:
@@ -288,6 +289,6 @@ def align_query(
         raise
     except ValueError as error:
         raise InvalidModelResponseError(
-            f"Invalid model response for {query.alignment_id}:"
-            + f"{error}; response={response!r}"
+            f"Invalid model response for {query.alignment_id}\n"
+            + f"{error}\n\nResponse\n{response}"
         ) from error

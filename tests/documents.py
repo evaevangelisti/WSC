@@ -203,9 +203,7 @@ def lexicon(
 
 
 WORDNET = (lexical_entry(), synset())
-"""
-Minimal WordNet document shared by command fixtures and expected results.
-"""
+"""Minimal WordNet document shared by command fixtures and expected results."""
 
 
 _DUMP = """<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.11/" version="0.11">

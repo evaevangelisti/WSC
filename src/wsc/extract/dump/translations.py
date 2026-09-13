@@ -5,8 +5,8 @@ from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
+from ...identifiers import lemma_id, translation_table_id
 from ...models import POS, TranslationTable
-from ..identifiers import lemma_id, translation_table_id
 from .markup import arguments, plain
 
 _HEADING = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$")

@@ -135,8 +135,8 @@ def read_alignments(
     Stream validated decisions from an alignment table.
 
     Args:
-    path: Completed language model alignment TSV.
-    queries: Queries indexed by alignment identifier.
+        path: Completed language model alignment TSV.
+        queries: Queries indexed by alignment identifier.
 
     Yields:
         Decisions grouped by their original query.

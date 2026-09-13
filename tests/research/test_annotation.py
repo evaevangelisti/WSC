@@ -22,7 +22,9 @@ from wsc.models.alignment import AlignmentQuery, AlignmentTask, Definition
 from wsc.reading import QueryRecord
 
 
-def query(identifier: str = "entry") -> AlignmentQuery:
+def query(
+    identifier: str = "entry",
+) -> AlignmentQuery:
     """
     Build a complete translation annotation input.
 
@@ -151,7 +153,9 @@ def test_offset_samples_share_identities_but_preserve_engine_proposals(
     assert tasks[1][0]["data"]["marked"] == "a <b>&lt;word&gt;</b> example"
 
 
-def test_frozen_alignment_tasks_have_no_model_predictions(tmp_path: Path) -> None:
+def test_frozen_alignment_tasks_have_no_model_predictions(
+    tmp_path: Path,
+) -> None:
     """One shared sample supplies one hundred primary and ten secondary tasks."""
     queries = [query(f"entry{index}") for index in range(100)]
     write_tasks(queries, tmp_path, 4)
@@ -159,7 +163,7 @@ def test_frozen_alignment_tasks_have_no_model_predictions(tmp_path: Path) -> Non
     repeats: list[dict[str, dict[str, object]]] = read_json(
         tmp_path / "tasks.second.json"
     )
-    sample = read_json(tmp_path / "sample.json")
+    sample: dict[str, dict[str, str]] = read_json(tmp_path / "sample.json")
 
     assert len(tasks) == 100
     assert len(repeats) == 10

@@ -1,9 +1,10 @@
-"""How a lemma and its senses are named."""
+"""Name lexical entries, senses, translation tables, and alignment queries."""
 
 from collections.abc import Iterable
 from hashlib import blake2b
 
-from ..models import POS
+from .models import POS
+from .models.alignment import AlignmentTask
 
 _DIGEST_SIZE = 4
 
@@ -76,3 +77,11 @@ def translation_table_id(
         The identifier, as bank.noun.tr.3f9c1a2b.
     """
     return f"{lemma_id}.tr.{_digest(gloss)}"
+
+
+def query_id(
+    task: AlignmentTask,
+    identifier: str,
+) -> str:
+    """Build a task-scoped identifier for an alignment query."""
+    return f"{task.value}:{identifier}"

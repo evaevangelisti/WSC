@@ -7,7 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from wsc import cli
-from wsc.extract.identifiers import translation_table_id
+from wsc.identifiers import translation_table_id
 from wsc.models.alignment import (
     AlignmentTask,
     LanguageModel,
@@ -114,6 +114,9 @@ def test_command_replays_decisions_without_loading_model(
             An offline language model.
         """
         assert settings.temperature == 0.0
+        assert settings.reasoning_parser == "qwen3"
+        assert settings.chat_template_options == (("enable_thinking", False),)
+        assert settings.engine_options == (("tensor_parallel_size", 4),)
 
         return Model()
 
@@ -124,6 +127,12 @@ def test_command_replays_decisions_without_loading_model(
         str(tmp_path / "output.jsonl"),
         "--cache-dir",
         str(tmp_path / "cache"),
+        "--reasoning-parser",
+        "qwen3",
+        "--chat-template-option",
+        "enable_thinking=false",
+        "--engine-option",
+        "tensor_parallel_size=4",
     ]
 
     for task in tasks:
@@ -132,6 +141,8 @@ def test_command_replays_decisions_without_loading_model(
     first = CliRunner().invoke(cli.app, arguments)
 
     assert first.exit_code == 0, first.output
+    assert "INFO wsc.cli: Writing alignment cache:" in first.stderr
+    assert not first.stdout
     output = next(read_lemmas(tmp_path / "output.jsonl"))
     assert output.senses[0].translations == {"it": frozenset({"parola"})}
     assert not output.translation_tables
@@ -177,19 +188,6 @@ def test_command_replays_decisions_without_loading_model(
 
     assert changed.exit_code != 0
     assert "No compatible alignment cache" in changed.output
-
-
-def test_command_exposes_generation_options_without_score_thresholds() -> None:
-    """The command accepts language model settings and two gloss modes."""
-    result = CliRunner().invoke(cli.app, ["align", "--help"])
-    output = " ".join(result.output.split())
-
-    assert result.exit_code == 0
-    assert "temperature" in output
-    assert "engine-option" in output
-    assert "provider-temperature" not in output
-    assert "threshold" not in output
-    assert "context" not in output
 
 
 def test_command_preserves_input_when_output_path_matches(

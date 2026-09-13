@@ -1,82 +1,126 @@
 """Exercise decision persistence and cache provenance."""
 
 import json
+from collections.abc import Callable
+from contextlib import ExitStack
 from dataclasses import replace
 from pathlib import Path
 
-from wsc.alignment import parse_response, serialize_alignment
+import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+
+from wsc.alignment import open_alignment_recorder, parse_response
 from wsc.alignment.provenance import build_metadata, cache_key
-from wsc.constants import ALIGNMENT_FIELDS
-from wsc.export import TSVWriter
-from wsc.models.alignment import GlossMode, ModelSettings
+from wsc.models.alignment import AlignmentTask, GlossMode, ModelSettings
 from wsc.reading import read_alignments, read_metadata
 
-from .test_aligner import decision, query
+from .examples import build_decision, build_query
 
 
-def test_cache_round_trip_preserves_decisions_response_and_synonyms(
-    tmp_path: Path,
+@given(
+    reason=st.text(min_size=1).filter(lambda text: bool(text.strip())),
+    task=st.sampled_from(AlignmentTask),
+    abstain=st.booleans(),
+)
+def test_recorded_decisions_are_visible_before_commit_and_replay_exactly(
+    workspace: Callable[[], Path],
+    reason: str,
+    task: AlignmentTask,
+    *,
+    abstain: bool,
 ) -> None:
-    """TSV replay retains decisions, tabs, Unicode, and synonyms."""
-    sample = replace(query(), lemma='café\t"quoted"\nentry')
+    """Incremental TSV rows retain Unicode, quoting, links, and abstentions."""
+    directory = workspace()
+    sample = build_query(task)
     response = json.dumps(
-        {"s1": decision("t1"), "s2": None},
-        ensure_ascii=False,
-        indent=2,
+        {
+            "s1": [
+                {
+                    "target_id": "t1",
+                    "relation": "translation"
+                    if task == AlignmentTask.TRANSLATIONS
+                    else "equivalent",
+                    "reason": reason,
+                },
+            ],
+            "s2": None
+            if abstain
+            else build_decision(
+                "t2",
+                "translation" if task == AlignmentTask.TRANSLATIONS else "equivalent",
+            ),
+        },
     )
     result = parse_response(sample, response)
+    path = directory / f"{task}.tsv"
+    metadata: dict[str, object] = {"schema": "test"}
+    queries = {sample.alignment_id: sample}
+    expected = (replace(result, response=""),)
+
+    with ExitStack() as stack:
+        record = open_alignment_recorder(stack, {task: path}, metadata)
+        record(result)
+
+        assert not path.exists()
+        assert (
+            tuple(read_alignments(path.with_suffix(".tsv.part"), queries)) == expected
+        )
+        assert not (directory / "metadata.json").exists()
+
+    assert tuple(read_alignments(path, queries)) == expected
+    assert read_metadata(path) == metadata
+    assert not list(directory.glob("*.part"))
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        ModelSettings("other"),
+        ModelSettings("model", temperature=0.5),
+        ModelSettings("model", maximum_tokens=100),
+        ModelSettings("model", engine_options=(("dtype", "float16"),)),
+        ModelSettings("model", reasoning_parser="qwen3"),
+        ModelSettings("model", reasoning_effort="low"),
+        ModelSettings("model", chat_template_options=(("enable_thinking", False),)),
+    ],
+)
+def test_generation_settings_change_cache_identity(
+    tmp_path: Path,
+    settings: ModelSettings,
+) -> None:
+    """Every generation option contributes to cache compatibility."""
     source = tmp_path / "sample.json"
     _ = source.write_text("{}", encoding="utf-8")
-    settings = ModelSettings("model")
-    metadata = build_metadata(source, settings, GlossMode.FULL)
-    path = tmp_path / "translations.tsv"
-    (tmp_path / "metadata.json").write_text(
-        json.dumps(metadata),
-        encoding="utf-8",
-    )
+    original = build_metadata(source, ModelSettings("model"), GlossMode.FULL)
+    changed = build_metadata(source, settings, GlossMode.FULL)
 
-    with TSVWriter(path, ALIGNMENT_FIELDS) as writer:
-        for row in serialize_alignment(result):
-            writer.write(row)
-
-    assert tuple(read_alignments(path, {sample.alignment_id: sample})) == (
-        replace(result, response=""),
-    )
-    assert read_metadata(path) == metadata
-
-    for changed in (
-        replace(settings, model="other"),
-        replace(settings, temperature=0.5),
-        replace(settings, maximum_tokens=100),
-        replace(
-            settings,
-            engine_options=(("dtype", "float16"),),
-        ),
-    ):
-        assert cache_key(build_metadata(source, changed, GlossMode.FULL)) != cache_key(
-            metadata
-        )
+    assert cache_key(original) != cache_key(changed)
 
 
-def test_reranker_caches_require_explicit_migration(
+def test_failed_recording_preserves_completed_cache(
     tmp_path: Path,
 ) -> None:
-    """Old score tables cannot be interpreted as generated decisions."""
-    path = tmp_path / "old.tsv"
-    (tmp_path / "metadata.json").write_text(
-        json.dumps({"schema": "3"}),
-        encoding="utf-8",
-    )
+    """An interrupted run replaces neither completed decisions nor metadata."""
+    path = tmp_path / "translations.tsv"
+    metadata_path = tmp_path / "metadata.json"
+    _ = path.write_text("previous decisions", encoding="utf-8")
+    _ = metadata_path.write_text("previous metadata", encoding="utf-8")
 
-    with TSVWriter(path, ALIGNMENT_FIELDS) as writer:
-        writer.write(
-            {
-                "alignment_id": "old",
-                "source_id": "source",
-                "target_id": "",
-                "relation": "",
-                "reason": "",
-            }
-        )
+    def interrupt() -> None:
+        with ExitStack() as stack:
+            recorder = open_alignment_recorder(
+                stack,
+                {AlignmentTask.TRANSLATIONS: path},
+                {"schema": "new"},
+            )
+            recorder(parse_response(build_query(), '{"s1": null, "s2": null}'))
 
-    assert read_metadata(path)["schema"] == "3"
+            raise RuntimeError("interrupted")
+
+    with pytest.raises(RuntimeError, match="interrupted"):
+        interrupt()
+
+    assert path.read_text(encoding="utf-8") == "previous decisions"
+    assert metadata_path.read_text(encoding="utf-8") == "previous metadata"
+    assert not list(tmp_path.glob("*.part"))

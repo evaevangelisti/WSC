@@ -19,7 +19,6 @@ dependencies = [
     "requests>=2.34.2",
     "tqdm>=4.70.0",
     "typer>=0.27.1",
-    "vllm>=0.29.0 ; sys_platform == 'linux'",
     "wiktextract @ git+https://github.com/tatuylonen/wiktextract.git",
 ]
 

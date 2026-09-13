@@ -121,21 +121,23 @@ wsc wordnet
 
 ### align
 
-Aligns collected senses with translations and WordNet synsets through [vLLM](https://vllm.ai/).
+Aligns collected senses with translations and WordNet synsets through offline [vLLM](https://vllm.ai/) inference.
 
 ```sh
-wsc align senses.jsonl aligned.jsonl
+wsc align senses.jsonl aligned.jsonl --reasoning-parser openai_gptoss
 ```
 
 | Option | Default | |
 | --- | --- | --- |
 | `--task` | both resources | `translations` or `wordnet`; repeat to select both |
-| `--model` | `Qwen/Qwen3-8B` | Model identifier |
+| `--model` | `openai/gpt-oss-120b` | Local model path or Hugging Face identifier |
 | `--gloss-mode` | `last` | Last gloss or full hierarchy joined with ` > ` |
 | `--prompts` | bundled `prompts.toml` | One customizable template per task |
 | `--temperature` | `0.0` | Sampling temperature |
 | `--maximum-tokens` | `4096` | Generated token limit |
-| `--reasoning-effort` | unset | Reasoning setting |
+| `--reasoning-effort` | unset | Reasoning effort supported by the chat template |
+| `--reasoning-parser` | unset | vLLM reasoning parser |
+| `--chat-template-option` | unset | Chat template `KEY=VALUE` argument; repeat to set multiple |
 | `--engine-option`, `-o` | unset | Additional vLLM engine parameter; repeat to set multiple |
 | `--reuse` | off | Reapply cached decisions without contacting the model |
 | `--wordnet-edition` | `latest` | Extracted WordNet edition; also `WSC_WORDNET_EDITION` |

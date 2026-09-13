@@ -9,9 +9,9 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
 
+from ...identifiers import lemma_id
 from ...models import POS, TranslationTable
 from ..dump import PageTranslations
-from ..identifiers import lemma_id
 from .merge import add_translations
 from .parts import parse_translations
 from .schema import RawEntry

@@ -10,7 +10,6 @@
 extractor
 entries
 schema
-identifiers
 markup
 merge
 off_page_translations

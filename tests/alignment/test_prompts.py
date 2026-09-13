@@ -9,7 +9,7 @@ from wsc.constants import PROMPTS_PATH
 from wsc.models.alignment import GlossMode, ModelSettings
 from wsc.reading import read_prompts
 
-from .test_aligner import query
+from .examples import build_query
 
 
 def test_prompt_edits_change_requests_and_cache_identity(
@@ -29,7 +29,9 @@ def test_prompt_edits_change_requests_and_cache_identity(
 
     assert set(original.tasks) == {"translations", "wordnet"}
     assert original.system.startswith("You are a computational lexicographer")
-    assert build_request(query(), prompts=changed).prompt.startswith("Custom prompt:")
+    assert build_request(build_query(), prompts=changed).prompt.startswith(
+        "Custom prompt:"
+    )
     assert cache_key(first) != cache_key(second)
     prompts = second["prompts"]
     assert isinstance(prompts, dict)

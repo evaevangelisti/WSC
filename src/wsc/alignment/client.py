@@ -1,17 +1,16 @@
-"""Generate decisions through offline vLLM batch inference."""
+"""Generate decisions through offline vLLM inference."""
 
-from collections.abc import Sequence
-from typing import Protocol
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from ..models.alignment import LanguageModel, ModelRequest, ModelSettings
 
-
-class Completion(Protocol):
-    """Provide the vLLM completion fields used by the adapter."""
-
-    finish_reason: str | None
-    text: str
-    token_ids: Sequence[int]
+if TYPE_CHECKING:
+    from vllm.entrypoints.openai.chat_completion.protocol import ChatCompletionRequest
+    from vllm.outputs import CompletionOutput
+    from vllm.reasoning import ReasoningParser
+    from vllm.tokenizers import TokenizerLike
 
 
 class ChatModel:
@@ -22,7 +21,7 @@ class ChatModel:
         settings: ModelSettings,
     ) -> None:
         """
-        Configure the model enigne.
+        Configure the model engine and its output parser.
 
         Args:
             settings: Model and generation configuration.
@@ -35,41 +34,64 @@ class ChatModel:
                 "Offline alignment requires vLLM; install the platform backend first"
             ) from error
 
-        self._llm: LLM = LLM(
-            model=settings.model,
-            **dict(settings.engine_options),
+        engine_options = dict(settings.engine_options)
+
+        if settings.reasoning_parser is not None:
+            engine_options["reasoning_parser"] = settings.reasoning_parser
+
+        self._llm: LLM = LLM(model=settings.model, **engine_options)
+        self._tokenizer: TokenizerLike = self._llm.get_tokenizer()
+
+        self._chat_template_kwargs: dict[str, object] = dict(
+            settings.chat_template_options,
         )
 
-        self._tokenizer = self._llm.get_tokenizer()
+        if settings.reasoning_effort is not None:
+            self._chat_template_kwargs["reasoning_effort"] = settings.reasoning_effort
 
-        parser = ReasoningParserManager.get_reasoning_parser("openai_gptoss")
-        self._reasoning_parser = parser(tokenizer=self._tokenizer)
+        configuration = self._llm.llm_engine.vllm_config
+        parser_name = configuration.structured_outputs_config.reasoning_parser
+
+        self._reasoning_parser_class: type[ReasoningParser] | None = (
+            ReasoningParserManager.get_reasoning_parser(parser_name)
+            if parser_name
+            else None
+        )
 
         self._settings: ModelSettings = settings
 
     def _parse_reasoning(
         self,
-        completion: Completion,
-    ) -> str:
+        completion: CompletionOutput,
+        request: ChatCompletionRequest,
+    ) -> str | None:
         """
-        Extract and decode the final response from a reasoning completion.
+        Extract final content using the configured reasoning parser.
 
         Args:
-            completion: vLLM completion containing generated token IDs.
+            completion: Generated text and token identifiers.
+            request: Chat request supplying the parser context.
 
         Returns:
-            The decoded final response without reasoning content.
-
-        Raises:
-            ValueError: If the completion has no final response.
+            Final content, or None when the parser finds no final answer.
         """
-        token_ids = completion.token_ids
-        content_ids = self._reasoning_parser.extract_content_ids(token_ids)
+        if self._reasoning_parser_class is None:
+            return completion.text
 
-        text = self._tokenizer.decode(content_ids).strip()
+        from vllm.reasoning.gptoss_reasoning_parser import GptOssReasoningParser
 
-        if not text:
-            raise ValueError(f"Empty final model response: text={completion.text!r}")
+        reasoning_parser = self._reasoning_parser_class(
+            tokenizer=self._tokenizer,
+            chat_template_kwargs=request.chat_template_kwargs,
+        )
+
+        if issubclass(self._reasoning_parser_class, GptOssReasoningParser):
+            return self._tokenizer.decode(
+                reasoning_parser.extract_content_ids(list(completion.token_ids)),
+                skip_special_tokens=True,
+            )
+
+        _, text = reasoning_parser.extract_reasoning(completion.text, request)
 
         return text
 
@@ -78,51 +100,60 @@ class ChatModel:
         request: ModelRequest,
     ) -> str:
         """
-        Request a structured chat completion.
+        Generate and parse a structured completion without an API server.
 
         Args:
             request: Alignment prompt and response schema.
 
         Returns:
-            Generated JSON text.
+            Final JSON text without reasoning content.
 
         Raises:
-            ValueError: If generation is incomplete or has no text.
+            ValueError: If generation is incomplete or has no final text.
         """
-        from vllm import SamplingParams
-        from vllm.sampling_params import StructuredOutputsParams
-
-        sampling_params = SamplingParams(
-            temperature=self._settings.temperature,
-            max_tokens=self._settings.maximum_tokens,
-            structured_outputs=StructuredOutputsParams(json=request.schema),
+        from vllm.entrypoints.openai.chat_completion.protocol import (
+            ChatCompletionRequest,
         )
+        from vllm.sampling_params import SamplingParams, StructuredOutputsParams
 
-        chat_template_kwargs = (
-            {"reasoning_effort": self._settings.reasoning_effort}
-            if self._settings.reasoning_effort is not None
-            else None
-        )
-
-        [output] = self._llm.chat(
+        chat_request = ChatCompletionRequest(
+            model=self._settings.model,
             messages=[
                 {"role": "system", "content": request.system},
                 {"role": "user", "content": request.prompt},
             ],
-            sampling_params=sampling_params,
-            chat_template_kwargs=chat_template_kwargs,
+            chat_template_kwargs=self._chat_template_kwargs or None,
+        )
+
+        [output] = self._llm.chat(
+            messages=chat_request.messages,
+            sampling_params=SamplingParams(
+                temperature=self._settings.temperature,
+                max_tokens=self._settings.maximum_tokens,
+                structured_outputs=StructuredOutputsParams(json=request.schema),
+                skip_special_tokens=False,
+            ),
+            chat_template_kwargs=chat_request.chat_template_kwargs,
+            use_tqdm=False,
         )
 
         completion = output.outputs[0]
 
         if completion.finish_reason != "stop":
             raise ValueError(
-                "Incomplete model response: "
-                + f"finish_reason={completion.finish_reason!r}, "
-                + f"text={completion.text!r}"
+                "Incomplete model response\n"
+                + f"Finish reason: {completion.finish_reason}\n\n"
+                + f"Response\n{completion.text}"
             )
 
-        return self._parse_reasoning(completion)
+        text = self._parse_reasoning(completion, chat_request)
+
+        if text is None or not text.strip():
+            raise ValueError(
+                f"Empty final model response\n\nResponse\n{completion.text}"
+            )
+
+        return text.strip()
 
 
 def open_model(

@@ -82,3 +82,17 @@ class TSVWriter(Writer[Mapping[str, object]]):
             raise RuntimeError("TSVWriter must be used as a context manager")
 
         self._writer.writerow(item)
+
+    def flush(
+        self,
+    ) -> None:
+        """
+        Make buffered rows visible in the partial file.
+
+        Raises:
+            RuntimeError: If the writer has not been entered.
+        """
+        if self._file is None:
+            raise RuntimeError("TSVWriter must be used as a context manager")
+
+        self._file.flush()

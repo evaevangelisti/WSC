@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ..constants import ALIGNMENT_FIELDS
 from ..export import TSVWriter
+from ..files import partial_file
 from ..models.alignment import AlignmentResult, AlignmentTask
 
 
@@ -20,7 +21,7 @@ def serialize_alignment(
         result: Validated model decisions.
 
     Yields:
-        Records containing query context and raw response on the first row.
+        One row per accepted link or explicit abstention.
     """
     for decision in result.decisions:
         for link in decision.links or (None,):
@@ -49,16 +50,18 @@ def open_alignment_recorder(
     Returns:
         A callback persisting each alignment result.
     """
+    metadata_path = next(iter(paths.values())).with_name("metadata.json")
+
+    metadata_partial = stack.enter_context(partial_file(metadata_path))
+    _ = metadata_partial.write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=4) + "\n",
+        encoding="utf-8",
+    )
+
     writers = {
         task: stack.enter_context(TSVWriter(path, ALIGNMENT_FIELDS))
         for task, path in paths.items()
     }
-
-    metadata_path = next(iter(paths.values())).with_name("metadata.json")
-    _ = metadata_path.write_text(
-        json.dumps(metadata, ensure_ascii=False, indent=4) + "\n",
-        encoding="utf-8",
-    )
 
     def record_decisions(
         result: AlignmentResult,
@@ -71,5 +74,7 @@ def open_alignment_recorder(
         """
         for row in serialize_alignment(result):
             writers[result.query.task].write(row)
+
+        writers[result.query.task].flush()
 
     return record_decisions

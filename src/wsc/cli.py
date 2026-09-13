@@ -3,6 +3,7 @@
 import json
 from contextlib import ExitStack
 from importlib.metadata import version
+from logging import getLogger
 from pathlib import Path
 from typing import Annotated, cast
 
@@ -40,6 +41,7 @@ from .extract import (
     read_off_page_translations,
     write_off_page_translations,
 )
+from .logging import configure_logging
 from .models import POS, Engine, Lemma, Synset
 from .models.alignment import AlignmentTask, GlossMode, ModelSettings
 from .reading import (
@@ -51,6 +53,8 @@ from .reading import (
     read_synsets,
 )
 from .upstream import cache, download, repositories, wiktextract
+
+_LOGGER = getLogger(__name__)
 
 DumpDate = Annotated[
     str,
@@ -83,6 +87,14 @@ app = typer.Typer(
 )
 
 
+@app.callback()
+def configure(
+    context: typer.Context,
+) -> None:
+    """Configure logs for the selected command."""
+    context.with_resource(configure_logging())
+
+
 @app.command()
 def fetch(
     dump_date: DumpDate = cache.LATEST,
@@ -95,12 +107,12 @@ def fetch(
 
     if date == cache.LATEST:
         date = repositories.wiktionary.latest_date(user_agent, TIMEOUT)
-        typer.echo(f"Resolved latest to {date}")
+        _LOGGER.info("Resolved latest to %s", date)
 
     dump_path = cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
 
     if dump_path.exists():
-        typer.echo(f"Already fetched {dump_path}")
+        _LOGGER.info("Already fetched %s", dump_path)
 
         return
 
@@ -112,7 +124,7 @@ def fetch(
         CHUNK_SIZE,
     )
 
-    typer.echo(f"Fetched {dump_path}")
+    _LOGGER.info("Fetched %s", dump_path)
 
 
 @app.command()
@@ -163,7 +175,7 @@ def parse(
     off_page_translations_path = dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
 
     if output_path.exists() and off_page_translations_path.exists():
-        typer.echo(f"Already parsed {output_path}")
+        _LOGGER.info("Already parsed %s", output_path)
 
         return
 
@@ -191,7 +203,7 @@ def parse(
             )
 
         if skipped_lines:
-            typer.echo(f"Set aside {skipped_lines} lines holding no entry")
+            _LOGGER.warning("Skipped %s lines without entries", skipped_lines)
 
     off_page_translations = build_off_page_translations(
         DumpExtractor(LANGUAGE_SECTION).extract(dump_path),
@@ -201,7 +213,7 @@ def parse(
     write_off_page_translations(off_page_translations_path, off_page_translations)
 
     translated = len(off_page_translations)
-    typer.echo(f"Parsed {output_path}, {translated} entries translated elsewhere")
+    _LOGGER.info("Parsed %s: %s off-page translation entries", output_path, translated)
 
 
 @app.command()
@@ -300,7 +312,7 @@ def collect(
         for lemma in extractor.extract(input_path):
             writer.write(lemma)
 
-    typer.echo(f"Collected {output_path}")
+    _LOGGER.info("Collected %s", output_path)
 
 
 @app.command()
@@ -317,14 +329,14 @@ def wordnet(
 
     if edition == cache.LATEST:
         edition = repositories.wordnet.latest_version(user_agent, TIMEOUT)
-        typer.echo(f"Resolved latest to {edition}")
+        _LOGGER.info("Resolved latest to %s", edition)
 
     wordnet_dir = cache.wordnet_dir(cache_dir, edition)
 
     wordnet_path = wordnet_dir / cache.WORDNET_NAME
 
     if wordnet_path.exists():
-        typer.echo(f"Already fetched {wordnet_path}")
+        _LOGGER.info("Already fetched %s", wordnet_path)
     else:
         download(
             repositories.wordnet.url(edition),
@@ -334,12 +346,12 @@ def wordnet(
             CHUNK_SIZE,
         )
 
-        typer.echo(f"Fetched {wordnet_path}")
+        _LOGGER.info("Fetched %s", wordnet_path)
 
     output_path = wordnet_dir / cache.SYNSETS_NAME
 
     if output_path.exists():
-        typer.echo(f"Already read {output_path}")
+        _LOGGER.info("Already read %s", output_path)
 
         return
 
@@ -351,15 +363,17 @@ def wordnet(
         for synset in extractor.extract(wordnet_path):
             writer.write(synset)
 
-    typer.echo(f"Read {output_path}")
+    _LOGGER.info("Read %s", output_path)
 
 
-def _parse_engine_option(option: str) -> tuple[str, object]:
+def _parse_option(
+    option: str,
+) -> tuple[str, object]:
     """
-    Parse a single ``key=value`` engine option.
+    Parse a single ``key=value`` option.
 
     Args:
-        option: Raw ``--engine-option`` argument.
+        option: Raw engine or chat template argument.
 
     Returns:
         The option name and its parsed value.
@@ -405,7 +419,7 @@ def align(
     model: Annotated[
         str,
         typer.Option(
-            help="Model identifier served by the endpoint.",
+            help="Local model path or Hugging Face identifier.",
         ),
     ] = ALIGNMENT_MODEL,
     gloss_mode: Annotated[
@@ -436,10 +450,16 @@ def align(
             help="Maximum generated tokens per request.",
         ),
     ] = ALIGNMENT_MAXIMUM_TOKENS,
+    reasoning_parser: Annotated[
+        str | None,
+        typer.Option(
+            help="vLLM reasoning parser.",
+        ),
+    ] = None,
     reasoning_effort: Annotated[
         str | None,
         typer.Option(
-            help="Reasoning setting supported by the API model.",
+            help="Reasoning effort supported by the model's chat template.",
         ),
     ] = None,
     engine_option: Annotated[
@@ -449,6 +469,14 @@ def align(
             "-o",
             metavar="KEY=VALUE",
             help="Additional vLLM engine parameter; repeat to set multiple.",
+        ),
+    ] = None,
+    chat_template_option: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--chat-template-option",
+            metavar="KEY=VALUE",
+            help="Chat template argument; repeat to set multiple.",
         ),
     ] = None,
     *,
@@ -477,10 +505,17 @@ def align(
         model=model,
         temperature=temperature,
         maximum_tokens=maximum_tokens,
+        reasoning_parser=reasoning_parser,
         reasoning_effort=reasoning_effort,
         engine_options=tuple(
             sorted(
-                (_parse_engine_option(item) for item in engine_option or ()),
+                (_parse_option(item) for item in engine_option or ()),
+                key=lambda pair: pair[0],
+            )
+        ),
+        chat_template_options=tuple(
+            sorted(
+                (_parse_option(item) for item in chat_template_option or ()),
                 key=lambda pair: pair[0],
             )
         ),
@@ -507,6 +542,10 @@ def align(
 
     evidence_dir = cache.alignment_dir(cache_dir, cache_key(metadata))
     evidence_paths = {selected: evidence_dir / f"{selected}.tsv" for selected in tasks}
+
+    _LOGGER.info(
+        "%s alignment cache: %s", "Reusing" if reuse else "Writing", evidence_dir
+    )
 
     if reuse:
         for path in evidence_paths.values():
@@ -551,4 +590,4 @@ def align(
         ):
             writer.write(lemma)
 
-    typer.echo(f"Aligned {output_path}")
+    _LOGGER.info("Aligned %s", output_path)

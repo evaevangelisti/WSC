@@ -5,6 +5,7 @@ from dataclasses import replace
 
 from kwic import Query
 
+from ...identifiers import translation_table_id
 from ...models import (
     Lemma,
     Offset,
@@ -13,7 +14,6 @@ from ...models import (
     WordOffset,
     WordOffsetSource,
 )
-from ..identifiers import translation_table_id
 
 
 def add_translations(
@@ -29,16 +29,16 @@ def add_translations(
         added_translations: What to add to it.
         lemma_id: The entry identifier used to name merged tables.
     """
-    gathered = {
+    gathered_translation_tables = {
         table.gloss: {
-            language: set(words)
-            for language, words in table.translations.items()
+            language: set(words) for language, words in table.translations.items()
         }
         for table in kept_translations
     }
 
     for table in added_translations:
-        kept_words = gathered.setdefault(table.gloss, {})
+        kept_words = gathered_translation_tables.setdefault(table.gloss, {})
+
         for language, words in table.translations.items():
             kept_words.setdefault(language, set()).update(words)
 
@@ -48,7 +48,7 @@ def add_translations(
             gloss,
             {language: frozenset(words) for language, words in translated.items()},
         )
-        for gloss, translated in gathered.items()
+        for gloss, translated in gathered_translation_tables.items()
     )
 
 

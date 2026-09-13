@@ -2,8 +2,8 @@
 
 from collections import defaultdict
 
+from ....identifiers import translation_table_id
 from ....models import TranslationTable
-from ...identifiers import translation_table_id
 from ..merge import add_translations
 from ..schema import RawTranslation
 

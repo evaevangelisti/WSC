@@ -51,7 +51,9 @@ def test_arbitrary_rows_preserve_values_and_column_order(
         ]
 
 
-def test_undeclared_columns_preserve_existing_output(tmp_path: Path) -> None:
+def test_undeclared_columns_preserve_existing_output(
+    tmp_path: Path,
+) -> None:
     """A malformed row never replaces previously completed output."""
     path = tmp_path / "inventory.tsv"
     original = "name\nprevious\n"
@@ -67,7 +69,9 @@ def test_undeclared_columns_preserve_existing_output(tmp_path: Path) -> None:
     assert not path.with_name("inventory.tsv.part").exists()
 
 
-def test_writes_require_an_open_context(tmp_path: Path) -> None:
+def test_writes_require_an_open_context(
+    tmp_path: Path,
+) -> None:
     """Writing before entry or after closure fails without changing output."""
     path = tmp_path / "inventory.tsv"
     writer = TSVWriter(path, ("name",))

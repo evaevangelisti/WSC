@@ -10,7 +10,7 @@ from .decisions import (
     validate_result,
 )
 from .records import open_alignment_recorder, serialize_alignment
-from .tasks import build_queries, query_id
+from .tasks import build_queries
 
 __all__ = [
     "Aligner",
@@ -20,7 +20,6 @@ __all__ = [
     "build_request",
     "open_alignment_recorder",
     "parse_response",
-    "query_id",
     "render_definition",
     "serialize_alignment",
     "validate_result",

@@ -46,9 +46,7 @@ texts = st.text(
     min_size=1,
     max_size=60,
 ).filter(lambda text: bool(text.strip()))
-"""
-Single-line attestation text.
-"""
+"""Single-line attestation text."""
 
 sentence_kinds = st.sampled_from(["example", "quotation"])
 """What wiktextract calls a sentence, where it says which kind it read."""

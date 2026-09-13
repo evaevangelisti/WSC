@@ -28,18 +28,22 @@ class ModelSettings:
     Configure language model inference.
 
     Attributes:
-        model: Model identifier exposed by the server.
+        model: Local model path or Hugging Face identifier.
         temperature: Sampling temperature.
         maximum_tokens: Maximum number of generated tokens.
-        reasoning_effort: Optional reasoning setting supported by the server.
+        reasoning_parser: Optional vLLM parser for reasoning completions.
+        reasoning_effort: Optional reasoning effort supported by the chat template.
         engine_options: Additional keyword arguments forwarded to the engine.
+        chat_template_options: Additional keyword arguments for the chat template.
     """
 
     model: str
     temperature: float = 0.0
     maximum_tokens: int = 4096
+    reasoning_parser: str | None = None
     reasoning_effort: str | None = None
     engine_options: tuple[tuple[str, object], ...] = ()
+    chat_template_options: tuple[tuple[str, object], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

@@ -2,8 +2,10 @@
 
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import replace
+from logging import getLogger
 
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from ..constants import DEFAULT_PROMPTS
 from ..errors import InvalidModelResponseError
@@ -22,6 +24,8 @@ from .decisions import (
     validate_result,
 )
 from .tasks import TASK_HANDLERS, build_queries
+
+_LOGGER = getLogger(__name__)
 
 
 class Aligner:
@@ -113,38 +117,42 @@ class Aligner:
         """
         streams = cached_results or {}
 
-        for lemma in tqdm(lemmas, desc="Aligning the senses", unit=" lemma"):
+        for lemma in tqdm(lemmas, desc="Aligning senses", unit=" lemma"):
             senses = {
                 sense.id: replace(sense, translations=dict(sense.translations))
                 for sense in lemma.senses
             }
 
-            try:
-                for task in self._tasks:
-                    for query in build_queries(lemma, task, self._candidates):
-                        result = self._evaluate(query, streams)
+            translation_tables = lemma.translation_tables
 
-                        if task not in streams:
-                            tqdm.write(
-                                f"Generated response for {query.alignment_id}: "
-                                + f"{result.response}"
+            for task in self._tasks:
+                for query in build_queries(lemma, task, self._candidates):
+                    try:
+                        result = self._evaluate(query, streams)
+                    except InvalidModelResponseError as error:
+                        with logging_redirect_tqdm(loggers=[getLogger("wsc")]):
+                            _LOGGER.warning(
+                                "Skipped %s\n\n%s", query.alignment_id, error
                             )
 
-                        if recorder is not None:
-                            recorder(result)
+                        continue
 
-                        TASK_HANDLERS[task].apply(lemma, senses, query, result.links)
-            except InvalidModelResponseError as error:
-                tqdm.write(f"Skipping {lemma.id}: {error}")
+                    _LOGGER.debug(
+                        "Aligned %s\n\n%s", query.alignment_id, result.response
+                    )
+
+                    if recorder is not None:
+                        recorder(result)
+
+                    TASK_HANDLERS[task].apply(lemma, senses, query, result.links)
+
+                    if task == AlignmentTask.TRANSLATIONS:
+                        translation_tables = ()
 
             yield replace(
                 lemma,
                 senses=list(senses.values()),
-                translation_tables=(
-                    ()
-                    if AlignmentTask.TRANSLATIONS in self._tasks
-                    else lemma.translation_tables
-                ),
+                translation_tables=translation_tables,
             )
 
         for task, stream in streams.items():

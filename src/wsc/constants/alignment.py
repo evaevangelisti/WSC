@@ -14,7 +14,7 @@ ALIGNMENT_FIELDS = (
 """Store one tabular row for each source decision."""
 
 ALIGNMENT_MODEL = "openai/gpt-oss-120b"
-"""Select the default served model identifier."""
+"""Select the default local inference model."""
 
 ALIGNMENT_MAXIMUM_TOKENS = 4096
 """Limit the generated response length."""
