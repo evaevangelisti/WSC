@@ -1,4 +1,4 @@
-"""Serialize alignment decisions into resource-specific tables."""
+"""Record alignment decisions incrementally in resource-specific tables."""
 
 import json
 from collections.abc import Callable, Iterator

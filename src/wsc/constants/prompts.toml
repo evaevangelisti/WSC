@@ -6,31 +6,31 @@ Respond with a single JSON object and nothing else.
 
 [translations]
 template = """
-Given these full definitions of the word $lemma ($pos):
-<full_definitions>
+Given these Wiktionary sense definitions of the word $lemma ($pos):
+<wiktionary_definitions>
 $source_definitions
-</full_definitions>
+</wiktionary_definitions>
 
-Associate them with the following short translation definitions:
-<short_definitions>
+Associate them with the following translation-table glosses:
+<translation_table_glosses>
 $target_definitions
-</short_definitions>
+</translation_table_glosses>
 
 Constraints:
+- Base every association on semantic evidence from the supplied definitions and supporting synonyms.
+$hierarchy
 - Match definitions that express the same lexical sense.
 - Allow abbreviated wording and omitted explanatory detail.
 - Preserve the referent, participant role, defining purpose, and literal or figurative meaning.
-- Use synonyms as supporting context for the definition.
-$hierarchy
-- Decide from the definitions; candidate count and position provide no evidence.
-- Associate each full definition with at most one short definition.
-- Use each short definition ID at most once.
-- Use null when no clear semantic equivalent can be identified.
-- Give each association a brief reason grounded in the supplied definitions, using at most 20 words.
+- Associate each Wiktionary sense definition with at most one translation-table gloss.
+- Use each translation-table ID at most once.
+- Resolve competing translation associations jointly, using null wherever semantic evidence leaves the assignment ambiguous.
+- Use null for source definitions with insufficient evidence for any association satisfying these constraints.
+- Justify each association in at most 20 words, identifying the shared meaning that distinguishes it from competing senses.
 
 Output:
-Return only the following JSON shape, one key per full definition ID:
-{"<full_definition_id>": null | [{"target_id": "<short_definition_id>", "relation": "translation", "reason": "<=20 words"}]}
+Return only the following JSON shape, one key per Wiktionary sense definition ID:
+{"<wiktionary_id>": null | [{"target_id": "<translation_table_id>", "relation": "translation", "reason": "<=20 words"}]}
 Use only the supplied IDs.
 """
 
@@ -52,16 +52,16 @@ Relations:
 - wiktionary_broader: Every instance of the WordNet concept belongs to the Wiktionary concept, with a strict defining restriction.
 
 Constraints:
-- Distinguish defining restrictions from extra examples and explanatory wording.
-- Require conceptual equivalence or inclusion; topical, part-whole, and cause-effect connections are insufficient.
-- Use synonyms as supporting context for the definition.
+- Base every association on semantic evidence from the supplied definitions and supporting synonyms.
 $hierarchy
-- Decide from the definitions; candidate count and position provide no evidence.
-- Evaluate every candidate and retain each clearly supported association.
+- Accept associations supported by conceptual equivalence or strict inclusion.
+- Distinguish defining restrictions from extra examples and explanatory wording.
+- Assign narrower or broader when a defining restriction establishes strict inclusion between the concepts.
 - Assign one relation to each accepted pair, directed from Wiktionary toward WordNet.
-- Restrict equivalent to the strongest match per synset and per Wiktionary definition; assign narrower or broader to the rest.
-- Use null when no clear association can be identified.
-- Give each association a brief reason naming the shared concept or defining restriction, using at most 20 words.
+- Select at most one equivalent association per Wiktionary definition and per synset, choosing the strongest semantic match.
+- Evaluate every candidate and retain each supported association satisfying these constraints.
+- Use null for source definitions with insufficient evidence for any association satisfying these constraints.
+- Write a reason of at most 20 words identifying the decisive shared meaning or the restriction establishing inclusion.
 
 Output:
 Return only the following JSON shape, one key per Wiktionary definition ID:

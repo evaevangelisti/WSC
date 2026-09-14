@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from vllm.tokenizers import TokenizerLike
 
 
-class ChatModel:
+class OfflineModel:
     """Use the offline vLLM engine for local models."""
 
     def __init__(
@@ -166,6 +166,6 @@ def open_model(
         settings: Model identifier and generation options.
 
     Returns:
-        An offline vLLM inference client.
+        An offline vLLM model.
     """
-    return ChatModel(settings)
+    return OfflineModel(settings)

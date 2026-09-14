@@ -19,7 +19,7 @@ from wsc.upstream import cache
 
 
 class Model:
-    """Generate a valid association from the requested output schema."""
+    """Generate a valid association for the candidate supplied by the command."""
 
     def generate(
         self,
@@ -34,16 +34,11 @@ class Model:
         Returns:
             A translation or equivalent WordNet association.
         """
+        translation_target = translation_table_id("word.noun", "gloss")
         relation = (
-            "translation"
-            if "short translation definitions" in request.prompt
-            else "equivalent"
+            "translation" if translation_target in request.prompt else "equivalent"
         )
-        target = (
-            translation_table_id("word.noun", "gloss")
-            if relation == "translation"
-            else "wordnet-sense"
-        )
+        target = translation_target if relation == "translation" else "wordnet-sense"
 
         return json.dumps(
             {

@@ -1,5 +1,6 @@
 """Exercise decision persistence and cache provenance."""
 
+import csv
 import json
 from collections.abc import Callable
 from contextlib import ExitStack
@@ -12,10 +13,44 @@ from hypothesis import strategies as st
 
 from wsc.alignment import open_alignment_recorder, parse_response
 from wsc.alignment.provenance import build_metadata, cache_key
+from wsc.constants import ALIGNMENT_FIELDS
 from wsc.models.alignment import AlignmentTask, GlossMode, ModelSettings
 from wsc.reading import read_alignments, read_metadata
 
 from .examples import build_decision, build_query
+
+
+@pytest.mark.parametrize(
+    "assignments",
+    [
+        (("s1", "t1"), ("s1", "t2"), ("s2", "")),
+        (("s1", "t1"), ("s2", "t1")),
+    ],
+)
+def test_cached_equivalences_require_unique_sources_and_synsets(
+    tmp_path: Path,
+    assignments: tuple[tuple[str, str], ...],
+) -> None:
+    """Cached decisions obey the same equivalence constraints as model responses."""
+    query = build_query(AlignmentTask.WORDNET)
+    path = tmp_path / "wordnet.tsv"
+
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.writer(stream, delimiter="\t")
+        writer.writerows([ALIGNMENT_FIELDS])
+        writer.writerows(
+            (
+                query.alignment_id,
+                source,
+                target,
+                "equivalent" if target else "",
+                "The definitions express the same concept." if target else "",
+            )
+            for source, target in assignments
+        )
+
+    with pytest.raises(ValueError, match="One-to-one alignment violated"):
+        _ = tuple(read_alignments(path, {query.alignment_id: query}))
 
 
 @given(

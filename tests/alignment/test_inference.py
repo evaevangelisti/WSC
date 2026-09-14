@@ -1,4 +1,4 @@
-"""Exercise the offline vLLM model boundary without loading model weights."""
+"""Exercise offline vLLM inference without loading model weights."""
 
 import json
 import sys
@@ -252,7 +252,7 @@ def fake_vllm_modules(
 @pytest.mark.usefixtures("_vllm_modules")
 def test_offline_model_preserves_generation_contract() -> None:
     """The vLLM adapter forwards settings and returns validated JSON."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     settings = ModelSettings(
         "local-model",
@@ -288,7 +288,7 @@ def test_incomplete_model_outputs_remain_failures(
     finish_reason: str | None,
 ) -> None:
     """Incomplete offline completions raise an explicit generation error."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     FakeLLM.finish_reason = finish_reason
 
@@ -302,7 +302,7 @@ def test_missing_vllm_is_reported_at_model_construction(
     """Importing the package remains possible when the optional backend is absent."""
     monkeypatch.setitem(sys.modules, "vllm", None)
 
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     with pytest.raises(RuntimeError, match="requires vLLM"):
         _ = open_model(ModelSettings("local-model"))
@@ -318,7 +318,7 @@ def test_reasoning_uses_the_configured_parser(
     reason: str,
 ) -> None:
     """Only final tokens reach JSON validation, even when reasoning contains JSON."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     response = json.dumps(
         {
@@ -349,7 +349,7 @@ def test_empty_final_responses_are_rejected(
     parser: str | None,
 ) -> None:
     """A stopped generation still requires nonempty final content."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     FakeLLM.response = "reasoning</think> \n\t" if parser else " \n\t"
     FakeLLM.token_ids = [*map(ord, "reasoning"), -1, *map(ord, " \n\t")]
@@ -367,7 +367,7 @@ def test_reasoning_without_a_final_channel_is_rejected(
     parser: str,
 ) -> None:
     """Reasoning JSON cannot be accepted as the final decision."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     FakeLLM.token_ids = list(map(ord, FakeLLM.response))
 
@@ -381,7 +381,7 @@ def test_reasoning_without_a_final_channel_is_rejected(
 @pytest.mark.usefixtures("_vllm_modules")
 def test_disabled_thinking_preserves_the_final_response() -> None:
     """Template options reach parsing when a reasoning model generates plain JSON."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     result = align_query(
         build_query(),
@@ -404,7 +404,7 @@ def test_explicit_parser_overrides_engine_options(
     parser: str | None,
 ) -> None:
     """Generation and extraction use the same parser after option precedence."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     response = FakeLLM.response
     FakeLLM.response = "reasoning</think>" + response
@@ -429,7 +429,7 @@ def test_explicit_parser_overrides_engine_options(
 @pytest.mark.usefixtures("_vllm_modules")
 def test_harmony_uses_a_fresh_parser_for_each_request() -> None:
     """Repeated generations parse independent final channels for local checkpoints."""
-    from wsc.alignment.client import open_model
+    from wsc.alignment.inference import open_model
 
     response = FakeLLM.response
     FakeLLM.token_ids = [-1, *map(ord, response), -2]

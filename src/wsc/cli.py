@@ -14,7 +14,7 @@ from .alignment import (
     WordNetCandidates,
     open_alignment_recorder,
 )
-from .alignment.client import open_model
+from .alignment.inference import open_model
 from .alignment.provenance import build_metadata, cache_key
 from .constants import (
     ALIGNMENT_MAXIMUM_TOKENS,

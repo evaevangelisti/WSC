@@ -11,6 +11,7 @@ from ..constants import DEFAULT_PROMPTS
 from ..errors import InvalidModelResponseError
 from ..models import Lemma
 from ..models.alignment import (
+    AlignmentDecision,
     AlignmentPrompts,
     AlignmentQuery,
     AlignmentResult,
@@ -19,13 +20,55 @@ from ..models.alignment import (
     LanguageModel,
 )
 from .candidates import WordNetCandidates
-from .decisions import (
-    align_query,
-    validate_result,
-)
+from .decisions import parse_response, validate_result
+from .requests import build_request
 from .tasks import TASK_HANDLERS, build_queries
 
 _LOGGER = getLogger(__name__)
+
+
+def align_query(
+    query: AlignmentQuery,
+    model: LanguageModel,
+    mode: GlossMode = GlossMode.LAST,
+    prompts: AlignmentPrompts = DEFAULT_PROMPTS,
+) -> AlignmentResult:
+    """
+    Generate validated decisions for a complete alignment query.
+
+    Args:
+        query: Sources and available candidates.
+        model: Language model generation boundary.
+        mode: Wiktionary gloss representation.
+        prompts: Task prompt templates.
+
+    Returns:
+        Associations or explicit abstentions for every source.
+    """
+    if not query.target_definitions or not query.source_definitions:
+        return AlignmentResult(
+            query,
+            tuple(AlignmentDecision(source.id) for source in query.source_definitions),
+        )
+
+    request = build_request(query, mode, prompts)
+
+    try:
+        response = model.generate(request)
+    except ValueError as error:
+        raise InvalidModelResponseError(
+            f"Model generation failed for {query.alignment_id}\n\n{error}"
+        ) from error
+
+    try:
+        return parse_response(query, response)
+    except InvalidModelResponseError:
+        raise
+    except ValueError as error:
+        raise InvalidModelResponseError(
+            f"Invalid model response for {query.alignment_id}\n"
+            + f"{error}\n\nResponse\n{response}"
+        ) from error
 
 
 class Aligner:

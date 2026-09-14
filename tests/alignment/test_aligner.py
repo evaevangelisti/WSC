@@ -177,6 +177,73 @@ def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:
     assert not lemma.senses[0].wordnet
 
 
+@given(
+    relations=st.tuples(*(st.sampled_from((None, *WordNetRelation)) for _ in range(4))),
+)
+@example(relations=(WordNetRelation.EQUIVALENT, WordNetRelation.EQUIVALENT, None, None))
+@example(relations=(WordNetRelation.EQUIVALENT, None, WordNetRelation.EQUIVALENT, None))
+@example(
+    relations=(
+        WordNetRelation.EQUIVALENT,
+        WordNetRelation.WIKTIONARY_NARROWER,
+        WordNetRelation.WIKTIONARY_BROADER,
+        WordNetRelation.EQUIVALENT,
+    ),
+)
+@example(
+    relations=(
+        WordNetRelation.WIKTIONARY_NARROWER,
+        WordNetRelation.WIKTIONARY_BROADER,
+        WordNetRelation.WIKTIONARY_BROADER,
+        WordNetRelation.WIKTIONARY_NARROWER,
+    ),
+)
+def test_wordnet_equivalence_is_one_to_one(
+    relations: tuple[WordNetRelation | None, ...],
+) -> None:
+    """Only equivalence requires distinct sources and targets in generated graphs."""
+    pairs = (("s1", "t1"), ("s1", "t2"), ("s2", "t1"), ("s2", "t2"))
+    associations = [
+        (source, target, relation)
+        for (source, target), relation in zip(pairs, relations, strict=True)
+        if relation is not None
+    ]
+    equivalents = [
+        (source, target)
+        for source, target, relation in associations
+        if relation == WordNetRelation.EQUIVALENT
+    ]
+    response = json.dumps(
+        {
+            source_id: [
+                {
+                    "target_id": target,
+                    "relation": relation,
+                    "reason": "The definitions support the association.",
+                }
+                for source, target, relation in associations
+                if source == source_id
+            ]
+            or None
+            for source_id in ("s1", "s2")
+        }
+    )
+    query = build_query(AlignmentTask.WORDNET)
+    model = Model([response])
+
+    if len({source for source, _ in equivalents}) != len(equivalents) or len(
+        {target for _, target in equivalents}
+    ) != len(equivalents):
+        with pytest.raises(ValueError, match="One-to-one alignment violated"):
+            _ = align_query(query, model)
+    else:
+        result = align_query(query, model)
+
+        assert [
+            (link.source_id, link.target_id, link.relation) for link in result.links
+        ] == associations
+
+
 @pytest.mark.parametrize("mode", list(GlossMode))
 def test_prompts_render_identifiers_synonyms_and_hierarchy(
     mode: GlossMode,

@@ -1,15 +1,10 @@
 """Expose language model alignment and decision persistence."""
 
-from .aligner import Aligner
+from .aligner import Aligner, align_query
 from .candidates import WordNetCandidates
-from .decisions import (
-    align_query,
-    build_request,
-    parse_response,
-    render_definition,
-    validate_result,
-)
-from .records import open_alignment_recorder, serialize_alignment
+from .decisions import parse_response, validate_result
+from .recording import open_alignment_recorder, serialize_alignment
+from .requests import build_request, render_definition
 from .tasks import build_queries
 
 __all__ = [

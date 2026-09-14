@@ -35,6 +35,7 @@ ALIGNMENT_SCHEMA = "5"
 """Version the decision-based cache independently of reranker scores."""
 
 HIERARCHY_CONSTRAINT = (
-    "- Read each '>' hierarchy from general context to the final specific sense."
+    "- Read each '>' hierarchy from left to right, interpreting the final sense "
+    + "with its inherited defining restrictions."
 )
 """Explain the full Wiktionary gloss representation."""
