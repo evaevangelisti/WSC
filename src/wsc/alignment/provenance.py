@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import asdict
 from pathlib import Path
 
-from ..constants import ALIGNMENT_SCHEMA, DEFAULT_PROMPTS
+from ..constants import ALIGNMENT_SCHEMA, DEFAULT_PROMPTS, HIERARCHY_CONSTRAINT
 from ..models.alignment import AlignmentPrompts, GlossMode, ModelSettings
 
 type Metadata = dict[str, object]
@@ -32,7 +32,13 @@ def build_metadata(
     Returns:
         Content fingerprints and reproducible inference settings.
     """
-    prompt_text = json.dumps(asdict(prompts), sort_keys=True)
+    prompt = json.dumps(
+        {
+            **asdict(prompts),
+            "hierarchy": HIERARCHY_CONSTRAINT if mode == GlossMode.FULL else "",
+        },
+        sort_keys=True,
+    )
 
     return {
         "schema": ALIGNMENT_SCHEMA,
@@ -42,8 +48,8 @@ def build_metadata(
         "gloss_mode": mode,
         "prompts": {
             "name": prompts.name,
-            "text": prompt_text,
-            "fingerprint": hashlib.sha256(prompt_text.encode()).hexdigest(),
+            "text": prompt,
+            "fingerprint": hashlib.sha256(prompt.encode()).hexdigest(),
         },
         "wordnet": fingerprint(synsets_path) if synsets_path else "",
     }

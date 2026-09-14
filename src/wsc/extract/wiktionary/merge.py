@@ -132,6 +132,11 @@ def merge_senses(
         kept_sense.topics = _merge_items(kept_sense.topics, sense.topics)
         kept_sense.tags = _merge_items(kept_sense.tags, sense.tags)
 
+        kept_sense.wikidata_ids = _merge_items(
+            kept_sense.wikidata_ids,
+            sense.wikidata_ids,
+        )
+
         kept_sense.sentences += sense.sentences
 
     return list(gathered_senses.values())

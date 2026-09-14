@@ -53,8 +53,16 @@ class WordNetExtractor:
             written_forms: The form each lexical entry was written in.
 
         Returns:
-            The synset, or None if its part of speech is not one we keep.
+            The complete synset, or None when required fields or filters exclude it.
         """
+        identifier = element.get("id", "").strip()
+        ili = element.get("ili", "").strip()
+
+        definition = (element.findtext("Definition") or "").strip()
+
+        if not identifier or not ili or not definition:
+            return None
+
         pos = _POS_BY_CODE.get(element.get("partOfSpeech", ""))
 
         if pos is None:
@@ -64,10 +72,10 @@ class WordNetExtractor:
             return None
 
         return Synset(
-            element.get("id", ""),
-            element.get("ili", ""),
+            identifier,
+            ili,
             pos,
-            (element.findtext("Definition") or "").strip(),
+            definition,
             tuple(
                 written_forms[member] for member in element.get("members", "").split()
             ),
