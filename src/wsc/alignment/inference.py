@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from logging import getLogger
 from typing import TYPE_CHECKING
 
 from ..models.alignment import LanguageModel, ModelRequest, ModelSettings
@@ -11,6 +12,8 @@ if TYPE_CHECKING:
     from vllm.outputs import CompletionOutput
     from vllm.reasoning import ReasoningParser
     from vllm.tokenizers import TokenizerLike
+
+_LOGGER = getLogger(__name__)
 
 
 class OfflineModel:
@@ -26,6 +29,8 @@ class OfflineModel:
         Args:
             settings: Model and generation configuration.
         """
+        _LOGGER.info("Initializing model %s", settings.model)
+
         try:
             from vllm import LLM
             from vllm.reasoning import ReasoningParserManager
@@ -59,6 +64,8 @@ class OfflineModel:
         )
 
         self._settings: ModelSettings = settings
+
+        _LOGGER.info("Initialized model %s", settings.model)
 
     def _parse_reasoning(
         self,
