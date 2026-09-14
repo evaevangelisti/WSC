@@ -1,9 +1,6 @@
 # Exports the studies draw from
 data/
-
-# Reports
-research/report/reports/
-research/annotation/reports/
+/collection/
 
 # Built documentation
 docs/build/

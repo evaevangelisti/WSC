@@ -62,14 +62,6 @@ _SYNSET_RECORD = {
     "members": ["bank"],
 }
 
-_SUFFIXES = st.text(
-    alphabet=string.ascii_lowercase,
-    min_size=1,
-    max_size=6,
-).filter(
-    lambda suffix: suffix != "jsonl",
-)
-
 
 def _normalize_output(
     result: Result,
@@ -558,7 +550,43 @@ class TestParse:
 
 
 class TestCollect:
-    """Collecting the senses of a parsed dump into a file."""
+    """Collecting the senses of a parsed dump into an output directory."""
+
+    def test_writes_default_directory(
+        self,
+        workspace: Callable[[], Path],
+        cli: Callable[..., Result],
+        parse_dump: Callable[..., Path],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """An omitted output option creates all artifacts in collection."""
+        directory = workspace()
+        cache_dir = directory / "cache"
+        input_path = parse_dump(cache_dir, [])
+        monkeypatch.chdir(directory)
+
+        result = cli("collect", cache_dir=cache_dir)
+
+        assert result.exit_code == 0
+
+        output_dir = directory / "collection"
+        manifest = cast(
+            RawJson,
+            json.loads((output_dir / "manifest.json").read_text(encoding="utf-8")),
+        )
+        sources = cast(dict[str, RawJson], manifest["sources"])
+        settings = cast(RawJson, manifest["settings"])
+
+        assert {path.name for path in output_dir.iterdir()} == {
+            "senses.jsonl",
+            "report.json",
+            "report.md",
+            "manifest.json",
+        }
+        assert manifest["dump_date"] == "20260801"
+        assert sources["wiktextract"]["path"] == str(input_path.resolve())
+        assert sources["wiktextract"]["bytes"] == input_path.stat().st_size
+        assert settings["engine"] == "spacy"
 
     @given(st.lists(raw_entries(), max_size=4))
     def test_exports_collected_entries(
@@ -574,8 +602,9 @@ class TestCollect:
         cache_dir = directory / "cache"
         _ = parse_dump(cache_dir, entries)
 
-        output_path = directory / "senses.jsonl"
-        result = cli("collect", str(output_path), cache_dir=cache_dir)
+        output_dir = directory / "collection"
+        output_path = output_dir / "senses.jsonl"
+        result = cli("collect", "--output-dir", str(output_dir), cache_dir=cache_dir)
 
         assert result.exit_code == 0
         assert [
@@ -602,14 +631,28 @@ class TestCollect:
         )
         asked = [argument for pos in allowed for argument in ("--pos", pos.value)]
 
-        output_path = directory / "senses.jsonl"
-        _ = cli("collect", str(output_path), *asked, cache_dir=cache_dir)
+        output_dir = directory / "collection"
+        output_path = output_dir / "senses.jsonl"
+        _ = cli("collect", "--output-dir", str(output_dir), *asked, cache_dir=cache_dir)
 
         codes = {pos.value for pos in allowed}
 
         assert [
             record["lemma"] for record in collected(output_path)
         ] == _collect_headwords(entries, codes)
+
+        report = cast(
+            RawJson,
+            json.loads((output_dir / "report.json").read_text(encoding="utf-8")),
+        )
+        manifest = cast(
+            RawJson,
+            json.loads((output_dir / "manifest.json").read_text(encoding="utf-8")),
+        )
+        settings = cast(RawJson, manifest["settings"])
+
+        assert set(cast(dict[str, int], report["entries"])) <= codes
+        assert settings["parts_of_speech"] == [part.value for part in allowed]
 
     @given(st.sampled_from(["--min-year", "--max-year"]), st.data())
     def test_orders_quotation_bounds(
@@ -645,8 +688,16 @@ class TestCollect:
 
         kept = newer if option == "--min-year" else older
 
-        output_path = directory / "senses.jsonl"
-        _ = cli("collect", str(output_path), option, str(kept), cache_dir=cache_dir)
+        output_dir = directory / "collection"
+        output_path = output_dir / "senses.jsonl"
+        _ = cli(
+            "collect",
+            "--output-dir",
+            str(output_dir),
+            option,
+            str(kept),
+            cache_dir=cache_dir,
+        )
 
         (record,) = collected(output_path)
 
@@ -671,10 +722,12 @@ class TestCollect:
         _ = parse_dump(cache_dir, entries, date=date)
         _ = parse_dump(cache_dir, [], date=newer)
 
-        output_path = directory / "senses.jsonl"
+        output_dir = directory / "collection"
+        output_path = output_dir / "senses.jsonl"
         _ = cli(
             "collect",
-            str(output_path),
+            "--output-dir",
+            str(output_dir),
             "--dump-date",
             date,
             cache_dir=cache_dir,
@@ -683,6 +736,13 @@ class TestCollect:
         assert [
             record["lemma"] for record in collected(output_path)
         ] == _collect_headwords(entries)
+
+        manifest = cast(
+            RawJson,
+            json.loads((output_dir / "manifest.json").read_text(encoding="utf-8")),
+        )
+
+        assert manifest["dump_date"] == date
 
     @given(dump_dates, st.lists(raw_entries(), min_size=1, max_size=3))
     def test_reads_environment_settings(
@@ -699,10 +759,12 @@ class TestCollect:
         cache_dir = directory / "cache"
         _ = parse_dump(cache_dir, entries, date)
 
-        output_path = directory / "senses.jsonl"
+        output_dir = directory / "collection"
+        output_path = output_dir / "senses.jsonl"
         result = cli(
             "collect",
-            str(output_path),
+            "--output-dir",
+            str(output_dir),
             cache_dir=cache_dir,
             env={"WSC_DUMP_DATE": date},
         )
@@ -723,7 +785,12 @@ class TestCollect:
         cache_dir = directory / "cache"
         _ = fetch_dump(cache_dir)
 
-        result = cli("collect", str(directory / "senses.jsonl"), cache_dir=cache_dir)
+        result = cli(
+            "collect",
+            "--output-dir",
+            str(directory / "collection"),
+            cache_dir=cache_dir,
+        )
 
         assert result.exit_code != 0
         assert "parse it first" in _normalize_output(result)
@@ -738,33 +805,13 @@ class TestCollect:
 
         result = cli(
             "collect",
-            str(directory / "senses.jsonl"),
+            "--output-dir",
+            str(directory / "collection"),
             cache_dir=directory / "cache",
         )
 
         assert result.exit_code != 0
         assert "fetch one first" in _normalize_output(result)
-
-    @given(_SUFFIXES)
-    def test_rejects_unsupported_format(
-        self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        parse_dump: Callable[..., Path],
-        suffix: str,
-    ) -> None:
-        """The suffix picks the format, so an unknown one is refused."""
-        directory = workspace()
-        cache_dir = directory / "cache"
-        _ = parse_dump(cache_dir, [])
-
-        result = cli(
-            "collect",
-            str(directory / f"senses.{suffix}"),
-            cache_dir=cache_dir,
-        )
-
-        assert result.exit_code != 0
 
 
 class TestHelp:

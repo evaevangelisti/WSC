@@ -23,7 +23,7 @@ def read_prompts(
         path: TOML file containing task templates.
 
     Returns:
-        Prompt templates shared by inference and experiments.
+        Prompt templates used by alignment inference.
     """
     with path.open("rb") as stream:
         records = cast(dict[str, object], tomllib.load(stream))

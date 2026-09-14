@@ -11,6 +11,7 @@ from .alignment import (
     PROMPTS_PATH,
     TRANSLATION_RELATION,
 )
+from .collection import COLLECTION_DIR, COLLECTION_FILES
 from .extraction import (
     BATCH_SIZE,
     COMPRESSION_LEVEL,
@@ -39,6 +40,8 @@ __all__ = [
     "ALIGNMENT_TEMPERATURE",
     "BATCH_SIZE",
     "CHUNK_SIZE",
+    "COLLECTION_DIR",
+    "COLLECTION_FILES",
     "COMPRESSION_LEVEL",
     "DEFAULT_PROMPTS",
     "DUMP_INDEX_URL",

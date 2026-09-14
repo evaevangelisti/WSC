@@ -17,10 +17,14 @@ usage
 reference/models/index
 reference/upstream/index
 reference/extract/index
-reference/alignment
-reference/reading
+reference/collection/index
+reference/alignment/index
+reference/reading/index
 reference/export/index
-reference/constants
+reference/constants/index
 reference/identifiers
 reference/files
+reference/logging
+reference/errors
+reference/cli
 ```

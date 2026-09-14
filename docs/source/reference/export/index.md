@@ -8,6 +8,6 @@
 ```{toctree}
 :hidden:
 
-writers
+base
 formats/index
 ```

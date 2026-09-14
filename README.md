@@ -76,7 +76,7 @@ wsc parse
 
 ### collect
 
-Reads the senses into a file, one entry per headword and part of speech, the suffix picking the format.
+Collects senses and reports into a directory, with one JSONL entry per headword and part of speech.
 
 Wiktextract's bold ranges and [kwic](https://github.com/evaevangelisti/kwic) independently locate lemmas. Offsets record `bold`, `lemmatizer`, or both, preserving disagreements for review.
 
@@ -85,11 +85,12 @@ When lemmatization finds nothing, the listed forms are matched.
 `--gpu` needs CuPy, which kwic offers as an extra named after your CUDA release: `pip install "kwic[cuda13x]"`.
 
 ```sh
-wsc collect senses.jsonl
+wsc collect
 ```
 
 | Option | Default | |
 | --- | --- | --- |
+| `--output-dir` | `collection` | Directory for the collection and its reports |
 | `--dump-date` | `latest` | Dump to use, as `20260801` |
 | `--pos` | every part of speech | Parts of speech to keep; repeat to name several |
 | `--min-year` | no limit | Oldest quotation to keep |
@@ -105,6 +106,15 @@ wsc collect senses.jsonl
 | `spacy` | a transformer pipeline, the most accurate of the three | tens a second |
 | `stanza` | Stanza, whose parser finds a phrasal verb written apart | tens a second |
 | `lemminflect` | spaCy for the tags and LemmInflect for the lemmas | hundreds a second |
+
+Each collection contains four files:
+
+| File | Contents |
+| --- | --- |
+| `senses.jsonl` | Collected entries and their senses |
+| `report.json` | Numeric statistics and complete frequency distributions |
+| `report.md` | Readable tables describing coverage and offset agreement |
+| `manifest.json` | Resolved dump, source files, filters, runtime versions, and timestamps |
 
 ### wordnet
 
@@ -124,7 +134,7 @@ wsc wordnet
 Aligns collected senses with translations and WordNet synsets through offline [vLLM](https://vllm.ai/) inference.
 
 ```sh
-wsc align senses.jsonl aligned.jsonl --reasoning-parser openai_gptoss
+wsc align collection/senses.jsonl aligned.jsonl
 ```
 
 | Option | Default | |

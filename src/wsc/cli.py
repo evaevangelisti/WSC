@@ -16,12 +16,14 @@ from .alignment import (
 )
 from .alignment.inference import open_model
 from .alignment.provenance import build_metadata, cache_key
+from .collection import CollectionSettings, build_manifest, write_collection
 from .constants import (
     ALIGNMENT_MAXIMUM_TOKENS,
     ALIGNMENT_MODEL,
     ALIGNMENT_TEMPERATURE,
     BATCH_SIZE,
     CHUNK_SIZE,
+    COLLECTION_DIR,
     KAIKKI_URL,
     LANGUAGE_SECTION,
     PROCESSES,
@@ -218,13 +220,6 @@ def parse(
 
 @app.command()
 def collect(
-    output_path: Annotated[
-        Path,
-        typer.Argument(
-            metavar="output",
-            help="Where the senses go; the suffix picks the format.",
-        ),
-    ],
     dump_date: DumpDate = cache.LATEST,
     pos: Annotated[
         list[POS] | None,
@@ -277,8 +272,14 @@ def collect(
         ),
     ] = False,
     cache_dir: CacheDir = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(
+            help="Directory for the collected senses, reports, and manifest.",
+        ),
+    ] = COLLECTION_DIR,
 ) -> None:
-    """Collect the senses of a parsed dump into a file."""
+    """Collect senses, statistics, and provenance into an output directory."""
     try:
         date = cache.fetched_date(cache_dir, dump_date)
     except FileNotFoundError as error:
@@ -306,13 +307,26 @@ def collect(
         off_page_translations,
     )
 
-    writer: Writer[Lemma] = open_writer(output_path)
+    settings = CollectionSettings(
+        parts_of_speech=tuple(dict.fromkeys(pos or POS)),
+        minimum_year=minimum_year,
+        maximum_year=maximum_year,
+        engine=engine,
+        processes=processes,
+        batch_size=batch_size,
+        gpu=gpu,
+    )
 
-    with writer:
-        for lemma in extractor.extract(input_path):
-            writer.write(lemma)
+    manifest = build_manifest(
+        input_path,
+        off_page_translations_path if off_page_translations_path.exists() else None,
+        date,
+        settings,
+    )
 
-    _LOGGER.info("Collected %s", output_path)
+    write_collection(extractor.extract(input_path), output_dir, manifest)
+
+    _LOGGER.info("Collected %s", output_dir)
 
 
 @app.command()
