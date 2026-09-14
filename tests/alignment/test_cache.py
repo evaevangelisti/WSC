@@ -27,7 +27,7 @@ from .examples import build_decision, build_query
         (("s1", "t1"), ("s2", "t1")),
     ],
 )
-def test_cached_equivalences_require_unique_sources_and_synsets(
+def test_validates_cached_equivalences(
     tmp_path: Path,
     assignments: tuple[tuple[str, str], ...],
 ) -> None:
@@ -58,7 +58,7 @@ def test_cached_equivalences_require_unique_sources_and_synsets(
     task=st.sampled_from(AlignmentTask),
     abstain=st.booleans(),
 )
-def test_recorded_decisions_are_visible_before_commit_and_replay_exactly(
+def test_flushes_replayable_decisions(
     workspace: Callable[[], Path],
     reason: str,
     task: AlignmentTask,
@@ -120,7 +120,7 @@ def test_recorded_decisions_are_visible_before_commit_and_replay_exactly(
         ModelSettings("model", chat_template_options=(("enable_thinking", False),)),
     ],
 )
-def test_generation_settings_change_cache_identity(
+def test_fingerprints_generation_settings(
     tmp_path: Path,
     settings: ModelSettings,
 ) -> None:
@@ -133,7 +133,7 @@ def test_generation_settings_change_cache_identity(
     assert cache_key(original) != cache_key(changed)
 
 
-def test_failed_recording_preserves_completed_cache(
+def test_preserves_completed_cache(
     tmp_path: Path,
 ) -> None:
     """An interrupted run replaces neither completed decisions nor metadata."""

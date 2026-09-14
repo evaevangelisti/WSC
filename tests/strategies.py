@@ -45,7 +45,9 @@ texts = st.text(
     alphabet=st.characters(codec="utf-8", exclude_characters="\n"),
     min_size=1,
     max_size=60,
-).filter(lambda text: bool(text.strip()))
+).filter(
+    lambda text: bool(text.strip()),
+)
 """Single-line attestation text."""
 
 sentence_kinds = st.sampled_from(["example", "quotation"])
@@ -61,7 +63,7 @@ years = st.integers(min_value=1000, max_value=2099)
 """A year a reference may name, from the first century of printing to this one."""
 
 undated_references = st.text(alphabet=_UNDATED, min_size=1, max_size=20).filter(
-    lambda reference: bool(reference.strip())
+    lambda reference: bool(reference.strip()),
 )
 """A source naming no year, which is a quotation nothing can date."""
 
@@ -74,7 +76,9 @@ wordnet_versions = st.integers(min_value=1000, max_value=9999).map(str)
 dump_dates = st.dates(
     min_value=date(2001, 1, 1),
     max_value=date(2099, 12, 31),
-).map(lambda day: day.strftime("%Y%m%d"))
+).map(
+    lambda day: day.strftime("%Y%m%d"),
+)
 """The day a dump began, as the directory holding it is named."""
 
 parts_of_speech: st.SearchStrategy[POS] = st.sampled_from(POS)
@@ -90,7 +94,9 @@ unknown_pos_codes = st.text(
     alphabet=string.ascii_lowercase,
     min_size=1,
     max_size=6,
-).filter(lambda code: code not in {pos.value for pos in POS})
+).filter(
+    lambda code: code not in {pos.value for pos in POS},
+)
 """A part of speech Wiktionary describes and the collector does not keep."""
 
 
@@ -101,7 +107,9 @@ _WORD_OFFSET_SOURCES = st.lists(
     min_size=1,
     max_size=len(WordOffsetSource),
     unique=True,
-).map(tuple)
+).map(
+    tuple,
+)
 
 _WORD_OFFSETS = st.lists(
     st.builds(
@@ -110,7 +118,9 @@ _WORD_OFFSETS = st.lists(
         _WORD_OFFSET_SOURCES,
     ),
     max_size=3,
-).map(tuple)
+).map(
+    tuple,
+)
 
 _UNQUOTED: st.SearchStrategy[str | None] = st.none()
 
@@ -140,7 +150,7 @@ def references(
     return st.sampled_from(_REFERENCE_SHAPES).map(lambda shape: shape.format(year=year))
 
 
-def _dotted(
+def _join_words(
     parts: tuple[str, str, int],
 ) -> str:
     """
@@ -161,7 +171,9 @@ identifiers = st.tuples(
     words,
     pos_codes,
     st.integers(min_value=1, max_value=99),
-).map(_dotted)
+).map(
+    _join_words,
+)
 """An identifier of the shape an extraction writes."""
 
 
@@ -403,7 +415,7 @@ lemmas = parts_of_speech.flatmap(
         words,
         st.just(pos),
         st.lists(words, max_size=3).map(
-            lambda spellings: frozenset(f"{spelling}.{pos}" for spelling in spellings)
+            lambda spellings: frozenset(f"{spelling}.{pos}" for spelling in spellings),
         ),
         st.lists(senses, max_size=3),
         translations.map(
@@ -414,8 +426,8 @@ lemmas = parts_of_speech.flatmap(
                     languages,
                 )
                 for index, (gloss, languages) in enumerate(tables.items())
-            )
+            ),
         ),
-    )
+    ),
 )
 """One lemma, as an extraction hands it to a writer."""

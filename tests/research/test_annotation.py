@@ -85,17 +85,17 @@ def annotated_task(
                     },
                     {"from_name": "notes", "value": {"text": [notes] if notes else []}},
                 ],
-            }
+            },
         ],
     }
 
 
-def test_offset_samples_share_identities_but_preserve_engine_proposals(
+def test_preserves_engine_proposals(
     tmp_path: Path,
 ) -> None:
     """All engines receive identical sentences and independent repeat identities."""
-    data = tmp_path / "data"
-    data.mkdir()
+    input_directory = tmp_path / "data"
+    input_directory.mkdir()
 
     for position, export in enumerate(EXPORTS):
         records = [
@@ -116,9 +116,9 @@ def test_offset_samples_share_identities_but_preserve_engine_proposals(
                                 ]
                                 if position
                                 else [],
-                            }
+                            },
                         ],
-                    }
+                    },
                 ],
             }
             for index in range(130)
@@ -127,17 +127,19 @@ def test_offset_samples_share_identities_but_preserve_engine_proposals(
         if position == 2:
             records.reverse()
 
-        _ = (data / export).write_text(
-            "\n".join(json.dumps(record) for record in records), encoding="utf-8"
+        _ = (input_directory / export).write_text(
+            "\n".join(json.dumps(record) for record in records),
+            encoding="utf-8",
         )
 
-    output = tmp_path / "tasks"
-    build_offsets(data, output, 100, 31)
+    output_directory = tmp_path / "tasks"
+    build_offsets(input_directory, output_directory, 100, 31)
     tasks: list[list[dict[str, dict[str, object]]]] = [
-        read_json(output / f"{Path(export).stem}.json") for export in EXPORTS
+        read_json(output_directory / f"{Path(export).stem}.json") for export in EXPORTS
     ]
     repeats: list[list[dict[str, dict[str, object]]]] = [
-        read_json(output / f"{Path(export).stem}.second.json") for export in EXPORTS
+        read_json(output_directory / f"{Path(export).stem}.second.json")
+        for export in EXPORTS
     ]
 
     assert all(len(items) == 100 for items in tasks)
@@ -153,7 +155,7 @@ def test_offset_samples_share_identities_but_preserve_engine_proposals(
     assert tasks[1][0]["data"]["marked"] == "a <b>&lt;word&gt;</b> example"
 
 
-def test_frozen_alignment_tasks_have_no_model_predictions(
+def test_excludes_model_predictions(
     tmp_path: Path,
 ) -> None:
     """One shared sample supplies one hundred primary and ten secondary tasks."""
@@ -161,7 +163,7 @@ def test_frozen_alignment_tasks_have_no_model_predictions(
     write_tasks(queries, tmp_path, 4)
     tasks: list[dict[str, dict[str, object]]] = read_json(tmp_path / "tasks.json")
     repeats: list[dict[str, dict[str, object]]] = read_json(
-        tmp_path / "tasks.second.json"
+        tmp_path / "tasks.second.json",
     )
     sample: dict[str, dict[str, str]] = read_json(tmp_path / "sample.json")
 
@@ -172,7 +174,7 @@ def test_frozen_alignment_tasks_have_no_model_predictions(
     assert set(sample["splits"].values()) == {"development", "test"}
 
 
-def test_annotation_import_deduplicates_agreement_and_preserves_notes(
+def test_consolidates_repeated_annotations(
     tmp_path: Path,
 ) -> None:
     """Repeated readings contribute to agreement statistics."""
@@ -182,12 +184,20 @@ def test_annotation_import_deduplicates_agreement_and_preserves_notes(
         json.dumps(
             [
                 annotated_task(
-                    sample, [("s1", "t1", "translation")], "matched", 1, "first note"
+                    sample,
+                    [("s1", "t1", "translation")],
+                    "matched",
+                    1,
+                    "first note",
                 ),
                 annotated_task(
-                    sample, [("s1", "t1", "translation")], "matched", 2, "second note"
+                    sample,
+                    [("s1", "t1", "translation")],
+                    "matched",
+                    2,
+                    "second note",
                 ),
-            ]
+            ],
         ),
         encoding="utf-8",
     )
@@ -198,10 +208,14 @@ def test_annotation_import_deduplicates_agreement_and_preserves_notes(
     assert gold.judgements[0].notes == ("first note", "second note")
 
 
-def test_conflicts_require_explicit_adjudication() -> None:
+def test_requires_explicit_adjudication() -> None:
     """Disagreement is neither a negative label nor a majority vote."""
     first = Judgement(
-        query(), "1", "matched", frozenset({("s1", "t1", "translation")}), ()
+        query(),
+        "1",
+        "matched",
+        frozenset({("s1", "t1", "translation")}),
+        (),
     )
     second = Judgement(query(), "2", "no_match", frozenset(), ())
     unresolved = consolidate([first, second])
@@ -223,7 +237,7 @@ def test_conflicts_require_explicit_adjudication() -> None:
         ([("unknown", "t1", "translation")], "matched"),
     ],
 )
-def test_invalid_manual_references_are_rejected(
+def test_rejects_invalid_annotations(
     tmp_path: Path,
     links: list[tuple[str, str, str]],
     status: str,
@@ -231,16 +245,18 @@ def test_invalid_manual_references_are_rejected(
     """Contradictory manual judgements cannot enter gold."""
     path = tmp_path / "labels.json"
     _ = path.write_text(
-        json.dumps([annotated_task(query(), links, status)]), encoding="utf-8"
+        json.dumps([annotated_task(query(), links, status)]),
+        encoding="utf-8",
     )
 
     with pytest.raises(ValueError, match="entry"):
         _ = read_judgements([path])
 
 
-def test_shared_sampling_and_splits_are_reproducible() -> None:
+def test_reproduces_grouped_sampling() -> None:
     """Sampling is deterministic and headword groups cannot leak across splits."""
     assert sample_items(range(1000), 100, 41) == sample_items(range(1000), 100, 41)
+
     queries = [query(f"entry{index}") for index in range(20)]
     extra = AlignmentQuery(
         AlignmentTask.WORDNET,
@@ -257,7 +273,7 @@ def test_shared_sampling_and_splits_are_reproducible() -> None:
 
 
 @pytest.mark.parametrize("task", list(AlignmentTask))
-def test_removed_candidate_status_cannot_enter_gold(
+def test_rejects_removed_status(
     tmp_path: Path,
     task: AlignmentTask,
 ) -> None:

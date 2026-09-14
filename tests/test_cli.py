@@ -66,10 +66,12 @@ _SUFFIXES = st.text(
     alphabet=string.ascii_lowercase,
     min_size=1,
     max_size=6,
-).filter(lambda suffix: suffix != "jsonl")
+).filter(
+    lambda suffix: suffix != "jsonl",
+)
 
 
-def _said(
+def _normalize_output(
     result: Result,
 ) -> str:
     """
@@ -84,7 +86,7 @@ def _said(
     return " ".join(result.output.replace("│", " ").split())
 
 
-def _years_of(
+def _read_years(
     record: RawJson,
 ) -> list[object]:
     """
@@ -107,7 +109,7 @@ def _years_of(
 _DUMP_BODY = bz2.compress(dump().encode())
 
 
-def _gathered(
+def _collect_headwords(
     entries: list[RawJson],
     codes: set[str] | None = None,
 ) -> list[object]:
@@ -134,7 +136,7 @@ def _gathered(
 
 
 @contextmanager
-def _wikimedia(
+def _serve_wikimedia(
     date: str,
 ) -> Generator[responses.RequestsMock]:
     """
@@ -158,7 +160,7 @@ def _wikimedia(
 
 
 @contextmanager
-def _en_word_net(
+def _serve_wordnet(
     version: str,
 ) -> Generator[responses.RequestsMock]:
     """
@@ -293,7 +295,7 @@ class TestFetch:
     """Downloading a dump, and settling which one that is."""
 
     @given(dump_dates)
-    def test_resolves_latest_against_wikimedia(
+    def test_resolves_latest_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -302,17 +304,17 @@ class TestFetch:
         """Latest is the newest finished dump, and only Wikimedia knows which."""
         cache_dir = workspace() / "cache"
 
-        with _wikimedia(date):
+        with _serve_wikimedia(date):
             result = cli("fetch", cache_dir=cache_dir)
 
         assert result.exit_code == 0
-        assert f"Resolved latest to {date}" in _said(result)
+        assert f"Resolved latest to {date}" in _normalize_output(result)
         assert (
             cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
         ).read_bytes() == _DUMP_BODY
 
     @given(dump_dates)
-    def test_fetches_the_dump_asked_for(
+    def test_fetches_selected_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -321,7 +323,7 @@ class TestFetch:
         """A dump named on the command line is fetched without asking the index."""
         cache_dir = workspace() / "cache"
 
-        with _wikimedia(date) as server:
+        with _serve_wikimedia(date) as server:
             result = cli(
                 "fetch",
                 "--dump-date",
@@ -330,13 +332,13 @@ class TestFetch:
             )
 
             assert [call.request.url for call in server.calls] == [
-                DUMP_URL.format(date=date)
+                DUMP_URL.format(date=date),
             ]
 
         assert result.exit_code == 0
 
     @given(dump_dates)
-    def test_names_the_collector_and_its_version_to_wikimedia(
+    def test_sends_package_identity(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -346,7 +348,7 @@ class TestFetch:
         cache_dir = workspace() / "cache"
         expected = USER_AGENT.format(version=version("wsc"))
 
-        with _wikimedia(date) as server:
+        with _serve_wikimedia(date) as server:
             _ = cli("fetch", cache_dir=cache_dir)
 
             assert server.calls
@@ -355,7 +357,7 @@ class TestFetch:
             )
 
     @given(dump_dates)
-    def test_stops_when_what_it_would_fetch_is_already_there(
+    def test_reuses_cached_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -377,14 +379,14 @@ class TestFetch:
             assert not server.calls
 
         assert result.exit_code == 0
-        assert "Already fetched" in _said(result)
+        assert "Already fetched" in _normalize_output(result)
 
 
 class TestParse:
     """What a parse settles, wiktextract standing in for itself."""
 
     @given(dump_dates, st.integers(min_value=1, max_value=16))
-    def test_points_wiktextract_at_what_the_command_settled(
+    def test_forwards_parser_settings(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -415,12 +417,12 @@ class TestParse:
                 dump_dir / cache.WIKTEXTRACT_NAME,
                 processes,
                 None,
-            )
+            ),
         ]
-        assert "Parsed" in _said(result)
+        assert "Parsed" in _normalize_output(result)
 
     @given(st.text(alphabet=string.ascii_letters, min_size=1, max_size=8))
-    def test_hands_over_the_database_it_was_told_to_keep(
+    def test_forwards_database_path(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -447,7 +449,7 @@ class TestParse:
         assert calls[0][3] == database_path
 
     @given(st.lists(dump_dates, min_size=2, max_size=4, unique=True), st.data())
-    def test_parses_the_dump_asked_for(
+    def test_parses_selected_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -470,7 +472,7 @@ class TestParse:
         assert calls[0][0] == cache.dump_dir(cache_dir, asked) / cache.DUMP_NAME
 
     @given(st.integers(min_value=1, max_value=10000))
-    def test_reports_the_lines_set_aside(
+    def test_reports_discarded_lines(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -486,9 +488,11 @@ class TestParse:
 
         result = cli("parse", cache_dir=cache_dir)
 
-        assert f"WARNING wsc.cli: Skipped {skipped_lines} lines" in _said(result)
+        assert f"WARNING wsc.cli: Skipped {skipped_lines} lines" in _normalize_output(
+            result,
+        )
 
-    def test_says_nothing_when_no_line_was_set_aside(
+    def test_omits_empty_warnings(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -503,10 +507,10 @@ class TestParse:
 
         result = cli("parse", cache_dir=cache_dir)
 
-        assert "Set aside" not in _said(result)
+        assert "Set aside" not in _normalize_output(result)
 
     @given(st.lists(raw_entries(), max_size=3))
-    def test_stops_when_the_dump_was_already_parsed(
+    def test_reuses_parsed_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -520,9 +524,9 @@ class TestParse:
         result = cli("parse", cache_dir=cache_dir)
 
         assert result.exit_code == 0
-        assert "Already parsed" in _said(result)
+        assert "Already parsed" in _normalize_output(result)
 
-    def test_refuses_when_the_dump_was_not_fetched(
+    def test_rejects_unfetched_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -534,10 +538,10 @@ class TestParse:
         )
 
         assert result.exit_code != 0
-        assert "fetch one first" in _said(result)
+        assert "fetch one first" in _normalize_output(result)
 
     @given(dump_dates)
-    def test_refuses_when_the_dump_is_gone_from_its_directory(
+    def test_rejects_missing_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -550,14 +554,14 @@ class TestParse:
         result = cli("parse", cache_dir=cache_dir)
 
         assert result.exit_code != 0
-        assert "fetch it first" in _said(result)
+        assert "fetch it first" in _normalize_output(result)
 
 
 class TestCollect:
     """Collecting the senses of a parsed dump into a file."""
 
     @given(st.lists(raw_entries(), max_size=4))
-    def test_writes_what_the_extractor_read(
+    def test_exports_collected_entries(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -574,12 +578,12 @@ class TestCollect:
         result = cli("collect", str(output_path), cache_dir=cache_dir)
 
         assert result.exit_code == 0
-        assert [record["lemma"] for record in collected(output_path)] == _gathered(
-            entries
-        )
+        assert [
+            record["lemma"] for record in collected(output_path)
+        ] == _collect_headwords(entries)
 
     @given(st.lists(raw_entries(), max_size=4), st.data())
-    def test_keeps_only_the_parts_of_speech_asked_for(
+    def test_filters_selected_categories(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -594,7 +598,7 @@ class TestCollect:
         _ = parse_dump(cache_dir, entries)
 
         allowed = data.draw(
-            st.lists(parts_of_speech, min_size=1, max_size=3, unique=True)
+            st.lists(parts_of_speech, min_size=1, max_size=3, unique=True),
         )
         asked = [argument for pos in allowed for argument in ("--pos", pos.value)]
 
@@ -603,12 +607,12 @@ class TestCollect:
 
         codes = {pos.value for pos in allowed}
 
-        assert [record["lemma"] for record in collected(output_path)] == _gathered(
-            entries, codes
-        )
+        assert [
+            record["lemma"] for record in collected(output_path)
+        ] == _collect_headwords(entries, codes)
 
     @given(st.sampled_from(["--min-year", "--max-year"]), st.data())
-    def test_bounds_the_quotations_the_way_round_they_were_named(
+    def test_orders_quotation_bounds(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -631,8 +635,8 @@ class TestCollect:
                     raw_senses(examples=st.just(dated)),
                     min_size=1,
                     max_size=1,
-                )
-            )
+                ),
+            ),
         )
 
         directory = workspace()
@@ -646,10 +650,10 @@ class TestCollect:
 
         (record,) = collected(output_path)
 
-        assert _years_of(record) == [kept]
+        assert _read_years(record) == [kept]
 
     @given(st.lists(raw_entries(), max_size=3), dump_dates, st.data())
-    def test_collects_the_dump_asked_for(
+    def test_collects_selected_dump(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -676,12 +680,12 @@ class TestCollect:
             cache_dir=cache_dir,
         )
 
-        assert [record["lemma"] for record in collected(output_path)] == _gathered(
-            entries
-        )
+        assert [
+            record["lemma"] for record in collected(output_path)
+        ] == _collect_headwords(entries)
 
     @given(dump_dates, st.lists(raw_entries(), min_size=1, max_size=3))
-    def test_takes_its_settings_from_the_environment(
+    def test_reads_environment_settings(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -704,11 +708,11 @@ class TestCollect:
         )
 
         assert result.exit_code == 0
-        assert [record["lemma"] for record in collected(output_path)] == _gathered(
-            entries
-        )
+        assert [
+            record["lemma"] for record in collected(output_path)
+        ] == _collect_headwords(entries)
 
-    def test_refuses_when_nothing_was_parsed(
+    def test_rejects_missing_extraction(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -722,9 +726,9 @@ class TestCollect:
         result = cli("collect", str(directory / "senses.jsonl"), cache_dir=cache_dir)
 
         assert result.exit_code != 0
-        assert "parse it first" in _said(result)
+        assert "parse it first" in _normalize_output(result)
 
-    def test_refuses_when_nothing_was_fetched(
+    def test_rejects_empty_cache(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -739,10 +743,10 @@ class TestCollect:
         )
 
         assert result.exit_code != 0
-        assert "fetch one first" in _said(result)
+        assert "fetch one first" in _normalize_output(result)
 
     @given(_SUFFIXES)
-    def test_refuses_a_format_it_cannot_write(
+    def test_rejects_unsupported_format(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -766,20 +770,20 @@ class TestCollect:
 class TestHelp:
     """What the command line says about itself."""
 
-    def test_says_where_the_cache_goes_by_default(
+    def test_describes_default_cache(
         self,
     ) -> None:
         """None is not an answer a reader can act on, so the help says what it means."""
         result = CliRunner().invoke(app, ["fetch", "--help"])
 
-        assert "cache directory" in _said(result)
+        assert "cache directory" in _normalize_output(result)
 
 
 class TestWordNet:
     """Downloading the wordnet, reading it, and settling which edition that is."""
 
     @given(wordnet_versions)
-    def test_resolves_latest_against_the_index(
+    def test_resolves_latest_edition(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -788,15 +792,15 @@ class TestWordNet:
         """Editions come out yearly, and only the index says which is the newest."""
         cache_dir = workspace() / "cache"
 
-        with _en_word_net(edition):
+        with _serve_wordnet(edition):
             result = cli("wordnet", cache_dir=cache_dir)
 
         assert result.exit_code == 0
-        assert f"Resolved latest to {edition}" in _said(result)
+        assert f"Resolved latest to {edition}" in _normalize_output(result)
         assert (cache.wordnet_dir(cache_dir, edition) / cache.WORDNET_NAME).exists()
 
     @given(wordnet_versions)
-    def test_fetches_the_edition_asked_for(
+    def test_fetches_selected_edition(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -805,7 +809,7 @@ class TestWordNet:
         """An edition named on the command line is fetched without asking the index."""
         cache_dir = workspace() / "cache"
 
-        with _en_word_net(edition) as server:
+        with _serve_wordnet(edition) as server:
             result = cli(
                 "wordnet",
                 "--edition",
@@ -814,15 +818,15 @@ class TestWordNet:
             )
 
             assert [call.request.url for call in server.calls] == [
-                WORDNET_URL.format(version=edition)
+                WORDNET_URL.format(version=edition),
             ]
 
         assert result.exit_code == 0
-        assert "Resolved latest" not in _said(result)
+        assert "Resolved latest" not in _normalize_output(result)
         assert (cache.wordnet_dir(cache_dir, edition) / cache.WORDNET_NAME).exists()
 
     @given(wordnet_versions)
-    def test_takes_its_edition_from_the_environment(
+    def test_reads_environment_edition(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -831,7 +835,7 @@ class TestWordNet:
         """An edition shared with align may come from the environment."""
         cache_dir = workspace() / "cache"
 
-        with _en_word_net(edition) as server:
+        with _serve_wordnet(edition) as server:
             result = cli(
                 "wordnet",
                 cache_dir=cache_dir,
@@ -839,13 +843,13 @@ class TestWordNet:
             )
 
             assert [call.request.url for call in server.calls] == [
-                WORDNET_URL.format(version=edition)
+                WORDNET_URL.format(version=edition),
             ]
 
         assert result.exit_code == 0
 
     @given(wordnet_versions)
-    def test_reads_the_synsets_off_what_it_fetched(
+    def test_extracts_downloaded_synsets(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -854,7 +858,7 @@ class TestWordNet:
         """The archive is of no use to an alignment; the synsets in it are."""
         cache_dir = workspace() / "cache"
 
-        with _en_word_net(edition):
+        with _serve_wordnet(edition):
             result = cli("wordnet", "--edition", edition, cache_dir=cache_dir)
 
         synsets_path = cache.wordnet_dir(cache_dir, edition) / cache.SYNSETS_NAME
@@ -866,7 +870,7 @@ class TestWordNet:
         ] == [_SYNSET_RECORD]
 
     @given(wordnet_versions)
-    def test_reads_a_wordnet_fetched_before(
+    def test_extracts_cached_wordnet(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -885,14 +889,14 @@ class TestWordNet:
         synsets_path = cache.wordnet_dir(cache_dir, edition) / cache.SYNSETS_NAME
 
         assert result.exit_code == 0
-        assert "Already fetched" in _said(result)
+        assert "Already fetched" in _normalize_output(result)
         assert [
             json.loads(line)
             for line in synsets_path.read_text(encoding="utf-8").splitlines()
         ] == [_SYNSET_RECORD]
 
     @given(wordnet_versions)
-    def test_names_the_collector_and_its_version(
+    def test_sends_package_identity(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -902,7 +906,7 @@ class TestWordNet:
         cache_dir = workspace() / "cache"
         expected = USER_AGENT.format(version=version("wsc"))
 
-        with _en_word_net(edition) as server:
+        with _serve_wordnet(edition) as server:
             _ = cli("wordnet", cache_dir=cache_dir)
 
             assert server.calls
@@ -911,7 +915,7 @@ class TestWordNet:
             )
 
     @given(wordnet_versions)
-    def test_stops_when_what_it_would_make_is_already_there(
+    def test_reuses_cached_synsets(
         self,
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
@@ -928,5 +932,5 @@ class TestWordNet:
             assert not server.calls
 
         assert result.exit_code == 0
-        assert "Already read" in _said(result)
+        assert "Already read" in _normalize_output(result)
         assert synsets_path.read_text(encoding="utf-8") == "{}\n"

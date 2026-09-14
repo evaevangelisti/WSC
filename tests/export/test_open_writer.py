@@ -23,12 +23,12 @@ _CASES = st.lists(st.booleans(), min_size=5, max_size=5).map(
         "".join(
             letter.upper() if capital else letter
             for letter, capital in zip("jsonl", capitals, strict=True)
-        )
-    )
+        ),
+    ),
 )
 
 _UNKNOWN = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=6).filter(
-    lambda suffix: f".{suffix}" not in _KNOWN
+    lambda suffix: f".{suffix}" not in _KNOWN,
 )
 
 
@@ -36,7 +36,7 @@ class TestOpenWriter:
     """Picking a format off the suffix of the path."""
 
     @pytest.mark.parametrize("suffix", _KNOWN)
-    def test_every_format_the_collector_offers_opens_a_writer(
+    def test_opens_supported_formats(
         self,
         workspace: Callable[[], Path],
         suffix: str,
@@ -47,7 +47,7 @@ class TestOpenWriter:
         assert isinstance(writer, Writer)
 
     @given(_CASES)
-    def test_reads_the_suffix_whatever_its_case(
+    def test_accepts_mixed_case(
         self,
         workspace: Callable[[], Path],
         suffix: str,
@@ -58,7 +58,7 @@ class TestOpenWriter:
         assert isinstance(writer, Writer)
 
     @pytest.mark.parametrize("suffix", _KNOWN)
-    def test_opens_nothing_yet(
+    def test_defers_file_creation(
         self,
         workspace: Callable[[], Path],
         suffix: str,
@@ -71,7 +71,7 @@ class TestOpenWriter:
         assert list(directory.iterdir()) == []
 
     @given(_UNKNOWN)
-    def test_refuses_a_suffix_it_does_not_know(
+    def test_rejects_unknown_suffix(
         self,
         workspace: Callable[[], Path],
         suffix: str,
@@ -83,7 +83,7 @@ class TestOpenWriter:
         assert suffix in str(refusal.value)
         assert all(known in str(refusal.value) for known in _KNOWN)
 
-    def test_refuses_a_path_with_no_suffix_at_all(
+    def test_rejects_missing_suffix(
         self,
         workspace: Callable[[], Path],
     ) -> None:

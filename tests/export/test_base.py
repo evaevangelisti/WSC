@@ -78,7 +78,7 @@ def _write(
             writer.write(lemma)
 
 
-def _write_then_fail(
+def _interrupt_writing(
     writer: Writer[Lemma],
     written: Iterable[Lemma],
 ) -> None:
@@ -103,7 +103,7 @@ class TestWriter:
     """Writing through a .part file, so a run cut short leaves nothing."""
 
     @given(_DIRECTORIES, _WRITTEN)
-    def test_creates_the_parent_directory(
+    def test_creates_parent_directory(
         self,
         workspace: Callable[[], Path],
         directories: list[str],
@@ -119,7 +119,7 @@ class TestWriter:
         assert output_path.exists()
 
     @given(_WRITTEN)
-    def test_holds_output_back_until_the_block_is_left(
+    def test_defers_output_publication(
         self,
         workspace: Callable[[], Path],
         written: list[Lemma],
@@ -136,7 +136,7 @@ class TestWriter:
         assert output_path.exists()
 
     @given(_WRITTEN)
-    def test_leaves_no_partial_file_behind(
+    def test_removes_partial_output(
         self,
         workspace: Callable[[], Path],
         written: list[Lemma],
@@ -152,7 +152,7 @@ class TestWriter:
         assert list(directory.iterdir()) == [output_path]
 
     @given(_WRITTEN)
-    def test_writes_nothing_when_the_block_raises(
+    def test_discards_failed_output(
         self,
         workspace: Callable[[], Path],
         written: list[Lemma],
@@ -161,12 +161,12 @@ class TestWriter:
         directory = workspace()
 
         with pytest.raises(RuntimeError, match="something went wrong"):
-            _write_then_fail(_open(directory / "senses.jsonl"), written)
+            _interrupt_writing(_open(directory / "senses.jsonl"), written)
 
         assert list(directory.iterdir()) == []
 
     @given(_WRITTEN)
-    def test_lets_go_of_the_file_however_the_block_ended(
+    def test_closes_output_stream(
         self,
         workspace: Callable[[], Path],
         written: list[Lemma],
@@ -175,13 +175,13 @@ class TestWriter:
         writer = _open(workspace() / "senses.jsonl")
 
         with pytest.raises(RuntimeError, match="something went wrong"):
-            _write_then_fail(writer, written)
+            _interrupt_writing(writer, written)
 
         with pytest.raises(RuntimeError, match="context manager"):
             writer.write(Lemma("bank.noun.1", "bank", POS.NOUN))
 
     @given(_WRITTEN)
-    def test_writes_nothing_when_closing_fails(
+    def test_discards_unflushed_output(
         self,
         workspace: Callable[[], Path],
         written: list[Lemma],

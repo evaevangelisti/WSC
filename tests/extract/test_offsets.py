@@ -33,7 +33,7 @@ class TestQueries:
     """What one entry is looked for by."""
 
     @given(words, _PARTS_OF_SPEECH, _FORMS)
-    def test_carries_the_headword_and_every_form_collected(
+    def test_preserves_query_forms(
         self,
         headword: str,
         pos: POS,
@@ -46,7 +46,7 @@ class TestQueries:
         assert query.forms == forms
 
     @given(words, _PARTS_OF_SPEECH, _FORMS)
-    def test_names_the_part_of_speech_in_the_tagset_engines_report(
+    def test_maps_engine_categories(
         self,
         headword: str,
         pos: POS,
@@ -60,7 +60,7 @@ class TestSearches:
     """What comes back for a batch of sentences."""
 
     @given(st.lists(words, max_size=6))
-    def test_answers_every_sentence_it_was_handed(
+    def test_returns_sentence_offsets(
         self,
         locator: Locator,
         headwords: list[str],
@@ -74,7 +74,7 @@ class TestSearches:
         assert len(list(find_word_offsets(locator, searches))) == len(searches)
 
     @given(st.lists(words, min_size=1, max_size=6))
-    def test_reads_each_sentence_for_its_own_lemma(
+    def test_isolates_lemma_queries(
         self,
         locator: Locator,
         headwords: list[str],
@@ -85,16 +85,16 @@ class TestSearches:
             for headword in headwords
         ]
 
-        found = list(find_word_offsets(locator, searches))
+        offsets = list(find_word_offsets(locator, searches))
 
         assert all(
             text[start:end].casefold() == query.lemma.casefold()
-            for (text, query), word_offsets in zip(searches, found, strict=True)
+            for (text, query), word_offsets in zip(searches, offsets, strict=True)
             for start, end in word_offsets
         )
 
     @given(words)
-    def test_reads_leftmost_first_and_never_twice_over(
+    def test_orders_unique_offsets(
         self,
         locator: Locator,
         headword: str,
@@ -102,20 +102,20 @@ class TestSearches:
         """A sentence may attest the lemma more than once, and each occurrence once."""
         text = f"{headword} and {headword} again {headword}"
 
-        (found,) = find_word_offsets(
+        (offsets,) = find_word_offsets(
             locator,
             [(text, build_query(headword, POS.NOUN, frozenset({headword})))],
         )
 
-        assert all(start < end for start, end in found)
-        assert all(before[1] <= after[0] for before, after in pairwise(found))
+        assert all(start < end for start, end in offsets)
+        assert all(before[1] <= after[0] for before, after in pairwise(offsets))
 
 
 class TestFallback:
     """Matching the listed forms where the reading found nothing."""
 
     @given(words)
-    def test_matches_a_form_the_reading_passed_over(
+    def test_matches_unrecognized_forms(
         self,
         locator: Locator,
         headword: str,
@@ -123,15 +123,15 @@ class TestFallback:
         """The engine reads every word as a noun, so a verb is never read off."""
         text = f"1 {headword} 2"
 
-        (found,) = find_word_offsets(
+        (offsets,) = find_word_offsets(
             locator,
             [(text, build_query(headword, POS.VERB, frozenset({headword})))],
         )
 
-        assert found == ((2, 2 + len(headword)),)
+        assert offsets == ((2, 2 + len(headword)),)
 
     @given(st.data())
-    def test_hands_back_nothing_where_neither_finds_it(
+    def test_returns_empty_matches(
         self,
         locator: Locator,
         data: st.DataObject,
@@ -140,31 +140,37 @@ class TestFallback:
         text = data.draw(st.text(alphabet="123 ", max_size=20))
         headword = data.draw(words)
 
-        (found,) = find_word_offsets(
+        (offsets,) = find_word_offsets(
             locator,
             [(text, build_query(headword, POS.VERB, frozenset({headword})))],
         )
 
-        assert found == ()
+        assert offsets == ()
 
     @given(st.data())
-    def test_falls_back_on_one_sentence_without_touching_the_next(
+    def test_isolates_sentence_fallback(
         self,
         locator: Locator,
         data: st.DataObject,
     ) -> None:
         """Each sentence is answered for itself, whichever found it."""
-        read = data.draw(words)
-        matched = data.draw(
-            words.filter(lambda word: word.casefold() != read.casefold())
+        recognized_word = data.draw(words)
+        fallback_word = data.draw(
+            words.filter(lambda word: word.casefold() != recognized_word.casefold()),
         )
 
         searches = [
-            (f"1 {read} 2", build_query(read, POS.NOUN, frozenset({read}))),
-            (f"1 {matched} 2", build_query(matched, POS.VERB, frozenset({matched}))),
+            (
+                f"1 {recognized_word} 2",
+                build_query(recognized_word, POS.NOUN, frozenset({recognized_word})),
+            ),
+            (
+                f"1 {fallback_word} 2",
+                build_query(fallback_word, POS.VERB, frozenset({fallback_word})),
+            ),
         ]
 
         assert list(find_word_offsets(locator, searches)) == [
-            ((2, 2 + len(read)),),
-            ((2, 2 + len(matched)),),
+            ((2, 2 + len(recognized_word)),),
+            ((2, 2 + len(fallback_word)),),
         ]

@@ -4,6 +4,7 @@ import gzip
 import string
 from collections.abc import Callable, Iterable
 from pathlib import Path
+from xml.etree import ElementTree
 
 import pytest
 from documents import lexical_entry, lexicon, synset
@@ -11,14 +12,16 @@ from hypothesis import given
 from hypothesis import strategies as st
 from strategies import parts_of_speech
 
+from wsc.export.formats.jsonl import JSONLWriter
 from wsc.extract import WordNetExtractor
 from wsc.models import POS, Synset
+from wsc.reading import read_synsets
 
 # WordNet satellite adjectives share the adjective part of speech.
 _POS_CODES = st.sampled_from(["n", "v", "a", "s", "r"])
 
 _UNKNOWN_POS_CODES = st.text(alphabet=string.ascii_lowercase, max_size=3).filter(
-    lambda code: code not in ("n", "v", "a", "s", "r")
+    lambda code: code not in ("n", "v", "a", "s", "r"),
 )
 
 _IDENTIFIERS = st.text(
@@ -36,8 +39,10 @@ _TEXTS = st.text(
     max_size=40,
 )
 
+_DEFINITIONS = _TEXTS.filter(lambda text: bool(text.strip()))
+
 _RELATION_TYPES = st.sampled_from(
-    ["hypernym", "hyponym", "mero_part", "similar", "also"]
+    ["hypernym", "hyponym", "mero_part", "similar", "also"],
 )
 
 _NO_MEMBERS: st.SearchStrategy[tuple[str, ...]] = st.just(())
@@ -64,7 +69,7 @@ def _synsets(
         identifier=draw(_IDENTIFIERS),
         pos=draw(pos_codes),
         members=draw(members),
-        definition=draw(_TEXTS),
+        definition=draw(_DEFINITIONS),
         ili=draw(_IDENTIFIERS),
         examples=draw(st.lists(_TEXTS, max_size=3)),
         relations=draw(
@@ -109,7 +114,7 @@ class TestOpening:
     """Reading the file however it was compressed."""
 
     @given(st.lists(_synsets(), max_size=3))
-    def test_reads_the_same_wordnet_whatever_the_suffix_names(
+    def test_reads_compressed_wordnet(
         self,
         extract: Callable[..., list[Synset]],
         elements: list[str],
@@ -124,7 +129,7 @@ class TestOpening:
 class TestSynsets:
     """What a synset carries over."""
 
-    def test_reads_what_the_alignment_will_need(
+    def test_preserves_synset_fields(
         self,
         extract: Callable[..., list[Synset]],
     ) -> None:
@@ -146,21 +151,21 @@ class TestSynsets:
                 ("bank",),
                 ("oewn-08419984-n",),
                 ("He went to the bank.",),
-            )
+            ),
         ]
 
     @given(st.data())
-    def test_spells_out_the_members_of_a_synset(
+    def test_resolves_synset_members(
         self,
         extract: Callable[..., list[Synset]],
         data: st.DataObject,
     ) -> None:
         """A synset names its members by entry, and an entry holds the word."""
         written_forms = data.draw(
-            st.dictionaries(_IDENTIFIERS, _TEXTS, min_size=1, max_size=4)
+            st.dictionaries(_IDENTIFIERS, _TEXTS, min_size=1, max_size=4),
         )
         members = data.draw(
-            st.lists(st.sampled_from(sorted(written_forms)), max_size=4)
+            st.lists(st.sampled_from(sorted(written_forms)), max_size=4),
         )
 
         elements = [
@@ -175,8 +180,8 @@ class TestSynsets:
             written_forms[member] for member in members
         )
 
-    @given(_TEXTS)
-    def test_strips_a_definition(
+    @given(_DEFINITIONS)
+    def test_strips_definition(
         self,
         extract: Callable[..., list[Synset]],
         definition: str,
@@ -186,12 +191,62 @@ class TestSynsets:
 
         assert extract(elements)[0].definition == definition.strip()
 
+    @given(
+        st.dictionaries(
+            st.sampled_from(["id", "ili", "Definition"]),
+            st.none() | st.text(alphabet=" \t\n\r", max_size=4),
+            min_size=1,
+            max_size=3,
+        ),
+    )
+    def test_discards_incomplete_synsets(
+        self,
+        extract: Callable[..., list[Synset]],
+        workspace: Callable[[], Path],
+        missing_fields: dict[str, str | None],
+    ) -> None:
+        """Incomplete synsets are skipped while retained records remain readable."""
+        incomplete = ElementTree.fromstring(synset(members=()))
+
+        for field, value in missing_fields.items():
+            if field == "Definition":
+                definition = incomplete.find("Definition")
+
+                assert definition is not None
+
+                if value is None:
+                    incomplete.remove(definition)
+                else:
+                    definition.text = value
+            elif value is None:
+                del incomplete.attrib[field]
+            else:
+                incomplete.set(field, value)
+
+        records = extract(
+            [
+                synset(identifier="first", members=()),
+                ElementTree.tostring(incomplete, encoding="unicode"),
+                synset(identifier="last", members=()),
+            ],
+        )
+
+        assert [record.id for record in records] == ["first", "last"]
+
+        output_path = workspace() / "synsets.jsonl"
+
+        with JSONLWriter[Synset](output_path) as writer:
+            for record in records:
+                writer.write(record)
+
+        assert list(read_synsets(output_path)) == records
+
 
 class TestExamples:
     """The sentences a synset is given, which read alongside its definition."""
 
     @given(st.lists(_TEXTS, max_size=4))
-    def test_keeps_them_in_the_order_they_were_written(
+    def test_preserves_example_order(
         self,
         extract: Callable[..., list[Synset]],
         examples: list[str],
@@ -208,7 +263,7 @@ class TestHypernyms:
     """What a synset hangs under, which is how far apart two of them are."""
 
     @given(st.lists(st.tuples(_RELATION_TYPES, _IDENTIFIERS), max_size=5))
-    def test_keeps_every_synset_it_is_a_kind_of_and_nothing_else(
+    def test_selects_hypernym_relations(
         self,
         extract: Callable[..., list[Synset]],
         relations: list[tuple[str, str]],
@@ -234,7 +289,7 @@ class TestPartsOfSpeech:
             ("r", POS.ADVERB),
         ],
     )
-    def test_converts_every_code_wordnet_writes(
+    def test_maps_wordnet_categories(
         self,
         extract: Callable[..., list[Synset]],
         code: str,
@@ -244,7 +299,7 @@ class TestPartsOfSpeech:
         assert extract([synset(pos=code, members=())])[0].pos is expected
 
     @given(st.lists(_synsets(), max_size=4), st.data())
-    def test_keeps_only_the_parts_of_speech_asked_for(
+    def test_filters_selected_categories(
         self,
         extract: Callable[..., list[Synset]],
         elements: list[str],
@@ -258,7 +313,7 @@ class TestPartsOfSpeech:
         ]
 
     @given(st.lists(_synsets(), max_size=4), _synsets(pos_codes=_UNKNOWN_POS_CODES))
-    def test_reads_past_a_code_it_does_not_know(
+    def test_skips_unknown_categories(
         self,
         extract: Callable[..., list[Synset]],
         elements: list[str],

@@ -40,7 +40,7 @@ class TestDownload:
     """Retrieval through a .part file, so a failed attempt can be resumed."""
 
     @given(_BODIES, _CHUNK_SIZES)
-    def test_writes_the_file(
+    def test_writes_download(
         self,
         workspace: Callable[[], Path],
         body: bytes,
@@ -57,7 +57,7 @@ class TestDownload:
         assert output_path.read_bytes() == body
 
     @given(st.lists(st.sampled_from(["cache", "en", "20260801"]), min_size=1))
-    def test_creates_the_parent_directory(
+    def test_creates_parent_directory(
         self,
         workspace: Callable[[], Path],
         directories: list[str],
@@ -73,7 +73,7 @@ class TestDownload:
         assert output_path.exists()
 
     @given(_BODIES)
-    def test_leaves_no_partial_file_behind(
+    def test_removes_partial_output(
         self,
         workspace: Callable[[], Path],
         body: bytes,
@@ -88,7 +88,7 @@ class TestDownload:
 
         assert list(directory.iterdir()) == [directory / "dump.xml.bz2"]
 
-    def test_names_itself_to_the_server(
+    def test_sends_package_identity(
         self,
         workspace: Callable[[], Path],
     ) -> None:
@@ -100,7 +100,7 @@ class TestDownload:
 
             assert server.calls[0].request.headers["User-Agent"] == USER_AGENT
 
-    def test_asks_for_nothing_when_there_is_nothing_to_resume(
+    def test_omits_initial_range(
         self,
         workspace: Callable[[], Path],
     ) -> None:
@@ -113,7 +113,7 @@ class TestDownload:
             assert "Range" not in server.calls[0].request.headers
 
     @given(st.binary(min_size=1, max_size=32), _BODIES, _CHUNK_SIZES)
-    def test_resumes_from_what_a_failed_attempt_left(
+    def test_resumes_partial_download(
         self,
         workspace: Callable[[], Path],
         downloaded: bytes,
@@ -136,7 +136,7 @@ class TestDownload:
         assert output_path.read_bytes() == downloaded + rest
 
     @given(st.binary(min_size=1, max_size=32), _BODIES)
-    def test_starts_over_when_the_server_ignores_the_range(
+    def test_restarts_ignored_range(
         self,
         workspace: Callable[[], Path],
         downloaded: bytes,
@@ -154,7 +154,7 @@ class TestDownload:
         assert output_path.read_bytes() == body
 
     @given(st.binary(min_size=1, max_size=32), _REFUSALS)
-    def test_keeps_what_a_failed_attempt_had_downloaded(
+    def test_preserves_partial_download(
         self,
         workspace: Callable[[], Path],
         downloaded: bytes,
@@ -174,7 +174,7 @@ class TestDownload:
         assert partial_path.read_bytes() == downloaded
 
     @given(_REFUSALS)
-    def test_raises_when_the_server_refuses(
+    def test_propagates_http_errors(
         self,
         workspace: Callable[[], Path],
         status: int,

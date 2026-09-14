@@ -20,7 +20,7 @@ _EDITIONS = st.lists(wordnet_versions, min_size=1, max_size=4, unique=True)
 class TestUrl:
     """Where one edition of the wordnet sits."""
 
-    def test_names_the_file_after_the_edition(
+    def test_builds_edition_url(
         self,
     ) -> None:
         """The generated address includes the requested edition and filename."""
@@ -33,7 +33,7 @@ class TestLatestVersion:
     """The most recent edition of the wordnet."""
 
     @given(_EDITIONS)
-    def test_takes_the_newest_the_index_lists(
+    def test_selects_latest_edition(
         self,
         versions: list[str],
     ) -> None:
@@ -44,7 +44,7 @@ class TestLatestVersion:
             assert wordnet.latest_version(USER_AGENT, TIMEOUT) == max(versions)
 
     @given(_EDITIONS)
-    def test_names_the_collector_to_the_server(
+    def test_sends_package_identity(
         self,
         versions: list[str],
     ) -> None:
@@ -56,7 +56,7 @@ class TestLatestVersion:
 
             assert server.calls[0].request.headers["User-Agent"] == USER_AGENT
 
-    def test_raises_when_the_index_lists_no_edition(
+    def test_rejects_empty_index(
         self,
     ) -> None:
         """A page that answered but holds nothing is as good as no page."""
@@ -67,7 +67,7 @@ class TestLatestVersion:
                 _ = wordnet.latest_version(USER_AGENT, TIMEOUT)
 
     @given(st.sampled_from([403, 404, 500, 503]))
-    def test_raises_when_the_index_cannot_be_read(
+    def test_propagates_index_errors(
         self,
         status: int,
     ) -> None:

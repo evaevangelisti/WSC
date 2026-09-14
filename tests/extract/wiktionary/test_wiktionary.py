@@ -45,7 +45,7 @@ from wsc.models import (
 _loads: Callable[[str], object] = json.loads
 
 
-def _reads_as_an_entry(
+def _is_json_entry(
     line: str,
 ) -> bool:
     """
@@ -68,7 +68,7 @@ def _reads_as_an_entry(
     return True
 
 
-def _padded(
+def _pad_word(
     word: str,
 ) -> st.SearchStrategy[str]:
     """
@@ -83,14 +83,14 @@ def _padded(
     return st.tuples(_PADDING, st.just(word), _PADDING).map("".join)
 
 
-_PADDED_HEADWORDS = words.flatmap(_padded)
+_PADDED_HEADWORDS = words.flatmap(_pad_word)
 
 
 _UNREADABLE = st.one_of(
     raw_entries(headwords=st.just("") | blanks),
     raw_entries(pos_codes=unknown_pos_codes),
     raw_entries(
-        senses=st.lists(raw_senses(glosses=st.lists(blanks, max_size=2)), max_size=2)
+        senses=st.lists(raw_senses(glosses=st.lists(blanks, max_size=2)), max_size=2),
     ),
 )
 
@@ -111,9 +111,11 @@ _REPORTS = st.one_of(
             "{",
             '{"word": "bank"',
             '{"word": }',
-        ]
+        ],
     ),
-).filter(lambda line: not _reads_as_an_entry(line))
+).filter(
+    lambda line: not _is_json_entry(line),
+)
 
 _SERVICE_TAGS = st.sampled_from(["inflection-template", "romanization", "table-tags"])
 
@@ -122,7 +124,7 @@ _EMPTY_CELLS = st.sampled_from(["-", ""]) | blanks
 _PADDING = blanks | st.just("")
 
 
-def _pointer(
+def _build_pointer(
     headword: str,
 ) -> str:
     """
@@ -248,23 +250,23 @@ class TestOpening:
     """Reading the file however it was compressed."""
 
     @given(st.lists(raw_entries(), max_size=3))
-    def test_reads_the_same_entries_whatever_the_suffix_names(
+    def test_reads_compressed_entries(
         self,
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
         """A parse writes zstd, but a file found elsewhere may be plain or gzipped."""
-        plain = extract(entries, name="wiktextract.jsonl")
+        plain_lemmas = extract(entries, name="wiktextract.jsonl")
 
-        assert extract(entries, name="wiktextract.jsonl.zst") == plain
-        assert extract(entries, name="wiktextract.jsonl.gz") == plain
+        assert extract(entries, name="wiktextract.jsonl.zst") == plain_lemmas
+        assert extract(entries, name="wiktextract.jsonl.gz") == plain_lemmas
 
 
 class TestEntries:
     """Which entries are read at all."""
 
     @given(st.data())
-    def test_keeps_english_alone(
+    def test_selects_english_entries(
         self,
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
@@ -272,19 +274,19 @@ class TestEntries:
         """The extractor keeps English entries from multilingual dumps."""
         editions = data.draw(
             st.lists(languages, min_size=1, max_size=3, unique=True).map(
-                lambda drawn: [*drawn, LANGUAGE]
-            )
+                lambda drawn: [*drawn, LANGUAGE],
+            ),
         )
         entries = data.draw(
-            st.lists(raw_entries(languages=st.sampled_from(editions)), max_size=5)
+            st.lists(raw_entries(languages=st.sampled_from(editions)), max_size=5),
         )
 
-        spoken = [entry for entry in entries if entry["lang_code"] == LANGUAGE]
+        english_entries = [entry for entry in entries if entry["lang_code"] == LANGUAGE]
 
-        assert extract(entries) == extract(spoken)
+        assert extract(entries) == extract(english_entries)
 
     @given(st.lists(raw_entries(), max_size=5), st.data())
-    def test_keeps_only_the_parts_of_speech_asked_for(
+    def test_filters_selected_categories(
         self,
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
@@ -298,7 +300,7 @@ class TestEntries:
         ]
 
     @given(st.lists(raw_entries(), max_size=4), _UNREADABLE, st.data())
-    def test_reads_past_an_entry_it_cannot_collect(
+    def test_skips_uncollectable_entries(
         self,
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
@@ -312,7 +314,7 @@ class TestEntries:
         assert extract(mixed) == extract(entries)
 
     @given(st.lists(raw_entries(), max_size=4), _REPORTS, st.data())
-    def test_reads_past_a_line_that_is_not_an_entry(
+    def test_skips_invalid_lines(
         self,
         extract_lines: Callable[[Iterable[str]], list[Lemma]],
         entries: list[RawJson],
@@ -328,22 +330,22 @@ class TestEntries:
         )
 
     @given(st.lists(raw_entries(headwords=_PADDED_HEADWORDS), max_size=4))
-    def test_strips_the_headword_it_reads(
+    def test_strips_headword(
         self,
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
         """The whitespace an editor left around a headword is not part of it."""
-        gathered = dict.fromkeys(
+        entry_keys = dict.fromkeys(
             (str(entry["word"]).strip(), entry["pos"]) for entry in entries
         )
 
         assert [lemma.lemma for lemma in extract(entries)] == [
-            headword for headword, _ in gathered
+            headword for headword, _ in entry_keys
         ]
 
     @given(parts_of_speech, st.data())
-    def test_reads_the_part_of_speech_off_the_code_wiktextract_writes(
+    def test_maps_wiktextract_categories(
         self,
         extract: Callable[..., list[Lemma]],
         pos: POS,
@@ -359,33 +361,35 @@ class TestIdentifiers:
     """How a lemma and its senses are named."""
 
     @given(st.lists(raw_entries(), max_size=5))
-    def test_opens_an_identifier_with_the_headword_and_part_of_speech(
+    def test_prefixes_entry_identifiers(
         self,
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
         """An entry is named bank.noun, and a sense adds a digest of its own."""
         for lemma in extract(entries):
-            key = f"{lemma.lemma}.{lemma.pos}"
+            entry_id = f"{lemma.lemma}.{lemma.pos}"
 
-            assert lemma.id == key
-            assert all(sense.id.startswith(f"{key}.") for sense in lemma.senses)
+            assert lemma.id == entry_id
+            assert all(sense.id.startswith(f"{entry_id}.") for sense in lemma.senses)
 
     @given(st.lists(raw_entries(), max_size=5))
-    def test_names_a_sense_after_what_it_says(
+    def test_hashes_sense_glosses(
         self,
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
         """Two senses reading the same way are the same sense, wherever they sit."""
-        named: dict[str, tuple[str, ...]] = {}
+        sense_glosses: dict[str, tuple[str, ...]] = {}
 
         for lemma in extract(entries):
             for sense in lemma.senses:
-                assert named.setdefault(sense.id, sense.glosses) == sense.glosses
+                assert (
+                    sense_glosses.setdefault(sense.id, sense.glosses) == sense.glosses
+                )
 
     @given(st.lists(raw_senses(), min_size=1, max_size=4), st.data())
-    def test_names_a_sense_the_same_however_the_entry_is_ordered(
+    def test_stabilizes_sense_identifiers(
         self,
         extract: Callable[..., list[Lemma]],
         senses: list[RawJson],
@@ -401,17 +405,56 @@ class TestIdentifiers:
         }
         reordered: RawJson = {**entry, "senses": list(reversed(senses))}
 
-        read = {sense.id for lemma in extract([entry]) for sense in lemma.senses}
-        again = {sense.id for lemma in extract([reordered]) for sense in lemma.senses}
+        original_identifiers = {
+            sense.id for lemma in extract([entry]) for sense in lemma.senses
+        }
+        reordered_identifiers = {
+            sense.id for lemma in extract([reordered]) for sense in lemma.senses
+        }
 
-        assert read == again
+        assert original_identifiers == reordered_identifiers
 
 
 class TestSenses:
     """What a sense carries over."""
 
+    @given(
+        st.lists(
+            st.lists(
+                st.integers(min_value=1, max_value=20).map(lambda value: f"Q{value}"),
+                unique=True,
+                max_size=5,
+            ),
+            min_size=2,
+            max_size=4,
+        ),
+    )
+    def test_merges_wikidata_identifiers(
+        self,
+        extract: Callable[..., list[Lemma]],
+        identifiers: list[list[str]],
+    ) -> None:
+        """Repeated senses retain distinct Wikidata identifiers in encounter order."""
+        entry: RawJson = {
+            "word": "bank",
+            "pos": "noun",
+            "lang_code": "en",
+            "senses": [
+                {"glosses": ["a financial institution"], "wikidata": group}
+                for group in identifiers
+            ],
+        }
+
+        senses = extract([entry])[0].senses
+        expected = tuple(
+            dict.fromkeys(identifier for group in identifiers for identifier in group),
+        )
+
+        assert len(senses) == 1
+        assert senses[0].wikidata_ids == expected
+
     @given(st.lists(st.one_of(glosses, blanks), min_size=1, max_size=4), st.data())
-    def test_keeps_the_gloss_chain_outermost_first(
+    def test_preserves_gloss_hierarchy(
         self,
         extract: Callable[..., list[Lemma]],
         chain: list[str],
@@ -421,17 +464,17 @@ class TestSenses:
         senses: list[RawJson] = [{"glosses": chain}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
-        kept = tuple(gloss.strip() for gloss in chain if gloss.strip())
+        expected_glosses = tuple(gloss.strip() for gloss in chain if gloss.strip())
 
         assert [
             sense.glosses for lemma in extract([entry]) for sense in lemma.senses
-        ] == ([kept] if kept else [])
+        ] == ([expected_glosses] if expected_glosses else [])
 
     @given(
         st.lists(st.lists(glosses, min_size=1, max_size=3), min_size=1, max_size=4),
         st.data(),
     )
-    def test_keeps_a_sub_sense_alongside_its_parent(
+    def test_preserves_nested_senses(
         self,
         extract: Callable[..., list[Lemma]],
         chains: list[list[str]],
@@ -441,20 +484,24 @@ class TestSenses:
         senses: list[RawJson] = [{"glosses": chain} for chain in chains]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
-        gathered = list(
+        unique_chains = list(
             dict.fromkeys(
                 tuple(gloss.strip() for gloss in chain if gloss.strip())
                 for chain in chains
-            )
+            ),
         )
 
-        kept = extract([entry])[0].senses
+        collected_senses = extract([entry])[0].senses
 
-        assert [sense.depth for sense in kept] == [len(chain) for chain in gathered]
-        assert [sense.gloss for sense in kept] == [chain[-1] for chain in gathered]
+        assert [sense.depth for sense in collected_senses] == [
+            len(chain) for chain in unique_chains
+        ]
+        assert [sense.gloss for sense in collected_senses] == [
+            chain[-1] for chain in unique_chains
+        ]
 
     @given(st.lists(words, max_size=3), st.lists(words, max_size=3), st.data())
-    def test_keeps_tags_and_topics_apart(
+    def test_separates_sense_labels(
         self,
         extract: Callable[..., list[Lemma]],
         tags: list[str],
@@ -468,8 +515,8 @@ class TestSenses:
                     raw_senses(tags=st.just(tags), topics=st.just(topics)),
                     min_size=1,
                     max_size=1,
-                )
-            )
+                ),
+            ),
         )
 
         sense = extract([entry])[0].senses[0]
@@ -481,7 +528,7 @@ class TestPseudoSenses:
     """Exclude senses describing inflected forms."""
 
     @given(form_tags, st.data())
-    def test_drops_a_sense_that_only_inflects_the_headword(
+    def test_excludes_inflected_senses(
         self,
         extract: Callable[..., list[Lemma]],
         tag: str,
@@ -494,7 +541,7 @@ class TestPseudoSenses:
         assert extract([entry]) == []
 
     @given(form_tags, st.lists(st.booleans(), min_size=1, max_size=6), st.data())
-    def test_names_what_is_kept_without_naming_what_is_not(
+    def test_preserves_retained_identifiers(
         self,
         extract: Callable[..., list[Lemma]],
         tag: str,
@@ -509,17 +556,18 @@ class TestPseudoSenses:
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
         lemmas = extract([entry])
-        kept = lemmas[0].senses if lemmas else []
+        collected_senses = lemmas[0].senses if lemmas else []
 
-        assert [sense.gloss for sense in kept] == [
+        assert [sense.gloss for sense in collected_senses] == [
             f"Sense {position}." for position, drop in enumerate(inflecting) if not drop
         ]
         assert all(
-            sense.id.startswith(f"{lemmas[0].lemma}.{lemmas[0].pos}.") for sense in kept
+            sense.id.startswith(f"{lemmas[0].lemma}.{lemmas[0].pos}.")
+            for sense in collected_senses
         )
 
     @given(form_tags, st.data())
-    def test_an_entry_of_forms_alone_is_left_out(
+    def test_excludes_inflected_entries(
         self,
         extract: Callable[..., list[Lemma]],
         tag: str,
@@ -527,25 +575,25 @@ class TestPseudoSenses:
     ) -> None:
         """Only the entry that defines something comes through."""
         headword = data.draw(words)
-        inflected: RawJson = {
+        inflected_entry: RawJson = {
             "word": headword,
             "pos": "noun",
             "lang_code": "en",
             "senses": [{"glosses": ["Plural of bank."], "tags": [tag]}],
         }
-        defined: RawJson = {
+        defining_entry: RawJson = {
             "word": headword,
             "pos": "noun",
             "lang_code": "en",
             "senses": [{"glosses": ["A meaning."]}],
         }
 
-        lemmas = extract([inflected, defined])
+        lemmas = extract([inflected_entry, defining_entry])
 
         assert [lemma.lemma for lemma in lemmas] == [headword]
 
     @given(st.lists(words, max_size=3), st.data())
-    def test_keeps_a_sense_whose_tags_say_nothing_about_forms(
+    def test_preserves_defining_senses(
         self,
         extract: Callable[..., list[Lemma]],
         tags: list[str],
@@ -562,21 +610,21 @@ class TestSentences:
     """The sentences illustrating a sense."""
 
     @given(st.lists(raw_examples(), max_size=4))
-    def test_a_sentence_with_no_reference_is_an_example(
+    def test_classifies_unreferenced_examples(
         self,
         attest: Callable[..., list[Sentence]],
         examples: list[RawJson],
     ) -> None:
         """An editor wrote it, so there is no source to name."""
-        found = attest(*examples)
+        sentences = attest(*examples)
 
-        assert all(isinstance(sentence, Example) for sentence in found)
-        assert [sentence.text for sentence in found] == [
+        assert all(isinstance(sentence, Example) for sentence in sentences)
+        assert [sentence.text for sentence in sentences] == [
             str(example["text"]).strip() for example in examples
         ]
 
     @given(st.data())
-    def test_a_sentence_with_a_reference_is_a_quotation(
+    def test_classifies_referenced_quotations(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -595,7 +643,7 @@ class TestSentences:
         )
 
     @given(st.lists(st.one_of(texts, blanks), max_size=4), st.data())
-    def test_strips_a_sentence_and_drops_a_blank_one(
+    def test_filters_blank_sentences(
         self,
         attest: Callable[..., list[Sentence]],
         written: list[str],
@@ -613,7 +661,7 @@ class TestKinds:
     """Reading a sentence as the kind wiktextract says it is."""
 
     @given(st.data())
-    def test_wiktextract_settles_the_kind_over_a_reference_it_withheld(
+    def test_preserves_explicit_examples(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -623,26 +671,26 @@ class TestKinds:
         reference = data.draw(references(year))
         text = data.draw(texts)
 
-        quoted = attest({"text": f"{reference}\n{text}", "type": "quotation"})[0]
-        plain = attest({"text": f"{reference}\n{text}", "type": "example"})[0]
+        quotation = attest({"text": f"{reference}\n{text}", "type": "quotation"})[0]
+        example = attest({"text": f"{reference}\n{text}", "type": "example"})[0]
 
-        assert isinstance(quoted, Quotation)
-        assert isinstance(plain, Example)
+        assert isinstance(quotation, Quotation)
+        assert isinstance(example, Example)
 
     @given(texts)
-    def test_a_quotation_with_no_source_to_tell_apart_is_kept_as_an_example(
+    def test_preserves_unreferenced_quotations(
         self,
         attest: Callable[..., list[Sentence]],
         written: str,
     ) -> None:
         """An export tells the two apart by the reference, and it has none."""
-        found = attest({"text": written, "type": "quotation"})[0]
+        example = attest({"text": written, "type": "quotation"})[0]
 
-        assert isinstance(found, Example)
-        assert found.text == written.strip()
+        assert isinstance(example, Example)
+        assert example.text == written.strip()
 
     @given(st.data())
-    def test_a_quotation_naming_no_source_is_still_a_quotation(
+    def test_recognizes_embedded_references(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -652,40 +700,43 @@ class TestKinds:
         reference = data.draw(references(year))
         text = data.draw(texts)
 
-        found = attest(
+        quotation = attest(
             {"text": f"{reference}\n{text}", "type": "quotation"},
         )[0]
 
-        assert isinstance(found, Quotation)
-        assert (found.text, found.reference, found.year) == (
+        assert isinstance(quotation, Quotation)
+        assert (quotation.text, quotation.reference, quotation.year) == (
             text.strip(),
             reference,
             year,
         )
 
     @given(st.data())
-    def test_an_undated_first_line_is_a_source_only_where_it_says_so(
+    def test_interprets_undated_headers(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
         """A break alone proves nothing: prose runs over lines too."""
-        head = data.draw(undated_references)
-        tail = data.draw(texts)
-        written = f"{head}\n{tail}"
+        reference = data.draw(undated_references)
+        sentence_text = data.draw(texts)
+        written = f"{reference}\n{sentence_text}"
 
-        untyped = attest({"text": written})[0]
+        example = attest({"text": written})[0]
 
-        assert isinstance(untyped, Example)
-        assert untyped.text == written.strip()
+        assert isinstance(example, Example)
+        assert example.text == written.strip()
 
-        quoted = attest({"text": written, "type": "quotation"})[0]
+        quotation = attest({"text": written, "type": "quotation"})[0]
 
-        assert isinstance(quoted, Quotation)
-        assert (quoted.text, quoted.reference) == (tail.strip(), head.strip())
+        assert isinstance(quotation, Quotation)
+        assert (quotation.text, quotation.reference) == (
+            sentence_text.strip(),
+            reference.strip(),
+        )
 
     @given(st.data())
-    def test_a_sentence_read_as_an_example_is_never_split(
+    def test_preserves_example_lines(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -694,13 +745,13 @@ class TestKinds:
         year = data.draw(years)
         written = f"{data.draw(references(year))}\n{data.draw(texts)}"
 
-        found = attest({"text": written, "type": "example"})[0]
+        example = attest({"text": written, "type": "example"})[0]
 
-        assert isinstance(found, Example)
-        assert found.text == written.strip()
+        assert isinstance(example, Example)
+        assert example.text == written.strip()
 
     @given(st.data())
-    def test_a_break_with_nothing_after_it_leaves_no_sentence(
+    def test_excludes_bodyless_quotations(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -712,7 +763,7 @@ class TestKinds:
         assert attest({"text": written, "type": "quotation"}) == []
 
     @given(st.data())
-    def test_a_source_split_off_is_left_out_of_the_offsets(
+    def test_adjusts_reference_offsets(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -722,13 +773,13 @@ class TestKinds:
         year = data.draw(years)
         reference = f"{year}, {headword}, A Book"
 
-        found = attest(
+        quotation = attest(
             {"text": f"{reference}\n{headword}", "type": "quotation"},
             headword=headword,
         )[0]
 
-        assert found.text == headword
-        assert found.word_offsets == (
+        assert quotation.text == headword
+        assert quotation.word_offsets == (
             WordOffset(
                 (0, len(headword)),
                 (WordOffsetSource.LEMMATIZER,),
@@ -740,30 +791,30 @@ class TestPointers:
     """Passing over what stands in for a sentence without being one."""
 
     @given(words)
-    def test_drops_a_pointer_to_the_citations_page(
+    def test_excludes_citation_pointers(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
     ) -> None:
         """It navigates somewhere; it attests nothing."""
-        assert attest({"text": _pointer(headword)}, headword=headword) == []
+        assert attest({"text": _build_pointer(headword)}, headword=headword) == []
 
     @given(words, sentence_kinds)
-    def test_keeps_a_sentence_wiktextract_read_as_one(
+    def test_preserves_explicit_sentences(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
         kind: str,
     ) -> None:
         """A pointer is left where no kind was read, so a kind rules it out."""
-        written = _pointer(headword)
+        written = _build_pointer(headword)
 
-        found = attest({"text": written, "type": kind}, headword=headword)
+        sentences = attest({"text": written, "type": kind}, headword=headword)
 
-        assert [sentence.text for sentence in found] == [written]
+        assert [sentence.text for sentence in sentences] == [written]
 
     @given(words, st.data())
-    def test_keeps_a_sentence_that_merely_opens_the_same_way(
+    def test_preserves_pointer_prefixes(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
@@ -772,16 +823,16 @@ class TestPointers:
         """Pointer detection requires the complete template."""
         written = f"For quotations {data.draw(texts)}"
 
-        found = attest({"text": written}, headword=headword)
+        sentences = attest({"text": written}, headword=headword)
 
-        assert [sentence.text for sentence in found] == [written.strip()]
+        assert [sentence.text for sentence in sentences] == [written.strip()]
 
 
 class TestYears:
     """Reading a year off a reference, and filtering on it."""
 
     @given(st.data())
-    def test_reads_the_year_the_reference_names(
+    def test_extracts_reference_year(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -807,7 +858,7 @@ class TestYears:
             ("A Book, ISBN 1234567", None),
         ],
     )
-    def test_reads_the_dates_wiktionary_writes(
+    def test_parses_wiktionary_dates(
         self,
         attest: Callable[..., list[Sentence]],
         reference: str,
@@ -820,7 +871,7 @@ class TestYears:
         assert quotation.year == expected
 
     @given(st.lists(years, max_size=4), st.none() | years, st.none() | years, st.data())
-    def test_keeps_the_quotations_inside_the_bounds(
+    def test_filters_quotation_years(
         self,
         attest: Callable[..., list[Sentence]],
         dated: list[int],
@@ -833,14 +884,14 @@ class TestYears:
             data.draw(raw_examples(references=references(year))) for year in dated
         ]
 
-        kept = attest(
+        sentences = attest(
             *examples,
             minimum_year=minimum_year,
             maximum_year=maximum_year,
         )
 
         assert [
-            sentence.year for sentence in kept if isinstance(sentence, Quotation)
+            sentence.year for sentence in sentences if isinstance(sentence, Quotation)
         ] == [
             year
             for year in dated
@@ -849,7 +900,7 @@ class TestYears:
         ]
 
     @given(st.lists(raw_examples(), max_size=4), st.none() | years, st.data())
-    def test_a_bound_never_widens_what_is_kept(
+    def test_bounds_reduce_quotations(
         self,
         attest: Callable[..., list[Sentence]],
         examples: list[RawJson],
@@ -857,18 +908,20 @@ class TestYears:
         data: st.DataObject,
     ) -> None:
         """A bound is asked for to leave something out, never to let something in."""
-        dated = [
+        dated_examples = [
             data.draw(raw_examples(references=references(data.draw(years))))
             for _ in examples
         ]
 
-        every = attest(*examples, *dated)
-        bounded = attest(*examples, *dated, minimum_year=minimum_year)
+        unfiltered_sentences = attest(*examples, *dated_examples)
+        filtered_sentences = attest(
+            *examples, *dated_examples, minimum_year=minimum_year
+        )
 
-        assert set(bounded) <= set(every)
+        assert set(filtered_sentences) <= set(unfiltered_sentences)
 
     @given(st.data())
-    def test_drops_an_undated_quotation_once_a_bound_is_set(
+    def test_excludes_undated_quotations(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -879,7 +932,7 @@ class TestYears:
         assert attest(undated, minimum_year=data.draw(years)) == []
 
     @given(st.data())
-    def test_keeps_an_undated_quotation_when_no_bound_is_set(
+    def test_preserves_undated_quotations(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
@@ -894,7 +947,7 @@ class TestYears:
         assert (quotation.reference, quotation.year) == (reference.strip(), None)
 
     @given(st.lists(raw_examples(), max_size=3), st.data())
-    def test_leaves_examples_alone(
+    def test_preserves_unfiltered_examples(
         self,
         attest: Callable[..., list[Sentence]],
         examples: list[RawJson],
@@ -902,12 +955,14 @@ class TestYears:
     ) -> None:
         """The bounds reach quotations alone, an example carrying no date."""
         year = data.draw(years)
-        outside = data.draw(raw_examples(references=references(year)))
+        excluded_quotation = data.draw(raw_examples(references=references(year)))
 
-        assert attest(*examples, outside, minimum_year=year + 1) == attest(*examples)
+        assert attest(*examples, excluded_quotation, minimum_year=year + 1) == attest(
+            *examples
+        )
 
     @given(st.data())
-    def test_a_sense_the_bounds_emptied_is_kept_all_the_same(
+    def test_preserves_unattested_senses(
         self,
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
@@ -921,8 +976,8 @@ class TestYears:
                     raw_senses(examples=st.just([example])),
                     min_size=1,
                     max_size=1,
-                )
-            )
+                ),
+            ),
         )
 
         lemmas = extract([entry], minimum_year=year + 1)
@@ -934,7 +989,7 @@ class TestWordOffsets:
     """Where the lemma occurs in the sentences attesting it."""
 
     @given(words, st.data())
-    def test_a_sentence_carries_where_the_lemma_occurs(
+    def test_locates_sentence_lemma(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
@@ -950,19 +1005,19 @@ class TestWordOffsets:
             ),
         )
 
-    def test_combines_sources_supporting_the_same_offset(
+    def test_merges_offset_sources(
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
         """Agreement remains distinguishable from either method alone."""
-        found = attest(
+        sentences = attest(
             {
                 "text": "a bank account",
                 "bold_text_offsets": [[2, 6]],
             },
         )
 
-        assert found[0].word_offsets == (
+        assert sentences[0].word_offsets == (
             WordOffset(
                 (2, 6),
                 (
@@ -972,47 +1027,47 @@ class TestWordOffsets:
             ),
         )
 
-    def test_keeps_disagreeing_offsets_separately(
+    def test_preserves_offset_disagreements(
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
         """A later review needs both proposals where the methods disagree."""
-        found = attest(
+        sentences = attest(
             {
                 "text": "a bank account",
                 "bold_text_offsets": [[7, 14]],
             },
         )
 
-        assert found[0].word_offsets == (
+        assert sentences[0].word_offsets == (
             WordOffset((2, 6), (WordOffsetSource.LEMMATIZER,)),
             WordOffset((7, 14), (WordOffsetSource.BOLD,)),
         )
 
-    def test_discards_a_bold_offset_outside_the_sentence(
+    def test_discards_invalid_offsets(
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
         """An invalid source range cannot identify text for review."""
-        found = attest(
+        sentences = attest(
             {
                 "text": "a bank account",
                 "bold_text_offsets": [[2, 100]],
             },
         )
 
-        assert found[0].word_offsets == (
+        assert sentences[0].word_offsets == (
             WordOffset((2, 6), (WordOffsetSource.LEMMATIZER,)),
         )
 
-    def test_moves_bold_offsets_with_a_removed_reference(
+    def test_shifts_bold_offsets(
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
         """Bold ranges remain relative to the exported sentence."""
         reference = "2026, bank"
         start = len(reference) + 1
-        found = attest(
+        sentences = attest(
             {
                 "text": f"{reference}\nbank",
                 "type": "quotation",
@@ -1020,7 +1075,7 @@ class TestWordOffsets:
             },
         )
 
-        assert found[0].word_offsets == (
+        assert sentences[0].word_offsets == (
             WordOffset(
                 (0, 4),
                 (
@@ -1031,7 +1086,7 @@ class TestWordOffsets:
         )
 
     @given(words, words, st.data())
-    def test_locates_an_inflection_wiktextract_listed(
+    def test_locates_listed_inflections(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
@@ -1039,17 +1094,17 @@ class TestWordOffsets:
         data: st.DataObject,
     ) -> None:
         """A sentence attests the lemma in whatever form it needs."""
-        form = data.draw(raw_forms(forms=_padded(inflection)))
+        form = data.draw(raw_forms(forms=_pad_word(inflection)))
         example = data.draw(raw_examples(texts=st.just(f"1 {inflection} 2")))
 
-        found = attest(example, headword=headword, forms=[form])
+        sentences = attest(example, headword=headword, forms=[form])
 
         assert (2, 2 + len(inflection)) in (
-            word_offset.offset for word_offset in found[0].word_offsets
+            word_offset.offset for word_offset in sentences[0].word_offsets
         )
 
     @given(words, _SERVICE_TAGS, st.data())
-    def test_skips_what_is_listed_among_the_forms_without_being_one(
+    def test_excludes_service_forms(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
@@ -1057,21 +1112,21 @@ class TestWordOffsets:
         data: st.DataObject,
     ) -> None:
         """An inflection table names itself, its template and its transliterations."""
-        listed = data.draw(
-            words.filter(lambda form: form.casefold() != headword.casefold())
+        service_form = data.draw(
+            words.filter(lambda form: form.casefold() != headword.casefold()),
         )
 
-        form = data.draw(raw_forms(forms=st.just(listed), tags=st.just([tag])))
-        example = data.draw(raw_examples(texts=st.just(f"1 {listed} 2")))
+        form = data.draw(raw_forms(forms=st.just(service_form), tags=st.just([tag])))
+        example = data.draw(raw_examples(texts=st.just(f"1 {service_form} 2")))
 
-        found = attest(example, headword=headword, forms=[form])
+        sentences = attest(example, headword=headword, forms=[form])
 
-        assert (2, 2 + len(listed)) not in (
-            word_offset.offset for word_offset in found[0].word_offsets
+        assert (2, 2 + len(service_form)) not in (
+            word_offset.offset for word_offset in sentences[0].word_offsets
         )
 
     @given(words, _EMPTY_CELLS, st.data())
-    def test_skips_a_form_the_inflection_table_left_empty(
+    def test_excludes_empty_forms(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
@@ -1082,9 +1137,9 @@ class TestWordOffsets:
         form = data.draw(raw_forms(forms=st.just(cell)))
         example = data.draw(raw_examples(texts=st.just(f"1 {headword} - 2")))
 
-        found = attest(example, headword=headword, forms=[form])
+        sentences = attest(example, headword=headword, forms=[form])
 
-        assert found[0].word_offsets == (
+        assert sentences[0].word_offsets == (
             WordOffset(
                 (2, 2 + len(headword)),
                 (WordOffsetSource.LEMMATIZER,),
@@ -1101,7 +1156,7 @@ class TestVariants:
         parts_of_speech,
         st.data(),
     )
-    def test_takes_a_spelling_from_the_entry_pointing_at_it(
+    def test_collects_spelling_variants(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
@@ -1110,7 +1165,7 @@ class TestVariants:
         data: st.DataObject,
     ) -> None:
         """Another spelling sits on a page of its own and points back."""
-        pointing: RawJson = {
+        variant_entry: RawJson = {
             "word": spelling,
             "pos": pos.value,
             "lang_code": "en",
@@ -1119,21 +1174,21 @@ class TestVariants:
                     "glosses": [f"Alternative spelling of {headword}."],
                     "tags": ["alt-of"],
                     "alt_of": [{"word": headword}],
-                }
+                },
             ],
         }
-        defined = data.draw(
-            raw_entries(headwords=st.just(headword), pos_codes=st.just(pos.value))
+        defining_entry = data.draw(
+            raw_entries(headwords=st.just(headword), pos_codes=st.just(pos.value)),
         )
 
-        lemmas = extract([pointing, defined])
+        lemmas = extract([variant_entry, defining_entry])
 
         assert [lemma.variants for lemma in lemmas] == [
-            frozenset({f"{spelling}.{pos}"}) - {f"{headword}.{pos}"}
+            frozenset({f"{spelling}.{pos}"}) - {f"{headword}.{pos}"},
         ]
 
     @given(words, words, st.data())
-    def test_leaves_an_inflection_alone(
+    def test_excludes_inflected_variants(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
@@ -1141,7 +1196,7 @@ class TestVariants:
         data: st.DataObject,
     ) -> None:
         """Plural forms are excluded from spelling variants."""
-        pointing: RawJson = {
+        inflected_entry: RawJson = {
             "word": spelling,
             "pos": "noun",
             "lang_code": "en",
@@ -1150,19 +1205,19 @@ class TestVariants:
                     "glosses": [f"Plural of {headword}."],
                     "tags": ["form-of", "plural"],
                     "form_of": [{"word": headword}],
-                }
+                },
             ],
         }
-        defined = data.draw(
-            raw_entries(headwords=st.just(headword), pos_codes=st.just("noun"))
+        defining_entry = data.draw(
+            raw_entries(headwords=st.just(headword), pos_codes=st.just("noun")),
         )
 
-        lemmas = extract([pointing, defined])
+        lemmas = extract([inflected_entry, defining_entry])
 
         assert [lemma.variants for lemma in lemmas] == [frozenset()]
 
     @given(words, words, st.data())
-    def test_leaves_the_forms_an_entry_lists_for_itself_alone(
+    def test_excludes_listed_variants(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
@@ -1171,10 +1226,10 @@ class TestVariants:
     ) -> None:
         """An Alternative forms section names derivations as readily as spellings."""
         form = data.draw(
-            raw_forms(forms=st.just(spelling), tags=st.just(["alternative"]))
+            raw_forms(forms=st.just(spelling), tags=st.just(["alternative"])),
         )
         entry = data.draw(
-            raw_entries(headwords=st.just(headword), forms=st.just([form]))
+            raw_entries(headwords=st.just(headword), forms=st.just([form])),
         )
 
         (lemma,) = extract([entry])
@@ -1182,7 +1237,7 @@ class TestVariants:
         assert lemma.variants == frozenset()
 
     @given(words, words, st.data())
-    def test_points_only_at_the_same_part_of_speech(
+    def test_filters_variant_categories(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
@@ -1190,7 +1245,7 @@ class TestVariants:
         data: st.DataObject,
     ) -> None:
         """A spelling of the noun says nothing about how the verb is written."""
-        pointing: RawJson = {
+        variant_entry: RawJson = {
             "word": spelling,
             "pos": "verb",
             "lang_code": "en",
@@ -1199,14 +1254,14 @@ class TestVariants:
                     "glosses": [f"Alternative spelling of {headword}."],
                     "tags": ["alt-of"],
                     "alt_of": [{"word": headword}],
-                }
+                },
             ],
         }
-        defined = data.draw(
-            raw_entries(headwords=st.just(headword), pos_codes=st.just("noun"))
+        defining_entry = data.draw(
+            raw_entries(headwords=st.just(headword), pos_codes=st.just("noun")),
         )
 
-        lemmas = extract([pointing, defined])
+        lemmas = extract([variant_entry, defining_entry])
 
         assert [lemma.variants for lemma in lemmas] == [frozenset()]
 
@@ -1215,7 +1270,7 @@ class TestTranslations:
     """What other languages call the entry, which Wiktionary hangs off the entry."""
 
     @given(words, languages, glosses, st.data())
-    def test_gathers_a_translation_under_the_gloss_and_the_language(
+    def test_groups_translation_glosses(
         self,
         extract: Callable[..., list[Lemma]],
         translation: str,
@@ -1224,24 +1279,24 @@ class TestTranslations:
         data: st.DataObject,
     ) -> None:
         """The gloss is stripped, an editor having written it by hand."""
-        raw = data.draw(
+        translation_record = data.draw(
             raw_translations(
                 translations=st.just(translation),
                 codes=st.just(language),
                 glosses=st.just(gloss),
-            )
+            ),
         )
-        entry = data.draw(raw_entries(translations=st.just([raw])))
+        entry = data.draw(raw_entries(translations=st.just([translation_record])))
 
         (lemma,) = extract([entry])
 
         assert lemma.translation_tables[0].gloss == gloss.strip()
         assert lemma.translation_tables[0].translations == {
-            language: frozenset({translation})
+            language: frozenset({translation}),
         }
 
     @given(words, words, languages, glosses, st.data())
-    def test_gathers_two_words_of_one_language_together(
+    def test_groups_translation_languages(
         self,
         extract: Callable[..., list[Lemma]],
         first: str,
@@ -1251,44 +1306,45 @@ class TestTranslations:
         data: st.DataObject,
     ) -> None:
         """One meaning is often said more than one way in the same language."""
-        drawn = [
+        translation_records = [
             data.draw(
                 raw_translations(
                     translations=st.just(word),
                     codes=st.just(language),
                     glosses=st.just(gloss),
-                )
+                ),
             )
             for word in (first, second)
         ]
-        entry = data.draw(raw_entries(translations=st.just(drawn)))
+        entry = data.draw(raw_entries(translations=st.just(translation_records)))
 
         (lemma,) = extract([entry])
 
         table = next(
             table for table in lemma.translation_tables if table.gloss == gloss.strip()
         )
+
         assert table.translations[language] == frozenset({first, second})
 
     @given(st.sampled_from(("word", "lang_code", "sense")), st.data())
-    def test_leaves_out_a_translation_missing_what_keys_it(
+    def test_excludes_incomplete_translations(
         self,
         extract: Callable[..., list[Lemma]],
         key: str,
         data: st.DataObject,
     ) -> None:
         """A translation is filed under its gloss and its language, or nowhere."""
-        raw = data.draw(raw_translations())
-        raw[key] = data.draw(blanks)
+        translation_record = data.draw(raw_translations())
+        translation_record[key] = data.draw(blanks)
 
-        entry = data.draw(raw_entries(translations=st.just([raw])))
+        entry = data.draw(raw_entries(translations=st.just([translation_record])))
 
         (lemma,) = extract([entry])
 
         assert not lemma.translation_tables
 
     @given(st.data())
-    def test_carries_none_where_the_entry_lists_none(
+    def test_preserves_empty_translations(
         self,
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
@@ -1305,7 +1361,7 @@ class TestSynonyms:
     """Other words standing for what a sense means."""
 
     @given(words, words, st.data())
-    def test_ties_a_synonym_to_the_sense_that_names_it(
+    def test_associates_sense_synonyms(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
@@ -1313,10 +1369,10 @@ class TestSynonyms:
         data: st.DataObject,
     ) -> None:
         """A synonym under a sense stands for that meaning alone."""
-        raw = data.draw(raw_synonyms(words=st.just(synonym)))
-        sense = data.draw(raw_senses(synonyms=st.just([raw])))
+        synonym_record = data.draw(raw_synonyms(words=st.just(synonym)))
+        sense = data.draw(raw_senses(synonyms=st.just([synonym_record])))
         entry = data.draw(
-            raw_entries(headwords=st.just(headword), senses=st.just([sense]))
+            raw_entries(headwords=st.just(headword), senses=st.just([sense])),
         )
 
         (lemma,) = extract([entry])
@@ -1324,7 +1380,7 @@ class TestSynonyms:
         assert lemma.senses[0].synonyms == (() if synonym == headword else (synonym,))
 
     @given(words, words, words, st.data())
-    def test_keeps_two_synonyms_in_the_order_they_were_listed(
+    def test_preserves_synonym_order(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
@@ -1333,10 +1389,12 @@ class TestSynonyms:
         data: st.DataObject,
     ) -> None:
         """A sense may be put more than one way, and order is what is read."""
-        raw = [data.draw(raw_synonyms(words=st.just(word))) for word in (first, second)]
-        sense = data.draw(raw_senses(synonyms=st.just(raw)))
+        synonym_records = [
+            data.draw(raw_synonyms(words=st.just(word))) for word in (first, second)
+        ]
+        sense = data.draw(raw_senses(synonyms=st.just(synonym_records)))
         entry = data.draw(
-            raw_entries(headwords=st.just(headword), senses=st.just([sense]))
+            raw_entries(headwords=st.just(headword), senses=st.just([sense])),
         )
 
         (lemma,) = extract([entry])
@@ -1351,17 +1409,17 @@ class TestSynonyms:
         assert lemma.senses[0].synonyms == tuple(expected)
 
     @given(words, st.data())
-    def test_leaves_out_the_headword_as_a_synonym_of_its_own_sense(
+    def test_excludes_headword_synonyms(
         self,
         extract: Callable[..., list[Lemma]],
         headword: str,
         data: st.DataObject,
     ) -> None:
         """A word is not offered as another way to say itself."""
-        raw = data.draw(raw_synonyms(words=st.just(headword)))
-        sense = data.draw(raw_senses(synonyms=st.just([raw])))
+        synonym_record = data.draw(raw_synonyms(words=st.just(headword)))
+        sense = data.draw(raw_senses(synonyms=st.just([synonym_record])))
         entry = data.draw(
-            raw_entries(headwords=st.just(headword), senses=st.just([sense]))
+            raw_entries(headwords=st.just(headword), senses=st.just([sense])),
         )
 
         (lemma,) = extract([entry])
@@ -1369,7 +1427,7 @@ class TestSynonyms:
         assert lemma.senses[0].synonyms == ()
 
     @given(st.data())
-    def test_carries_none_where_the_sense_lists_none(
+    def test_preserves_empty_synonyms(
         self,
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
@@ -1387,7 +1445,7 @@ class TestStrayReferences:
     """Passing over a reference left standing where a sentence belongs."""
 
     @given(years)
-    def test_leaves_out_a_reference_nobody_split_off(
+    def test_excludes_stray_references(
         self,
         attest: Callable[..., list[Sentence]],
         year: int,
@@ -1396,7 +1454,7 @@ class TestStrayReferences:
         assert attest({"text": f"{year}, John Milton, A Book"}) == []
 
     @given(years)
-    def test_keeps_a_sentence_opening_on_a_date(
+    def test_preserves_date_prefixes(
         self,
         attest: Callable[..., list[Sentence]],
         year: int,
@@ -1407,7 +1465,7 @@ class TestStrayReferences:
         assert attest({"text": written})[0].text == written
 
     @given(years, st.data())
-    def test_keeps_a_reference_a_body_follows(
+    def test_recognizes_quotation_body(
         self,
         attest: Callable[..., list[Sentence]],
         year: int,

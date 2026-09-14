@@ -26,17 +26,21 @@ _ENTRY_LINES = st.dictionaries(
     st.text(alphabet=string.ascii_letters, min_size=1, max_size=5),
     st.text(alphabet=string.ascii_letters, max_size=5),
     max_size=3,
-).map(json.dumps)
+).map(
+    json.dumps,
+)
 
 _REPORT_LINES = st.text(
     alphabet=f"{string.digits}{string.ascii_letters}{string.punctuation} ",
     max_size=20,
-).filter(lambda line: not line.startswith("{"))
+).filter(
+    lambda line: not line.startswith("{"),
+)
 
 _SPAWNS = settings(max_examples=10)
 
 
-def _whole(
+def _preserve_entry(
     entry: object,
 ) -> object:
     """
@@ -53,7 +57,7 @@ def _whole(
     return entry
 
 
-class _MutePopen:
+class _SilentProcess:
     """
     A process handing back no stream to read, as typeshed allows one to.
 
@@ -162,7 +166,7 @@ class TestParse:
 
     @_SPAWNS
     @given(st.lists(_ENTRY_LINES | _REPORT_LINES, max_size=8), _ENTRY_LINES, st.data())
-    def test_writes_the_entries_and_sets_the_rest_aside(
+    def test_filters_process_output(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -178,7 +182,7 @@ class TestParse:
         _ = stub_wiktextract(written)
 
         output_path = workspace() / "wiktextract.jsonl.zst"
-        skipped_lines = wiktextract.parse(dump_path, output_path, 1, _whole)
+        skipped_lines = wiktextract.parse(dump_path, output_path, 1, _preserve_entry)
 
         entries = [line for line in written if line.startswith("{")]
 
@@ -187,7 +191,7 @@ class TestParse:
 
     @_SPAWNS
     @given(st.integers(min_value=1, max_value=16))
-    def test_asks_wiktextract_for_what_the_collector_reads(
+    def test_forwards_extraction_options(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -203,7 +207,7 @@ class TestParse:
         commands = stub_wiktextract(['{"word": "bank"}'])
 
         output_path = workspace() / "wiktextract.jsonl.zst"
-        _ = wiktextract.parse(dump_path, output_path, processes, _whole)
+        _ = wiktextract.parse(dump_path, output_path, processes, _preserve_entry)
 
         assert commands == [
             [
@@ -222,12 +226,12 @@ class TestParse:
                 "--num-processes",
                 str(processes),
                 str(dump_path),
-            ]
+            ],
         ]
 
     @_SPAWNS
     @given(st.lists(st.sampled_from(["cache", "en", "20260801"]), min_size=1))
-    def test_tells_wiktextract_where_to_keep_its_pages(
+    def test_forwards_database_path(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -249,7 +253,7 @@ class TestParse:
             dump_path,
             directory / "wiktextract.jsonl.zst",
             1,
-            _whole,
+            _preserve_entry,
             database_path,
         )
 
@@ -257,7 +261,7 @@ class TestParse:
 
     @_SPAWNS
     @given(st.lists(st.sampled_from(["cache", "en", "20260801"]), min_size=1))
-    def test_creates_the_parent_directory(
+    def test_creates_parent_directory(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -268,13 +272,13 @@ class TestParse:
         _ = stub_wiktextract(['{"word": "bank"}'])
 
         output_path = workspace().joinpath(*directories) / "wiktextract.jsonl.zst"
-        _ = wiktextract.parse(dump_path, output_path, 1, _whole)
+        _ = wiktextract.parse(dump_path, output_path, 1, _preserve_entry)
 
         assert output_path.exists()
 
     @_SPAWNS
     @given(st.lists(_ENTRY_LINES, min_size=1, max_size=4))
-    def test_leaves_no_partial_file_behind(
+    def test_removes_partial_output(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -286,13 +290,13 @@ class TestParse:
 
         directory = workspace()
         output_path = directory / "wiktextract.jsonl.zst"
-        _ = wiktextract.parse(dump_path, output_path, 1, _whole)
+        _ = wiktextract.parse(dump_path, output_path, 1, _preserve_entry)
 
         assert list(directory.iterdir()) == [output_path]
 
     @_SPAWNS
     @given(st.lists(_REPORT_LINES, max_size=4))
-    def test_refuses_when_wiktextract_wrote_no_entry(
+    def test_rejects_empty_extraction(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -309,12 +313,12 @@ class TestParse:
                 dump_path,
                 directory / "wiktextract.jsonl.zst",
                 1,
-                _whole,
+                _preserve_entry,
             )
 
         assert list(directory.iterdir()) == []
 
-    def test_raises_when_wiktextract_offers_no_output(
+    def test_rejects_missing_stdout(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -325,8 +329,8 @@ class TestParse:
         def popen(
             _command: list[str],
             **_keywords: object,
-        ) -> _MutePopen:
-            return _MutePopen()
+        ) -> _SilentProcess:
+            return _SilentProcess()
 
         monkeypatch.setattr(subprocess, "Popen", popen)
 
@@ -337,14 +341,14 @@ class TestParse:
                 dump_path,
                 directory / "wiktextract.jsonl.zst",
                 1,
-                _whole,
+                _preserve_entry,
             )
 
         assert list(directory.iterdir()) == []
 
     @_SPAWNS
     @given(st.lists(_ENTRY_LINES, max_size=4), st.integers(min_value=1, max_value=255))
-    def test_writes_nothing_when_wiktextract_answers_with_an_error(
+    def test_discards_failed_extraction(
         self,
         workspace: Callable[[], Path],
         dump_path: Path,
@@ -362,7 +366,7 @@ class TestParse:
                 dump_path,
                 directory / "wiktextract.jsonl.zst",
                 1,
-                _whole,
+                _preserve_entry,
             )
 
         assert list(directory.iterdir()) == []

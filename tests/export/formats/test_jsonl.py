@@ -27,7 +27,7 @@ from wsc.models import (
 _WRITTEN = st.lists(lemmas, max_size=3)
 
 
-def _record_of_sentence(
+def _serialize_sentence(
     sentence: Sentence,
 ) -> RawJson:
     """
@@ -59,7 +59,7 @@ def _record_of_sentence(
     return record
 
 
-def _record_of_sense(
+def _serialize_sense(
     sense: Sense,
 ) -> RawJson:
     """
@@ -81,26 +81,26 @@ def _record_of_sense(
     if sense.etymology:
         record["etymology"] = sense.etymology
 
-    for key, held in (
+    for key, values in (
         ("synonyms", sense.synonyms),
         ("topics", sense.topics),
         ("tags", sense.tags),
-        ("sentences", tuple(map(_record_of_sentence, sense.sentences))),
+        ("sentences", tuple(map(_serialize_sentence, sense.sentences))),
         ("wikidata_ids", sense.wikidata_ids),
     ):
-        if held:
-            record[key] = list(held)
+        if values:
+            record[key] = list(values)
 
     if sense.wordnet:
         record["wordnet"] = [
-            {"synset_id": item.synset_id, "relation": item.relation}
-            for item in sense.wordnet
+            {"synset_id": alignment.synset_id, "relation": alignment.relation}
+            for alignment in sense.wordnet
         ]
 
     return record
 
 
-def _record_of_lemma(
+def _serialize_lemma(
     lemma: Lemma,
 ) -> RawJson:
     """
@@ -115,7 +115,7 @@ def _record_of_lemma(
     record: RawJson = {"id": lemma.id, "lemma": lemma.lemma, "pos": lemma.pos.value}
 
     if lemma.senses:
-        record["senses"] = [_record_of_sense(sense) for sense in lemma.senses]
+        record["senses"] = [_serialize_sense(sense) for sense in lemma.senses]
 
     if lemma.variants:
         record["variants"] = sorted(lemma.variants)
@@ -174,7 +174,7 @@ class TestJSONLWriter:
     """One JSON object per line."""
 
     @given(_WRITTEN)
-    def test_writes_one_line_per_lemma(
+    def test_writes_json_lines(
         self,
         write: Callable[..., str],
         written: list[Lemma],
@@ -186,7 +186,7 @@ class TestJSONLWriter:
         assert not text or text.endswith("\n")
 
     @given(_WRITTEN)
-    def test_writes_the_whole_lemma_and_nothing_besides(
+    def test_serializes_lemma_fields(
         self,
         write: Callable[..., str],
         written: list[Lemma],
@@ -195,11 +195,11 @@ class TestJSONLWriter:
         lines = [line for line in write(*written).split("\n") if line]
 
         assert [json.loads(line) for line in lines] == [
-            _record_of_lemma(lemma) for lemma in written
+            _serialize_lemma(lemma) for lemma in written
         ]
 
     @given(words)
-    def test_writes_text_as_it_stands(
+    def test_preserves_unicode_text(
         self,
         write: Callable[..., str],
         headword: str,
@@ -207,7 +207,7 @@ class TestJSONLWriter:
         """Serialized text preserves Unicode characters."""
         assert headword in write(Lemma(f"{headword}.noun.1", headword, POS.NOUN))
 
-    def test_writes_populated_alignment_fields(
+    def test_writes_alignment_fields(
         self,
         write: Callable[..., str],
     ) -> None:
@@ -227,10 +227,10 @@ class TestJSONLWriter:
                 "glosses": ["A financial institution."],
                 "translations": {"it": ["banca"]},
                 "wordnet": [{"synset_id": "i54321", "relation": "equivalent"}],
-            }
+            },
         ]
 
-    def test_refuses_to_write_before_it_is_entered(
+    def test_rejects_unopened_writer(
         self,
         workspace: Callable[[], Path],
     ) -> None:
@@ -240,7 +240,7 @@ class TestJSONLWriter:
         with pytest.raises(RuntimeError, match="context manager"):
             writer.write(Lemma("bank.noun.1", "bank", POS.NOUN))
 
-    def test_refuses_to_write_once_the_block_is_left(
+    def test_rejects_closed_writer(
         self,
         workspace: Callable[[], Path],
     ) -> None:

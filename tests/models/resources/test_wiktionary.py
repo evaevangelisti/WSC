@@ -17,7 +17,7 @@ class TestSense:
     """One meaning, read off its gloss chain."""
 
     @given(identifiers, _CHAINS)
-    def test_closes_on_its_own_gloss(
+    def test_returns_leaf_gloss(
         self,
         identifier: str,
         chain: list[str],
@@ -29,7 +29,7 @@ class TestSense:
         assert sense.definition.endswith(sense.gloss)
 
     @given(identifiers, _CHAINS)
-    def test_a_definition_holds_the_whole_chain(
+    def test_joins_gloss_chain(
         self,
         identifier: str,
         chain: list[str],
@@ -40,7 +40,7 @@ class TestSense:
         assert all(gloss in definition for gloss in chain)
 
     @given(identifiers, glosses)
-    def test_a_chain_of_one_is_its_own_definition(
+    def test_preserves_single_gloss(
         self,
         identifier: str,
         gloss: str,
@@ -51,7 +51,7 @@ class TestSense:
         assert sense.definition == sense.gloss
 
     @given(identifiers, _CHAINS, glosses)
-    def test_nesting_one_deeper_counts_one_more(
+    def test_counts_gloss_depth(
         self,
         identifier: str,
         chain: list[str],

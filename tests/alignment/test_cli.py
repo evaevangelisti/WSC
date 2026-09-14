@@ -49,19 +49,19 @@ class Model:
                         "reason": "Same lexical meaning.",
                     },
                 ],
-            }
+            },
         )
 
 
 @pytest.mark.parametrize("tasks", [(AlignmentTask.TRANSLATIONS,), tuple(AlignmentTask)])
-def test_command_replays_decisions_without_loading_model(
+def test_replays_cached_alignment(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     tasks: tuple[AlignmentTask, ...],
 ) -> None:
     """Cached replay preserves the aligned collection and original input."""
-    source = tmp_path / "input.jsonl"
-    original = (
+    input_path = tmp_path / "input.jsonl"
+    original_content = (
         json.dumps(
             {
                 "id": "word.noun",
@@ -73,13 +73,14 @@ def test_command_replays_decisions_without_loading_model(
                         "id": translation_table_id("word.noun", "gloss"),
                         "gloss": "gloss",
                         "translations": {"it": ["parola"]},
-                    }
+                    },
                 ],
-            }
+            },
         )
         + "\n"
     )
-    _ = source.write_text(original, encoding="utf-8")
+    _ = input_path.write_text(original_content, encoding="utf-8")
+
     synsets_path = cache.wordnet_dir(tmp_path / "cache", "2025") / cache.SYNSETS_NAME
     synsets_path.parent.mkdir(parents=True)
     _ = synsets_path.write_text(
@@ -90,7 +91,7 @@ def test_command_replays_decisions_without_loading_model(
                 "pos": "noun",
                 "definition": "meaning",
                 "members": ["word"],
-            }
+            },
         )
         + "\n",
         encoding="utf-8",
@@ -116,9 +117,10 @@ def test_command_replays_decisions_without_loading_model(
         return Model()
 
     monkeypatch.setattr(cli, "open_model", load_model)
+
     arguments = [
         "align",
-        str(source),
+        str(input_path),
         str(tmp_path / "output.jsonl"),
         "--cache-dir",
         str(tmp_path / "cache"),
@@ -133,27 +135,31 @@ def test_command_replays_decisions_without_loading_model(
     for task in tasks:
         arguments.extend(("--task", task))
 
-    first = CliRunner().invoke(cli.app, arguments)
+    inference_result = CliRunner().invoke(cli.app, arguments)
 
-    assert first.exit_code == 0, first.output
-    assert "INFO wsc.cli: Writing alignment cache:" in first.stderr
-    assert not first.stdout
-    output = next(read_lemmas(tmp_path / "output.jsonl"))
-    assert output.senses[0].translations == {"it": frozenset({"parola"})}
-    assert not output.translation_tables
+    assert inference_result.exit_code == 0, inference_result.output
+    assert "INFO wsc.cli: Writing alignment cache:" in inference_result.stderr
+    assert not inference_result.stdout
+
+    aligned_lemma = next(read_lemmas(tmp_path / "output.jsonl"))
+
+    assert aligned_lemma.senses[0].translations == {"it": frozenset({"parola"})}
+    assert not aligned_lemma.translation_tables
 
     if AlignmentTask.WORDNET in tasks:
-        assert output.senses[0].wordnet[0].synset_id == "wordnet-sense"
+        assert aligned_lemma.senses[0].wordnet[0].synset_id == "wordnet-sense"
 
-    paths = list((tmp_path / "cache").glob("alignment/*/*.tsv"))
-    assert {path.stem for path in paths} == set(tasks)
+    cache_paths = list((tmp_path / "cache").glob("alignment/*/*.tsv"))
+
+    assert {path.stem for path in cache_paths} == set(tasks)
     assert list((tmp_path / "cache").glob("alignment/*/metadata.json"))
     assert all(
         path.read_text(encoding="utf-8").splitlines()[0]
         == "alignment_id\tsource_id\ttarget_id\trelation\treason"
-        for path in paths
+        for path in cache_paths
     )
-    evidence = {path: path.read_bytes() for path in paths}
+
+    cached_content = {path: path.read_bytes() for path in cache_paths}
 
     def reject_model(
         settings: ModelSettings,
@@ -170,28 +176,29 @@ def test_command_replays_decisions_without_loading_model(
         raise AssertionError(f"Unexpected model loading: {settings.model}")
 
     monkeypatch.setattr(cli, "open_model", reject_model)
-    second = CliRunner().invoke(cli.app, [*arguments, "--reuse"])
+    replay_result = CliRunner().invoke(cli.app, [*arguments, "--reuse"])
 
-    assert second.exit_code == 0, second.output
-    assert next(read_lemmas(tmp_path / "output.jsonl")) == output
-    assert source.read_text() == original
-    assert {path: path.read_bytes() for path in paths} == evidence
+    assert replay_result.exit_code == 0, replay_result.output
+    assert next(read_lemmas(tmp_path / "output.jsonl")) == aligned_lemma
+    assert input_path.read_text() == original_content
+    assert {path: path.read_bytes() for path in cache_paths} == cached_content
 
-    changed = CliRunner().invoke(
-        cli.app, [*arguments, "--temperature", "0.5", "--reuse"]
+    incompatible_result = CliRunner().invoke(
+        cli.app,
+        [*arguments, "--temperature", "0.5", "--reuse"],
     )
 
-    assert changed.exit_code != 0
-    assert "No compatible alignment cache" in changed.output
+    assert incompatible_result.exit_code != 0
+    assert "No compatible alignment cache" in incompatible_result.output
 
 
-def test_command_preserves_input_when_output_path_matches(
+def test_rejects_input_overwrite(
     tmp_path: Path,
 ) -> None:
     """In-place alignment fails before loading models."""
-    source = tmp_path / "input.jsonl"
-    _ = source.write_text("original", encoding="utf-8")
-    result = CliRunner().invoke(cli.app, ["align", str(source), str(source)])
+    input_path = tmp_path / "input.jsonl"
+    _ = input_path.write_text("original", encoding="utf-8")
+    result = CliRunner().invoke(cli.app, ["align", str(input_path), str(input_path)])
 
     assert result.exit_code != 0
-    assert source.read_text() == "original"
+    assert input_path.read_text() == "original"

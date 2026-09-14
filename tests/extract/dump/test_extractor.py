@@ -23,11 +23,11 @@ from wsc.models import POS
 @given(
     translations=st.lists(words, min_size=1, max_size=15),
     template=st.sampled_from(
-        ("t", "t+", "tt", "tt+", "t-check", "t+check", "t-simple")
+        ("t", "t+", "tt", "tt+", "t-check", "t+check", "t-simple"),
     ),
     compressed=st.booleans(),
 )
-def test_subpages_preserve_words_and_respect_language_and_table_boundaries(
+def test_respects_translation_boundaries(
     workspace: Callable[[], Path],
     translations: list[str],
     template: str,
@@ -74,7 +74,9 @@ def test_subpages_preserve_words_and_respect_language_and_table_boundaries(
     }
 
     assert set(records) == {POS.NOUN, POS.VERB}
+
     noun = records[POS.NOUN]
+
     assert noun.lemma == "entry"
     assert not noun.pointers
     assert len(noun.translations) == 1
@@ -87,7 +89,7 @@ def test_subpages_preserve_words_and_respect_language_and_table_boundaries(
     translations=st.lists(words, min_size=1, max_size=15),
     template=st.sampled_from(("trans-see", "trans-top-see")),
 )
-def test_pointers_merge_etymologies_and_round_trip_with_subpage_tables(
+def test_resolves_translation_pointers(
     workspace: Callable[[], Path],
     translations: list[str],
     template: str,
@@ -130,14 +132,17 @@ def test_pointers_merge_etymologies_and_round_trip_with_subpage_tables(
         ],
     )
     result = build_off_page_translations(
-        DumpExtractor("English").extract(source), entries
+        DumpExtractor("English").extract(source),
+        entries,
     )
     output = directory / "translations.json"
     write_off_page_translations(output, result)
 
     assert read_off_page_translations(output) == result
     assert set(result) == {"entry.noun"}
+
     tables = {table.gloss: table for table in result["entry.noun"]}
+
     assert set(tables) == {"meaning", "target"}
     assert tables["meaning"].translations == {
         "it": frozenset(translations),

@@ -92,7 +92,7 @@ def dump_status(
                 "articlesdump": {"status": "done"},
                 "articlesdumprecombine": {"status": state},
             },
-        }
+        },
     )
 
 
@@ -174,7 +174,7 @@ def synset(
                 for rel_type, target in relations
             ),
             *(_EXAMPLE.format(text=escape(text)) for text in examples),
-        ]
+        ],
     )
 
     return _SYNSET.format(

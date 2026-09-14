@@ -34,7 +34,7 @@ from .examples import Model, build_decision, build_query
 
 
 @given(targets=st.permutations(("t1", "t2")), abstain=st.booleans())
-def test_translation_decisions_preserve_one_to_one_associations(
+def test_preserves_translation_bijection(
     targets: tuple[str, ...],
     *,
     abstain: bool,
@@ -44,7 +44,7 @@ def test_translation_decisions_preserve_one_to_one_associations(
         {
             "s1": build_decision(targets[0]),
             "s2": build_decision(None if abstain else targets[1]),
-        }
+        },
     )
     result = align_query(build_query(), Model([response]))
 
@@ -71,7 +71,7 @@ def test_translation_decisions_preserve_one_to_one_associations(
         },
     ],
 )
-def test_invalid_model_assignments_are_rejected(
+def test_rejects_invalid_assignments(
     response: dict[str, object],
 ) -> None:
     """Missing, contradictory, and invented associations fail validation."""
@@ -80,7 +80,7 @@ def test_invalid_model_assignments_are_rejected(
 
 
 @pytest.mark.parametrize("response", ["null", "[]", "```json\n{}\n```", "{"])
-def test_invalid_model_json_is_rejected(
+def test_rejects_invalid_json(
     response: str,
 ) -> None:
     """Malformed model responses remain visible failures."""
@@ -88,7 +88,7 @@ def test_invalid_model_json_is_rejected(
         _ = parse_response(build_query(), response)
 
 
-def test_empty_candidates_avoid_model_inference() -> None:
+def test_skips_empty_candidates() -> None:
     """Empty candidate sets produce explicit empty decisions."""
     model = Model([])
     empty = align_query(replace(build_query(), target_definitions=()), model)
@@ -98,7 +98,7 @@ def test_empty_candidates_avoid_model_inference() -> None:
     assert not model.requests
 
 
-def test_alignment_applies_decisions_and_preserves_collection() -> None:
+def test_aligns_collection_copies() -> None:
     """Translations move to copied senses while source entries remain intact."""
     lemma = Lemma(
         "word.noun",
@@ -118,19 +118,20 @@ def test_alignment_applies_decisions_and_preserves_collection() -> None:
             ),
         ),
     )
+
     model = Model(
         [
             json.dumps(
                 {
                     "s1": build_decision(
-                        translation_table_id("word.noun", "second heading")
+                        translation_table_id("word.noun", "second heading"),
                     ),
                     "s2": build_decision(
-                        translation_table_id("word.noun", "first heading")
+                        translation_table_id("word.noun", "first heading"),
                     ),
-                }
-            )
-        ]
+                },
+            ),
+        ],
     )
     aligner = Aligner(model, WordNetCandidates(()), (AlignmentTask.TRANSLATIONS,))
     (aligned,) = aligner.align([lemma])
@@ -142,13 +143,14 @@ def test_alignment_applies_decisions_and_preserves_collection() -> None:
     assert all(not sense.translations for sense in lemma.senses)
 
 
-def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:
+def test_preserves_directed_relations() -> None:
     """A source retains equivalent and broader WordNet candidates."""
     lemma = Lemma("word.noun", "word", POS.NOUN, senses=[Sense("s", ("sense",))])
     synsets = (
         Synset("wn1", "i1", POS.NOUN, "specific", ("word", "synonym")),
         Synset("wn2", "i2", POS.NOUN, "general", ("word",)),
     )
+
     response = json.dumps(
         {
             "s": [
@@ -163,7 +165,7 @@ def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:
                     "reason": "The source adds a defining restriction.",
                 },
             ],
-        }
+        },
     )
     model = Model([response])
     aligner = Aligner(model, WordNetCandidates(synsets), (AlignmentTask.WORDNET,))
@@ -198,7 +200,7 @@ def test_wordnet_keeps_multiple_synsets_and_directed_relations() -> None:
         WordNetRelation.WIKTIONARY_NARROWER,
     ),
 )
-def test_wordnet_equivalence_is_one_to_one(
+def test_requires_unique_equivalences(
     relations: tuple[WordNetRelation | None, ...],
 ) -> None:
     """Only equivalence requires distinct sources and targets in generated graphs."""
@@ -213,6 +215,7 @@ def test_wordnet_equivalence_is_one_to_one(
         for source, target, relation in associations
         if relation == WordNetRelation.EQUIVALENT
     ]
+
     response = json.dumps(
         {
             source_id: [
@@ -226,13 +229,13 @@ def test_wordnet_equivalence_is_one_to_one(
             ]
             or None
             for source_id in ("s1", "s2")
-        }
+        },
     )
     query = build_query(AlignmentTask.WORDNET)
     model = Model([response])
 
     if len({source for source, _ in equivalents}) != len(equivalents) or len(
-        {target for _, target in equivalents}
+        {target for _, target in equivalents},
     ) != len(equivalents):
         with pytest.raises(ValueError, match="One-to-one alignment violated"):
             _ = align_query(query, model)
@@ -245,7 +248,7 @@ def test_wordnet_equivalence_is_one_to_one(
 
 
 @pytest.mark.parametrize("mode", list(GlossMode))
-def test_prompts_render_identifiers_synonyms_and_hierarchy(
+def test_renders_definition_context(
     mode: GlossMode,
 ) -> None:
     """Prompt definitions retain their identity and selected context."""
@@ -262,7 +265,7 @@ def test_prompts_render_identifiers_synonyms_and_hierarchy(
     assert '"status"' not in prompt
 
 
-def test_candidates_include_variants_and_sense_synonyms() -> None:
+def test_includes_variant_candidates() -> None:
     """Variant lookup preserves dotted forms and sense-specific synonyms."""
     lemma = Lemma(
         "alias.name",
@@ -272,7 +275,7 @@ def test_candidates_include_variants_and_sense_synonyms() -> None:
         senses=[Sense("s", ("sense",), synonyms=("variant",))],
     )
     candidates = WordNetCandidates(
-        [Synset("wn", "ili", POS.NOUN, "definition", ("a.b",))]
+        [Synset("wn", "ili", POS.NOUN, "definition", ("a.b",))],
     )
     (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
 
@@ -283,7 +286,7 @@ def test_candidates_include_variants_and_sense_synonyms() -> None:
     assert result.alignment_id == "wordnet:alias.name"
 
 
-def test_candidates_exclude_the_queried_lemma_from_synonyms() -> None:
+def test_excludes_headword_synonyms() -> None:
     """Candidate context does not repeat the lemma as a WordNet synonym."""
     lemma = Lemma(
         "word.noun",
@@ -292,7 +295,7 @@ def test_candidates_exclude_the_queried_lemma_from_synonyms() -> None:
         senses=[Sense("s", ("sense",))],
     )
     candidates = WordNetCandidates(
-        [Synset("wn", "ili", POS.NOUN, "definition", ("word", "term", "word_form"))]
+        [Synset("wn", "ili", POS.NOUN, "definition", ("word", "term", "word_form"))],
     )
 
     (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
@@ -302,7 +305,7 @@ def test_candidates_exclude_the_queried_lemma_from_synonyms() -> None:
     assert result.target_definitions[0].synonyms == ("term", "word_form")
 
 
-def test_wordnet_query_contains_all_source_senses() -> None:
+def test_queries_complete_senses() -> None:
     """WordNet compares every Wiktionary sense in one model request."""
     lemma = Lemma(
         "word.noun",
@@ -324,7 +327,7 @@ def test_wordnet_query_contains_all_source_senses() -> None:
     assert result.alignment_id == "wordnet:word.noun"
 
 
-def test_replay_rejects_context_drift_and_extra_results() -> None:
+def test_validates_replay_context() -> None:
     """Cached decisions must cover the current collection exactly."""
     lemma = Lemma(
         "word.noun",
@@ -341,11 +344,13 @@ def test_replay_rejects_context_drift_and_extra_results() -> None:
     )
     candidates = WordNetCandidates(())
     (sample,) = build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates)
+
     assert sample.alignment_id == "translations:word.noun"
+
     result = parse_response(
         sample,
         json.dumps(
-            {"s1": build_decision(translation_table_id("word.noun", "heading"))}
+            {"s1": build_decision(translation_table_id("word.noun", "heading"))},
         ),
     )
     aligner = Aligner(None, candidates, (AlignmentTask.TRANSLATIONS,))
@@ -355,7 +360,7 @@ def test_replay_rejects_context_drift_and_extra_results() -> None:
             aligner.align(
                 [lemma],
                 cached_results={AlignmentTask.TRANSLATIONS: iter([result, result])},
-            )
+            ),
         )
 
     changed = replace(lemma, senses=[Sense("s1", ("changed",))])
@@ -363,14 +368,15 @@ def test_replay_rejects_context_drift_and_extra_results() -> None:
     with pytest.raises(ValueError, match="Cached candidates differ"):
         _ = list(
             aligner.align(
-                [changed], cached_results={AlignmentTask.TRANSLATIONS: iter([result])}
-            )
+                [changed],
+                cached_results={AlignmentTask.TRANSLATIONS: iter([result])},
+            ),
         )
 
 
 @given(failures=st.lists(st.booleans(), min_size=1, max_size=15))
 @example(failures=[True, False, True])
-def test_failed_queries_preserve_translations_and_allow_other_tasks(
+def test_isolates_failed_queries(
     failures: list[bool],
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -382,8 +388,10 @@ def test_failed_queries_preserve_translations_and_allow_other_tasks(
             POS.NOUN,
             senses=[
                 Sense(
-                    f"s{index}", ("meaning",), translations={"it": frozenset({"old"})}
-                )
+                    f"s{index}",
+                    ("meaning",),
+                    translations={"it": frozenset({"old"})},
+                ),
             ],
             translation_tables=(
                 TranslationTable(f"t{index}", "meaning", {"it": frozenset({"new"})}),
@@ -403,7 +411,9 @@ def test_failed_queries_preserve_translations_and_allow_other_tasks(
     ]
     model = Model(responses)
     candidates = WordNetCandidates([Synset("wn", "i1", POS.NOUN, "meaning", ("word",))])
+
     caplog.clear()
+
     aligned = list(Aligner(model, candidates).align(lemmas))
 
     assert len(model.requests) == len(responses)
@@ -415,7 +425,7 @@ def test_failed_queries_preserve_translations_and_allow_other_tasks(
             original.translation_tables if failed else ()
         )
         assert result.senses[0].translations == {
-            "it": frozenset({"old" if failed else "new"})
+            "it": frozenset({"old" if failed else "new"}),
         }
         assert result.senses[0].wordnet == (
             WordNetAlignment("wn", WordNetRelation.EQUIVALENT),

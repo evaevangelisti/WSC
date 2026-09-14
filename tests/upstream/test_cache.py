@@ -14,11 +14,11 @@ from wsc.upstream import cache
 _FETCHED = st.lists(dump_dates, min_size=1, max_size=4, unique=True)
 
 
-class TestDumpDir:
+class TestDumpDirectory:
     """Naming the directory one dump sits in."""
 
     @given(dump_dates)
-    def test_names_the_directory_after_the_date(
+    def test_builds_dated_path(
         self,
         workspace: Callable[[], Path],
         date: str,
@@ -29,7 +29,7 @@ class TestDumpDir:
         assert cache.dump_dir(cache_dir, date) == cache_dir / "wiktionary" / date
 
     @given(dump_dates)
-    def test_falls_back_to_the_platform_cache(
+    def test_uses_platform_cache(
         self,
         date: str,
     ) -> None:
@@ -39,7 +39,7 @@ class TestDumpDir:
         )
 
     @given(dump_dates)
-    def test_creates_nothing(
+    def test_defers_directory_creation(
         self,
         workspace: Callable[[], Path],
         date: str,
@@ -56,7 +56,7 @@ class TestFetchedDate:
     """Settling which fetched dump to work on."""
 
     @given(_FETCHED)
-    def test_accepts_every_date_that_was_fetched(
+    def test_resolves_fetched_dates(
         self,
         workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
@@ -71,7 +71,7 @@ class TestFetchedDate:
         assert [cache.fetched_date(cache_dir, date) for date in dates] == dates
 
     @given(_FETCHED)
-    def test_latest_takes_the_newest_dump_fetched(
+    def test_selects_latest_dump(
         self,
         workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
@@ -86,7 +86,7 @@ class TestFetchedDate:
         assert cache.fetched_date(cache_dir, cache.LATEST) == max(dates)
 
     @given(_FETCHED, st.data())
-    def test_latest_passes_over_a_file_named_like_a_dump(
+    def test_ignores_regular_files(
         self,
         workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
@@ -105,7 +105,7 @@ class TestFetchedDate:
         assert cache.fetched_date(cache_dir, cache.LATEST) == max(dates)
 
     @given(_FETCHED, st.data())
-    def test_refuses_a_date_that_was_not_fetched(
+    def test_rejects_unfetched_date(
         self,
         workspace: Callable[[], Path],
         fetch_dump: Callable[..., Path],
@@ -123,7 +123,7 @@ class TestFetchedDate:
         with pytest.raises(FileNotFoundError, match=missing):
             _ = cache.fetched_date(cache_dir, missing)
 
-    def test_refuses_latest_when_nothing_was_fetched(
+    def test_rejects_empty_cache(
         self,
         workspace: Callable[[], Path],
     ) -> None:
@@ -131,7 +131,7 @@ class TestFetchedDate:
         with pytest.raises(FileNotFoundError, match="fetch one first"):
             _ = cache.fetched_date(workspace(), cache.LATEST)
 
-    def test_refuses_latest_when_the_cache_does_not_exist(
+    def test_rejects_absent_cache(
         self,
         workspace: Callable[[], Path],
     ) -> None:
