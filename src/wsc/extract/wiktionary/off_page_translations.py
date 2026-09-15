@@ -20,48 +20,23 @@ type OffPageTranslations = dict[str, tuple[TranslationTable, ...]]
 """What each entry is translated by elsewhere, by the name of the entry."""
 
 
-def _flatten_translations(
-    translations: tuple[TranslationTable, ...],
-) -> dict[str, frozenset[str]]:
-    """
-    Gather every table of an entry into one, whatever gloss headed it.
-
-    Pointers identify entries containing translation tables.
-
-    Args:
-        translations: What the entry pointed at carries.
-
-    Returns:
-        The words each language offers for it.
-    """
-    flattened_words: dict[str, frozenset[str]] = {}
-
-    for table in translations:
-        for language, words in table.translations.items():
-            flattened_words[language] = (
-                flattened_words.get(language, frozenset()) | words
-            )
-
-    return flattened_words
-
-
 def _read_pointed_translations(
     entries: Iterable[RawEntry],
     pointed_ids: set[str],
-) -> dict[str, dict[str, frozenset[str]]]:
+) -> dict[str, tuple[TranslationTable, ...]]:
     """
     Read the translations of the entries some pointer names.
 
-    One name gathers every etymology, which wiktextract writes as an entry apiece.
+    Tables retain their gloss while entries from separate etymologies are merged.
 
     Args:
         entries: The parsed extraction, walked once.
         pointed_ids: What names the entries worth reading.
 
     Returns:
-        The words each language offers for an entry, by the name of the entry.
+        Translation tables grouped by the name of the entry.
     """
-    pointed_translations: dict[str, dict[str, frozenset[str]]] = {}
+    pointed_translations: dict[str, tuple[TranslationTable, ...]] = {}
 
     for entry in entries:
         try:
@@ -74,14 +49,16 @@ def _read_pointed_translations(
         if pointed_id not in pointed_ids:
             continue
 
-        kept_words = pointed_translations.setdefault(pointed_id, {})
         pointed_tables = parse_translations(
             entry.get("translations", []),
             lemma_id=pointed_id,
         )
 
-        for language, words in _flatten_translations(pointed_tables).items():
-            kept_words[language] = kept_words.get(language, frozenset()) | words
+        pointed_translations[pointed_id] = add_translations(
+            pointed_translations.get(pointed_id, ()),
+            pointed_tables,
+            pointed_id,
+        )
 
     return pointed_translations
 
@@ -113,41 +90,54 @@ def build_off_page_translations(
 
     pointed_translations = _read_pointed_translations(entries, pointed_ids)
 
+    for page in translated_pages:
+        pointed_id = lemma_id(page.lemma, page.pos)
+
+        if pointed_id not in pointed_ids:
+            continue
+
+        pointed_translations[pointed_id] = add_translations(
+            pointed_translations.get(pointed_id, ()),
+            page.translations,
+            pointed_id,
+        )
+
     off_page_translations: OffPageTranslations = {}
 
     for page in translated_pages:
         page_id = lemma_id(page.lemma, page.pos)
-        entry_translations = off_page_translations.setdefault(page_id, ())
+        translation_tables = off_page_translations.setdefault(page_id, ())
 
-        entry_translations = add_translations(
-            entry_translations,
+        translation_tables = add_translations(
+            translation_tables,
             page.translations,
             page_id,
         )
 
         for gloss, pointed_lemmas in page.pointers.items():
-            for pointed_lemma in pointed_lemmas:
-                pointed_words = pointed_translations.get(
-                    lemma_id(pointed_lemma, page.pos)
+            matching_translation_tables = tuple(
+                table
+                for pointed_lemma in pointed_lemmas
+                for table in pointed_translations.get(
+                    lemma_id(pointed_lemma, page.pos),
+                    (),
+                )
+                if table.gloss == gloss
+            )
+
+            if matching_translation_tables:
+                translation_tables = add_translations(
+                    translation_tables,
+                    matching_translation_tables,
+                    page_id,
                 )
 
-                if pointed_words:
-                    entry_translations = add_translations(
-                        entry_translations,
-                        (
-                            TranslationTable(
-                                "",
-                                gloss,
-                                pointed_words,
-                            ),
-                        ),
-                        page_id,
-                    )
-
-        off_page_translations[page_id] = entry_translations
+        off_page_translations[page_id] = translation_tables
 
     return {
-        entry_id: tables for entry_id, tables in off_page_translations.items() if tables
+        entry_id: translation_tables
+        for entry_id, translation_tables in off_page_translations.items()
+        if translation_tables
     }
 
 

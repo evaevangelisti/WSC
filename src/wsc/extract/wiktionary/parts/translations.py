@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from ....identifiers import translation_table_id
 from ....models import TranslationTable
+from ...translations import normalize_translation_gloss
 from ..merge import add_translations
 from ..schema import RawTranslation
 
@@ -42,7 +43,7 @@ def parse_translations(
     )
 
     for raw_translation in raw_translations:
-        gloss = raw_translation.get("sense", "").strip()
+        gloss = normalize_translation_gloss(raw_translation.get("sense", ""))
         language = raw_translation.get("lang_code", "").strip()
         word = raw_translation.get("word", "").strip()
 

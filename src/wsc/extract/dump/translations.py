@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 
 from ...identifiers import lemma_id, translation_table_id
 from ...models import POS, TranslationTable
+from ..translations import normalize_translation_gloss
 from .markup import arguments, plain
 
 _HEADING = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$")
@@ -67,7 +68,7 @@ def _read_pointers(
         if not positional_arguments:
             continue
 
-        gloss = plain(positional_arguments[0])
+        gloss = normalize_translation_gloss(plain(positional_arguments[0]))
 
         if not gloss:
             continue
@@ -177,7 +178,11 @@ def read_page(
 
         if found_top:
             positional_arguments, _ = arguments(found_top.group(1))
-            headed = plain(positional_arguments[0]) if positional_arguments else ""
+            headed = (
+                normalize_translation_gloss(plain(positional_arguments[0]))
+                if positional_arguments
+                else ""
+            )
 
             gloss = headed or None
 

@@ -51,7 +51,7 @@ def test_respects_translation_boundaries(
             "{{t|it|after}}",
             "===Verb===",
             "{{t|it|without a table}}",
-            "{{trans-top-also|action}}",
+            "{{trans-top-also|action|act|do}}",
             "{{t|fr|agir}}",
             "{{trans-bottom}}",
             "==German==",
@@ -83,6 +83,7 @@ def test_respects_translation_boundaries(
     assert noun.translations[0].id == translation_table_id("entry.noun", "meaning")
     assert noun.translations[0].translations == {"it": frozenset(translations)}
     assert records[POS.VERB].translations[0].translations == {"fr": frozenset({"agir"})}
+    assert not records[POS.VERB].pointers
 
 
 @given(
@@ -103,12 +104,20 @@ def test_resolves_translation_pointers(
                 "entry",
                 "==English==\n===Noun===\n"
                 + f"{{{{{template}|meaning|target|missing}}}}\n"
-                + "{{trans-see|target}}\n{{trans-see|}}",
+                + "{{trans-see|target}}\n"
+                + "{{trans-see|unmatched|target}}\n"
+                + "{{trans-see|}}",
             ),
             page(
                 "entry/translations",
                 "==English==\n===Noun===\n{{trans-top|meaning}}\n"
                 + "{{t|fr|mot}}\n{{trans-bottom}}",
+            ),
+            page(
+                "target/translations",
+                "==English==\n===Noun===\n"
+                + "{{trans-top|meaning — see also alternative}}\n"
+                + "{{t|de|Wort}}\n{{trans-bottom}}",
             ),
         ),
         encoding="utf-8",
@@ -117,7 +126,13 @@ def test_resolves_translation_pointers(
         {
             "word": "target",
             "pos": "noun",
-            "translations": [{"word": word, "lang_code": "it", "sense": "other"}],
+            "translations": [
+                {
+                    "word": word,
+                    "lang_code": "it",
+                    "sense": "meaning — see also alternative",
+                },
+            ],
         }
         for word in translations
     ]
@@ -126,8 +141,18 @@ def test_resolves_translation_pointers(
             {"word": "target", "pos": "unknown"},
             {
                 "word": "target",
+                "pos": "noun",
+                "translations": [
+                    {"word": "single", "lang_code": "it", "sense": "target"},
+                    {"word": "excluded", "lang_code": "it", "sense": "other"},
+                ],
+            },
+            {
+                "word": "target",
                 "pos": "verb",
-                "translations": [{"word": "excluded", "lang_code": "it"}],
+                "translations": [
+                    {"word": "excluded verb", "lang_code": "it", "sense": "meaning"},
+                ],
             },
         ],
     )
@@ -139,7 +164,7 @@ def test_resolves_translation_pointers(
     write_off_page_translations(output, result)
 
     assert read_off_page_translations(output) == result
-    assert set(result) == {"entry.noun"}
+    assert set(result) == {"entry.noun", "target.noun"}
 
     tables = {table.gloss: table for table in result["entry.noun"]}
 
@@ -147,8 +172,9 @@ def test_resolves_translation_pointers(
     assert tables["meaning"].translations == {
         "it": frozenset(translations),
         "fr": frozenset({"mot"}),
+        "de": frozenset({"Wort"}),
     }
-    assert tables["target"].translations == {"it": frozenset(translations)}
+    assert tables["target"].translations == {"it": frozenset({"single"})}
     assert all(
         table.id == translation_table_id("entry.noun", gloss)
         for gloss, table in tables.items()

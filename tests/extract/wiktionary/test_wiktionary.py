@@ -1269,7 +1269,12 @@ class TestVariants:
 class TestTranslations:
     """What other languages call the entry, which Wiktionary hangs off the entry."""
 
-    @given(words, languages, glosses, st.data())
+    @given(
+        words,
+        languages,
+        glosses.filter(lambda gloss: "see also" not in gloss.casefold()),
+        st.data(),
+    )
     def test_groups_translation_glosses(
         self,
         extract: Callable[..., list[Lemma]],
@@ -1295,7 +1300,13 @@ class TestTranslations:
             language: frozenset({translation}),
         }
 
-    @given(words, words, languages, glosses, st.data())
+    @given(
+        words,
+        words,
+        languages,
+        glosses.filter(lambda gloss: "see also" not in gloss.casefold()),
+        st.data(),
+    )
     def test_groups_translation_languages(
         self,
         extract: Callable[..., list[Lemma]],
@@ -1325,6 +1336,49 @@ class TestTranslations:
         )
 
         assert table.translations[language] == frozenset({first, second})
+
+    @given(
+        words,
+        words,
+        glosses.filter(lambda gloss: "see also" not in gloss.casefold()),
+        st.data(),
+    )
+    def test_removes_gloss_references(
+        self,
+        extract: Callable[..., list[Lemma]],
+        first: str,
+        second: str,
+        gloss: str,
+        data: st.DataObject,
+    ) -> None:
+        """A displayed see-also reference does not become part of the table gloss."""
+        referenced_gloss = f"{gloss} — see also alternative\ncleanup note"
+        translation_records = [
+            data.draw(
+                raw_translations(
+                    translations=st.just(translation),
+                    codes=st.just(language),
+                    glosses=st.just(table_gloss),
+                ),
+            )
+            for translation, language, table_gloss in (
+                (first, "it", gloss),
+                (second, "fr", referenced_gloss),
+            )
+        ]
+        entry = data.draw(raw_entries(translations=st.just(translation_records)))
+
+        (lemma,) = extract([entry])
+
+        assert len(lemma.translation_tables) == 1
+
+        table = lemma.translation_tables[0]
+
+        assert table.gloss == gloss.strip()
+        assert table.translations == {
+            "it": frozenset({first}),
+            "fr": frozenset({second}),
+        }
 
     @given(st.sampled_from(("word", "lang_code", "sense")), st.data())
     def test_excludes_incomplete_translations(

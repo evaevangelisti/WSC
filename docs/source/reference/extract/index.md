@@ -11,4 +11,5 @@ wiktionary/index
 dump/index
 wordnet
 offsets
+translations
 ```
