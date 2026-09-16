@@ -97,6 +97,17 @@ def extract(
         allowed_pos: frozenset[POS] | None = None,
         name: str = "wordnet.xml",
     ) -> list[Synset]:
+        """
+        Extract synsets from a generated WordNet document.
+
+        Args:
+            elements: XML elements included in the generated lexicon.
+            allowed_pos: Parts of speech to retain, or None for all supported ones.
+            name: Source filename selecting the compression format.
+
+        Returns:
+            Synsets retained by the configured filters.
+        """
         path = workspace() / name
         text = lexicon(*elements)
 

@@ -25,9 +25,12 @@ def add_translations(
     Add one set of translation tables to another, gloss by gloss.
 
     Args:
-        kept_translations: What is kept already, added to in place.
+        kept_translations: Previously retained translation tables.
         added_translations: What to add to it.
         lemma_id: The entry identifier used to name merged tables.
+
+    Returns:
+        Tables containing the combined words for each gloss and language.
     """
     gathered_translation_tables = {
         table.gloss: {

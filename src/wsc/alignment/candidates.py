@@ -59,11 +59,7 @@ class WordNetCandidates:
 
         found_synsets: dict[str, Synset] = {}
 
-        variant_forms = (
-            variant_id.rsplit(".", 1)[0] for variant_id in sorted(lemma.variants)
-        )
-
-        for form in (lemma.lemma, *variant_forms):
+        for form in (lemma.lemma, *sorted(lemma.variants)):
             found_synsets.update(self._members.get((self._normalize(form), pos), {}))
 
         return tuple(found_synsets[identifier] for identifier in sorted(found_synsets))

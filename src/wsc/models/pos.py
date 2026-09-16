@@ -5,10 +5,7 @@ from enum import StrEnum
 
 class POS(StrEnum):
     """
-    Part-of-speech tags the collector keeps.
-
-    Values are wiktextract's own codes, so POS("adj") converts directly. A proper noun
-    stands apart from a common one, as Wiktionary writes it.
+    Part-of-speech tags.
     """
 
     NOUN = "noun"

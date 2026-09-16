@@ -4,14 +4,13 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator
 
 from ....constants import LANGUAGE
-from ....identifiers import lemma_id
 from ....models import POS
-from ..schema import RawEntry, RawSense
+from ..schema import RawEntry, RawSense, parse_pos
 
 _ALT_OF = "alt-of"
 
 type Variants = dict[tuple[str, POS], frozenset[str]]
-"""Variant lemma identifiers grouped by headword and part of speech."""
+"""Variant lemmas grouped by headword and part of speech."""
 
 
 def _read_pointed_lemmas(
@@ -46,7 +45,7 @@ def gather_variants(
         entries: The wiktextract file, read whole.
 
     Returns:
-        Variant lemma identifiers grouped by headword and part of speech.
+        Variant lemmas grouped by headword and part of speech.
     """
     variants: defaultdict[tuple[str, POS], set[str]] = defaultdict(set)
 
@@ -60,7 +59,7 @@ def gather_variants(
             continue
 
         try:
-            pos = POS(entry.get("pos", ""))
+            pos = parse_pos(entry.get("pos", ""))
         except ValueError:
             continue
 
@@ -70,9 +69,9 @@ def gather_variants(
 
             for pointed_lemma in _read_pointed_lemmas(raw_sense):
                 if pointed_lemma != variant:
-                    variants[pointed_lemma, pos].add(lemma_id(variant, pos))
+                    variants[pointed_lemma, pos].add(variant)
 
     return {
-        pointed_lemma: frozenset(variant_ids)
-        for pointed_lemma, variant_ids in variants.items()
+        pointed_lemma: frozenset(variant_lemmas)
+        for pointed_lemma, variant_lemmas in variants.items()
     }

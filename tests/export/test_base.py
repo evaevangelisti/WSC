@@ -103,29 +103,14 @@ class TestWriter:
     """Writing through a .part file, so a run cut short leaves nothing."""
 
     @given(_DIRECTORIES, _WRITTEN)
-    def test_creates_parent_directory(
+    def test_publishes_complete_output(
         self,
         workspace: Callable[[], Path],
         directories: list[str],
         written: list[Lemma],
     ) -> None:
-        """An export may be the first thing written where it is going."""
+        """Writing creates parent directories and publishes output only on closure."""
         output_path = workspace().joinpath(*directories) / "senses.jsonl"
-
-        with _open(output_path) as writer:
-            for lemma in written:
-                writer.write(lemma)
-
-        assert output_path.exists()
-
-    @given(_WRITTEN)
-    def test_defers_output_publication(
-        self,
-        workspace: Callable[[], Path],
-        written: list[Lemma],
-    ) -> None:
-        """Output appears whole, or not at all: a file that is there is finished."""
-        output_path = workspace() / "senses.jsonl"
 
         with _open(output_path) as writer:
             for lemma in written:
@@ -133,37 +118,25 @@ class TestWriter:
 
             assert not output_path.exists()
 
-        assert output_path.exists()
+        assert list(output_path.parent.iterdir()) == [output_path]
 
-    @given(_WRITTEN)
-    def test_removes_partial_output(
-        self,
-        workspace: Callable[[], Path],
-        written: list[Lemma],
-    ) -> None:
-        """The .part file is removed once its contents are in place."""
-        directory = workspace()
-        output_path = directory / "senses.jsonl"
-
-        with _open(output_path) as writer:
-            for lemma in written:
-                writer.write(lemma)
-
-        assert list(directory.iterdir()) == [output_path]
-
-    @given(_WRITTEN)
+    @given(_WRITTEN, st.binary(max_size=100))
     def test_discards_failed_output(
         self,
         workspace: Callable[[], Path],
         written: list[Lemma],
+        original: bytes,
     ) -> None:
-        """A half-written export cannot be resumed, so none is left behind."""
+        """A failed replacement preserves completed output and removes partial data."""
         directory = workspace()
+        output_path = directory / "senses.jsonl"
+        _ = output_path.write_bytes(original)
 
         with pytest.raises(RuntimeError, match="something went wrong"):
-            _interrupt_writing(_open(directory / "senses.jsonl"), written)
+            _interrupt_writing(_open(output_path), written)
 
-        assert list(directory.iterdir()) == []
+        assert output_path.read_bytes() == original
+        assert list(directory.iterdir()) == [output_path]
 
     @given(_WRITTEN)
     def test_closes_output_stream(

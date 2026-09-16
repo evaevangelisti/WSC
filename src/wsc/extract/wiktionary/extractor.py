@@ -20,7 +20,7 @@ from .parts import (
     parse_senses,
     parse_translations,
 )
-from .schema import RawEntry
+from .schema import RawEntry, parse_pos
 
 _GATHERING_VARIANTS = "Gathering variants"
 _LOCATING = "Locating the lemmas"
@@ -77,7 +77,7 @@ class WiktionaryExtractor:
             entry: The entry, as wiktextract wrote it.
             lemma: The headword.
             pos: Its part of speech.
-            variants: Variant lemma identifiers from entries pointing at each headword.
+            variants: Variant lemmas from entries pointing at each headword.
 
         Returns:
             The lemma, or None where no sense of it survived the filters.
@@ -119,7 +119,7 @@ class WiktionaryExtractor:
 
         Args:
             input_path: The wiktextract file to read, compressed or not.
-            variants: Variant lemma identifiers grouped by headword and part of speech.
+            variants: Variant lemmas grouped by headword and part of speech.
 
         Yields:
             Retained entries and their sentence search queries.
@@ -133,8 +133,10 @@ class WiktionaryExtractor:
             if not lemma:
                 continue
 
+            pos_code = entry.get("pos", "")
+
             try:
-                pos = POS(entry.get("pos", ""))
+                pos = parse_pos(pos_code)
             except ValueError:
                 continue
 

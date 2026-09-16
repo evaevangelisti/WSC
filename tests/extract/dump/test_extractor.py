@@ -4,6 +4,7 @@ import bz2
 from collections.abc import Callable
 from pathlib import Path
 
+import pytest
 from documents import dump, page
 from hypothesis import given
 from hypothesis import strategies as st
@@ -12,6 +13,7 @@ from strategies import words
 from wsc.extract import (
     DumpExtractor,
     build_off_page_translations,
+    index_translation_glosses,
     read_off_page_translations,
     write_off_page_translations,
 )
@@ -103,20 +105,21 @@ def test_resolves_translation_pointers(
             page(
                 "entry",
                 "==English==\n===Noun===\n"
-                + f"{{{{{template}|meaning|target|missing}}}}\n"
+                + f"{{{{{template}|Meaning.|target|missing}}}}\n"
                 + "{{trans-see|target}}\n"
+                + "{{trans-see|spaced gloss|target}}\n"
                 + "{{trans-see|unmatched|target}}\n"
                 + "{{trans-see|}}",
             ),
             page(
                 "entry/translations",
-                "==English==\n===Noun===\n{{trans-top|meaning}}\n"
+                "==English==\n===Noun===\n{{trans-top|Meaning.}}\n"
                 + "{{t|fr|mot}}\n{{trans-bottom}}",
             ),
             page(
                 "target/translations",
                 "==English==\n===Noun===\n"
-                + "{{trans-top|meaning — see also alternative}}\n"
+                + "{{trans-top|MEANING. — see also alternative}}\n"
                 + "{{t|de|Wort}}\n{{trans-bottom}}",
             ),
         ),
@@ -125,6 +128,7 @@ def test_resolves_translation_pointers(
     entries: list[RawEntry] = [
         {
             "word": "target",
+            "lang_code": "en",
             "pos": "noun",
             "translations": [
                 {
@@ -138,20 +142,39 @@ def test_resolves_translation_pointers(
     ]
     entries.extend(
         [
-            {"word": "target", "pos": "unknown"},
+            {"word": "target", "lang_code": "en", "pos": "unknown"},
             {
                 "word": "target",
+                "lang_code": "en",
                 "pos": "noun",
                 "translations": [
                     {"word": "single", "lang_code": "it", "sense": "target"},
                     {"word": "excluded", "lang_code": "it", "sense": "other"},
+                    {
+                        "word": "spacing",
+                        "lang_code": "it",
+                        "sense": "spaced   gloss.",
+                    },
                 ],
             },
             {
                 "word": "target",
+                "lang_code": "en",
                 "pos": "verb",
                 "translations": [
                     {"word": "excluded verb", "lang_code": "it", "sense": "meaning"},
+                ],
+            },
+            {
+                "word": "target",
+                "lang_code": "mpt",
+                "pos": "noun",
+                "translations": [
+                    {
+                        "word": "intrusa",
+                        "lang_code": "it",
+                        "sense": "meaning",
+                    },
                 ],
             },
         ],
@@ -168,14 +191,158 @@ def test_resolves_translation_pointers(
 
     tables = {table.gloss: table for table in result["entry.noun"]}
 
-    assert set(tables) == {"meaning", "target"}
-    assert tables["meaning"].translations == {
+    assert set(tables) == {"Meaning.", "target", "spaced gloss"}
+    assert tables["Meaning."].translations == {
         "it": frozenset(translations),
         "fr": frozenset({"mot"}),
         "de": frozenset({"Wort"}),
     }
     assert tables["target"].translations == {"it": frozenset({"single"})}
+    assert tables["spaced gloss"].translations == {"it": frozenset({"spacing"})}
     assert all(
         table.id == translation_table_id("entry.noun", gloss)
         for gloss, table in tables.items()
     )
+
+
+def test_resolves_name_pointers(
+    workspace: Callable[[], Path],
+) -> None:
+    """Proper-noun pointers match Wiktextract's name code."""
+    source = workspace() / "dump.xml"
+    _ = source.write_text(
+        dump(
+            page(
+                "entry",
+                "==English==\n===Proper noun===\n" + "{{trans-see|meaning|target}}",
+            ),
+        ),
+        encoding="utf-8",
+    )
+    entries: list[RawEntry] = [
+        {
+            "word": "target",
+            "lang_code": "en",
+            "pos": "name",
+            "translations": [
+                {
+                    "word": "nome",
+                    "lang_code": "it",
+                    "sense": "meaning",
+                },
+            ],
+        },
+    ]
+
+    result = build_off_page_translations(
+        DumpExtractor("English").extract(source),
+        entries,
+    )
+
+    assert result["entry.propn"][0].translations == {
+        "it": frozenset({"nome"}),
+    }
+
+
+def test_fills_missing_english_tables(
+    workspace: Callable[[], Path],
+) -> None:
+    """Raw markup supplies only tables absent from the parsed entry."""
+    source = workspace() / "dump.xml"
+    _ = source.write_text(
+        dump(
+            page(
+                "entry",
+                "==English==\n===Noun===\n"
+                + "{{trans-top|known}}\n{{t|it|nota}}\n{{trans-bottom}}\n"
+                + "{{trans-top|missing}}\n{{t|fr|mot}}\n{{trans-bottom}}",
+            ),
+        ),
+        encoding="utf-8",
+    )
+    entries: list[RawEntry] = [
+        {
+            "word": "entry",
+            "lang_code": "en",
+            "pos": "noun",
+            "translations": [
+                {
+                    "word": "parola",
+                    "lang_code": "it",
+                    "sense": "known",
+                },
+            ],
+        },
+        {
+            "word": "entry",
+            "lang_code": "mpt",
+            "pos": "noun",
+            "translations": [
+                {
+                    "word": "mot",
+                    "lang_code": "fr",
+                    "sense": "missing",
+                },
+            ],
+        },
+    ]
+    parsed_glosses = index_translation_glosses(entries)
+
+    result = build_off_page_translations(
+        DumpExtractor("English").extract(source, parsed_glosses),
+        entries,
+    )
+
+    assert [table.gloss for table in result["entry.noun"]] == ["missing"]
+    assert result["entry.noun"][0].translations == {
+        "fr": frozenset({"mot"}),
+    }
+
+
+@pytest.mark.parametrize("level", [3, 4])
+@pytest.mark.parametrize("boundary", ["Pronoun", "Etymology 2", "language"])
+def test_isolates_translation_sections(
+    tmp_path: Path,
+    level: int,
+    boundary: str,
+) -> None:
+    """Section changes close unfinished tables and release the previous POS."""
+    heading = "=" * level
+    boundary_heading = "=" * (3 if boundary == "Etymology 2" else level)
+    transition = (
+        ["==French==", f"{heading}Noun{heading}", "==English=="]
+        if boundary == "language"
+        else [f"{boundary_heading}{boundary}{boundary_heading}"]
+    )
+    markup = "\n".join(
+        [
+            "==English==",
+            f"{heading}Noun{heading}",
+            "{{trans-top|kept}}",
+            "{{t|it|prima}}",
+            *transition,
+            "{{t|it|leaked}}",
+            "{{trans-top|excluded}}",
+            "{{t|it|estranea}}",
+            "{{trans-see|excluded|target}}",
+            f"{heading}Noun{heading}",
+            "{{t|it|still outside}}",
+            "{{trans-top|retained}}",
+            "{{t|it|seconda}}",
+            "{{trans-bottom}}",
+        ],
+    )
+    source = tmp_path / "dump.xml"
+    _ = source.write_text(
+        dump(page("entry/translations", markup)),
+        encoding="utf-8",
+    )
+
+    (record,) = DumpExtractor("English").extract(source)
+
+    assert record.pos == POS.NOUN
+    assert not record.pointers
+    assert {table.gloss: table.translations for table in record.translations} == {
+        "kept": {"it": frozenset({"prima"})},
+        "retained": {"it": frozenset({"seconda"})},
+    }

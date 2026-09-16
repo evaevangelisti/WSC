@@ -1,4 +1,4 @@
-"""The translation tables Wiktionary writes away from the entry they belong to."""
+"""Translation tables read from raw Wiktionary markup."""
 
 import re
 from collections import defaultdict
@@ -35,7 +35,7 @@ SUBPAGE_SUFFIX = "/translations"
 @dataclass(frozen=True, slots=True)
 class PageTranslations:
     """
-    What one page translates for one part of speech, away from the entry.
+    What one page translates for one part of speech.
 
     Attributes:
         lemma: The headword the translations belong to.
@@ -107,7 +107,7 @@ def _read_translations(
 def _sections(
     markup: str,
     language_section: str,
-) -> Iterator[tuple[POS, str]]:
+) -> Iterator[tuple[POS | None, str]]:
     """
     Walk the lines of a page sitting under a part of speech we keep.
 
@@ -116,10 +116,12 @@ def _sections(
         language_section: What the edition heads its own language with.
 
     Yields:
-        The part of speech a line sits under, and the line.
+        The current part of speech and line, or None at a section boundary.
     """
     reading_language = False
+
     pos: POS | None = None
+    pos_level = 0
 
     for line in markup.splitlines():
         found_heading = _HEADING.match(line)
@@ -131,15 +133,21 @@ def _sections(
             continue
 
         heading = found_heading.group(2)
+        level = len(found_heading.group(1))
 
-        if len(found_heading.group(1)) == 2:
+        if level == 2:
             reading_language = heading == language_section
+
+        if level <= pos_level:
             pos = None
 
         found_pos = _POS_BY_HEADING.get(heading)
 
-        if found_pos is not None:
+        if reading_language and found_pos is not None:
             pos = found_pos
+            pos_level = level
+
+        yield None, line
 
 
 def read_page(
@@ -148,9 +156,9 @@ def read_page(
     language_section: str,
 ) -> Iterator[PageTranslations]:
     """
-    Read the translations one page keeps away from the entry.
+    Read the translations and pointers written on one page.
 
-    A subpage holds the tables, an entry the pointers.
+    Main pages and translation subpages can both hold tables.
 
     Args:
         title: The page, which names the headword.
@@ -160,17 +168,16 @@ def read_page(
     Yields:
         One record per part of speech the page translates.
     """
-    subpage = title.endswith(SUBPAGE_SUFFIX)
-
     tables: defaultdict[POS, dict[str, dict[str, frozenset[str]]]] = defaultdict(dict)
     pointers: defaultdict[POS, dict[str, tuple[str, ...]]] = defaultdict(dict)
 
-    previous_pos: POS | None = None
     gloss: str | None = None
 
     for pos, line in _sections(markup, language_section):
-        if pos is not previous_pos:
-            previous_pos, gloss = pos, None
+        if pos is None:
+            gloss = None
+
+            continue
 
         pointers[pos].update(_read_pointers(line))
 
@@ -189,7 +196,7 @@ def read_page(
         if _BOTTOM.search(line):
             gloss = None
 
-        if not subpage or gloss is None:
+        if gloss is None:
             continue
 
         translations = tables[pos].setdefault(gloss, {})

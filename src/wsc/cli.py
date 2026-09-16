@@ -37,6 +37,7 @@ from .extract import (
     WiktionaryExtractor,
     WordNetExtractor,
     build_off_page_translations,
+    index_translation_glosses,
     narrow,
     open_locator,
     read_entries,
@@ -207,8 +208,12 @@ def parse(
         if skipped_lines:
             _LOGGER.warning("Skipped %s lines without entries", skipped_lines)
 
+    parsed_glosses = index_translation_glosses(
+        read_entries(output_path, "Indexing translation tables"),
+    )
+
     off_page_translations = build_off_page_translations(
-        DumpExtractor(LANGUAGE_SECTION).extract(dump_path),
+        DumpExtractor(LANGUAGE_SECTION).extract(dump_path, parsed_glosses),
         read_entries(output_path, "Answering the pointers"),
     )
 

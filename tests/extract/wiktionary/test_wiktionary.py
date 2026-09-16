@@ -164,6 +164,19 @@ def extract(
         maximum_year: int | None = None,
         name: str = "wiktextract.jsonl",
     ) -> list[Lemma]:
+        """
+        Extract lemmas from generated Wiktextract entries.
+
+        Args:
+            entries: Source entries to serialize and extract.
+            allowed_pos: Parts of speech to retain, or None for all supported ones.
+            minimum_year: Oldest retained quotation year, or None.
+            maximum_year: Newest retained quotation year, or None.
+            name: Source filename selecting the compression format.
+
+        Returns:
+            Collected lemmas after filtering.
+        """
         path = write_entries(workspace() / name, entries)
 
         extractor = WiktionaryExtractor(
@@ -197,6 +210,15 @@ def extract_lines(
     def run(
         lines: Iterable[str],
     ) -> list[Lemma]:
+        """
+        Extract lemmas from supplied source lines.
+
+        Args:
+            lines: Source lines emitted or written in their supplied order.
+
+        Returns:
+            Collected lemmas from readable entries.
+        """
         path = workspace() / "wiktextract.jsonl"
         _ = path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
 
@@ -226,6 +248,19 @@ def attest(
         minimum_year: int | None = None,
         maximum_year: int | None = None,
     ) -> list[Sentence]:
+        """
+        Collect attestations for a single generated sense.
+
+        Args:
+            examples: Raw examples attached to the generated sense.
+            headword: Lemma whose occurrences the extractor locates.
+            forms: Inflected forms supplied with the entry.
+            minimum_year: Oldest retained quotation year, or None.
+            maximum_year: Newest retained quotation year, or None.
+
+        Returns:
+            Sentences retained by the configured filters.
+        """
         sense: RawJson = {"glosses": ["A meaning."], "examples": list(examples)}
         entry: RawJson = {
             "word": headword,
@@ -355,6 +390,15 @@ class TestEntries:
         entry = data.draw(raw_entries(pos_codes=st.just(pos.value)))
 
         assert extract([entry])[0].pos is pos
+
+    @given(raw_entries(pos_codes=st.just("name")))
+    def test_maps_wiktextract_names(
+        self,
+        extract: Callable[..., list[Lemma]],
+        entry: RawJson,
+    ) -> None:
+        """Wiktextract's name code represents a proper noun."""
+        assert extract([entry])[0].pos is POS.PROPN
 
 
 class TestIdentifiers:
@@ -1184,7 +1228,38 @@ class TestVariants:
         lemmas = extract([variant_entry, defining_entry])
 
         assert [lemma.variants for lemma in lemmas] == [
-            frozenset({f"{spelling}.{pos}"}) - {f"{headword}.{pos}"},
+            frozenset({spelling}) - {headword},
+        ]
+
+    @given(words, words, st.data())
+    def test_collects_name_variants(
+        self,
+        extract: Callable[..., list[Lemma]],
+        headword: str,
+        spelling: str,
+        data: st.DataObject,
+    ) -> None:
+        """Proper-noun spellings use Wiktextract's name code."""
+        variant_entry: RawJson = {
+            "word": spelling,
+            "pos": "name",
+            "lang_code": "en",
+            "senses": [
+                {
+                    "glosses": [f"Alternative spelling of {headword}."],
+                    "tags": ["alt-of"],
+                    "alt_of": [{"word": headword}],
+                },
+            ],
+        }
+        defining_entry = data.draw(
+            raw_entries(headwords=st.just(headword), pos_codes=st.just("name")),
+        )
+
+        lemmas = extract([variant_entry, defining_entry])
+
+        assert [lemma.variants for lemma in lemmas] == [
+            frozenset({spelling}) - {headword},
         ]
 
     @given(words, words, st.data())

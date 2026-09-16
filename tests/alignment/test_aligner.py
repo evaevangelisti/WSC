@@ -62,12 +62,15 @@ def test_preserves_translation_bijection(
         {"s1": build_decision("unknown"), "s2": build_decision(None)},
         {"s1": build_decision("t1", "equivalent"), "s2": build_decision(None)},
         {"s1": {"status": "matched", "links": []}, "s2": build_decision(None)},
+        {"s1": [], "s2": None},
+        {"s1": ["t1"], "s2": None},
+        {"s1": [{"target_id": "t1", "relation": "translation"}], "s2": None},
         {
-            "s1": {
-                "status": "uncertain",
-                "links": [{"target_id": "t1", "relation": "translation"}],
-            },
-            "s2": build_decision(None),
+            "s1": [
+                {"target_id": "t1", "relation": "translation", "reason": "Same."},
+            ]
+            * 2,
+            "s2": None,
         },
     ],
 )
@@ -75,8 +78,24 @@ def test_rejects_invalid_assignments(
     response: dict[str, object],
 ) -> None:
     """Missing, contradictory, and invented associations fail validation."""
-    with pytest.raises(ValueError, match=r"Expected|Invalid|One-to-one"):
+    with pytest.raises(ValueError, match=r"Expected|Invalid|One-to-one|Repeated"):
         _ = align_query(build_query(), Model([json.dumps(response)]))
+
+
+@pytest.mark.parametrize("reason", [None, 0, False, [], {}, "", " \n\t"])
+def test_rejects_invalid_reasons(
+    reason: object,
+) -> None:
+    """Associations require textual evidence containing more than whitespace."""
+    response = json.dumps(
+        {
+            "s1": [{"target_id": "t1", "relation": "translation", "reason": reason}],
+            "s2": None,
+        },
+    )
+
+    with pytest.raises(ValueError, match="Invalid association"):
+        _ = align_query(build_query(), Model([response]))
 
 
 @pytest.mark.parametrize("response", ["null", "[]", "```json\n{}\n```", "{"])
@@ -271,7 +290,7 @@ def test_includes_variant_candidates() -> None:
         "alias.name",
         "alias",
         POS.PROPN,
-        variants=frozenset({"a.b.noun"}),
+        variants=frozenset({"a.b"}),
         senses=[Sense("s", ("sense",), synonyms=("variant",))],
     )
     candidates = WordNetCandidates(

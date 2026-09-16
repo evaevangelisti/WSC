@@ -48,6 +48,12 @@ def workspace(
     directories = count()
 
     def build() -> Path:
+        """
+        Create a fresh directory for one generated example.
+
+        Returns:
+            The newly created workspace path.
+        """
         path = tmp_path / f"{next(directories):03d}"
         path.mkdir()
 
@@ -69,6 +75,16 @@ def write_entries() -> Callable[[Path, Iterable[RawJson]], Path]:
         path: Path,
         entries: Iterable[RawJson],
     ) -> Path:
+        """
+        Write entries using the compression selected by the path.
+
+        Args:
+            path: Destination path selecting the compression format.
+            entries: Source entries to serialize and extract.
+
+        Returns:
+            The populated source path.
+        """
         path.parent.mkdir(parents=True, exist_ok=True)
 
         lines = "".join(
@@ -104,6 +120,17 @@ def fetch_dump() -> Callable[..., Path]:
         date: str = "20260801",
         pages: Iterable[str] = (),
     ) -> Path:
+        """
+        Place a compressed Wiktionary dump in the test cache.
+
+        Args:
+            cache_dir: Isolated source cache directory.
+            date: Dump date used to name the cache directory.
+            pages: Page elements included in the generated dump.
+
+        Returns:
+            The cached dump path.
+        """
         path = cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
         path.parent.mkdir(parents=True, exist_ok=True)
         _ = path.write_bytes(bz2.compress(dump(*pages).encode()))
@@ -127,6 +154,17 @@ def fetch_wordnet() -> Callable[..., Path]:
         version: str = "2025",
         elements: Iterable[str] = WORDNET,
     ) -> Path:
+        """
+        Place a compressed WordNet release in the test cache.
+
+        Args:
+            cache_dir: Isolated source cache directory.
+            version: WordNet release used to name the cache directory.
+            elements: XML elements included in the generated lexicon.
+
+        Returns:
+            The cached WordNet path.
+        """
         path = cache.wordnet_dir(cache_dir, version) / cache.WORDNET_NAME
         path.parent.mkdir(parents=True, exist_ok=True)
         _ = path.write_bytes(gzip.compress(lexicon(*elements).encode()))
@@ -155,6 +193,17 @@ def read_wordnet(
         version: str = "2025",
         lines: Iterable[str] = (),
     ) -> Path:
+        """
+        Place extracted synsets beside their cached source.
+
+        Args:
+            cache_dir: Isolated source cache directory.
+            version: WordNet release used to name the cache directory.
+            lines: Source lines emitted or written in their supplied order.
+
+        Returns:
+            The cached synset path.
+        """
         _ = fetch_wordnet(cache_dir, version)
 
         path = cache.wordnet_dir(cache_dir, version) / cache.SYNSETS_NAME
@@ -186,6 +235,17 @@ def parse_dump(
         entries: Iterable[RawJson],
         date: str = "20260801",
     ) -> Path:
+        """
+        Populate the parsed cache and supplemental translations.
+
+        Args:
+            cache_dir: Isolated source cache directory.
+            entries: Source entries to serialize and extract.
+            date: Dump date used to name the cache directory.
+
+        Returns:
+            The cached extraction path.
+        """
         _ = fetch_dump(cache_dir, date)
 
         dump_dir = cache.dump_dir(cache_dir, date)

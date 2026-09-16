@@ -121,7 +121,7 @@ def test_reports_lexical_evidence(
         "bank.noun",
         "bank",
         POS.NOUN,
-        variants=frozenset({"banke.noun"}),
+        variants=frozenset({"banke"}),
         senses=[
             Sense(
                 "bank.noun.1",
@@ -254,6 +254,15 @@ def test_preserves_failed_collection(
         expected = {path.name: path.read_bytes() for path in output_dir.iterdir()}
 
     def interrupted_entries() -> Iterator[Lemma]:
+        """
+        Yield one entry before interrupting extraction.
+
+        Yields:
+            The entry written before the simulated failure.
+
+        Raises:
+            RuntimeError: After the first entry has been consumed.
+        """
         yield entry
 
         raise RuntimeError("Interrupted extraction")

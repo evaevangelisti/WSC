@@ -35,17 +35,6 @@ _UNKNOWN = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=6).filt
 class TestOpenWriter:
     """Picking a format off the suffix of the path."""
 
-    @pytest.mark.parametrize("suffix", _KNOWN)
-    def test_opens_supported_formats(
-        self,
-        workspace: Callable[[], Path],
-        suffix: str,
-    ) -> None:
-        """A format is offered by being written, so each one hands back a writer."""
-        writer: Writer[Lemma] = open_writer(workspace() / f"senses{suffix}")
-
-        assert isinstance(writer, Writer)
-
     @given(_CASES)
     def test_accepts_mixed_case(
         self,

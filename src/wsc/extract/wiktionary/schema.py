@@ -8,6 +8,8 @@ what the page it was made from happened to say.
 from collections.abc import Mapping
 from typing import TypedDict, cast
 
+from ...models import POS
+
 
 class RawForm(TypedDict, total=False):
     """
@@ -134,6 +136,13 @@ _SENSE_LISTS = {
     "alt_of": _TARGET_KEYS,
     "synonyms": _SYNONYM_KEYS,
 }
+
+
+def parse_pos(
+    code: str,
+) -> POS:
+    """Map one Wiktextract part-of-speech code to the domain model."""
+    return POS.PROPN if code == "name" else POS(code)
 
 
 def _narrow_record(

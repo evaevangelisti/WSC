@@ -5,6 +5,7 @@ from .extractor import WiktionaryExtractor
 from .off_page_translations import (
     OffPageTranslations,
     build_off_page_translations,
+    index_translation_glosses,
     read_off_page_translations,
     write_off_page_translations,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "OffPageTranslations",
     "WiktionaryExtractor",
     "build_off_page_translations",
+    "index_translation_glosses",
     "narrow",
     "read_entries",
     "read_off_page_translations",

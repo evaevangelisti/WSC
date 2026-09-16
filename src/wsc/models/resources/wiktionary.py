@@ -152,7 +152,7 @@ class Lemma:
         id: Identifies the entry, such as bank.noun.
         lemma: The headword.
         pos: Its part of speech.
-        variants: Lemma identifiers of alternative spellings, such as colour.noun.
+        variants: Alternative spellings, such as colour.
         senses: Its meanings, in the order Wiktionary lists them.
         translation_tables: Translation tables attached to the entry.
     """

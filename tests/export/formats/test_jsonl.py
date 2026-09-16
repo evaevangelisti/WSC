@@ -157,6 +157,15 @@ def write(
     def run(
         *written: Lemma,
     ) -> str:
+        """
+        Export supplied lemmas and read the serialized document.
+
+        Args:
+            written: Collected lemmas to export.
+
+        Returns:
+            The complete JSONL text.
+        """
         output_path = workspace() / "senses.jsonl"
 
         writer: Writer[Lemma] = open_writer(output_path)

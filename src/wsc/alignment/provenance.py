@@ -12,6 +12,24 @@ from ..models.alignment import AlignmentPrompts, GlossMode, ModelSettings
 type Metadata = dict[str, object]
 
 
+def fingerprint(
+    path: Path,
+) -> str:
+    """
+    Compute a file content fingerprint.
+
+    Args:
+        path: Source artifact.
+
+    Returns:
+        SHA-256 digest of the file bytes.
+    """
+    with path.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256")
+
+    return digest.hexdigest()
+
+
 def build_metadata(
     input_path: Path,
     settings: ModelSettings,
@@ -53,24 +71,6 @@ def build_metadata(
         },
         "wordnet": fingerprint(synsets_path) if synsets_path else "",
     }
-
-
-def fingerprint(
-    path: Path,
-) -> str:
-    """
-    Compute a file content fingerprint.
-
-    Args:
-        path: Source artifact.
-
-    Returns:
-        SHA-256 digest of the file bytes.
-    """
-    with path.open("rb") as stream:
-        digest = hashlib.file_digest(stream, "sha256")
-
-    return digest.hexdigest()
 
 
 def cache_key(

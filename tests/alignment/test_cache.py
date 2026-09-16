@@ -143,6 +143,12 @@ def test_preserves_completed_cache(
     _ = metadata_path.write_text("previous metadata", encoding="utf-8")
 
     def interrupt() -> None:
+        """
+        Interrupt recording after writing a complete decision.
+
+        Raises:
+            RuntimeError: Always, before the cache is published.
+        """
         with ExitStack() as stack:
             recorder = open_alignment_recorder(
                 stack,

@@ -23,6 +23,7 @@ from documents import (
     dump_index,
     dump_status,
     lexicon,
+    page,
     wordnet_index,
 )
 from hypothesis import given
@@ -47,11 +48,13 @@ from wsc.constants import (
     DUMP_INDEX_URL,
     DUMP_STATUS_URL,
     DUMP_URL,
+    KAIKKI_URL,
     USER_AGENT,
     WORDNET_INDEX_URL,
     WORDNET_URL,
 )
 from wsc.models import Engine
+from wsc.reading import read_lemmas
 from wsc.upstream import cache, wiktextract
 
 _SYNSET_RECORD = {
@@ -200,6 +203,18 @@ def cli(
         *,
         gpu: bool,
     ) -> Locator:
+        """
+        Supply the deterministic locator used by command tests.
+
+        Args:
+            _engine: Requested engine, replaced by the deterministic test engine.
+            _processes: Requested worker count, unused by the test engine.
+            _batch_size: Requested batch size, unused by the test engine.
+            gpu: Requested GPU setting, unused by the test engine.
+
+        Returns:
+            The shared locator without loading a model.
+        """
         _ = gpu
 
         return locator
@@ -213,6 +228,17 @@ def cli(
         cache_dir: Path,
         env: dict[str, str] | None = None,
     ) -> Result:
+        """
+        Run a command with an isolated source cache.
+
+        Args:
+            arguments: Command name and command-line arguments.
+            cache_dir: Isolated source cache directory.
+            env: Environment overrides passed to the command runner.
+
+        Returns:
+            The command output and exit status.
+        """
         return runner.invoke(
             app,
             [*arguments, "--cache-dir", str(cache_dir)],
@@ -239,6 +265,15 @@ def stub_parse(
     def build(
         skipped_lines: int = 0,
     ) -> list[tuple[Path, Path, int, Path | None]]:
+        """
+        Install a parser replacement recording its arguments.
+
+        Args:
+            skipped_lines: Number of reporting lines the parser should discard.
+
+        Returns:
+            The list populated by subsequent parser calls.
+        """
         calls: list[tuple[Path, Path, int, Path | None]] = []
 
         def parse(
@@ -248,6 +283,19 @@ def stub_parse(
             _narrow: object,
             database_path: Path | None,
         ) -> int:
+            """
+            Record a parser invocation and create empty compressed output.
+
+            Args:
+                dump_path: Cached dump passed to the parser.
+                output_path: Destination of the generated extraction.
+                processes: Requested parser worker count.
+                _narrow: Narrowing callback unused by the parser replacement.
+                database_path: Requested Wiktextract page database, or None.
+
+            Returns:
+                The configured number of discarded reporting lines.
+            """
             calls.append((dump_path, output_path, processes, database_path))
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -276,6 +324,15 @@ def collected() -> Callable[[Path], list[RawJson]]:
     def read(
         output_path: Path,
     ) -> list[RawJson]:
+        """
+        Decode the entries written by a collection command.
+
+        Args:
+            output_path: Destination of the generated extraction.
+
+        Returns:
+            One JSON object per collected entry.
+        """
         text = output_path.read_text(encoding="utf-8")
 
         return [json.loads(line) for line in text.split("\n") if line]
@@ -547,6 +604,95 @@ class TestParse:
 
         assert result.exit_code != 0
         assert "fetch it first" in _normalize_output(result)
+
+
+@pytest.mark.parametrize("cached", [False, True])
+def test_collects_published_archive(
+    tmp_path: Path,
+    cli: Callable[..., Result],
+    fetch_dump: Callable[..., Path],
+    *,
+    cached: bool,
+) -> None:
+    """Archive collection retains lexical evidence and supplemental translations."""
+    dump_path = fetch_dump(
+        tmp_path,
+        pages=[
+            page(
+                "Rome",
+                "==English==\n===Proper noun===\n{{trans-top|capital}}\n"
+                + "{{t|it|Roma}}\n{{trans-bottom}}",
+            ),
+        ],
+    )
+    records = [
+        {
+            "word": "Rome",
+            "pos": "name",
+            "lang_code": "en",
+            "unused": "discard",
+            "senses": [
+                {
+                    "glosses": ["A capital city."],
+                    "wikidata": ["Q220"],
+                    "examples": [
+                        {
+                            "text": "Rome",
+                            "type": "example",
+                            "bold_text_offsets": [[0, 4]],
+                        },
+                    ],
+                },
+            ],
+        },
+        {
+            "word": "R.",
+            "pos": "name",
+            "lang_code": "en",
+            "senses": [{"tags": ["alt-of"], "alt_of": [{"word": "Rome"}]}],
+        },
+    ]
+    archive_bytes = gzip.compress(
+        "".join(f"{json.dumps(record)}\n" for record in records).encode(),
+    )
+    archive_path = dump_path.with_name(cache.ARCHIVE_NAME)
+
+    if cached:
+        _ = archive_path.write_bytes(archive_bytes)
+
+    with responses.RequestsMock() as server:
+        if not cached:
+            _ = server.get(KAIKKI_URL, body=archive_bytes)
+
+        parsed = cli("parse", "--archive", cache_dir=tmp_path)
+
+        assert parsed.exit_code == 0, parsed.output
+        assert len(server.calls) == (0 if cached else 1)
+
+    output_dir = tmp_path / "collection"
+    collected = cli(
+        "collect",
+        "--engine",
+        "lemminflect",
+        "--output-dir",
+        str(output_dir),
+        cache_dir=tmp_path,
+    )
+
+    assert collected.exit_code == 0, collected.output
+    assert archive_path.read_bytes() == archive_bytes
+
+    (entry,) = read_lemmas(output_dir / "senses.jsonl")
+
+    assert entry.id == "Rome.propn"
+    assert entry.variants == frozenset({"R."})
+    assert entry.senses[0].wikidata_ids == ("Q220",)
+
+    (offset,) = entry.senses[0].sentences[0].word_offsets
+
+    assert offset.offset == (0, 4)
+    assert offset.sources == ("bold", "lemmatizer")
+    assert entry.translation_tables[0].translations == {"it": frozenset({"Roma"})}
 
 
 class TestCollect:

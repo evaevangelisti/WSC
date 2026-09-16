@@ -95,7 +95,7 @@ unknown_pos_codes = st.text(
     min_size=1,
     max_size=6,
 ).filter(
-    lambda code: code not in {pos.value for pos in POS},
+    lambda code: code not in {"name", *(pos.value for pos in POS)},
 )
 """A part of speech Wiktionary describes and the collector does not keep."""
 
@@ -398,10 +398,11 @@ senses = st.builds(
 """One meaning of a lemma, filled the way an extraction fills it."""
 
 translations = st.dictionaries(
-    st.text(max_size=20),
+    glosses,
     st.dictionaries(
         languages,
         st.lists(words, min_size=1, max_size=3).map(frozenset),
+        min_size=1,
         max_size=2,
     ),
     max_size=2,
@@ -414,9 +415,7 @@ lemmas = parts_of_speech.flatmap(
         identifiers,
         words,
         st.just(pos),
-        st.lists(words, max_size=3).map(
-            lambda spellings: frozenset(f"{spelling}.{pos}" for spelling in spellings),
-        ),
+        st.lists(words, max_size=3).map(frozenset),
         st.lists(senses, max_size=3),
         translations.map(
             lambda tables: tuple(

@@ -9,15 +9,58 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
 
+from ...constants import LANGUAGE
 from ...identifiers import lemma_id
-from ...models import POS, TranslationTable
+from ...models import TranslationTable
 from ..dump import PageTranslations
+from ..translations import translation_gloss_key
 from .merge import add_translations
 from .parts import parse_translations
-from .schema import RawEntry
+from .schema import RawEntry, parse_pos
 
 type OffPageTranslations = dict[str, tuple[TranslationTable, ...]]
 """What each entry is translated by elsewhere, by the name of the entry."""
+
+type TranslationGlosses = dict[str, frozenset[str]]
+"""Normalized translation glosses already supplied for each entry."""
+
+
+def index_translation_glosses(
+    entries: Iterable[RawEntry],
+) -> TranslationGlosses:
+    """
+    Index the translation tables already supplied by Wiktextract.
+
+    Args:
+        entries: Parsed entries to inspect.
+
+    Returns:
+        Normalized translation glosses grouped by entry identifier.
+    """
+    indexed: dict[str, set[str]] = {}
+
+    for entry in entries:
+        if entry.get("lang_code") != LANGUAGE:
+            continue
+
+        word = entry.get("word", "").strip()
+
+        if not word:
+            continue
+
+        try:
+            pos = parse_pos(entry.get("pos", ""))
+        except ValueError:
+            continue
+
+        entry_id = lemma_id(word, pos)
+
+        for table in parse_translations(entry.get("translations", [])):
+            indexed.setdefault(entry_id, set()).add(
+                translation_gloss_key(table.gloss),
+            )
+
+    return {entry_id: frozenset(glosses) for entry_id, glosses in indexed.items()}
 
 
 def _read_pointed_translations(
@@ -39,8 +82,11 @@ def _read_pointed_translations(
     pointed_translations: dict[str, tuple[TranslationTable, ...]] = {}
 
     for entry in entries:
+        if entry.get("lang_code") != LANGUAGE:
+            continue
+
         try:
-            pos = POS(entry.get("pos", ""))
+            pos = parse_pos(entry.get("pos", ""))
         except ValueError:
             continue
 
@@ -116,13 +162,17 @@ def build_off_page_translations(
 
         for gloss, pointed_lemmas in page.pointers.items():
             matching_translation_tables = tuple(
-                table
+                TranslationTable(
+                    table.id,
+                    gloss,
+                    table.translations,
+                )
                 for pointed_lemma in pointed_lemmas
                 for table in pointed_translations.get(
                     lemma_id(pointed_lemma, page.pos),
                     (),
                 )
-                if table.gloss == gloss
+                if translation_gloss_key(table.gloss) == translation_gloss_key(gloss)
             )
 
             if matching_translation_tables:

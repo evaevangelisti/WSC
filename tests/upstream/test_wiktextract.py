@@ -5,6 +5,7 @@ Wiktextract itself is never run: what is tested is the plumbing around it, a sta
 subprocess keeping real streams and real exit codes.
 """
 
+import gzip
 import json
 import string
 import subprocess
@@ -18,8 +19,11 @@ from typing import IO, Self
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from kwic import Locator
+from strategies import RawJson, raw_entries
 
 from wsc.constants import LANGUAGE
+from wsc.extract import WiktionaryExtractor, narrow, read_entries
 from wsc.upstream import wiktextract
 
 _ENTRY_LINES = st.dictionaries(
@@ -46,7 +50,7 @@ def _preserve_entry(
     """
     Keep an entry as it stands, cutting nothing down.
 
-    What to cut is the schema's business, tested elsewhere.
+    Subprocess tests isolate stream handling from schema narrowing.
 
     Args:
         entry: One entry, as the extraction wrote it.
@@ -106,6 +110,16 @@ def stub_wiktextract(
         lines: Iterable[str],
         return_code: int = 0,
     ) -> list[list[str]]:
+        """
+        Configure a subprocess emitting the supplied source lines.
+
+        Args:
+            lines: Source lines emitted or written in their supplied order.
+            return_code: Exit status of the replacement subprocess.
+
+        Returns:
+            The list populated by subsequent subprocess commands.
+        """
         commands: list[list[str]] = []
 
         script = "".join(f"print({line!r})\n" for line in lines)
@@ -115,6 +129,16 @@ def stub_wiktextract(
             command: list[str],
             stdout: int | None = None,
         ) -> subprocess.Popen[bytes]:
+            """
+            Run the configured script while recording the requested command.
+
+            Args:
+                command: Original Wiktextract command to record.
+                stdout: Standard output configuration passed to the subprocess.
+
+            Returns:
+                The replacement subprocess with real output streams.
+            """
             commands.append(command)
 
             return real_popen([sys.executable, "-c", script], stdout=stdout)
@@ -330,6 +354,16 @@ class TestParse:
             _command: list[str],
             **_keywords: object,
         ) -> _SilentProcess:
+            """
+            Create a subprocess replacement without an output stream.
+
+            Args:
+                _command: Command unused by the silent process replacement.
+                _keywords: Subprocess options unused by the replacement.
+
+            Returns:
+                The process exposing no standard output.
+            """
             return _SilentProcess()
 
         monkeypatch.setattr(subprocess, "Popen", popen)
@@ -370,3 +404,64 @@ class TestParse:
             )
 
         assert list(directory.iterdir()) == []
+
+
+class TestNarrowFile:
+    """Published archives retain every field consumed by collection."""
+
+    @given(st.lists(raw_entries(), min_size=1, max_size=4))
+    def test_preserves_collected_entries(
+        self,
+        workspace: Callable[[], Path],
+        write_entries: Callable[[Path, Iterable[RawJson]], Path],
+        locator: Locator,
+        entries: list[RawJson],
+    ) -> None:
+        """Narrowing preserves extraction results and leaves archive bytes untouched."""
+        directory = workspace()
+        archive_path = write_entries(directory / "archive.jsonl.gz", entries)
+        archive_bytes = archive_path.read_bytes()
+        output_path = directory / "wiktextract.jsonl.zst"
+        extractor = WiktionaryExtractor(None, None, None, locator)
+        expected = list(extractor.extract(archive_path))
+
+        discarded = wiktextract.narrow_file(archive_path, output_path, narrow)
+
+        assert discarded == 0
+        assert len(list(read_entries(output_path, "Reading test entries"))) == len(
+            entries,
+        )
+        assert list(extractor.extract(output_path)) == expected
+        assert archive_path.read_bytes() == archive_bytes
+        assert not output_path.with_suffix(".zst.part").exists()
+
+    @pytest.mark.parametrize("valid_entry", [False, True])
+    def test_handles_interrupted_archives(
+        self,
+        tmp_path: Path,
+        *,
+        valid_entry: bool,
+    ) -> None:
+        """Incomplete JSON is counted; unusable archives preserve prior output."""
+        archive_path = tmp_path / "archive.jsonl.gz"
+        output_path = tmp_path / "wiktextract.jsonl.zst"
+        content = 'report\n{"word":\n'
+
+        if valid_entry:
+            content += '{"word": "bank", "discarded": true}\n'
+
+        _ = archive_path.write_bytes(gzip.compress(content.encode()))
+        _ = output_path.write_bytes(b"previous extraction")
+
+        if valid_entry:
+            assert wiktextract.narrow_file(archive_path, output_path, narrow) == 2
+            assert [json.loads(line) for line in read(output_path)] == [
+                {"word": "bank"},
+            ]
+        else:
+            with pytest.raises(RuntimeError, match="No entry"):
+                _ = wiktextract.narrow_file(archive_path, output_path, narrow)
+
+            assert output_path.read_bytes() == b"previous extraction"
+
+        assert not output_path.with_suffix(".zst.part").exists()
