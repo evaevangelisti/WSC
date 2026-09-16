@@ -8,12 +8,13 @@ from .alignment import (
     read_queries,
 )
 from .prompts import read_prompts
-from .wiktionary import LemmaRecord, parse_lemma, read_lemmas
+from .wiktionary import LemmaRecord, count_lemmas, parse_lemma, read_lemmas
 from .wordnet import read_synsets
 
 __all__ = [
     "LemmaRecord",
     "QueryRecord",
+    "count_lemmas",
     "parse_lemma",
     "parse_query",
     "read_alignments",

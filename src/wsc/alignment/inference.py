@@ -2,14 +2,24 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from functools import partial
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from ..models.alignment import LanguageModel, ModelRequest, ModelSettings
+from tqdm import tqdm
+
+from ..models.alignment import (
+    LanguageModel,
+    ModelOutcome,
+    ModelRequest,
+    ModelSettings,
+)
+from ..progress import nested_position, refresh_interval
 
 if TYPE_CHECKING:
     from vllm.entrypoints.openai.chat_completion.protocol import ChatCompletionRequest
-    from vllm.outputs import CompletionOutput
+    from vllm.outputs import CompletionOutput, RequestOutput
     from vllm.reasoning import ReasoningParser
     from vllm.tokenizers import TokenizerLike
 
@@ -102,6 +112,113 @@ class OfflineModel:
 
         return text
 
+    def _build_chat_request(
+        self,
+        request: ModelRequest,
+    ) -> ChatCompletionRequest:
+        """
+        Build the chat request carrying one alignment prompt.
+
+        Args:
+            request: Alignment prompt and response schema.
+
+        Returns:
+            A chat request with the configured template arguments.
+        """
+        from vllm.entrypoints.openai.chat_completion.protocol import (
+            ChatCompletionRequest,
+        )
+
+        return ChatCompletionRequest(
+            model=self._settings.model,
+            messages=[
+                {"role": "system", "content": request.system},
+                {"role": "user", "content": request.prompt},
+            ],
+            chat_template_kwargs=self._chat_template_kwargs or None,
+        )
+
+    def _collect(
+        self,
+        output: RequestOutput,
+        chat_request: ChatCompletionRequest,
+    ) -> ModelOutcome:
+        """
+        Extract the final content of one completed generation.
+
+        Args:
+            output: Engine output for a single request.
+            chat_request: Chat request supplying the parser context.
+
+        Returns:
+            The final JSON text, or the reason generation failed.
+        """
+        completion = output.outputs[0]
+
+        if completion.finish_reason != "stop":
+            return ModelOutcome(
+                error="Incomplete model response\n"
+                + f"Finish reason: {completion.finish_reason}\n\n"
+                + f"Response\n{completion.text}",
+            )
+
+        text = self._parse_reasoning(completion, chat_request)
+
+        if text is None or not text.strip():
+            return ModelOutcome(
+                error=f"Empty final model response\n\nResponse\n{completion.text}",
+            )
+
+        return ModelOutcome(text.strip())
+
+    def generate_many(
+        self,
+        requests: Sequence[ModelRequest],
+    ) -> tuple[ModelOutcome, ...]:
+        """
+        Generate a complete batch of structured completions in one engine call.
+
+        The engine schedules every prompt together, so continuous batching keeps
+        the accelerators saturated instead of serving one request at a time.
+
+        Args:
+            requests: Alignment prompts and response schemas.
+
+        Returns:
+            One outcome per request, in submission order.
+        """
+        from vllm.sampling_params import SamplingParams, StructuredOutputsParams
+
+        if not requests:
+            return ()
+
+        chat_requests = [self._build_chat_request(request) for request in requests]
+
+        outputs = self._llm.chat(
+            messages=[list(chat.messages) for chat in chat_requests],
+            sampling_params=[
+                SamplingParams(
+                    temperature=self._settings.temperature,
+                    max_tokens=self._settings.maximum_tokens,
+                    structured_outputs=StructuredOutputsParams(json=request.schema),
+                    skip_special_tokens=False,
+                )
+                for request in requests
+            ],
+            chat_template_kwargs=self._chat_template_kwargs or None,
+            use_tqdm=partial(
+                tqdm,
+                position=nested_position(),
+                leave=False,
+                mininterval=refresh_interval(),
+            ),
+        )
+
+        return tuple(
+            self._collect(output, chat_request)
+            for output, chat_request in zip(outputs, chat_requests, strict=True)
+        )
+
     def generate(
         self,
         request: ModelRequest,
@@ -118,49 +235,12 @@ class OfflineModel:
         Raises:
             ValueError: If generation is incomplete or has no final text.
         """
-        from vllm.entrypoints.openai.chat_completion.protocol import (
-            ChatCompletionRequest,
-        )
-        from vllm.sampling_params import SamplingParams, StructuredOutputsParams
+        [outcome] = self.generate_many((request,))
 
-        chat_request = ChatCompletionRequest(
-            model=self._settings.model,
-            messages=[
-                {"role": "system", "content": request.system},
-                {"role": "user", "content": request.prompt},
-            ],
-            chat_template_kwargs=self._chat_template_kwargs or None,
-        )
+        if outcome.text is None:
+            raise ValueError(outcome.error)
 
-        [output] = self._llm.chat(
-            messages=chat_request.messages,
-            sampling_params=SamplingParams(
-                temperature=self._settings.temperature,
-                max_tokens=self._settings.maximum_tokens,
-                structured_outputs=StructuredOutputsParams(json=request.schema),
-                skip_special_tokens=False,
-            ),
-            chat_template_kwargs=chat_request.chat_template_kwargs,
-            use_tqdm=False,
-        )
-
-        completion = output.outputs[0]
-
-        if completion.finish_reason != "stop":
-            raise ValueError(
-                "Incomplete model response\n"
-                + f"Finish reason: {completion.finish_reason}\n\n"
-                + f"Response\n{completion.text}"
-            )
-
-        text = self._parse_reasoning(completion, chat_request)
-
-        if text is None or not text.strip():
-            raise ValueError(
-                f"Empty final model response\n\nResponse\n{completion.text}"
-            )
-
-        return text.strip()
+        return outcome.text
 
 
 def open_model(

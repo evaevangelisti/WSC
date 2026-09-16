@@ -1,10 +1,13 @@
 """Build model responses and lexical queries for alignment tests."""
 
+from collections.abc import Sequence
+
 from wsc.models import POS
 from wsc.models.alignment import (
     AlignmentQuery,
     AlignmentTask,
     Definition,
+    ModelOutcome,
     ModelRequest,
 )
 
@@ -41,6 +44,21 @@ class Model:
         self.requests.append(request)
 
         return self.responses.pop(0)
+
+    def generate_many(
+        self,
+        requests: Sequence[ModelRequest],
+    ) -> tuple[ModelOutcome, ...]:
+        """
+        Record a batch of requests and return their responses.
+
+        Args:
+            requests: Actual rendered model requests.
+
+        Returns:
+            The next configured response for each request, in order.
+        """
+        return tuple(ModelOutcome(self.generate(request)) for request in requests)
 
 
 def build_query(

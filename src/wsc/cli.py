@@ -14,9 +14,11 @@ from .alignment import (
     WordNetCandidates,
     open_alignment_recorder,
 )
+from .alignment.aligner import count_prompts
 from .alignment.inference import open_model
 from .alignment.provenance import build_metadata, cache_key
 from .constants import (
+    ALIGNMENT_BATCH_SIZE,
     ALIGNMENT_MAXIMUM_TOKENS,
     ALIGNMENT_MODEL,
     ALIGNMENT_TEMPERATURE,
@@ -45,6 +47,7 @@ from .logging import configure_logging
 from .models import POS, Engine, Lemma, Synset
 from .models.alignment import AlignmentTask, GlossMode, ModelSettings
 from .reading import (
+    count_lemmas,
     read_alignments,
     read_lemmas,
     read_metadata,
@@ -450,6 +453,13 @@ def align(
             help="Maximum generated tokens per request.",
         ),
     ] = ALIGNMENT_MAXIMUM_TOKENS,
+    batch_size: Annotated[
+        int,
+        typer.Option(
+            min=1,
+            help="Prompts built before each batched inference pass.",
+        ),
+    ] = ALIGNMENT_BATCH_SIZE,
     reasoning_parser: Annotated[
         str | None,
         typer.Option(
@@ -552,6 +562,12 @@ def align(
             if not path.is_file() or read_metadata(path) != metadata:
                 raise typer.BadParameter(f"No compatible alignment cache at {path}")
 
+    _LOGGER.info("Counting prompts requiring inference")
+    total_prompts = (
+        0 if reuse else count_prompts(read_lemmas(input_path), tasks, candidates)
+    )
+    _LOGGER.info("Total inference prompts: %d", total_prompts)
+
     language_model = None if reuse else open_model(settings)
     writer: Writer[Lemma] = open_writer(output_path)
 
@@ -581,10 +597,13 @@ def align(
             tasks,
             gloss_mode,
             prompts,
+            batch_size,
         )
 
         for lemma in aligner.align(
             read_lemmas(input_path),
+            total=count_lemmas(input_path),
+            total_prompts=total_prompts,
             cached_results=cached_results,
             recorder=recorder,
         ):

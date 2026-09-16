@@ -10,6 +10,7 @@ from .alignment import (
     Definition,
     GlossMode,
     LanguageModel,
+    ModelOutcome,
     ModelRequest,
     ModelSettings,
 )
@@ -46,6 +47,7 @@ __all__ = [
     "GlossMode",
     "LanguageModel",
     "Lemma",
+    "ModelOutcome",
     "ModelRequest",
     "ModelSettings",
     "Offset",

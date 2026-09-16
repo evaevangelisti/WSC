@@ -168,6 +168,24 @@ def parse_lemma(
     )
 
 
+def count_lemmas(
+    path: Path,
+) -> int:
+    """
+    Count collected entries without reconstructing them.
+
+    Args:
+        path: Collected JSONL file, optionally compressed.
+
+    Returns:
+        The number of entries the file holds.
+    """
+    with open_compressed(path, "rb") as stream:
+        return sum(
+            chunk.count(b"\n") for chunk in iter(lambda: stream.read(1 << 22), b"")
+        )
+
+
 def read_lemmas(
     path: Path,
 ) -> Iterator[Lemma]:

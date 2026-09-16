@@ -22,6 +22,9 @@ ALIGNMENT_MAXIMUM_TOKENS = 4096
 ALIGNMENT_TEMPERATURE = 0.0
 """Request zero-temperature generation."""
 
+ALIGNMENT_BATCH_SIZE = 50_000
+"""Build this many prompts before each batched inference pass."""
+
 PROMPTS_PATH = Path(__file__).with_name("prompts.toml")
 """Locate the bundled task prompt templates."""
 

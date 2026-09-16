@@ -2,6 +2,7 @@
 
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from types import ModuleType, SimpleNamespace
 from typing import ClassVar, override
@@ -171,21 +172,22 @@ class FakeLanguageModel:
     def chat(
         self,
         *,
-        messages: list[dict[str, str]],
-        sampling_params: FakeSamplingParameters,
+        messages: list[list[dict[str, str]]],
+        sampling_params: list[FakeSamplingParameters],
         chat_template_kwargs: dict[str, object] | None,
-        use_tqdm: bool,
+        use_tqdm: Callable[..., object],
     ) -> list[object]:
-        """Return the configured completion and retain the request."""
-        assert not use_tqdm
+        """Return one configured completion per conversation of the batch."""
+        assert callable(use_tqdm)
 
-        self.requests.append(
-            {
-                "messages": messages,
-                "sampling_params": sampling_params,
-                "chat_template_kwargs": chat_template_kwargs,
-            },
-        )
+        for conversation, parameters in zip(messages, sampling_params, strict=True):
+            self.requests.append(
+                {
+                    "messages": conversation,
+                    "sampling_params": parameters,
+                    "chat_template_kwargs": chat_template_kwargs,
+                },
+            )
 
         return [
             SimpleNamespace(
@@ -196,7 +198,8 @@ class FakeLanguageModel:
                         token_ids=self.token_ids,
                     ),
                 ],
-            ),
+            )
+            for _ in messages
         ]
 
 

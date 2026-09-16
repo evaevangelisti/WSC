@@ -1,6 +1,7 @@
 """Shared constants grouped by responsibility."""
 
 from .alignment import (
+    ALIGNMENT_BATCH_SIZE,
     ALIGNMENT_FIELDS,
     ALIGNMENT_MAXIMUM_TOKENS,
     ALIGNMENT_MODEL,
@@ -32,6 +33,7 @@ from .upstream import (
 )
 
 __all__ = [
+    "ALIGNMENT_BATCH_SIZE",
     "ALIGNMENT_FIELDS",
     "ALIGNMENT_MAXIMUM_TOKENS",
     "ALIGNMENT_MODEL",
