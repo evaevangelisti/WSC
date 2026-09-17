@@ -2,18 +2,137 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from importlib import import_module
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import Protocol, cast
 
-from ..models.alignment import LanguageModel, ModelRequest, ModelSettings
-
-if TYPE_CHECKING:
-    from vllm.entrypoints.openai.chat_completion.protocol import ChatCompletionRequest
-    from vllm.outputs import CompletionOutput
-    from vllm.reasoning import ReasoningParser
-    from vllm.tokenizers import TokenizerLike
+from ..models.alignment import (
+    LanguageModel,
+    ModelOutcome,
+    ModelRequest,
+    ModelSettings,
+)
 
 _LOGGER = getLogger(__name__)
+
+
+class _ChatRequest(Protocol):
+    """Describe the vLLM chat request fields used during inference."""
+
+    messages: Sequence[dict[str, str]]
+    chat_template_kwargs: dict[str, object] | None
+
+
+class _Completion(Protocol):
+    """Describe one generated completion returned by vLLM."""
+
+    finish_reason: str | None
+    text: str
+    token_ids: Sequence[int]
+
+
+class _RequestOutput(Protocol):
+    """Describe the completion list returned for one request."""
+
+    outputs: Sequence[_Completion]
+
+
+class _Tokenizer(Protocol):
+    """Describe the tokenizer operation used by Harmony parsing."""
+
+    def decode(
+        self,
+        token_ids: list[int],
+        *,
+        skip_special_tokens: bool,
+    ) -> str:
+        """Decode generated token identifiers."""
+        ...
+
+
+class _ReasoningParser(Protocol):
+    """Describe the reasoning parser operations used by the adapter."""
+
+    def extract_content_ids(
+        self,
+        input_ids: list[int],
+    ) -> list[int]:
+        """Extract Harmony final-channel token identifiers."""
+        ...
+
+    def extract_reasoning(
+        self,
+        model_output: str,
+        request: _ChatRequest,
+    ) -> tuple[str | None, str | None]:
+        """Separate reasoning from final content."""
+        ...
+
+
+class _ReasoningParserFactory(Protocol):
+    """Construct one reasoning parser for each completion."""
+
+    def __call__(
+        self,
+        *,
+        tokenizer: _Tokenizer,
+        chat_template_kwargs: dict[str, object] | None,
+    ) -> _ReasoningParser:
+        """Build a parser with request-specific context."""
+        ...
+
+
+class _ParserManager(Protocol):
+    """Resolve the parser registered in the vLLM configuration."""
+
+    @staticmethod
+    def get_reasoning_parser(
+        name: str,
+    ) -> _ReasoningParserFactory:
+        """Return the registered reasoning parser factory."""
+        ...
+
+
+class _StructuredOutputsConfiguration(Protocol):
+    """Describe the configured reasoning parser name."""
+
+    reasoning_parser: str | None
+
+
+class _VllmConfiguration(Protocol):
+    """Describe the vLLM configuration fields used by the adapter."""
+
+    structured_outputs_config: _StructuredOutputsConfiguration
+
+
+class _Engine(Protocol):
+    """Describe the vLLM engine configuration boundary."""
+
+    vllm_config: _VllmConfiguration
+
+
+class _LanguageModel(Protocol):
+    """Describe the offline vLLM operations used by the adapter."""
+
+    llm_engine: _Engine
+
+    def get_tokenizer(
+        self,
+    ) -> _Tokenizer:
+        """Return the model tokenizer."""
+        ...
+
+    def chat(
+        self,
+        *,
+        messages: Sequence[Sequence[dict[str, str]]],
+        sampling_params: Sequence[object],
+        chat_template_kwargs: dict[str, object] | None,
+        use_tqdm: bool,
+    ) -> Sequence[_RequestOutput]:
+        """Generate a batch of chat completions."""
+        ...
 
 
 class OfflineModel:
@@ -32,20 +151,30 @@ class OfflineModel:
         _LOGGER.info("Initializing model %s", settings.model)
 
         try:
-            from vllm import LLM
-            from vllm.reasoning import ReasoningParserManager
+            vllm = import_module("vllm")
+            reasoning = import_module("vllm.reasoning")
         except ImportError as error:
             raise RuntimeError(
                 "Offline alignment requires vLLM; install the platform backend first"
             ) from error
+
+        model_factory = cast(Callable[..., _LanguageModel], vllm.LLM)
+        parser_manager = cast(
+            type[_ParserManager],
+            reasoning.ReasoningParserManager,
+        )
 
         engine_options = dict(settings.engine_options)
 
         if settings.reasoning_parser is not None:
             engine_options["reasoning_parser"] = settings.reasoning_parser
 
-        self._llm: LLM = LLM(model=settings.model, **engine_options)
-        self._tokenizer: TokenizerLike = self._llm.get_tokenizer()
+        self._llm: _LanguageModel = model_factory(
+            model=settings.model,
+            **engine_options,
+        )
+
+        self._tokenizer: _Tokenizer = self._llm.get_tokenizer()
 
         self._chat_template_kwargs: dict[str, object] = dict(
             settings.chat_template_options,
@@ -57,10 +186,8 @@ class OfflineModel:
         configuration = self._llm.llm_engine.vllm_config
         parser_name = configuration.structured_outputs_config.reasoning_parser
 
-        self._reasoning_parser_class: type[ReasoningParser] | None = (
-            ReasoningParserManager.get_reasoning_parser(parser_name)
-            if parser_name
-            else None
+        self._reasoning_parser_class: _ReasoningParserFactory | None = (
+            parser_manager.get_reasoning_parser(parser_name) if parser_name else None
         )
 
         self._settings: ModelSettings = settings
@@ -69,8 +196,8 @@ class OfflineModel:
 
     def _parse_reasoning(
         self,
-        completion: CompletionOutput,
-        request: ChatCompletionRequest,
+        completion: _Completion,
+        request: _ChatRequest,
     ) -> str | None:
         """
         Extract final content using the configured reasoning parser.
@@ -85,14 +212,21 @@ class OfflineModel:
         if self._reasoning_parser_class is None:
             return completion.text
 
-        from vllm.reasoning.gptoss_reasoning_parser import GptOssReasoningParser
-
         reasoning_parser = self._reasoning_parser_class(
             tokenizer=self._tokenizer,
             chat_template_kwargs=request.chat_template_kwargs,
         )
 
-        if issubclass(self._reasoning_parser_class, GptOssReasoningParser):
+        harmony = import_module("vllm.reasoning.gptoss_reasoning_parser")
+        harmony_parser = cast(
+            type[object],
+            harmony.GptOssReasoningParser,
+        )
+
+        if issubclass(
+            cast(type[object], self._reasoning_parser_class),
+            harmony_parser,
+        ):
             return self._tokenizer.decode(
                 reasoning_parser.extract_content_ids(list(completion.token_ids)),
                 skip_special_tokens=True,
@@ -118,12 +252,34 @@ class OfflineModel:
         Raises:
             ValueError: If generation is incomplete or has no final text.
         """
-        from vllm.entrypoints.openai.chat_completion.protocol import (
-            ChatCompletionRequest,
-        )
-        from vllm.sampling_params import SamplingParams, StructuredOutputsParams
+        [outcome] = self.generate_batch((request,))
 
-        chat_request = ChatCompletionRequest(
+        if outcome.text is None:
+            raise ValueError(outcome.error)
+
+        return outcome.text
+
+    def _build_chat_request(
+        self,
+        request: ModelRequest,
+    ) -> _ChatRequest:
+        """
+        Build one chat request from an alignment prompt.
+
+        Args:
+            request: Alignment prompt and response schema.
+
+        Returns:
+            Chat request carrying the configured template arguments.
+        """
+        protocol = import_module("vllm.entrypoints.openai.chat_completion.protocol")
+
+        request_factory = cast(
+            Callable[..., _ChatRequest],
+            protocol.ChatCompletionRequest,
+        )
+
+        return request_factory(
             model=self._settings.model,
             messages=[
                 {"role": "system", "content": request.system},
@@ -132,35 +288,88 @@ class OfflineModel:
             chat_template_kwargs=self._chat_template_kwargs or None,
         )
 
-        [output] = self._llm.chat(
-            messages=chat_request.messages,
-            sampling_params=SamplingParams(
-                temperature=self._settings.temperature,
-                max_tokens=self._settings.maximum_tokens,
-                structured_outputs=StructuredOutputsParams(json=request.schema),
-                skip_special_tokens=False,
-            ),
-            chat_template_kwargs=chat_request.chat_template_kwargs,
-            use_tqdm=False,
-        )
+    def _collect(
+        self,
+        output: _RequestOutput,
+        request: _ChatRequest,
+    ) -> ModelOutcome:
+        """
+        Read one generation without failing the remaining batch.
 
+        Args:
+            output: Engine output for one request.
+            request: Chat request supplying parser context.
+
+        Returns:
+            Final JSON text or its failure description.
+        """
         completion = output.outputs[0]
 
         if completion.finish_reason != "stop":
-            raise ValueError(
-                "Incomplete model response\n"
+            return ModelOutcome(
+                error="Incomplete model response\n"
                 + f"Finish reason: {completion.finish_reason}\n\n"
-                + f"Response\n{completion.text}"
+                + f"Response\n{completion.text}",
             )
 
-        text = self._parse_reasoning(completion, chat_request)
+        text = self._parse_reasoning(completion, request)
 
         if text is None or not text.strip():
-            raise ValueError(
-                f"Empty final model response\n\nResponse\n{completion.text}"
+            return ModelOutcome(
+                error=f"Empty final model response\n\nResponse\n{completion.text}",
             )
 
-        return text.strip()
+        return ModelOutcome(text.strip())
+
+    def generate_batch(
+        self,
+        requests: Sequence[ModelRequest],
+    ) -> tuple[ModelOutcome, ...]:
+        """
+        Generate structured completions in one engine call.
+
+        Args:
+            requests: Alignment prompts and response schemas.
+
+        Returns:
+            One outcome per request, in submission order.
+        """
+        if not requests:
+            return ()
+
+        sampling = import_module("vllm.sampling_params")
+
+        sampling_factory = cast(
+            Callable[..., object],
+            sampling.SamplingParams,
+        )
+
+        structured_factory = cast(
+            Callable[..., object],
+            sampling.StructuredOutputsParams,
+        )
+
+        chat_requests = [self._build_chat_request(request) for request in requests]
+
+        outputs = self._llm.chat(
+            messages=[list(request.messages) for request in chat_requests],
+            sampling_params=[
+                sampling_factory(
+                    temperature=self._settings.temperature,
+                    max_tokens=self._settings.maximum_tokens,
+                    structured_outputs=structured_factory(json=request.schema),
+                    skip_special_tokens=False,
+                )
+                for request in requests
+            ],
+            chat_template_kwargs=self._chat_template_kwargs or None,
+            use_tqdm=False,
+        )
+
+        return tuple(
+            self._collect(output, request)
+            for output, request in zip(outputs, chat_requests, strict=True)
+        )
 
 
 def open_model(

@@ -1,6 +1,5 @@
 """Write collected senses, statistics, and provenance together."""
 
-import json
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
@@ -9,6 +8,7 @@ from tempfile import TemporaryDirectory
 from ..constants import COLLECTION_FILES
 from ..export.formats.jsonl import JSONLWriter
 from ..models import Lemma
+from ..reporting import publish_files, stage_json
 from .markdown import render_markdown
 from .statistics import Statistics
 
@@ -52,18 +52,12 @@ def write_collection(
             "totals": report["totals"],
         }
 
-        for role, document in (("statistics", report), ("manifest", provenance)):
-            _ = (staging_dir / COLLECTION_FILES[role]).write_text(
-                json.dumps(document, ensure_ascii=False, indent=4) + "\n",
-                encoding="utf-8",
-            )
+        stage_json(staging_dir / COLLECTION_FILES["statistics"], report)
+        stage_json(staging_dir / COLLECTION_FILES["manifest"], provenance)
 
         _ = (staging_dir / COLLECTION_FILES["report"]).write_text(
             render_markdown(statistics),
             encoding="utf-8",
         )
 
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        for name in COLLECTION_FILES.values():
-            _ = (staging_dir / name).replace(output_dir / name)
+        publish_files(staging_dir, output_dir, COLLECTION_FILES.values())

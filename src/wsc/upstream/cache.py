@@ -155,16 +155,14 @@ def fetched_edition(
 
 def alignment_dir(
     cache_dir: Path | None,
-    key: str,
 ) -> Path:
     """
-    Locate candidate evidence for one inference configuration.
+    Locate reusable alignment evidence.
 
     Args:
         cache_dir: Source cache directory or platform default.
-        key: Fingerprint of model settings and input resources.
 
     Returns:
         Directory holding separate resource TSV files.
     """
-    return _root(cache_dir) / "alignment" / key
+    return _root(cache_dir) / "alignment"

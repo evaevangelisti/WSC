@@ -8,11 +8,12 @@
 :hidden:
 
 aligner
+batching
 candidates
 inference
 decisions
 requests
 tasks/index
 recording
-provenance
+reporting
 ```

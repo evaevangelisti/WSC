@@ -2,6 +2,7 @@
 
 import json
 from contextlib import ExitStack
+from functools import partial
 from importlib.metadata import version
 from logging import getLogger
 from pathlib import Path
@@ -15,11 +16,17 @@ from .alignment import (
     open_alignment_recorder,
 )
 from .alignment.inference import open_model
-from .alignment.provenance import build_metadata, cache_key
+from .alignment.reporting import AlignmentStatistics, write_alignment
+from .alignment.reporting import (
+    build_manifest as build_alignment_manifest,
+)
 from .collection import CollectionSettings, build_manifest, write_collection
 from .constants import (
+    ALIGNMENT_BATCH_SIZE,
+    ALIGNMENT_DIR,
     ALIGNMENT_MAXIMUM_TOKENS,
     ALIGNMENT_MODEL,
+    ALIGNMENT_SENSES,
     ALIGNMENT_TEMPERATURE,
     BATCH_SIZE,
     CHUNK_SIZE,
@@ -45,14 +52,12 @@ from .extract import (
     write_off_page_translations,
 )
 from .logging import configure_logging
-from .models import POS, Engine, Lemma, Synset
-from .models.alignment import AlignmentTask, GlossMode, ModelSettings
+from .models import POS, Engine, Synset
+from .models.alignment import AlignmentResult, AlignmentTask, GlossMode, ModelSettings
 from .reading import (
-    read_alignments,
+    read_alignment_cache,
     read_lemmas,
-    read_metadata,
     read_prompts,
-    read_queries,
     read_synsets,
 )
 from .upstream import cache, download, repositories, wiktextract
@@ -422,13 +427,6 @@ def align(
             help="Collected entries to align.",
         ),
     ],
-    output_path: Annotated[
-        Path,
-        typer.Argument(
-            metavar="output",
-            help="Destination for aligned entries.",
-        ),
-    ],
     task: Annotated[
         list[AlignmentTask] | None,
         typer.Option(
@@ -469,6 +467,13 @@ def align(
             help="Maximum generated tokens per request.",
         ),
     ] = ALIGNMENT_MAXIMUM_TOKENS,
+    batch_size: Annotated[
+        int,
+        typer.Option(
+            min=1,
+            help="Prompts prepared for each inference pass.",
+        ),
+    ] = ALIGNMENT_BATCH_SIZE,
     reasoning_parser: Annotated[
         str | None,
         typer.Option(
@@ -493,7 +498,6 @@ def align(
     chat_template_option: Annotated[
         list[str] | None,
         typer.Option(
-            "--chat-template-option",
             metavar="KEY=VALUE",
             help="Chat template argument; repeat to set multiple.",
         ),
@@ -503,14 +507,22 @@ def align(
         bool,
         typer.Option(
             "--reuse/--recompute",
-            help="Replay compatible cached decisions without model inference.",
+            help="Reuse cached source decisions and infer only missing senses.",
         ),
     ] = False,
     wordnet_edition: WordNetEdition = cache.LATEST,
     cache_dir: CacheDir = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(
+            help="Directory for aligned senses and its reports.",
+        ),
+    ] = ALIGNMENT_DIR,
 ) -> None:
     """Align collected senses with language model decisions."""
     tasks = tuple(dict.fromkeys(task or AlignmentTask))
+
+    output_path = output_dir / ALIGNMENT_SENSES
 
     if input_path.resolve() == output_path.resolve():
         raise typer.BadParameter("Input and output paths must be different")
@@ -551,48 +563,50 @@ def align(
 
         candidates = WordNetCandidates(read_synsets(synsets_path))
 
-    metadata = build_metadata(
+    manifest = build_alignment_manifest(
         input_path,
         settings,
         gloss_mode,
-        synsets_path,
         prompts,
+        tasks,
+        wordnet_edition if AlignmentTask.WORDNET in tasks else None,
     )
 
-    evidence_dir = cache.alignment_dir(cache_dir, cache_key(metadata))
-    evidence_paths = {selected: evidence_dir / f"{selected}.tsv" for selected in tasks}
+    evidence_dir = cache.alignment_dir(cache_dir)
+    evidence_paths = {task: evidence_dir / f"{task}.tsv" for task in tasks}
 
     _LOGGER.info(
-        "%s alignment cache: %s", "Reusing" if reuse else "Writing", evidence_dir
+        "%s alignment cache: %s",
+        "Updating" if reuse else "Writing",
+        evidence_dir,
     )
 
-    if reuse:
-        for path in evidence_paths.values():
-            if not path.is_file() or read_metadata(path) != metadata:
-                raise typer.BadParameter(f"No compatible alignment cache at {path}")
+    alignment_cache = {
+        selected: read_alignment_cache(path)
+        for selected, path in evidence_paths.items()
+        if reuse
+    }
 
     language_model = None if reuse else open_model(settings)
-    writer: Writer[Lemma] = open_writer(output_path)
+
+    model_loader = partial(open_model, settings) if reuse else None
+
+    statistics = AlignmentStatistics(tasks)
 
     with ExitStack() as stack:
-        _ = stack.enter_context(writer)
+        recorder = open_alignment_recorder(stack, evidence_paths)
 
-        recorder = (
-            None if reuse else open_alignment_recorder(stack, evidence_paths, metadata)
-        )
+        def record_result(
+            result: AlignmentResult,
+        ) -> None:
+            """
+            Persist one result and add it to the task report.
 
-        queries = {}
-        if reuse:
-            queries = read_queries(input_path, tasks, candidates)
-
-        cached_results = (
-            {
-                selected: read_alignments(path, queries)
-                for selected, path in evidence_paths.items()
-            }
-            if reuse
-            else {}
-        )
+            Args:
+                result: Resolved alignment decisions.
+            """
+            recorder(result)
+            statistics.add(result)
 
         aligner = Aligner(
             language_model,
@@ -600,13 +614,19 @@ def align(
             tasks,
             gloss_mode,
             prompts,
+            batch_size,
+            model_loader,
         )
 
-        for lemma in aligner.align(
-            read_lemmas(input_path),
-            cached_results=cached_results,
-            recorder=recorder,
-        ):
-            writer.write(lemma)
+        write_alignment(
+            aligner.align(
+                read_lemmas(input_path),
+                cache=alignment_cache,
+                recorder=record_result,
+            ),
+            output_dir,
+            statistics,
+            manifest,
+        )
 
-    _LOGGER.info("Aligned %s", output_path)
+    _LOGGER.info("Aligned %s", output_dir)

@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import csv
-import json
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, NotRequired, TypedDict, cast
+from typing import NotRequired, TypedDict
 
 from ..models import POS
 from ..models.alignment import (
@@ -18,9 +17,6 @@ from ..models.alignment import (
     AlignmentTask,
     Definition,
 )
-
-if TYPE_CHECKING:
-    from ..alignment.candidates import WordNetCandidates
 
 
 class DefinitionRecord(TypedDict):
@@ -80,56 +76,81 @@ def parse_query(
     )
 
 
-def read_metadata(
+def read_alignment_cache(
     path: Path,
-) -> dict[str, object]:
+) -> dict[str, dict[str, AlignmentDecision]]:
     """
-    Read inference settings from a cached alignment table.
+    Index persisted decisions by query and source identifiers.
 
     Args:
-        path: Alignment TSV file.
+        path: Task-specific alignment TSV.
 
     Returns:
-        Persisted inference settings.
+        Source decisions grouped by alignment identifier.
+
+    Raises:
+        ValueError: If the table schema or row structure is invalid.
     """
-    return cast(
-        dict[str, object],
-        json.loads(path.with_name("metadata.json").read_text(encoding="utf-8")),
-    )
+    if not path.is_file():
+        return {}
 
+    from ..constants import ALIGNMENT_FIELDS
 
-def read_queries(
-    input_path: Path,
-    tasks: tuple[AlignmentTask, ...],
-    candidates: WordNetCandidates,
-) -> dict[str, AlignmentQuery]:
-    """
-    Rebuild alignment queries needed to replay cached decisions.
+    cache: dict[str, dict[str, AlignmentDecision]] = {}
 
-    Args:
-        input_path: Collected entries used for the original alignment.
-        tasks: Alignment resources represented by the cache.
-        candidates: WordNet candidate index.
+    with path.open(encoding="utf-8", newline="") as stream:
+        reader = csv.DictReader(stream, delimiter="\t")
 
-    Returns:
-        Queries indexed by their stable alignment identifier.
-    """
-    from ..alignment.tasks import build_queries
-    from .wiktionary import read_lemmas
+        if tuple(reader.fieldnames or ()) != ALIGNMENT_FIELDS:
+            raise ValueError(f"Invalid alignment table fields: {path}")
 
-    queries: dict[str, AlignmentQuery] = {}
+        for alignment_id, rows in groupby(reader, key=lambda row: row["alignment_id"]):
+            if not alignment_id or alignment_id in cache:
+                raise ValueError(f"Repeated alignment record: {alignment_id!r}")
 
-    for lemma in read_lemmas(input_path):
-        for task in tasks:
-            for query in build_queries(lemma, task, candidates):
-                queries[query.alignment_id] = query
+            decisions: dict[str, AlignmentDecision] = {}
 
-    return queries
+            for source_id, source_rows in groupby(
+                rows,
+                key=lambda row: row["source_id"],
+            ):
+                records = list(source_rows)
+
+                if not source_id or source_id in decisions:
+                    raise ValueError(f"Repeated source decision: {source_id!r}")
+
+                for row in records:
+                    association = (
+                        bool(row["target_id"]),
+                        bool(row["relation"]),
+                        bool(row["reason"]),
+                    )
+
+                    if any(association) != all(association):
+                        raise ValueError(f"Incomplete source decision: {source_id}")
+
+                decisions[source_id] = AlignmentDecision(
+                    source_id,
+                    tuple(
+                        AlignmentLink(
+                            source_id,
+                            row["target_id"],
+                            row["relation"],
+                            row["reason"],
+                        )
+                        for row in records
+                        if row["target_id"]
+                    ),
+                )
+
+            cache[alignment_id] = decisions
+
+    return cache
 
 
 def read_alignments(
     path: Path,
-    queries: dict[str, AlignmentQuery],
+    queries: Mapping[str, AlignmentQuery],
 ) -> Iterator[AlignmentResult]:
     """
     Stream validated decisions from an alignment table.
@@ -146,45 +167,13 @@ def read_alignments(
     """
     from ..alignment.decisions import validate_result
 
-    with path.open(encoding="utf-8", newline="") as stream:
-        reader = csv.DictReader(stream, delimiter="\t")
+    for alignment_id, decisions in read_alignment_cache(path).items():
+        try:
+            query = queries[alignment_id]
+        except KeyError as error:
+            raise ValueError(f"Unknown cached alignment: {alignment_id}") from error
 
-        for alignment_id, rows in groupby(reader, key=lambda row: row["alignment_id"]):
-            records = list(rows)
+        result = AlignmentResult(query, tuple(decisions.values()))
+        validate_result(result)
 
-            try:
-                query = queries[alignment_id]
-            except KeyError as error:
-                raise ValueError(f"Unknown cached alignment: {alignment_id}") from error
-
-            decisions: list[AlignmentDecision] = []
-
-            for source_id, source_rows in groupby(
-                records,
-                key=lambda row: row["source_id"],
-            ):
-                if not source_id:
-                    continue
-
-                source_records = list(source_rows)
-
-                decisions.append(
-                    AlignmentDecision(
-                        source_id,
-                        tuple(
-                            AlignmentLink(
-                                source_id,
-                                row["target_id"],
-                                row["relation"],
-                                row["reason"],
-                            )
-                            for row in source_records
-                            if row["target_id"]
-                        ),
-                    )
-                )
-
-            result = AlignmentResult(query, tuple(decisions))
-            validate_result(result)
-
-            yield result
+        yield result

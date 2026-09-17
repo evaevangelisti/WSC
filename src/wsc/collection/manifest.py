@@ -1,19 +1,21 @@
 """Record the sources and settings used to collect a dump."""
 
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 from platform import python_version
 
 from ..constants import LANGUAGE, SPACY_PIPELINE
 from ..models import POS, Engine
+from ..reporting import describe_source
 
 
 @dataclass(frozen=True, slots=True)
 class CollectionSettings:
     """
     Filters and offset extraction options for a collection.
+
+    The values describe the collection configuration stored in its manifest.
 
     Attributes:
         parts_of_speech: Parts of speech retained in the output.
@@ -32,30 +34,6 @@ class CollectionSettings:
     processes: int
     batch_size: int
     gpu: bool
-
-
-def _describe_source(
-    path: Path,
-) -> dict[str, object]:
-    """
-    Record the location, size, and modification time of a source file.
-
-    Args:
-        path: Source file used by the collection.
-
-    Returns:
-        Absolute path, byte count, and modification timestamp in UTC.
-
-    Raises:
-        OSError: If the source file metadata cannot be read.
-    """
-    status = path.stat()
-
-    return {
-        "path": str(path.resolve()),
-        "bytes": status.st_size,
-        "modified_at": datetime.fromtimestamp(status.st_mtime, UTC).isoformat(),
-    }
 
 
 def build_manifest(
@@ -80,8 +58,8 @@ def build_manifest(
         "dump_date": dump_date,
         "language": LANGUAGE,
         "sources": {
-            "wiktextract": _describe_source(input_path),
-            "off_page_translations": _describe_source(off_page_path)
+            "wiktextract": describe_source(input_path),
+            "off_page_translations": describe_source(off_page_path)
             if off_page_path
             else None,
         },

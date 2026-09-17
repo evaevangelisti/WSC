@@ -26,6 +26,7 @@ from wsc.models import (
     WordNetRelation,
 )
 from wsc.models.alignment import (
+    AlignmentResult,
     AlignmentTask,
     GlossMode,
 )
@@ -346,51 +347,71 @@ def test_queries_complete_senses() -> None:
     assert result.alignment_id == "wordnet:word.noun"
 
 
-def test_validates_replay_context() -> None:
-    """Cached decisions must cover the current collection exactly."""
+def test_reuses_available_source_decisions() -> None:
+    """Partial reuse generates only missing sources and records a complete query."""
     lemma = Lemma(
         "word.noun",
         "word",
         POS.NOUN,
-        senses=[Sense("s1", ("first",))],
+        senses=[Sense("s1", ("first",)), Sense("s2", ("second",))],
         translation_tables=(
             TranslationTable(
-                translation_table_id("word.noun", "heading"),
-                "heading",
+                translation_table_id("word.noun", "first"),
+                "first",
                 {"it": frozenset({"uno"})},
+            ),
+            TranslationTable(
+                translation_table_id("word.noun", "second"),
+                "second",
+                {"it": frozenset({"due"})},
             ),
         ),
     )
     candidates = WordNetCandidates(())
     (sample,) = build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates)
-
-    assert sample.alignment_id == "translations:word.noun"
-
-    result = parse_response(
-        sample,
+    cached_query = replace(sample, source_definitions=sample.source_definitions[:1])
+    cached = parse_response(
+        cached_query,
         json.dumps(
-            {"s1": build_decision(translation_table_id("word.noun", "heading"))},
+            {"s1": build_decision(translation_table_id("word.noun", "first"))},
         ),
     )
-    aligner = Aligner(None, candidates, (AlignmentTask.TRANSLATIONS,))
-
-    with pytest.raises(ValueError, match="Unused cached"):
-        _ = list(
-            aligner.align(
-                [lemma],
-                cached_results={AlignmentTask.TRANSLATIONS: iter([result, result])},
+    model = Model(
+        [
+            json.dumps(
+                {
+                    "s2": build_decision(
+                        translation_table_id("word.noun", "second"),
+                    ),
+                },
             ),
-        )
+        ],
+    )
+    recorded: list[AlignmentResult] = []
+    aligner = Aligner(model, candidates, (AlignmentTask.TRANSLATIONS,))
+    (aligned,) = aligner.align(
+        [lemma],
+        cache={
+            AlignmentTask.TRANSLATIONS: {
+                sample.alignment_id: {
+                    "s1": cached.decisions[0],
+                },
+            },
+        },
+        recorder=recorded.append,
+    )
 
-    changed = replace(lemma, senses=[Sense("s1", ("changed",))])
-
-    with pytest.raises(ValueError, match="Cached candidates differ"):
-        _ = list(
-            aligner.align(
-                [changed],
-                cached_results={AlignmentTask.TRANSLATIONS: iter([result])},
-            ),
-        )
+    assert len(model.requests) == 1
+    assert "s2 second" in model.requests[0].prompt
+    assert "s1 first" not in model.requests[0].prompt
+    assert aligned.senses[0].translations == {"it": frozenset({"uno"})}
+    assert aligned.senses[1].translations == {"it": frozenset({"due"})}
+    assert not aligned.translation_tables
+    assert len(recorded) == 1
+    assert tuple(decision.source_id for decision in recorded[0].decisions) == (
+        "s1",
+        "s2",
+    )
 
 
 @given(failures=st.lists(st.booleans(), min_size=1, max_size=15))
@@ -433,9 +454,12 @@ def test_isolates_failed_queries(
 
     caplog.clear()
 
-    aligned = list(Aligner(model, candidates).align(lemmas))
+    aligned = list(Aligner(model, candidates, batch_size=4).align(lemmas))
 
     assert len(model.requests) == len(responses)
+    assert model.batches == [
+        min(4, len(responses) - start) for start in range(0, len(responses), 4)
+    ]
     assert len(aligned) == len(lemmas)
     assert len(caplog.records) == sum(failures)
 

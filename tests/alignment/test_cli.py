@@ -1,16 +1,21 @@
 """Exercise command-level inference and cached decision replay."""
 
+import csv
 import json
+from collections.abc import Sequence
 from pathlib import Path
+from typing import cast
 
 import pytest
 from typer.testing import CliRunner
 
 from wsc import cli
+from wsc.constants import ALIGNMENT_FIELDS
 from wsc.identifiers import translation_table_id
 from wsc.models.alignment import (
     AlignmentTask,
     LanguageModel,
+    ModelOutcome,
     ModelRequest,
     ModelSettings,
 )
@@ -20,6 +25,19 @@ from wsc.upstream import cache
 
 class Model:
     """Generate a valid association for the candidate supplied by the command."""
+
+    def __init__(
+        self,
+        response: str | None = None,
+    ) -> None:
+        """
+        Store an optional fixed response.
+
+        Args:
+            response: Fixed response for partial reuse tests.
+        """
+        self.response: str | None = response
+        self.requests: list[ModelRequest] = []
 
     def generate(
         self,
@@ -34,6 +52,11 @@ class Model:
         Returns:
             A translation or equivalent WordNet association.
         """
+        self.requests.append(request)
+
+        if self.response is not None:
+            return self.response
+
         translation_target = translation_table_id("word.noun", "gloss")
         relation = (
             "translation" if translation_target in request.prompt else "equivalent"
@@ -51,6 +74,21 @@ class Model:
                 ],
             },
         )
+
+    def generate_batch(
+        self,
+        requests: Sequence[ModelRequest],
+    ) -> tuple[ModelOutcome, ...]:
+        """
+        Generate every response in a command inference batch.
+
+        Args:
+            requests: Rendered model requests.
+
+        Returns:
+            One successful outcome per request.
+        """
+        return tuple(ModelOutcome(self.generate(request)) for request in requests)
 
 
 @pytest.mark.parametrize("tasks", [(AlignmentTask.TRANSLATIONS,), tuple(AlignmentTask)])
@@ -121,7 +159,8 @@ def test_replays_cached_alignment(
     arguments = [
         "align",
         str(input_path),
-        str(tmp_path / "output.jsonl"),
+        "--output-dir",
+        str(tmp_path / "output"),
         "--cache-dir",
         str(tmp_path / "cache"),
         "--reasoning-parser",
@@ -130,6 +169,8 @@ def test_replays_cached_alignment(
         "enable_thinking=false",
         "--engine-option",
         "tensor_parallel_size=4",
+        "--batch-size",
+        "1",
     ]
 
     for task in tasks:
@@ -141,7 +182,8 @@ def test_replays_cached_alignment(
     assert "INFO wsc.cli: Writing alignment cache:" in inference_result.stderr
     assert not inference_result.stdout
 
-    aligned_lemma = next(read_lemmas(tmp_path / "output.jsonl"))
+    output_dir = tmp_path / "output"
+    aligned_lemma = next(read_lemmas(output_dir / "senses.jsonl"))
 
     assert aligned_lemma.senses[0].translations == {"it": frozenset({"parola"})}
     assert not aligned_lemma.translation_tables
@@ -149,10 +191,9 @@ def test_replays_cached_alignment(
     if AlignmentTask.WORDNET in tasks:
         assert aligned_lemma.senses[0].wordnet[0].synset_id == "wordnet-sense"
 
-    cache_paths = list((tmp_path / "cache").glob("alignment/*/*.tsv"))
+    cache_paths = list((tmp_path / "cache").glob("alignment/*.tsv"))
 
     assert {path.stem for path in cache_paths} == set(tasks)
-    assert list((tmp_path / "cache").glob("alignment/*/metadata.json"))
     assert all(
         path.read_text(encoding="utf-8").splitlines()[0]
         == "alignment_id\tsource_id\ttarget_id\trelation\treason"
@@ -179,17 +220,43 @@ def test_replays_cached_alignment(
     replay_result = CliRunner().invoke(cli.app, [*arguments, "--reuse"])
 
     assert replay_result.exit_code == 0, replay_result.output
-    assert next(read_lemmas(tmp_path / "output.jsonl")) == aligned_lemma
+    assert next(read_lemmas(output_dir / "senses.jsonl")) == aligned_lemma
     assert input_path.read_text() == original_content
     assert {path: path.read_bytes() for path in cache_paths} == cached_content
+
+    manifest = cast(
+        dict[str, object],
+        json.loads((output_dir / "manifest.json").read_text()),
+    )
+    files = cast(dict[str, object], manifest["files"])
+
+    assert manifest["tasks"] == list(tasks)
+    assert files["senses"] == "senses.jsonl"
+
+    for task in tasks:
+        report = cast(
+            dict[str, object],
+            json.loads((output_dir / "reports" / f"{task}.json").read_text()),
+        )
+
+        assert report["task"] == task
+        assert report["senses"] == {
+            "evaluated": 1,
+            "aligned": 1,
+            "unaligned": 0,
+        }
+        assert report["associations"] == 1
+        assert report["relations"] == {
+            "translation" if task == AlignmentTask.TRANSLATIONS else "equivalent": 1,
+        }
 
     incompatible_result = CliRunner().invoke(
         cli.app,
         [*arguments, "--temperature", "0.5", "--reuse"],
     )
 
-    assert incompatible_result.exit_code != 0
-    assert "No compatible alignment cache" in incompatible_result.output
+    assert incompatible_result.exit_code == 0, incompatible_result.output
+    assert next(read_lemmas(output_dir / "senses.jsonl")) == aligned_lemma
 
 
 def test_rejects_input_overwrite(
@@ -198,7 +265,122 @@ def test_rejects_input_overwrite(
     """In-place alignment fails before loading models."""
     input_path = tmp_path / "input.jsonl"
     _ = input_path.write_text("original", encoding="utf-8")
-    result = CliRunner().invoke(cli.app, ["align", str(input_path), str(input_path)])
+    result = CliRunner().invoke(
+        cli.app,
+        ["align", str(input_path), "--output-dir", str(input_path)],
+    )
 
     assert result.exit_code != 0
     assert input_path.read_text() == "original"
+
+
+def test_reuses_partial_alignment_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Reuse requests only sources absent from the task TSV."""
+    input_path = tmp_path / "input.jsonl"
+    first_target = translation_table_id("word.noun", "first")
+    second_target = translation_table_id("word.noun", "second")
+    _ = input_path.write_text(
+        json.dumps(
+            {
+                "id": "word.noun",
+                "lemma": "word",
+                "pos": "noun",
+                "senses": [
+                    {"id": "s1", "glosses": ["first"]},
+                    {"id": "s2", "glosses": ["second"]},
+                ],
+                "translation_tables": [
+                    {
+                        "id": first_target,
+                        "gloss": "first",
+                        "translations": {"it": ["uno"]},
+                    },
+                    {
+                        "id": second_target,
+                        "gloss": "second",
+                        "translations": {"it": ["due"]},
+                    },
+                ],
+            },
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    cache_path = tmp_path / "cache" / "alignment" / "translations.tsv"
+    cache_path.parent.mkdir(parents=True)
+
+    with cache_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.writer(stream, delimiter="\t")
+        writer.writerow(ALIGNMENT_FIELDS)
+        writer.writerow(
+            (
+                "translations:word.noun",
+                "s1",
+                first_target,
+                "translation",
+                "The definitions express the same concept.",
+            ),
+        )
+
+    model = Model(
+        json.dumps(
+            {
+                "s2": [
+                    {
+                        "target_id": second_target,
+                        "relation": "translation",
+                        "reason": "The definitions express the same concept.",
+                    },
+                ],
+            },
+        ),
+    )
+
+    def load_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
+        """
+        Return the partial reuse model after deferred loading.
+
+        Args:
+            settings: Command inference configuration.
+
+        Returns:
+            Model recording the missing-source request.
+        """
+        del settings
+
+        return model
+
+    monkeypatch.setattr(cli, "open_model", load_model)
+
+    result = CliRunner().invoke(
+        cli.app,
+        [
+            "align",
+            str(input_path),
+            "--output-dir",
+            str(tmp_path / "output"),
+            "--task",
+            "translations",
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--reuse",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert len(model.requests) == 1
+    assert model.requests[0].schema["required"] == ["s2"]
+    assert first_target not in model.requests[0].prompt
+    assert second_target in model.requests[0].prompt
+
+    (aligned,) = tuple(read_lemmas(tmp_path / "output" / "senses.jsonl"))
+
+    assert aligned.senses[0].translations == {"it": frozenset({"uno"})}
+    assert aligned.senses[1].translations == {"it": frozenset({"due"})}
+    assert len(cache_path.read_text().splitlines()) == 3

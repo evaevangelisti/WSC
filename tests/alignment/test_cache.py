@@ -1,4 +1,4 @@
-"""Exercise decision persistence and cache provenance."""
+"""Exercise reusable alignment decision persistence."""
 
 import csv
 import json
@@ -12,10 +12,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from wsc.alignment import open_alignment_recorder, parse_response
-from wsc.alignment.provenance import build_metadata, cache_key
 from wsc.constants import ALIGNMENT_FIELDS
-from wsc.models.alignment import AlignmentTask, GlossMode, ModelSettings
-from wsc.reading import read_alignments, read_metadata
+from wsc.models.alignment import AlignmentTask
+from wsc.reading import read_alignment_cache, read_alignments
 
 from .examples import build_decision, build_query
 
@@ -89,58 +88,29 @@ def test_flushes_replayable_decisions(
     )
     result = parse_response(sample, response)
     path = directory / f"{task}.tsv"
-    metadata: dict[str, object] = {"schema": "test"}
     queries = {sample.alignment_id: sample}
     expected = (replace(result, response=""),)
 
     with ExitStack() as stack:
-        record = open_alignment_recorder(stack, {task: path}, metadata)
+        record = open_alignment_recorder(stack, {task: path})
         record(result)
 
         assert not path.exists()
         assert (
             tuple(read_alignments(path.with_suffix(".tsv.part"), queries)) == expected
         )
-        assert not (directory / "metadata.json").exists()
 
     assert tuple(read_alignments(path, queries)) == expected
-    assert read_metadata(path) == metadata
+    assert set(read_alignment_cache(path)[sample.alignment_id]) == {"s1", "s2"}
     assert not list(directory.glob("*.part"))
-
-
-@pytest.mark.parametrize(
-    "settings",
-    [
-        ModelSettings("other"),
-        ModelSettings("model", temperature=0.5),
-        ModelSettings("model", maximum_tokens=100),
-        ModelSettings("model", engine_options=(("dtype", "float16"),)),
-        ModelSettings("model", reasoning_parser="qwen3"),
-        ModelSettings("model", reasoning_effort="low"),
-        ModelSettings("model", chat_template_options=(("enable_thinking", False),)),
-    ],
-)
-def test_fingerprints_generation_settings(
-    tmp_path: Path,
-    settings: ModelSettings,
-) -> None:
-    """Every generation option contributes to cache compatibility."""
-    source = tmp_path / "sample.json"
-    _ = source.write_text("{}", encoding="utf-8")
-    original = build_metadata(source, ModelSettings("model"), GlossMode.FULL)
-    changed = build_metadata(source, settings, GlossMode.FULL)
-
-    assert cache_key(original) != cache_key(changed)
 
 
 def test_preserves_completed_cache(
     tmp_path: Path,
 ) -> None:
-    """An interrupted run replaces neither completed decisions nor metadata."""
+    """An interrupted rewrite preserves the completed decision table."""
     path = tmp_path / "translations.tsv"
-    metadata_path = tmp_path / "metadata.json"
     _ = path.write_text("previous decisions", encoding="utf-8")
-    _ = metadata_path.write_text("previous metadata", encoding="utf-8")
 
     def interrupt() -> None:
         """
@@ -153,7 +123,6 @@ def test_preserves_completed_cache(
             recorder = open_alignment_recorder(
                 stack,
                 {AlignmentTask.TRANSLATIONS: path},
-                {"schema": "new"},
             )
             recorder(parse_response(build_query(), '{"s1": null, "s2": null}'))
 
@@ -163,5 +132,4 @@ def test_preserves_completed_cache(
         interrupt()
 
     assert path.read_text(encoding="utf-8") == "previous decisions"
-    assert metadata_path.read_text(encoding="utf-8") == "previous metadata"
     assert not list(tmp_path.glob("*.part"))

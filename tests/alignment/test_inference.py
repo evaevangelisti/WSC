@@ -11,7 +11,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from wsc.alignment import align_query
-from wsc.models.alignment import ModelSettings
+from wsc.models.alignment import ModelRequest, ModelSettings
 
 from .examples import build_decision, build_query
 
@@ -159,6 +159,7 @@ class FakeLanguageModel:
             ),
         )
         self.requests: list[dict[str, object]] = []
+        self.batches: list[int] = []
 
         self.__class__.instances.append(self)
 
@@ -171,21 +172,28 @@ class FakeLanguageModel:
     def chat(
         self,
         *,
-        messages: list[dict[str, str]],
-        sampling_params: FakeSamplingParameters,
+        messages: list[list[dict[str, str]]],
+        sampling_params: list[FakeSamplingParameters],
         chat_template_kwargs: dict[str, object] | None,
         use_tqdm: bool,
     ) -> list[object]:
-        """Return the configured completion and retain the request."""
+        """Return one configured completion per batched conversation."""
         assert not use_tqdm
 
-        self.requests.append(
-            {
-                "messages": messages,
-                "sampling_params": sampling_params,
-                "chat_template_kwargs": chat_template_kwargs,
-            },
-        )
+        self.batches.append(len(messages))
+
+        for conversation, parameters in zip(
+            messages,
+            sampling_params,
+            strict=True,
+        ):
+            self.requests.append(
+                {
+                    "messages": conversation,
+                    "sampling_params": parameters,
+                    "chat_template_kwargs": chat_template_kwargs,
+                },
+            )
 
         return [
             SimpleNamespace(
@@ -196,7 +204,8 @@ class FakeLanguageModel:
                         token_ids=self.token_ids,
                     ),
                 ],
-            ),
+            )
+            for _ in messages
         ]
 
 
@@ -298,6 +307,41 @@ def test_forwards_generation_settings() -> None:
     }
     assert result.response == FakeLanguageModel.response
     assert result.links[0].reason == "The definitions express the same concept."
+
+
+@pytest.mark.usefixtures("_vllm_modules")
+def test_batches_engine_requests() -> None:
+    """Several prompts reach vLLM through one inference call."""
+    from wsc.alignment.inference import open_model
+
+    model = open_model(ModelSettings("local-model"))
+    requests = (
+        ModelRequest("system", "first", {"title": "first"}),
+        ModelRequest("system", "second", {"title": "second"}),
+    )
+
+    outcomes = model.generate_batch(requests)
+    backend = FakeLanguageModel.instances[0]
+    schemas: list[object] = []
+
+    for request in backend.requests:
+        sampling = request["sampling_params"]
+
+        assert isinstance(sampling, FakeSamplingParameters)
+
+        structured = sampling.values["structured_outputs"]
+
+        assert isinstance(structured, FakeSamplingParameters)
+
+        schemas.append(structured.values["json"])
+
+    assert backend.batches == [2]
+    assert len(backend.requests) == 2
+    assert schemas == [request.schema for request in requests]
+    assert tuple(outcome.text for outcome in outcomes) == (
+        FakeLanguageModel.response,
+        FakeLanguageModel.response,
+    )
 
 
 @pytest.mark.parametrize("finish_reason", ["length", "content_filter", None])

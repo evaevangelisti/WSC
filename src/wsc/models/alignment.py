@@ -1,6 +1,6 @@
 """Define inputs, decisions, and model contracts for lexical alignment."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
@@ -173,6 +173,20 @@ class ModelRequest:
     schema: dict[str, object]
 
 
+@dataclass(frozen=True, slots=True)
+class ModelOutcome:
+    """
+    Report one generation without interrupting its batch.
+
+    Attributes:
+        text: Generated JSON text, or None when generation failed.
+        error: Failure description, or None when generation succeeded.
+    """
+
+    text: str | None = None
+    error: str | None = None
+
+
 class LanguageModel(Protocol):
     """Generate structured alignment decisions."""
 
@@ -188,5 +202,20 @@ class LanguageModel(Protocol):
 
         Returns:
             Generated JSON text.
+        """
+        ...
+
+    def generate_batch(
+        self,
+        requests: Sequence[ModelRequest],
+    ) -> tuple[ModelOutcome, ...]:
+        """
+        Generate a batch of alignment responses.
+
+        Args:
+            requests: Prompts and schemas in submission order.
+
+        Returns:
+            One outcome per request, in submission order.
         """
         ...

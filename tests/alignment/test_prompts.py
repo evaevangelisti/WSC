@@ -1,78 +1,47 @@
-"""Exercise custom task prompts and their provenance."""
+"""Exercise custom alignment task prompts."""
 
 from dataclasses import replace
-from pathlib import Path
 
 import pytest
 
-from wsc.alignment import build_request, provenance, requests
-from wsc.alignment.provenance import build_metadata, cache_key
+from wsc.alignment import build_request, requests
 from wsc.constants import PROMPTS_PATH
-from wsc.models.alignment import GlossMode, ModelSettings
+from wsc.models.alignment import GlossMode
 from wsc.reading import read_prompts
 
 from .examples import build_query
 
 
-def test_fingerprints_prompt_edits(
-    tmp_path: Path,
-) -> None:
-    """Prompt content participates in both generation and cache compatibility."""
-    original_prompts = read_prompts(PROMPTS_PATH)
-    changed_prompts = replace(
-        original_prompts,
+def test_applies_prompt_edits() -> None:
+    """Custom prompt content reaches the rendered model request."""
+    original = read_prompts(PROMPTS_PATH)
+    changed = replace(
+        original,
         tasks={
-            **original_prompts.tasks,
+            **original.tasks,
             "translations": "Custom prompt: $source_definitions",
         },
     )
-    input_path = tmp_path / "sample.json"
-    _ = input_path.write_text("{}", encoding="utf-8")
-    settings = ModelSettings("model")
-    original_metadata = build_metadata(
-        input_path, settings, GlossMode.LAST, prompts=original_prompts
-    )
-    changed_metadata = build_metadata(
-        input_path, settings, GlossMode.LAST, prompts=changed_prompts
-    )
 
-    assert set(original_prompts.tasks) == {"translations", "wordnet"}
-    assert original_prompts.system.startswith("You are a computational lexicographer")
-    assert build_request(build_query(), prompts=changed_prompts).prompt.startswith(
+    assert set(original.tasks) == {"translations", "wordnet"}
+    assert original.system.startswith("You are a computational lexicographer")
+    assert build_request(build_query(), prompts=changed).prompt.startswith(
         "Custom prompt:",
     )
-    assert cache_key(original_metadata) != cache_key(changed_metadata)
-
-    recorded_prompts = changed_metadata["prompts"]
-
-    assert isinstance(recorded_prompts, dict)
-    assert "Custom prompt" in recorded_prompts["text"]
 
 
 @pytest.mark.parametrize("mode", list(GlossMode))
-def test_hierarchy_cache_identity(
-    tmp_path: Path,
+def test_applies_hierarchy_constraint(
     monkeypatch: pytest.MonkeyPatch,
     mode: GlossMode,
 ) -> None:
-    """Hierarchy edits invalidate only caches whose prompts include the constraint."""
-    input_path = tmp_path / "sample.json"
-    _ = input_path.write_text("{}", encoding="utf-8")
-
-    settings = ModelSettings("model")
+    """Hierarchy instructions affect only prompts carrying complete gloss paths."""
     query = build_query()
-
-    original_request = build_request(query, mode)
-    original_metadata = build_metadata(input_path, settings, mode)
+    original = build_request(query, mode)
 
     constraint = "- Interpret each hierarchy using the revised instructions."
     monkeypatch.setattr(requests, "HIERARCHY_CONSTRAINT", constraint)
-    monkeypatch.setattr(provenance, "HIERARCHY_CONSTRAINT", constraint)
 
-    changed_request = build_request(query, mode)
-    changed_metadata = build_metadata(input_path, settings, mode)
+    changed = build_request(query, mode)
 
-    assert (original_request != changed_request) == (mode == GlossMode.FULL)
-    assert (cache_key(original_metadata) != cache_key(changed_metadata)) == (
-        mode == GlossMode.FULL
-    )
+    assert (original != changed) == (mode == GlossMode.FULL)

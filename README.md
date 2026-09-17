@@ -90,7 +90,6 @@ wsc collect
 
 | Option | Default | |
 | --- | --- | --- |
-| `--output-dir` | `collection` | Directory for the collection and its reports |
 | `--dump-date` | `latest` | Dump to use, as `20260801` |
 | `--pos` | every part of speech | Parts of speech to keep; repeat to name several |
 | `--min-year` | no limit | Oldest quotation to keep |
@@ -100,6 +99,7 @@ wsc collect
 | `--batch-size` | `8` | How many sentences the reading takes at a time |
 | `--gpu` | off | Read on the graphics card |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
+| `--output-dir` | `collection` | Directory for the collection and its reports |
 
 | Engine | Reads with | Speed |
 | --- | --- | --- |
@@ -134,7 +134,7 @@ wsc wordnet
 Aligns collected senses with translations and WordNet synsets through offline [vLLM](https://vllm.ai/) inference.
 
 ```sh
-wsc align collection/senses.jsonl aligned.jsonl
+wsc align collection/senses.jsonl
 ```
 
 | Option | Default | |
@@ -145,10 +145,12 @@ wsc align collection/senses.jsonl aligned.jsonl
 | `--prompts` | bundled `prompts.toml` | One customizable template per task |
 | `--temperature` | `0.0` | Sampling temperature |
 | `--maximum-tokens` | `4096` | Generated token limit |
-| `--reasoning-effort` | unset | Reasoning effort supported by the chat template |
+| `--batch-size` | `32768` | Prompts prepared for one vLLM inference call |
 | `--reasoning-parser` | unset | vLLM reasoning parser |
+| `--reasoning-effort` | unset | Reasoning effort supported by the chat template |
 | `--chat-template-option` | unset | Chat template `KEY=VALUE` argument; repeat to set multiple |
 | `--engine-option`, `-o` | unset | Additional vLLM engine parameter; repeat to set multiple |
-| `--reuse` | off | Reapply cached decisions without contacting the model |
+| `--reuse` | off | Reuse decisions by source ID and infer only missing senses |
 | `--wordnet-edition` | `latest` | Extracted WordNet edition; also `WSC_WORDNET_EDITION` |
 | `--cache-dir` | platform cache | Also configurable through `WSC_CACHE_DIR` |
+| `--output-dir` | `alignment` | Directory for aligned senses and its reports |
