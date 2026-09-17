@@ -8,6 +8,7 @@
 :hidden:
 
 forms
+glosses
 senses
 sentences
 synonyms

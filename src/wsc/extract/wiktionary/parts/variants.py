@@ -6,6 +6,7 @@ from collections.abc import Iterable, Iterator
 from ....constants import LANGUAGE
 from ....models import POS
 from ..schema import RawEntry, RawSense, parse_pos
+from .glosses import is_variant_gloss, referenced_lemma
 
 _ALT_OF = "alt-of"
 
@@ -64,10 +65,18 @@ def gather_variants(
             continue
 
         for raw_sense in entry.get("senses", []):
-            if _ALT_OF not in raw_sense.get("tags", []):
-                continue
+            pointed_lemmas = (
+                _read_pointed_lemmas(raw_sense)
+                if _ALT_OF in raw_sense.get("tags", [])
+                else (
+                    target
+                    for gloss in raw_sense.get("glosses", [])
+                    if is_variant_gloss(gloss)
+                    and (target := referenced_lemma(gloss)) is not None
+                )
+            )
 
-            for pointed_lemma in _read_pointed_lemmas(raw_sense):
+            for pointed_lemma in pointed_lemmas:
                 if pointed_lemma != variant:
                     variants[pointed_lemma, pos].add(variant)
 

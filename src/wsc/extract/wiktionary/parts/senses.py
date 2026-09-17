@@ -4,6 +4,7 @@ from ....identifiers import sense_id
 from ....models import Sense
 from ..markup import carries_markup
 from ..schema import RawSense
+from .glosses import is_form_gloss, is_synonym_gloss, is_variant_gloss
 from .sentences import parse_sentences
 from .synonyms import parse_synonyms
 
@@ -44,7 +45,16 @@ def parse_senses(
             gloss.strip() for gloss in raw_sense.get("glosses", []) if gloss.strip()
         )
 
-        if not glosses or any(carries_markup(gloss) for gloss in glosses):
+        if (
+            not glosses
+            or any(carries_markup(gloss) for gloss in glosses)
+            or any(
+                is_form_gloss(gloss)
+                or is_synonym_gloss(gloss)
+                or is_variant_gloss(gloss)
+                for gloss in glosses
+            )
+        ):
             continue
 
         senses.append(
