@@ -1,23 +1,12 @@
 """What other languages call an entry."""
 
 from collections import defaultdict
+from itertools import chain
 
 from ....identifiers import translation_table_id
 from ....models import TranslationTable
-from ...translations import normalize_translation_gloss
-from ..merge import add_translations
+from ...translations import clean_translation, normalize_translation_gloss
 from ..schema import RawTranslation
-
-# Placeholder headings require full matches to preserve meaningful glosses.
-_PLACEHOLDER_GLOSSES = frozenset(
-    {
-        "translations",
-        "translations to be checked",
-        "translations to be specified",
-        "translation gloss",
-        "sense",
-    }
-)
 
 
 def parse_translations(
@@ -26,49 +15,48 @@ def parse_translations(
     lemma_id: str = "",
 ) -> tuple[TranslationTable, ...]:
     """
-    Gather an entry's translations under the glosses heading them.
-
-    Wiktionary stores translation tables at entry level.
+    Gather clean translations from both sources under their meaning headings.
 
     Args:
-        raw_translations: What wiktextract listed under the entry.
+        raw_translations: What Wiktextract listed under the entry.
         off_page_translations: Optional translations from linked pages.
         lemma_id: The entry identifier used to name tables.
 
     Returns:
-        The words each language offers for each gloss translated.
+        The words each language offers for each usable definition.
     """
-    gathered_translations: defaultdict[str, defaultdict[str, set[str]]] = defaultdict(
-        lambda: defaultdict(set)
+    gathered_translation_tables: defaultdict[str, defaultdict[str, set[str]]] = (
+        defaultdict(lambda: defaultdict(set))
     )
 
-    for raw_translation in raw_translations:
-        gloss = normalize_translation_gloss(raw_translation.get("sense", ""))
-        language = raw_translation.get("lang_code", "").strip()
-        word = raw_translation.get("word", "").strip()
+    source_translations = (
+        (item.get("sense", ""), item.get("lang_code", ""), item.get("word", ""))
+        for item in raw_translations
+    )
 
-        if not gloss or not language or not word:
-            continue
+    supplementary_translations = (
+        (table.gloss, language, word)
+        for table in off_page_translations or ()
+        for language, words in table.translations.items()
+        for word in words
+    )
 
-        if gloss.casefold() in _PLACEHOLDER_GLOSSES:
-            continue
+    for heading, code, written in chain(
+        source_translations,
+        supplementary_translations,
+    ):
+        gloss = normalize_translation_gloss(heading)
+        translation = clean_translation(code, written)
 
-        gathered_translations[gloss][language].add(word)
+        if gloss and translation is not None:
+            language, word = translation
+            gathered_translation_tables[gloss][language].add(word)
 
-    translations = tuple(
+    return tuple(
         TranslationTable(
             translation_table_id(lemma_id, gloss),
             gloss,
             {language: frozenset(words) for language, words in translated.items()},
         )
-        for gloss, translated in gathered_translations.items()
+        for gloss, translated in gathered_translation_tables.items()
     )
-
-    if off_page_translations:
-        translations = add_translations(
-            translations,
-            off_page_translations,
-            lemma_id,
-        )
-
-    return translations

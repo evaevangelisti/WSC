@@ -1,7 +1,8 @@
 """Locating a lemma inside the sentences that attest it."""
 
 import re
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
+from dataclasses import replace
 from functools import lru_cache
 from itertools import tee
 
@@ -9,7 +10,7 @@ from kwic import POS as UNIVERSAL_POS
 from kwic import Locator, Query
 
 from ..constants import BATCH_SIZE, PROCESSES, SPACY_PIPELINE
-from ..models import POS, Engine, Offset
+from ..models import POS, Attestation, Engine, Offset
 
 # Engine outputs use Universal Dependencies part-of-speech tags.
 _UNIVERSAL_TAGS = {
@@ -163,3 +164,102 @@ def find_word_offsets(
         )
 
         yield word_offsets or match_forms(text, query.forms)
+
+
+def _move_boundary(
+    position: int,
+    edits: list[tuple[int, int, str]],
+) -> int | None:
+    """
+    Move a boundary unless it falls inside a rewritten token.
+
+    Args:
+        position: Character boundary in the original text.
+        edits: Ordered replacements expressed in original coordinates.
+
+    Returns:
+        The relocated boundary, or None when its position is ambiguous.
+    """
+    shift = 0
+
+    for start, end, replacement in edits:
+        if position <= start:
+            break
+
+        if position < end:
+            return start + shift if not replacement else None
+
+        shift += len(replacement) - (end - start)
+
+    return position + shift
+
+
+def _move_range(
+    offset: Offset,
+    edits: list[tuple[int, int, str]],
+) -> Offset | None:
+    """
+    Retain only ranges with two identifiable, nonempty boundaries.
+
+    Args:
+        offset: Original start and end character boundaries.
+        edits: Ordered replacements expressed in original coordinates.
+
+    Returns:
+        A nonempty relocated range, or None when either boundary is ambiguous.
+    """
+    start = _move_boundary(offset[0], edits)
+    end = _move_boundary(offset[1], edits)
+
+    return (
+        (start, end) if start is not None and end is not None and start < end else None
+    )
+
+
+def substitute(
+    value: Attestation,
+    pattern: re.Pattern[str],
+    replacement: str | Callable[[re.Match[str]], str],
+) -> Attestation:
+    """
+    Replace matches and shift the word ranges by those exact edits.
+
+    Args:
+        value: Text and ranges in the current coordinate system.
+        pattern: Nonoverlapping fragments to replace.
+        replacement: Replacement text or a match-dependent renderer.
+
+    Returns:
+        Rewritten text with ranges that remain unambiguous.
+    """
+    edits = [
+        (
+            match.start(),
+            match.end(),
+            replacement(match) if callable(replacement) else match.expand(replacement),
+        )
+        for match in pattern.finditer(value.text)
+    ]
+
+    edits = [edit for edit in edits if value.text[edit[0] : edit[1]] != edit[2]]
+
+    if not edits:
+        return value
+
+    fragments: list[str] = []
+    position = 0
+
+    for start, end, written in edits:
+        fragments.extend((value.text[position:start], written))
+        position = end
+
+    fragments.append(value.text[position:])
+
+    return Attestation(
+        "".join(fragments),
+        word_offsets=tuple(
+            replace(word_offset, offset=moved)
+            for word_offset in value.word_offsets
+            if (moved := _move_range(word_offset.offset, edits)) is not None
+        ),
+    )

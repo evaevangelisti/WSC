@@ -123,7 +123,12 @@ class PreparedQuery:
     def result(
         self,
     ) -> AlignmentResult | None:
-        """Build the resolved result while preserving current source order."""
+        """
+        Build the resolved result while preserving current source order.
+
+        Returns:
+            The resolved sources and decisions, or None when no source is resolved.
+        """
         sources = tuple(
             source
             for source in self.query.source_definitions

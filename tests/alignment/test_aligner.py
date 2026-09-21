@@ -347,71 +347,108 @@ def test_queries_complete_senses() -> None:
     assert result.alignment_id == "wordnet:word.noun"
 
 
-def test_reuses_available_source_decisions() -> None:
-    """Partial reuse generates only missing sources and records a complete query."""
+@given(
+    decisions=st.lists(st.tuples(st.booleans(), st.booleans()), max_size=12),
+    targets=st.data(),
+)
+def test_reuses_available_source_decisions(
+    decisions: list[tuple[bool, bool]],
+    targets: st.DataObject,
+) -> None:
+    """Any cached subset preserves decisions, order, and deferred model loading."""
+    assigned = targets.draw(st.permutations(tuple(range(len(decisions)))))
     lemma = Lemma(
         "word.noun",
         "word",
         POS.NOUN,
-        senses=[Sense("s1", ("first",)), Sense("s2", ("second",))],
-        translation_tables=(
+        senses=[Sense(f"s{index}", (f"meaning {index}",)) for index in assigned],
+        translation_tables=tuple(
             TranslationTable(
-                translation_table_id("word.noun", "first"),
-                "first",
-                {"it": frozenset({"uno"})},
-            ),
-            TranslationTable(
-                translation_table_id("word.noun", "second"),
-                "second",
-                {"it": frozenset({"due"})},
-            ),
+                f"t{index}", f"heading {index}", {"it": frozenset({str(index)})}
+            )
+            for index in assigned
         ),
     )
     candidates = WordNetCandidates(())
-    (sample,) = build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates)
-    cached_query = replace(sample, source_definitions=sample.source_definitions[:1])
-    cached = parse_response(
-        cached_query,
-        json.dumps(
-            {"s1": build_decision(translation_table_id("word.noun", "first"))},
-        ),
-    )
-    model = Model(
-        [
-            json.dumps(
-                {
-                    "s2": build_decision(
-                        translation_table_id("word.noun", "second"),
-                    ),
-                },
-            ),
-        ],
-    )
+    queries = tuple(build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates))
     recorded: list[AlignmentResult] = []
-    aligner = Aligner(model, candidates, (AlignmentTask.TRANSLATIONS,))
-    (aligned,) = aligner.align(
-        [lemma],
-        cache={
+    responses = {
+        f"s{index}": build_decision(f"t{assigned[index]}" if matched else None)
+        for index, (_, matched) in enumerate(decisions)
+    }
+    cached = {
+        source: value
+        for index, (source, value) in enumerate(responses.items())
+        if decisions[index][0]
+    }
+    pending = {
+        source: value for source, value in responses.items() if source not in cached
+    }
+    model = Model([json.dumps(pending)] if pending else [])
+    loads: list[None] = []
+
+    def load_model() -> Model:
+        """Record deferred construction when at least one source needs inference."""
+        loads.append(None)
+
+        return model
+
+    cache = {}
+
+    if queries:
+        query = queries[0]
+        cached_query = replace(
+            query,
+            source_definitions=tuple(
+                source for source in query.source_definitions if source.id in cached
+            ),
+        )
+        cache = {
             AlignmentTask.TRANSLATIONS: {
-                sample.alignment_id: {
-                    "s1": cached.decisions[0],
+                query.alignment_id: {
+                    decision.source_id: decision
+                    for decision in parse_response(
+                        cached_query, json.dumps(cached)
+                    ).decisions
                 },
             },
-        },
-        recorder=recorded.append,
-    )
+        }
 
-    assert len(model.requests) == 1
-    assert "s2 second" in model.requests[0].prompt
-    assert "s1 first" not in model.requests[0].prompt
-    assert aligned.senses[0].translations == {"it": frozenset({"uno"})}
-    assert aligned.senses[1].translations == {"it": frozenset({"due"})}
-    assert not aligned.translation_tables
-    assert len(recorded) == 1
-    assert tuple(decision.source_id for decision in recorded[0].decisions) == (
-        "s1",
-        "s2",
-    )
+    (aligned,) = Aligner(
+        None,
+        candidates,
+        (AlignmentTask.TRANSLATIONS,),
+        model_loader=load_model,
+    ).align([lemma], cache=cache, recorder=recorded.append)
+
+    assert len(loads) == bool(pending)
+    assert len(model.requests) == bool(pending)
+    assert [sense.id for sense in aligned.senses] == [
+        sense.id for sense in lemma.senses
+    ]
+    assert all(not sense.translations for sense in lemma.senses)
+    assert aligned.translation_tables == ()
+
+    for sense in aligned.senses:
+        index = int(sense.id[1:])
+
+        assert sense.translations == (
+            {"it": frozenset({str(assigned[index])})} if decisions[index][1] else {}
+        )
+
+    if pending:
+        assert model.requests[0].schema["required"] == [
+            sense.id for sense in lemma.senses if sense.id in pending
+        ]
+
+    if queries:
+        assert len(recorded) == 1
+        assert (
+            recorded[0].decisions
+            == parse_response(queries[0], json.dumps(responses)).decisions
+        )
+    else:
+        assert not recorded
 
 
 @given(failures=st.lists(st.booleans(), min_size=1, max_size=15))

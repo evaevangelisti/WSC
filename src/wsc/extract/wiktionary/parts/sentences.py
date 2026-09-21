@@ -2,22 +2,29 @@
 
 import re
 
-from ....models import Example, Quotation, Sentence, WordOffset, WordOffsetSource
-from ..markup import carries_markup
+from ....models import (
+    Attestation,
+    Example,
+    Quotation,
+    Sentence,
+    WordOffset,
+    WordOffsetSource,
+)
+from ...markup import (
+    BIBLIOGRAPHY,
+    METADATA,
+    NAVIGATION,
+    is_literal_markup,
+    is_unrecoverable,
+    normalize_formatting,
+    remove_references,
+)
 from ..schema import RawExample
 
 _YEAR_PATTERN = re.compile(r"\b(1[0-9]{3}|20[0-9]{2})s?\b")
 
 _EXAMPLE = "example"
 _QUOTATION = "quotation"
-
-_POINTER_PATTERN = re.compile(r"^For quotations using this term, see Citations:")
-
-# A year followed by a comma and capitalized name identifies an embedded reference.
-_REFERENCE_PATTERN = re.compile(
-    r"^\s*(?:c\.|ca\.|circa)?\s*[12]\d{3}(?:\s*[-–—]\s*\d{2,4})?"
-    + r"(?:\s+[A-Z][a-z]+\.?(?:\s+\d{1,2})?)?\s*[,:]\s*[\"“'‘(]?[A-Z]"
-)
 
 
 def parse_year(
@@ -116,6 +123,7 @@ def _parse_bold_offsets(
     """
     leading_space = len(raw_text) - len(raw_text.lstrip())
     sentence_start = _sentence_start(raw_text, text)
+
     offset_shift = leading_space + sentence_start
 
     return tuple(
@@ -128,6 +136,45 @@ def _parse_bold_offsets(
             if 0 <= start - offset_shift < end - offset_shift <= len(text)
         )
     )
+
+
+def clean_sentence(
+    value: Attestation,
+    *,
+    quoted: bool,
+) -> Attestation | None:
+    """
+    Clean an attestation and relocate its existing word offsets.
+
+    Args:
+        value: Sentence text and ranges in its original coordinate system.
+        quoted: Whether an actual source reference accompanies the sentence.
+
+    Returns:
+        A cleaned attestation, or None for metadata or unrecoverable fragments.
+    """
+    literal = is_literal_markup(value.text)
+    value = normalize_formatting(value, preserve_markup=literal)
+
+    if not value.text:
+        return None
+
+    if not literal and (
+        is_unrecoverable(value.text) or "{{" in value.text or "}}" in value.text
+    ):
+        return None
+
+    if not quoted and not literal:
+        if METADATA.match(value.text) or NAVIGATION.match(value.text):
+            return None
+
+        if "\n" not in value.text and BIBLIOGRAPHY.match(value.text):
+            return None
+
+        value = remove_references(value, explicit=True)
+        value = normalize_formatting(value, preserve_markup=True)
+
+    return value if value.text else None
 
 
 def parse_sentences(
@@ -156,7 +203,7 @@ def parse_sentences(
 
         text = raw_text.strip()
 
-        if not text or carries_markup(text):
+        if not text:
             continue
 
         text, reference = read_source(text, raw_example)
@@ -167,15 +214,17 @@ def parse_sentences(
             raw_example.get("bold_text_offsets", []),
         )
 
+        cleaned = clean_sentence(
+            Attestation(text, word_offsets=word_offsets),
+            quoted=bool(reference),
+        )
+
+        if cleaned is None:
+            continue
+
+        text, word_offsets = cleaned.text, cleaned.word_offsets
+
         if not reference:
-            if "type" not in raw_example and _POINTER_PATTERN.match(text):
-                continue
-
-            # Embedded references use a line break to separate the sentence body.
-
-            if "\n" not in text and _REFERENCE_PATTERN.match(text):
-                continue
-
             sentences.append(
                 Example(
                     text,

@@ -11,6 +11,7 @@ from kwic import Locator
 from strategies import (
     RawJson,
     blanks,
+    definitions,
     form_tags,
     glosses,
     languages,
@@ -497,7 +498,7 @@ class TestSenses:
         assert len(senses) == 1
         assert senses[0].wikidata_ids == expected
 
-    @given(st.lists(st.one_of(glosses, blanks), min_size=1, max_size=4), st.data())
+    @given(st.lists(st.one_of(definitions, blanks), min_size=1, max_size=4), st.data())
     def test_preserves_gloss_hierarchy(
         self,
         extract: Callable[..., list[Lemma]],
@@ -515,7 +516,7 @@ class TestSenses:
         ] == ([expected_glosses] if expected_glosses else [])
 
     @given(
-        st.lists(st.lists(glosses, min_size=1, max_size=3), min_size=1, max_size=4),
+        st.lists(st.lists(definitions, min_size=1, max_size=3), min_size=1, max_size=4),
         st.data(),
     )
     def test_preserves_nested_senses(
@@ -570,6 +571,58 @@ class TestSenses:
 
 class TestPseudoSenses:
     """Exclude senses describing inflected forms."""
+
+    @given(
+        descriptions=st.lists(
+            st.tuples(
+                st.sampled_from(
+                    [
+                        "Plural of bank",
+                        "Dative of bank",
+                        "Masculine plural",
+                        "Misspelling of bank",
+                        "Synonym of bank",
+                        "Alternative spelling of bank",
+                        "Obsolete spelling of bank",
+                    ]
+                ),
+                st.booleans(),
+            ),
+            max_size=12,
+        ),
+        separator=st.sampled_from([" ", "  ", "\t", "\n"]),
+    )
+    def test_classifies_untagged_glosses(
+        self,
+        extract: Callable[..., list[Lemma]],
+        descriptions: list[tuple[str, bool]],
+        separator: str,
+    ) -> None:
+        """Untagged redirects are excluded only when they begin a hierarchy gloss."""
+        senses: list[RawJson] = [
+            {
+                "glosses": [
+                    f"Meaning {index}",
+                    separator.join(description.upper().split())
+                    if redirect
+                    else f"A definition mentioning {description}",
+                ],
+            }
+            for index, (description, redirect) in enumerate(descriptions)
+        ]
+        entry: RawJson = {
+            "word": "bank",
+            "pos": "noun",
+            "lang_code": "en",
+            "senses": senses,
+        }
+        collected = extract([entry])
+
+        assert [sense.glosses[0] for lemma in collected for sense in lemma.senses] == [
+            f"Meaning {index}"
+            for index, (_, redirect) in enumerate(descriptions)
+            if not redirect
+        ]
 
     @given(form_tags, st.data())
     def test_excludes_inflected_senses(
@@ -844,18 +897,18 @@ class TestPointers:
         assert attest({"text": _build_pointer(headword)}, headword=headword) == []
 
     @given(words, sentence_kinds)
-    def test_preserves_explicit_sentences(
+    def test_excludes_typed_pointers(
         self,
         attest: Callable[..., list[Sentence]],
         headword: str,
         kind: str,
     ) -> None:
-        """A pointer is left where no kind was read, so a kind rules it out."""
+        """An example type cannot turn a citation link into lexical evidence."""
         written = _build_pointer(headword)
 
         sentences = attest({"text": written, "type": kind}, headword=headword)
 
-        assert [sentence.text for sentence in sentences] == [written]
+        assert sentences == []
 
     @given(words, st.data())
     def test_preserves_pointer_prefixes(

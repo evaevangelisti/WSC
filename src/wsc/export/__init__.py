@@ -16,7 +16,17 @@ class _Factory(Protocol):
     def __call__[T: "DataclassInstance"](
         self,
         output_path: Path,
-    ) -> Writer[T]: ...
+    ) -> Writer[T]:
+        """
+        Build a writer for one output path.
+
+        Args:
+            output_path: Where the finished file is placed.
+
+        Returns:
+            A writer for the selected format, not yet open.
+        """
+        ...
 
 
 def _jsonl[T: "DataclassInstance"](

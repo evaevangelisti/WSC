@@ -1,4 +1,4 @@
-"""Language selection and extraction defaults."""
+"""Extraction defaults and lexical normalization policies."""
 
 LANGUAGE = "en"
 """Wiktionary's code for the edition read, and for the language kept in it."""
@@ -17,3 +17,31 @@ BATCH_SIZE = 8
 
 PROCESSES = 1
 """Single-process extraction avoids contention with Torch's own parallelism."""
+
+
+TRANSLATION_TEMPLATES = frozenset(
+    {"t", "t+", "tt", "tt+", "t-check", "t+check", "t-simple"}
+)
+"""Templates whose first two arguments identify a language and translated word."""
+
+TRANSLATION_PLACEHOLDERS = frozenset(
+    {
+        "translation",
+        "translations",
+        "translations to be checked",
+        "translations to be specified",
+        "translation gloss",
+        "sense",
+    }
+)
+"""Headings that cannot identify a translation sense."""
+
+SEA_LANGUAGES = frozenset({"de", "af", "fy", "sco"})
+"""Languages in the audit where initial See can name a sea or lake."""
+
+MOJIBAKE_REPLACEMENTS = {
+    "Ã©": "é",
+    "â€¢": "•",
+    "â€“": "–",
+}
+"""Unambiguous encoding artifacts observed in English attestations."""

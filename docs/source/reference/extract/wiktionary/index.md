@@ -10,7 +10,6 @@
 extractor
 entries
 schema
-markup
 merge
 off_page_translations
 parts/index

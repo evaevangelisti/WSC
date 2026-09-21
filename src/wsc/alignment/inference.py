@@ -47,7 +47,16 @@ class _Tokenizer(Protocol):
         *,
         skip_special_tokens: bool,
     ) -> str:
-        """Decode generated token identifiers."""
+        """
+        Decode generated token identifiers.
+
+        Args:
+            token_ids: Generated token identifiers in sequence order.
+            skip_special_tokens: Whether decoding omits special tokens.
+
+        Returns:
+            The decoded text.
+        """
         ...
 
 
@@ -58,7 +67,15 @@ class _ReasoningParser(Protocol):
         self,
         input_ids: list[int],
     ) -> list[int]:
-        """Extract Harmony final-channel token identifiers."""
+        """
+        Extract Harmony final-channel token identifiers.
+
+        Args:
+            input_ids: Generated token identifiers including channel markers.
+
+        Returns:
+            Token identifiers belonging to the final response channel.
+        """
         ...
 
     def extract_reasoning(
@@ -66,7 +83,16 @@ class _ReasoningParser(Protocol):
         model_output: str,
         request: _ChatRequest,
     ) -> tuple[str | None, str | None]:
-        """Separate reasoning from final content."""
+        """
+        Separate reasoning from final content.
+
+        Args:
+            model_output: Generated completion containing reasoning and final content.
+            request: Chat context used by the parser.
+
+        Returns:
+            Reasoning and final content, each None when absent.
+        """
         ...
 
 
@@ -79,7 +105,16 @@ class _ReasoningParserFactory(Protocol):
         tokenizer: _Tokenizer,
         chat_template_kwargs: dict[str, object] | None,
     ) -> _ReasoningParser:
-        """Build a parser with request-specific context."""
+        """
+        Build a parser with request-specific context.
+
+        Args:
+            tokenizer: Tokenizer associated with the generation engine.
+            chat_template_kwargs: Request-specific chat template arguments, or None.
+
+        Returns:
+            A reasoning parser configured for the request.
+        """
         ...
 
 
@@ -90,7 +125,15 @@ class _ParserManager(Protocol):
     def get_reasoning_parser(
         name: str,
     ) -> _ReasoningParserFactory:
-        """Return the registered reasoning parser factory."""
+        """
+        Return the registered reasoning parser factory.
+
+        Args:
+            name: Parser name registered in the engine configuration.
+
+        Returns:
+            The factory for the named reasoning parser.
+        """
         ...
 
 
@@ -120,7 +163,12 @@ class _LanguageModel(Protocol):
     def get_tokenizer(
         self,
     ) -> _Tokenizer:
-        """Return the model tokenizer."""
+        """
+        Return the model tokenizer.
+
+        Returns:
+            The tokenizer associated with the loaded model.
+        """
         ...
 
     def chat(
@@ -131,7 +179,18 @@ class _LanguageModel(Protocol):
         chat_template_kwargs: dict[str, object] | None,
         use_tqdm: bool,
     ) -> Sequence[_RequestOutput]:
-        """Generate a batch of chat completions."""
+        """
+        Generate a batch of chat completions.
+
+        Args:
+            messages: Conversations submitted in batch order.
+            sampling_params: Generation parameters for each conversation.
+            chat_template_kwargs: Template arguments shared by the batch, or None.
+            use_tqdm: Whether the engine displays a progress bar.
+
+        Returns:
+            Generated request outputs in submission order.
+        """
         ...
 
 
@@ -147,6 +206,9 @@ class OfflineModel:
 
         Args:
             settings: Model and generation configuration.
+
+        Raises:
+            RuntimeError: If the offline vLLM backend is unavailable.
         """
         _LOGGER.info("Initializing model %s", settings.model)
 

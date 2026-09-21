@@ -7,7 +7,12 @@ from contextlib import contextmanager
 
 @contextmanager
 def configure_logging() -> Generator[None]:
-    """Send package logs to stderr for the lifetime of a command."""
+    """
+    Send package logs to stderr for the lifetime of a command.
+
+    Yields:
+        None while the package log handler is active.
+    """
     logger = logging.getLogger(__package__)
 
     previous_level = logger.level

@@ -99,7 +99,12 @@ app = typer.Typer(
 def configure(
     context: typer.Context,
 ) -> None:
-    """Configure logs for the selected command."""
+    """
+    Configure logs for the selected command.
+
+    Args:
+        context: Command context that owns the logging handler.
+    """
     context.with_resource(configure_logging())
 
 
@@ -108,7 +113,13 @@ def fetch(
     dump_date: DumpDate = cache.LATEST,
     cache_dir: CacheDir = None,
 ) -> None:
-    """Download a Wiktionary dump. Needs the network."""
+    """
+    Download a Wiktionary dump. Needs the network.
+
+    Args:
+        dump_date: Dump date to download, or latest.
+        cache_dir: Cache root, or None for the platform default.
+    """
     user_agent = USER_AGENT.format(version=version("wsc"))
 
     date = dump_date
@@ -166,6 +177,16 @@ def parse(
     Parse a fetched dump with wiktextract, or take one published.
 
     The dump is then walked for the translations left behind.
+
+    Args:
+        dump_date: Fetched dump date to parse, or latest.
+        processes: Number of worker processes available to Wiktextract.
+        database_path: Persistent extraction database, or None for a temporary file.
+        archive: Whether to download the published parse instead of running Wiktextract.
+        cache_dir: Cache root, or None for the platform default.
+
+    Raises:
+        typer.BadParameter: If the requested dump has not been fetched.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -289,7 +310,24 @@ def collect(
         ),
     ] = COLLECTION_DIR,
 ) -> None:
-    """Collect senses, statistics, and provenance into an output directory."""
+    """
+    Collect senses, statistics, and provenance into an output directory.
+
+    Args:
+        dump_date: Parsed dump date to collect, or latest.
+        pos: Parts of speech to retain, or None for all supported parts.
+        minimum_year: Earliest quotation year, or None for no lower limit.
+        maximum_year: Latest quotation year, or None for no upper limit.
+        engine: Sentence analyser used to locate headword occurrences.
+        processes: Number of worker processes available to the analyser.
+        batch_size: Number of sentences processed per batch.
+        gpu: Whether analysis requires GPU inference.
+        cache_dir: Cache root, or None for the platform default.
+        output_dir: Directory receiving the collection, manifest, and reports.
+
+    Raises:
+        typer.BadParameter: If the requested dump or parse is unavailable.
+    """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
     except FileNotFoundError as error:
@@ -348,6 +386,10 @@ def wordnet(
     Download the wordnet the senses are aligned with, and read its synsets.
 
     Needs the network, unless the edition asked for is already here.
+
+    Args:
+        edition: WordNet edition to download, or latest.
+        cache_dir: Cache root, or None for the platform default.
     """
     user_agent = USER_AGENT.format(version=version("wsc"))
 
@@ -519,7 +561,30 @@ def align(
         ),
     ] = ALIGNMENT_DIR,
 ) -> None:
-    """Align collected senses with language model decisions."""
+    """
+    Align collected senses with language model decisions.
+
+    Args:
+        input_path: Collected entries to align.
+        task: Resources to align, or None for all supported tasks.
+        model: Local model path or Hugging Face identifier.
+        gloss_mode: Representation of Wiktionary definitions supplied to the model.
+        prompts_path: Task prompt templates to load.
+        temperature: Generation sampling temperature.
+        maximum_tokens: Maximum generated tokens per request.
+        batch_size: Number of prompts prepared for each inference pass.
+        reasoning_parser: vLLM reasoning parser name, or None for the model default.
+        reasoning_effort: Reasoning effort accepted by the model template, or None.
+        engine_option: Additional engine settings written as KEY=VALUE pairs.
+        chat_template_option: Additional template settings written as KEY=VALUE pairs.
+        reuse: Whether cached decisions replace generation for resolved sources.
+        wordnet_edition: Cached WordNet edition to use, or latest.
+        cache_dir: Cache root, or None for the platform default.
+        output_dir: Directory receiving the aligned collection, manifest, and reports.
+
+    Raises:
+        typer.BadParameter: If input paths conflict or required resources are missing.
+    """
     tasks = tuple(dict.fromkeys(task or AlignmentTask))
 
     output_path = output_dir / ALIGNMENT_SENSES

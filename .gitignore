@@ -1,6 +1,7 @@
-# Exports the studies draw from
+# Collected and aligned data
 data/
 /collection/
+/alignment/
 
 # Built documentation
 docs/build/

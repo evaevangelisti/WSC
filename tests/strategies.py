@@ -38,17 +38,29 @@ _UNDATED = string.ascii_letters + " ,.'"
 words = st.text(alphabet=_LETTERS, min_size=1, max_size=8)
 """One written form, whether a headword or an inflection of one."""
 
-glosses = st.text(min_size=1, max_size=40).filter(lambda gloss: bool(gloss.strip()))
-"""What a sense says it means, in whatever an editor wrote it."""
-
-texts = st.text(
-    alphabet=st.characters(codec="utf-8", exclude_characters="\n"),
-    min_size=1,
-    max_size=60,
-).filter(
-    lambda text: bool(text.strip()),
+_LEXICAL_CHARACTERS = st.characters(
+    categories=("L", "M", "N", "P", "S"),
+    exclude_characters="'&<>{}[]\\`\ufffd",
 )
-"""Single-line attestation text."""
+
+texts = (
+    st.lists(
+        st.text(alphabet=_LEXICAL_CHARACTERS, min_size=1, max_size=12),
+        min_size=1,
+        max_size=4,
+    )
+    .map(" ".join)
+    .filter(
+        lambda text: not any(marker in text for marker in ("Ã©", "â€¢", "â€“")),
+    )
+)
+"""Visible Unicode prose; cleanup properties generate damaged strings separately."""
+
+glosses = texts
+"""Plain lexical headings without navigation or display artifacts."""
+
+definitions = glosses.map(lambda gloss: f"A meaning: {gloss}")
+"""Lexical definitions with Unicode text after a non-redirect opening."""
 
 sentence_kinds = st.sampled_from(["example", "quotation"])
 """What wiktextract calls a sentence, where it says which kind it read."""
@@ -126,7 +138,7 @@ _UNQUOTED: st.SearchStrategy[str | None] = st.none()
 
 _UNTYPED: st.SearchStrategy[str | None] = st.none()
 
-_GLOSS_CHAINS = st.lists(glosses, min_size=1, max_size=3)
+_GLOSS_CHAINS = st.lists(definitions, min_size=1, max_size=3)
 
 _LABELS = st.lists(words, max_size=2)
 

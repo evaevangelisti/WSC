@@ -10,5 +10,6 @@
 collection
 alignment
 extraction
+glosses
 upstream
 ```

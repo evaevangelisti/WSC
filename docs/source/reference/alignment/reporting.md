@@ -2,5 +2,12 @@
 
 ```{eval-rst}
 .. automodule:: wsc.alignment.reporting
-   :members:
+```
+
+```{toctree}
+:hidden:
+
+reporting/statistics
+reporting/manifest
+reporting/writing
 ```

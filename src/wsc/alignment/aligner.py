@@ -3,6 +3,7 @@
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from functools import partial
 from logging import getLogger
 
 from tqdm import tqdm
@@ -98,6 +99,9 @@ def align_query(
 
     Returns:
         Associations or explicit abstentions for every source.
+
+    Raises:
+        InvalidModelResponseError: If generation fails or the model response is invalid.
     """
     if not query.target_definitions or not query.source_definitions:
         return _abstain(query)
@@ -283,34 +287,25 @@ class Aligner:
         Yields:
             Prepared batches in collection order.
         """
-        remaining = iter(lemmas)
+        prepare = partial(
+            prepare_batch,
+            iter(lemmas),
+            self._candidates,
+            self._tasks,
+            self._mode,
+            self._prompts,
+            self._batch_size,
+            cache,
+        )
 
         with ThreadPoolExecutor(
             max_workers=1,
             thread_name_prefix="wsc-prompts",
         ) as executor:
-            future = executor.submit(
-                prepare_batch,
-                remaining,
-                self._candidates,
-                self._tasks,
-                self._mode,
-                self._prompts,
-                self._batch_size,
-                cache,
-            )
+            future = executor.submit(prepare)
 
             while (batch := future.result()) is not None:
-                future = executor.submit(
-                    prepare_batch,
-                    remaining,
-                    self._candidates,
-                    self._tasks,
-                    self._mode,
-                    self._prompts,
-                    self._batch_size,
-                    cache,
-                )
+                future = executor.submit(prepare)
 
                 yield batch
 

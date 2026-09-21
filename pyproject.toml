@@ -53,6 +53,14 @@ typing = [
 [tool.ruff]
 line-length = 88
 src = ["src"]
+include = [
+    "src/**/*.py",
+    "tests/**/*.py",
+    "docs/source/**/*.py",
+    "docs/source/**/*.md",
+    "README.md",
+    "pyproject.toml",
+]
 
 [tool.ruff.lint]
 select = [
@@ -103,8 +111,6 @@ ignore = [
     "PLC0415", # A format is imported where it is built, not before.
 ]
 
-# Wiktionary writes a date range with an en dash, and sets its apostrophes and
-# hyphens typographically, which is what the report unifies before it reads.
 allowed-confusables = ["–", "’", "‘", "‐", "‑"]
 
 [tool.ruff.lint.pycodestyle]
@@ -115,18 +121,17 @@ convention = "google"
 
 [tool.basedpyright]
 typeCheckingMode = "recommended"
+include = ["src", "tests", "docs/source"]
 
-# Where the suite and the studies keep what they share, which pytest and the
-# scripts put on the path too.
-extraPaths = ["tests", "research"]
+strict = ["src", "tests", "docs"]
+
+extraPaths = ["tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["--import-mode=importlib", "--strict-markers"]
 
-# The generators and the documents the suite shares are written once, beside
-# the tests drawing from them.
-pythonpath = ["tests", "research"]
+pythonpath = ["tests"]
 
 [tool.coverage.run]
 source = ["src"]

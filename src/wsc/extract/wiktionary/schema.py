@@ -141,7 +141,18 @@ _SENSE_LISTS = {
 def parse_pos(
     code: str,
 ) -> POS:
-    """Map one Wiktextract part-of-speech code to the domain model."""
+    """
+    Map one Wiktextract part-of-speech code to the domain model.
+
+    Args:
+        code: Part-of-speech code supplied by Wiktextract.
+
+    Returns:
+        The corresponding supported part of speech.
+
+    Raises:
+        ValueError: If the source code names an unsupported part of speech.
+    """
     return POS.PROPN if code == "name" else POS(code)
 
 

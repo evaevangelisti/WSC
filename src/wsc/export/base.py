@@ -47,7 +47,14 @@ class Writer[T](ABC):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        """Move the .part file into place, or remove it if anything went wrong."""
+        """
+        Move the .part file into place, or remove it if anything went wrong.
+
+        Args:
+            exc_type: Exception type raised in the context, or None after success.
+            exc_value: Exception raised in the context, or None after success.
+            traceback: Traceback from the context, or None after success.
+        """
         succeeded = exc_type is None
 
         try:

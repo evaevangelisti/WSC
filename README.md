@@ -60,8 +60,6 @@ wsc fetch
 
 Reads the dump with [wiktextract](https://github.com/tatuylonen/wiktextract), which turns Wiktionary's markup into entries, keeping the fields the collector reads.
 
-Parsing runs for hours. `--archive` downloads what [kaikki.org](https://kaikki.org) holds instead, whatever that site currently publishes.
-
 ```sh
 wsc parse
 ```
@@ -79,10 +77,6 @@ wsc parse
 Collects senses and reports into a directory, with one JSONL entry per headword and part of speech.
 
 Wiktextract's bold ranges and [kwic](https://github.com/evaevangelisti/kwic) independently locate lemmas. Offsets record `bold`, `lemmatizer`, or both, preserving disagreements for review.
-
-When lemmatization finds nothing, the listed forms are matched.
-
-`--gpu` needs CuPy, which kwic offers as an extra named after your CUDA release: `pip install "kwic[cuda13x]"`.
 
 ```sh
 wsc collect
@@ -107,7 +101,7 @@ wsc collect
 | `stanza` | Stanza, whose parser finds a phrasal verb written apart | tens a second |
 | `lemminflect` | spaCy for the tags and LemmInflect for the lemmas | hundreds a second |
 
-Each collection contains four files:
+Each collection contains the collected senses, a manifest, and reports in JSON and Markdown:
 
 | File | Contents |
 | --- | --- |
@@ -154,3 +148,12 @@ wsc align collection/senses.jsonl
 | `--wordnet-edition` | `latest` | Extracted WordNet edition; also `WSC_WORDNET_EDITION` |
 | `--cache-dir` | platform cache | Also configurable through `WSC_CACHE_DIR` |
 | `--output-dir` | `alignment` | Directory for aligned senses and its reports |
+
+Each alignment contains the aligned collection, a manifest, and one report per selected task:
+
+| File | Contents |
+| --- | --- |
+| `senses.jsonl` | Collected entries with aligned translations and WordNet associations |
+| `reports/translations.json` | Evaluated, aligned, and unaligned senses, translation associations, and relation counts |
+| `reports/wordnet.json` | Evaluated, aligned, and unaligned senses, WordNet associations, and relation counts |
+| `manifest.json` | Input collection, tasks, model settings, runtime versions, timestamps, and output files |

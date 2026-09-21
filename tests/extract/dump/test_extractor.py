@@ -346,3 +346,100 @@ def test_isolates_translation_sections(
         "kept": {"it": frozenset({"prima"})},
         "retained": {"it": frozenset({"seconda"})},
     }
+
+
+@given(
+    first=words,
+    second=words,
+    numbered=st.booleans(),
+    multiline=st.booleans(),
+)
+def test_reads_nested_arguments_in_document_order(
+    workspace: Callable[[], Path],
+    first: str,
+    second: str,
+    *,
+    numbered: bool,
+    multiline: bool,
+) -> None:
+    """Piped links, numbered parameters, and same-line table boundaries retain words."""
+    separator = "\n" if multiline else ""
+    heading = f"To produce [[leaf|{first}]] and 10<sup>15</sup>"
+    arguments = f"1=fr|2=[[leaf|{second}]]" if numbered else f"fr|[[leaf|{second}]]"
+    markup = (
+        "==English==\n===Noun===\n"
+        + f"{{{{trans-top|{separator}{heading}}}}}"
+        + f"{{{{t|{separator}{arguments}|note={{{{q|rare|dated}}}}}}}}"
+        + "{{trans-bottom}}{{t|it|outside}}"
+        + "\n{{trans-top|translations  to be checked}}{{t|it|placeholder}}"
+        + "{{trans-bottom}}"
+        + "\n<!-- {{trans-top|comment}}{{t|it|comment}} -->"
+        + "<nowiki>{{trans-top|literal}}{{t|it|literal}}</nowiki>"
+    )
+    source = workspace() / "dump.xml"
+    _ = source.write_text(dump(page("sample entry/translations", markup)))
+
+    (record,) = DumpExtractor("English").extract(source)
+    (table,) = record.translations
+
+    assert table.gloss == f"To produce {first} and 10¹⁵"
+    assert table.id.startswith("sample_entry.noun.tr.")
+    assert table.translations == {"fr": frozenset({second})}
+
+
+@pytest.mark.parametrize(
+    ("arguments", "expected"),
+    [
+        ("1=it|fr|2=parola", "fr"),
+        ("fr|1=it|2=parola", "it"),
+    ],
+)
+def test_uses_last_parameter_assignment(
+    workspace: Callable[[], Path],
+    arguments: str,
+    expected: str,
+) -> None:
+    """Explicit numbering and implicit positions obey source-order assignment."""
+    markup = (
+        "==English==\n===Noun===\n{{trans-top|meaning}}"
+        + f"{{{{t|{arguments}}}}}"
+        + "{{trans-bottom}}"
+    )
+    source = workspace() / "dump.xml"
+    _ = source.write_text(dump(page("entry/translations", markup)))
+
+    (record,) = DumpExtractor("English").extract(source)
+
+    assert record.translations[0].translations == {expected: frozenset({"parola"})}
+
+
+def test_recovers_partially_damaged_parsed_tables(
+    workspace: Callable[[], Path],
+) -> None:
+    """A usable word cannot hide a truncated translation from source recovery."""
+    entries: list[RawEntry] = [
+        {
+            "word": "leaf",
+            "pos": "noun",
+            "lang_code": "en",
+            "translations": [
+                {"sense": "plant part", "lang_code": "fr", "word": "feuille"},
+                {"sense": "plant part", "lang_code": "it", "word": "[[foglio"},
+            ],
+        },
+    ]
+    markup = (
+        "==English==\n===Noun===\n{{trans-top|plant part}}\n"
+        + "{{t|fr|feuille}} {{t|it|[[foglio|foglia]]}}\n{{trans-bottom}}"
+    )
+    source = workspace() / "dump.xml"
+    _ = source.write_text(dump(page("leaf", markup)))
+
+    (record,) = DumpExtractor("English").extract(
+        source, index_translation_glosses(entries)
+    )
+
+    assert record.translations[0].translations == {
+        "fr": frozenset({"feuille"}),
+        "it": frozenset({"foglia"}),
+    }

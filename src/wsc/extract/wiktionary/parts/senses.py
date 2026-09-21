@@ -2,9 +2,8 @@
 
 from ....identifiers import sense_id
 from ....models import Sense
-from ..markup import carries_markup
 from ..schema import RawSense
-from .glosses import is_form_gloss, is_synonym_gloss, is_variant_gloss
+from .glosses import clean_gloss, is_form_gloss, is_synonym_gloss, is_variant_gloss
 from .sentences import parse_sentences
 from .synonyms import parse_synonyms
 
@@ -41,20 +40,24 @@ def parse_senses(
         if not _FORM_TAGS.isdisjoint(tags):
             continue
 
-        glosses = tuple(
+        original_glosses = tuple(
             gloss.strip() for gloss in raw_sense.get("glosses", []) if gloss.strip()
         )
 
-        if (
-            not glosses
-            or any(carries_markup(gloss) for gloss in glosses)
-            or any(
-                is_form_gloss(gloss)
-                or is_synonym_gloss(gloss)
-                or is_variant_gloss(gloss)
-                for gloss in glosses
-            )
+        if not original_glosses or any(
+            is_form_gloss(gloss) or is_synonym_gloss(gloss) or is_variant_gloss(gloss)
+            for gloss in original_glosses
         ):
+            continue
+
+        cleaned_glosses = [clean_gloss(gloss) for gloss in original_glosses]
+
+        if any(gloss is None for gloss in cleaned_glosses):
+            continue
+
+        glosses = tuple(gloss for gloss in cleaned_glosses if gloss)
+
+        if not glosses:
             continue
 
         senses.append(

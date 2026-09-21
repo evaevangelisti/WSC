@@ -38,7 +38,7 @@ def lemma_id(
     Returns:
         The identifier, as bank.noun.
     """
-    return f"{lemma}.{pos}"
+    return f"{lemma.replace(' ', '_')}.{pos}"
 
 
 def sense_id(
@@ -83,5 +83,14 @@ def query_id(
     task: AlignmentTask,
     identifier: str,
 ) -> str:
-    """Build a task-scoped identifier for an alignment query."""
+    """
+    Build a task-scoped identifier for an alignment query.
+
+    Args:
+        task: Resource whose alignment is requested.
+        identifier: Entry identifier shared by the query sources.
+
+    Returns:
+        The task name and entry identifier separated by a colon.
+    """
     return f"{task.value}:{identifier}"

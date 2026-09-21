@@ -4,11 +4,13 @@ import re
 from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from itertools import groupby
 
+from ...constants.extraction import TRANSLATION_TEMPLATES
 from ...identifiers import lemma_id, translation_table_id
 from ...models import POS, TranslationTable
-from ..translations import normalize_translation_gloss
-from .markup import arguments, plain
+from ..translations import clean_translation, normalize_translation_gloss, templates
+from .markup import plain
 
 _HEADING = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$")
 
@@ -19,15 +21,6 @@ _POS_BY_HEADING: dict[str, POS] = {
     "Adjective": POS.ADJECTIVE,
     "Adverb": POS.ADVERB,
 }
-
-_TOP = re.compile(r"\{\{trans-top(?:-also)?\s*\|([^{}]*)\}\}")
-_BOTTOM = re.compile(r"\{\{trans-bottom\s*\}\}")
-
-_TRANSLATION = re.compile(
-    r"\{\{(?:t|t\+|tt|tt\+|t-check|t\+check|t-simple)\|([^{}]*)\}\}"
-)
-
-_SEE = re.compile(r"\{\{trans-(?:see|top-see)\s*\|([^{}]*)\}\}")
 
 SUBPAGE_SUFFIX = "/translations"
 
@@ -48,60 +41,6 @@ class PageTranslations:
     pos: POS
     translations: tuple[TranslationTable, ...] = ()
     pointers: dict[str, tuple[str, ...]] = field(default_factory=dict)
-
-
-def _read_pointers(
-    line: str,
-) -> Iterator[tuple[str, tuple[str, ...]]]:
-    """
-    Read every pointer one line writes at the headwords translating a meaning.
-
-    Args:
-        line: The line to read.
-
-    Yields:
-        The meaning, and the headwords said to translate it.
-    """
-    for found_pointer in _SEE.finditer(line):
-        positional_arguments, _ = arguments(found_pointer.group(1))
-
-        if not positional_arguments:
-            continue
-
-        gloss = normalize_translation_gloss(plain(positional_arguments[0]))
-
-        if not gloss:
-            continue
-
-        # Single-argument templates use the same value for meaning and target headword.
-
-        pointed_lemmas = tuple(plain(name) for name in positional_arguments[1:])
-
-        yield gloss, pointed_lemmas or (gloss,)
-
-
-def _read_translations(
-    line: str,
-) -> Iterator[tuple[str, str]]:
-    """
-    Read every translation one line of a table offers.
-
-    Args:
-        line: The line to read.
-
-    Yields:
-        The language offering a word, by code, and the word.
-    """
-    for found_translation in _TRANSLATION.finditer(line):
-        positional_arguments, _ = arguments(found_translation.group(1))
-
-        if len(positional_arguments) < 2:
-            continue
-
-        language, word = positional_arguments[0], plain(positional_arguments[1])
-
-        if language and word:
-            yield language, word
 
 
 def _sections(
@@ -150,6 +89,27 @@ def _sections(
         yield None, line
 
 
+def _section_texts(
+    markup: str,
+    language_section: str,
+) -> Iterator[tuple[POS, str]]:
+    """
+    Join consecutive section lines so templates may span line breaks.
+
+    Args:
+        markup: Page wikitext containing language and part-of-speech headings.
+        language_section: Language heading whose sections should be read.
+
+    Yields:
+        Part of speech and complete text for each consecutive section.
+    """
+    sections = groupby(_sections(markup, language_section), key=lambda item: item[0])
+
+    for pos, lines in sections:
+        if pos is not None:
+            yield pos, "\n".join(line for _, line in lines)
+
+
 def read_page(
     title: str,
     markup: str,
@@ -171,38 +131,40 @@ def read_page(
     tables: defaultdict[POS, dict[str, dict[str, frozenset[str]]]] = defaultdict(dict)
     pointers: defaultdict[POS, dict[str, tuple[str, ...]]] = defaultdict(dict)
 
-    gloss: str | None = None
+    for pos, section in _section_texts(markup, language_section):
+        gloss = ""
 
-    for pos, line in _sections(markup, language_section):
-        if pos is None:
-            gloss = None
+        for name, parameters in templates(section):
+            if name in {"trans-see", "trans-top-see"}:
+                heading = normalize_translation_gloss(parameters.get("1", ""))
+                targets = tuple(
+                    plain(value)
+                    for key, value in parameters.items()
+                    if key.isdecimal() and int(key) > 1 and value
+                )
 
-            continue
+                if heading:
+                    pointers[pos][heading] = targets or (heading,)
 
-        pointers[pos].update(_read_pointers(line))
+            elif name in {"trans-top", "trans-top-also"}:
+                gloss = normalize_translation_gloss(parameters.get("1", ""))
 
-        found_top = _TOP.search(line)
+            elif name == "trans-bottom":
+                gloss = ""
 
-        if found_top:
-            positional_arguments, _ = arguments(found_top.group(1))
-            headed = (
-                normalize_translation_gloss(plain(positional_arguments[0]))
-                if positional_arguments
-                else ""
-            )
+            elif gloss and name in TRANSLATION_TEMPLATES:
+                translation = clean_translation(
+                    parameters.get("1", ""),
+                    parameters.get("2", ""),
+                )
 
-            gloss = headed or None
+                if translation is not None:
+                    language, word = translation
 
-        if _BOTTOM.search(line):
-            gloss = None
-
-        if gloss is None:
-            continue
-
-        translations = tables[pos].setdefault(gloss, {})
-
-        for language, word in _read_translations(line):
-            translations[language] = translations.get(language, frozenset()) | {word}
+                    translated = tables[pos].setdefault(gloss, {})
+                    translated[language] = translated.get(language, frozenset()) | {
+                        word
+                    }
 
     for part_of_speech in sorted(tables.keys() | pointers.keys()):
         yield PageTranslations(

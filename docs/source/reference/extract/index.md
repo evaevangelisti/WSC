@@ -11,5 +11,7 @@ wiktionary/index
 dump/index
 wordnet
 offsets
+markup
 translations
+cleaning
 ```
