@@ -76,6 +76,47 @@ def extract(
         ("1000 lambdas", "1000 lambdas"),
         ("Compare", "Compare"),
         ("See; see also.", "See; see also."),
+        ("A hierarchy heading:", "A hierarchy heading."),
+        (
+            "A rodent (but see also its synonyms), native to America.",
+            "A rodent, native to America.",
+        ),
+        (
+            "Rights. see: Wikipedia:Reciprocity (international relations).",
+            "Rights.",
+        ),
+        ("A definition (For further discussion, see the appendix).", "A definition."),
+        (
+            "A definition (more formally, see the chart), with a qualification.",
+            "A definition, with a qualification.",
+        ),
+        (
+            "A definition (said of a treatment, see treatment).",
+            "A definition (said of a treatment).",
+        ),
+        (
+            "A definition (cf. another), with a qualification.",
+            "A definition, with a qualification.",
+        ),
+        (
+            "A definition. Compare fly (verb (regular)) and line (verb).",
+            "A definition.",
+        ),
+        ("A piece of fabric cf. gusset.", "A piece of fabric"),
+        ("Real Madrid CF.", "Real Madrid CF."),
+        (
+            "To buy a ticket for a movie, see it and then go into another movie.",
+            "To buy a ticket for a movie, see it and then go into another movie.",
+        ),
+        ("A bishop's see: merely titular.", "A bishop's see: merely titular."),
+        (
+            "To compare two objects; to assess their differences.",
+            "To compare two objects; to assess their differences.",
+        ),
+        (
+            "A failure to perceive something (see, hear, feel, etc.).",
+            "A failure to perceive something (see, hear, feel, etc.).",
+        ),
         (
             "To see by foresight; see clairvoyantly; view telepathically.",
             "To see by foresight; see clairvoyantly; view telepathically.",
@@ -121,11 +162,20 @@ def test_cleans_definitions(
         assert result[0].senses[0].glosses == ("A parent.", expected)
 
 
+@pytest.mark.parametrize(
+    "written",
+    [
+        "See other.",
+        "* see: The Warren.",
+        "For additional senses, see the individual entries.",
+    ],
+)
 def test_removes_navigation_levels(
     extract: Callable[..., list[Lemma]],
+    written: str,
 ) -> None:
     """A navigation-only hierarchy level does not erase its defining parent."""
-    result = extract({"senses": [{"glosses": ["A meaning.", "See other."]}]})
+    result = extract({"senses": [{"glosses": ["A meaning.", written]}]})
 
     assert result[0].senses[0].glosses == ("A meaning.",)
 
@@ -140,6 +190,9 @@ def test_removes_navigation_levels(
         ("Usage notes: see other", None),
         ("See Citations:sample", None),
         ("See also quotations under sample.", None),
+        ("Also see: United National Congress, Trinidad and Tobago", None),
+        ("A sample entry. Also see: another entry.", "A sample entry."),
+        ("A sample entry (also see: another entry).", "A sample entry."),
         ("For examples using this term, see Citations:sample.", None),
         ("See you at five.", "See you at five."),
         ("I left; see you tomorrow.", "I left; see you tomorrow."),
@@ -162,6 +215,11 @@ def test_removes_navigation_levels(
         ),
         ("A #92;forallx sample entry.", None),
         ("A {{unexpanded|sample}} entry.", None),
+        (". Compare caducous.", None),
+        (
+            "The predicand denotes he (cf. he was downhearted).",
+            "The predicand denotes he (cf. he was downhearted).",
+        ),
     ],
 )
 def test_cleans_sentences(
@@ -190,6 +248,7 @@ def test_cleans_sentences(
     "written",
     [
         "See also the life around you.",
+        "Also see: the life around you.",
         "We said (see you at five) and left.",
         "The address is https://example.org/.",
         "A chemical 2-[[1-amino]-2-oxo] compound.",
@@ -215,10 +274,95 @@ def test_preserves_quoted_content(
     assert result[0].senses[0].sentences[0].text == written
 
 
+@given(
+    token=words,
+    reference=st.sampled_from(
+        [
+            "See also quotation under cyclopian.",
+            "See also quotations under vapory.",
+            "See Citations:sample.",
+            "Also see: quotation under cyclopian.",
+            "See also: quotations under vapory.",
+            "But see: Citations:sample.",
+        ],
+    ),
+    position=st.sampled_from(["before", "between", "after"]),
+)
+@example(token="S", reference="See also quotation under cyclopian.", position="after")
+def test_removes_separate_editorial_lines(
+    token: str,
+    reference: str,
+    position: str,
+) -> None:
+    """Removing editorial lines preserves quoted prose and exact token provenance."""
+    lines = [f"A {token}.", f"Another {token}."]
+    lines.insert({"before": 0, "between": 1, "after": 2}[position], reference)
+    written = "\n".join(lines)
+    start = written.index(f"Another {token}.") + len("Another ")
+    reference_start = written.index(reference)
+    sources = (WordOffsetSource.BOLD, WordOffsetSource.LEMMATIZER)
+    value = Attestation(
+        written,
+        word_offsets=(
+            WordOffset((start, start + len(token)), sources),
+            WordOffset((reference_start, reference_start + 3), sources),
+        ),
+    )
+
+    cleaned = clean_sentence(value, quoted=True)
+    expected = f"A {token}.\nAnother {token}."
+    final_start = expected.rindex(token)
+
+    assert cleaned is not None
+    assert cleaned == Attestation(
+        expected,
+        word_offsets=(WordOffset((final_start, final_start + len(token)), sources),),
+    )
+    assert clean_sentence(cleaned, quoted=True) == cleaned
+
+
+@given(
+    prefix=st.sampled_from(["Also see", "also SEE", "BUT see", "See also"]),
+    spacing=st.sampled_from(["", " ", "\t", "  "]),
+    bullet=st.sampled_from(["", "* ", "• ", "- "]),
+)
+def test_excludes_navigation_across_fields(
+    extract: Callable[..., list[Lemma]],
+    prefix: str,
+    spacing: str,
+    bullet: str,
+) -> None:
+    """Colon navigation is excluded consistently across both translation sources."""
+    written = f"{bullet}{prefix}{spacing}:{spacing}another entry"
+    result = extract(
+        {
+            "senses": [
+                {
+                    "glosses": ["A meaning.", written],
+                    "examples": [{"text": written, "type": "example"}],
+                },
+            ],
+            "translations": [
+                {"sense": written, "lang_code": "fr", "word": "mot"},
+                {"sense": "A meaning.", "lang_code": "fr", "word": written},
+            ],
+        },
+        (TranslationTable("old", written, {"fr": frozenset({"mot"})}),),
+    )
+
+    assert result[0].senses[0].glosses == ("A meaning.",)
+    assert not result[0].senses[0].sentences
+    assert not result[0].translation_tables
+
+
 @pytest.mark.parametrize(
     ("language", "written", "expected"),
     [
         ("fi", "see laskettu aika", None),
+        ("de", "but see Kuchen", None),
+        ("de", "but see", None),
+        ("fr", "also see feuille", None),
+        ("en", "see: snowflake and softie", None),
         ("de", "see adjektivisches Demonstrativpronomen", None),
         ("de", "See Thesaurus:Heidelbeere", None),
         ("de", "See von Galiläa", ("de", "See von Galiläa")),
@@ -229,6 +373,14 @@ def test_preserves_quoted_content(
         ("en", "translation", ("en", "translation")),
         ("cmn", "see entry) 可惜", ("cmn", "可惜")),
         ("fi", "poltto (see polttomoottori)", ("fi", "poltto")),
+        (
+            "fi",
+            "hyvät ja huonot ajat (but also see myötä- ja vastoinkäymiset)",
+            ("fi", "hyvät ja huonot ajat"),
+        ),
+        ("fi", "ilman (jotakin)", ("fi", "ilman (jotakin)")),
+        ("sq", "lirë (i/e)", ("sq", "lirë (i/e)")),
+        ("ko", "자유적(自由的)이다", ("ko", "자유적(自由的)이다")),
         ("cy", "{{t|1=cy|2=post|3=m}}", ("cy", "post")),
         ("en", "{{t+|cmn|極簡主義|tr=jíjiǎn zhǔyì}}", ("cmn", "極簡主義")),
         ("fr", "[[feuille|feuilles]]", ("fr", "feuilles")),
@@ -293,6 +445,25 @@ def test_removes_editorial_translation_tails(
 
     assert raw.translation_tables == merged.translation_tables
     assert raw.translation_tables[0].gloss == heading
+
+
+def test_normalizes_translation_gloss_punctuation(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """Translation headings use the same terminal punctuation as sense glosses."""
+    result = extract(
+        {
+            "translations": [
+                {
+                    "sense": "A hierarchical meaning:",
+                    "lang_code": "it",
+                    "word": "parola",
+                }
+            ]
+        }
+    )
+
+    assert result[0].translation_tables[0].gloss == "A hierarchical meaning."
 
 
 @pytest.mark.parametrize(

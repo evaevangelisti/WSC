@@ -51,3 +51,11 @@ Existing offset provenance is preserved; ambiguous rewritten boundaries are omit
 ## API
 
 See the functions documented under [glosses](wiktionary/parts/glosses.md), [sentences](wiktionary/parts/sentences.md), [translations](translations.md), [markup](markup.md), and [offsets](offsets.md).
+
+## Residual editorial references
+
+A second complete scan on 2026-09-21 extends bounded reference handling to `see:`, `but see`, `also see`, bullets, comma-separated clauses, and `for …, see …` instructions. Definition and table cleanup also handles explicit `cf.` and `compare` references. Parenthetical qualifiers and text following a reference remain intact.
+
+Referenced quotations retain the author's prose and comparisons. Separate lines explicitly pointing to quotations under another headword or to a Wiktionary namespace are removed, with exact offset relocation. Lexical uses such as “see it”, “See; see also”, episcopal “see”, and “Real Madrid CF.” remain valid content. Ambiguous comparisons and incomplete prose are preserved rather than treated as proof of a reference.
+
+The alignment reports' migration-only `pending_review` counts invalidated source decisions awaiting reassessment. `evaluation_basis` describes reconstruction from retained cache decisions and existing associations; it does not indicate a new inference run. The residual migration and its mappings are recorded in `data/quality-audit/residual-migration-20260921.md` and its JSON ledger.

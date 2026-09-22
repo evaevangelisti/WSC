@@ -202,29 +202,50 @@ BIBLIOGRAPHY = re.compile(
 )
 
 NAVIGATION = re.compile(
-    r"^(?:see\s+(?:also\b|(?:Citations|Thesaurus|Appendix|Wikipedia):|"
+    r"^(?:[*•#-]\s*)?(?:[.;]\s*(?:compare|cf\.)\s+|"
+    + r"(?:but(?:\s+also)?|also)\s+see(?:\s*:\s*|\s+)|see\s*:\s*|"
+    + r"see\s+(?:also\b|(?:Citations|Thesaurus|Appendix|Wikipedia):|"
     + r"(?:the\s+)?(?:quotations?|usage notes?|translations?)\b)|"
     + r"for\s+(?:examples?|quotations?)\b[^\n]*\bsee\b)",
     re.IGNORECASE,
 )
 
-_START = re.compile(r"^see\s+", re.IGNORECASE)
+_SEE = (
+    r"(?:(?:but(?:\s+also)?|also)\s+)?"
+    + r"see(?:\s*:\s*|,\s*for example,\s*|\s+(?:also\s+)?)"
+)
+_PURPOSE = r"(?:for\s+[^();\n]*?,\s*|for\s+[^();\n]*?\bforms\s+|more formally,\s*)"
+_DIRECTIVE = rf"(?:{_PURPOSE})?(?:{_SEE}|cf\.\s+|compare(?:\s+with)?\s+)"
+_BODY = r"(?:[^.\n()]|\.(?!\s|$)|\((?:[^()]|\([^()]*\))*\))+"
 
+_START = re.compile(rf"^(?:[*•#-]\s*)?{_SEE}", re.IGNORECASE)
+_PURPOSE_START = re.compile(rf"^{_PURPOSE}{_SEE}", re.IGNORECASE)
 _DEFINITION = re.compile(r"^see\s+[^\n]+?,\s*for:\s*", re.IGNORECASE)
 
 _PARENTHESES = re.compile(
-    r"[ \t]*\(\s*see\s+[^()]*(?:\([^()]*\)[^()]*)*\)", re.IGNORECASE
+    rf"[ \t]*\(\s*{_DIRECTIVE}[^()]*(?:\([^()]*\)[^()]*)*\)", re.IGNORECASE
 )
 
 _UNCLOSED_REFERENCE = re.compile(
-    r"[ \t]*\(\s*see\s+[^()]*(?:\([^()]*\)[^()]*)*$", re.IGNORECASE
+    rf"[ \t]*\(\s*{_DIRECTIVE}[^()]*(?:\([^()]*\)[^()]*)*$", re.IGNORECASE
 )
 
 _CLAUSE = re.compile(
-    r"(?P<before>[.;:]|[ \t]*[—–-])\s*see\s+"
-    + r"(?:[^.\n()]|\.(?!\s|$)|\([^()]*\))*"
+    rf"(?P<before>[.;:,]|[ \t]*[—–-])\s*{_DIRECTIVE}"
+    + _BODY
     + r"(?:\.(?=\s|$)|(?=\)|$))",
     re.IGNORECASE,
+)
+
+_LEXICAL_OBJECT = re.compile(
+    rf"^,\s*{_SEE}(?:it|them|him|her|us|me|you|what|how|whether|if|that)\b",
+    re.IGNORECASE,
+)
+
+_UNPUNCTUATED_COMPARISON = re.compile(r"[ \t]+cf\.\s+" + _BODY + r"\.?$")
+
+_QUOTED_TARGET = re.compile(
+    r"(?<=[\"”'])\s+see:\s*" + _BODY + r"(?=\)|$)", re.IGNORECASE
 )
 
 _TABLE_TAIL = re.compile(
@@ -248,11 +269,26 @@ _DEMONSTRATION = re.compile(
 )
 
 _EXPLICIT = re.compile(
-    r"\bsee\s+(?:also\b|(?:Citations|Thesaurus|Wikipedia|Appendix):|usage notes?\b)",
+    r"\b(?:compare\s+|(?:but(?:\s+also)?|also)\s+see\s*:|"
+    + r"see\s*:\s*|see\s+(?:also\b|"
+    + r"(?:Citations|Thesaurus|Wikipedia|Appendix):|usage notes?\b))",
     re.IGNORECASE,
 )
 
 _EMPTY = re.compile(r"\([ \t]*\)|[ \t]+([,.;:])")
+
+
+def normalize_definition_punctuation(text: str) -> str:
+    """
+    Replace a definition's final colon with a period.
+
+    Args:
+        text: A sense gloss or translation-table heading.
+
+    Returns:
+        The definition with normalized terminal punctuation.
+    """
+    return f"{text[:-1]}." if text.endswith(":") else text
 
 
 def remove_references(
@@ -286,7 +322,8 @@ def remove_references(
         _CLAUSE,
         lambda match: (
             match[0]
-            if explicit and not _EXPLICIT.search(match[0])
+            if (explicit and not _EXPLICIT.search(match[0]))
+            or _LEXICAL_OBJECT.match(match[0])
             else "."
             if match["before"] == "."
             else ""
@@ -314,18 +351,24 @@ def clean_definition_references(
     Returns:
         The retained definition, or an empty string for standalone navigation.
     """
-    if text.casefold().startswith(("to see ", "see;", "see.")):
+    if text.casefold().startswith(("see;", "see.")):
         return text
 
     value = substitute(Attestation(text), _DEFINITION, "")
 
-    if NAVIGATION.match(value.text) or (not table and _START.match(value.text)):
+    if (
+        NAVIGATION.match(value.text)
+        or _PURPOSE_START.match(value.text)
+        or (not table and _START.match(value.text))
+    ):
         return ""
 
     if table:
         value = substitute(value, _TABLE_TAIL, "")
 
-    value = remove_references(value)
+    value = remove_references(value, explicit=text.casefold().startswith("to see "))
+    value = substitute(value, _UNPUNCTUATED_COMPARISON, "")
+    value = substitute(value, _QUOTED_TARGET, "")
 
     value = substitute(value, _DEMONSTRATION, "")
     value = substitute(value, _FURTHER_REFERENCE, "")

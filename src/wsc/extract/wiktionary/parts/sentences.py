@@ -19,9 +19,29 @@ from ...markup import (
     normalize_formatting,
     remove_references,
 )
+from ...offsets import substitute
 from ..schema import RawExample
 
 _YEAR_PATTERN = re.compile(r"\b(1[0-9]{3}|20[0-9]{2})s?\b")
+
+_REFERENCE_LINE = re.compile(
+    r"(?:^|\n)[ \t]*(?:[*•#-][ \t]+)?(?:(?:also|but)\s+)?"
+    + r"see\s*(?::\s*)?(?:also\s*:?\s+)?"
+    + r"(?:quotations?\s+(?:under|at)\b|(?:Citations|Thesaurus|Appendix|Wikipedia):)"
+    + r"[^\n]*(?=\n|$)",
+    re.IGNORECASE,
+)
+
+_TITLE_REFERENCE = re.compile(
+    r"[ \t]*(?:\(\s*|\[\s*)(?:(?:also|but(?:\s+also)?)\s+)?"
+    + r"see\s+(?:the\s+)?title(?:\s+already)?\.?\s*(?:\)|\])[ \t]*",
+    re.IGNORECASE,
+)
+
+_TITLE_ONLY = re.compile(
+    r"^(?:(?:also|but(?:\s+also)?)\s+)?see\s+(?:the\s+)?title\.?$",
+    re.IGNORECASE,
+)
 
 _EXAMPLE = "example"
 _QUOTATION = "quotation"
@@ -44,6 +64,26 @@ def parse_year(
     return int(found_year.group(1)) if found_year else None
 
 
+def clean_reference(
+    reference: str,
+) -> str:
+    """
+    Normalize surrounding whitespace and stray reference delimiters.
+
+    Args:
+        reference: The source reference as Wiktionary formats it.
+
+    Returns:
+        The reference without trailing colons or an unmatched opening bracket.
+    """
+    reference = re.sub(r"[\s:]+$", "", reference.strip())
+
+    if reference.startswith("[") and reference.count("[") > reference.count("]"):
+        reference = reference[1:].lstrip()
+
+    return reference
+
+
 def read_source(
     text: str,
     raw_example: RawExample,
@@ -63,7 +103,7 @@ def read_source(
     reference = raw_example.get("ref", "").strip()
 
     if reference:
-        return text, reference
+        return text, clean_reference(reference)
 
     kind = raw_example.get("type", "")
 
@@ -76,7 +116,7 @@ def read_source(
         return text, ""
 
     if kind == _QUOTATION or parse_year(head) is not None:
-        return tail.strip(), head.strip()
+        return tail.strip(), clean_reference(head)
 
     return text, ""
 
@@ -156,7 +196,15 @@ def clean_sentence(
     literal = is_literal_markup(value.text)
     value = normalize_formatting(value, preserve_markup=literal)
 
+    if not literal:
+        value = substitute(value, _REFERENCE_LINE, "")
+        value = substitute(value, _TITLE_REFERENCE, "")
+        value = normalize_formatting(value, preserve_markup=True)
+
     if not value.text:
+        return None
+
+    if not literal and _TITLE_ONLY.fullmatch(value.text):
         return None
 
     if not literal and (

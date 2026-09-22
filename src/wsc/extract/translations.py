@@ -15,6 +15,7 @@ from .markup import (
     clean_definition_references,
     is_literal_markup,
     is_unrecoverable,
+    normalize_definition_punctuation,
     normalize_formatting,
     remove_references,
 )
@@ -156,7 +157,10 @@ def read_template(
 
 
 _LANGUAGE = re.compile(r"[a-z]{2,3}(?:-[A-Za-z0-9]+)*")
-_START = re.compile(r"^see\s+", re.IGNORECASE)
+_START = re.compile(
+    r"^(?:(?:but(?:\s+also)?|also)\s+see(?:\s*:\s*|\s+|$)|" + r"see(?:\s*:\s*|\s+))",
+    re.IGNORECASE,
+)
 _ENTRY = re.compile(r"^see entry\)\s*", re.IGNORECASE)
 _INVISIBLE = re.compile("[\\s\u00ad\u200b-\u200f\u2060\ufeff]*")
 
@@ -240,6 +244,7 @@ def normalize_translation_gloss(
         return ""
 
     text = normalize_formatting(Attestation(text), preserve_markup=True).text
+    text = normalize_definition_punctuation(text)
 
     return "" if " ".join(text.casefold().split()) in TRANSLATION_PLACEHOLDERS else text
 

@@ -13,6 +13,7 @@ from ...markup import (
     clean_definition_references,
     is_literal_markup,
     is_unrecoverable,
+    normalize_definition_punctuation,
     normalize_formatting,
 )
 
@@ -139,4 +140,6 @@ def clean_gloss(
     if not literal:
         text = clean_definition_references(text)
 
-    return normalize_formatting(Attestation(text), preserve_markup=True).text
+    text = normalize_formatting(Attestation(text), preserve_markup=True).text
+
+    return normalize_definition_punctuation(text)

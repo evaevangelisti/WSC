@@ -1,11 +1,12 @@
 """Tests for src/wsc/extract/wiktionary/."""
 
 import json
+import re
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 from kwic import Locator
 from strategies import (
@@ -529,10 +530,17 @@ class TestSenses:
         senses: list[RawJson] = [{"glosses": chain} for chain in chains]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
+        normalized_chains = (
+            tuple(
+                f"{gloss[:-1]}." if gloss.endswith(":") else gloss
+                for gloss in (written.strip() for written in chain)
+                if gloss
+            )
+            for chain in chains
+        )
         unique_chains = list(
             dict.fromkeys(
-                tuple(gloss.strip() for gloss in chain if gloss.strip())
-                for chain in chains
+                normalized_chains,
             ),
         )
 
@@ -739,6 +747,34 @@ class TestSentences:
             reference,
         )
 
+    @pytest.mark.parametrize(
+        ("written", "expected"),
+        [
+            ("(see title)", None),
+            ("[See title.]", None),
+            (
+                'The term "suffrajitsu" came into common use. (also see title)',
+                'The term "suffrajitsu" came into common use.',
+            ),
+            (
+                "[see title] The term came into common use.",
+                "The term came into common use.",
+            ),
+        ],
+    )
+    def test_removes_title_directives_from_quotations(
+        self,
+        attest: Callable[..., list[Sentence]],
+        written: str,
+        expected: str | None,
+    ) -> None:
+        """A source-title directive is editorial text rather than quoted evidence."""
+        sentences = attest({"text": written, "ref": "2015, A Title"})
+
+        assert [sentence.text for sentence in sentences] == (
+            [expected] if expected is not None else []
+        )
+
     @given(st.lists(st.one_of(texts, blanks), max_size=4), st.data())
     def test_filters_blank_sentences(
         self,
@@ -756,6 +792,57 @@ class TestSentences:
 
 class TestKinds:
     """Reading a sentence as the kind wiktextract says it is."""
+
+    @given(
+        suffix=st.text(alphabet=" :\t\u00a0", min_size=1),
+        embedded=st.booleans(),
+        headword=words,
+    )
+    def test_normalizes_reference_separators(
+        self,
+        attest: Callable[..., list[Sentence]],
+        suffix: str,
+        headword: str,
+        *,
+        embedded: bool,
+    ) -> None:
+        """Reference cleanup preserves internal colons, quotation dates, and offsets."""
+        reference = "2000, A Title: A Subtitle, London: Publisher, https://example.org"
+        written = reference + suffix
+        raw: RawJson = (
+            {"text": f"{written}\n{headword}", "type": "quotation"}
+            if embedded
+            else {"text": headword, "ref": written}
+        )
+
+        quotation = attest(raw, headword=headword)[0]
+
+        assert isinstance(quotation, Quotation)
+        assert quotation.reference == reference
+        assert quotation.year == 2000
+        assert quotation.text == headword
+        assert quotation.word_offsets == (
+            WordOffset((0, len(headword)), (WordOffsetSource.LEMMATIZER,)),
+        )
+        assert attest(
+            {"text": quotation.text, "ref": quotation.reference},
+            headword=headword,
+        ) == [quotation]
+
+    def test_removes_an_unmatched_reference_bracket(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """An unmatched export delimiter does not become reference content."""
+        quotation = attest(
+            {
+                "text": "A quoted sentence.",
+                "ref": "[2015, An Author, A Title [revised]",
+            }
+        )[0]
+
+        assert isinstance(quotation, Quotation)
+        assert quotation.reference == "2015, An Author, A Title [revised]"
 
     @given(st.data())
     def test_preserves_explicit_examples(
@@ -808,21 +895,24 @@ class TestKinds:
             year,
         )
 
-    @given(st.data())
+    @given(reference=undated_references, sentence_text=texts)
+    @example(reference="''", sentence_text="0")
+    @example(reference="A ", sentence_text="0")
     def test_interprets_undated_headers(
         self,
         attest: Callable[..., list[Sentence]],
-        data: st.DataObject,
+        reference: str,
+        sentence_text: str,
     ) -> None:
         """A break alone proves nothing: prose runs over lines too."""
-        reference = data.draw(undated_references)
-        sentence_text = data.draw(texts)
         written = f"{reference}\n{sentence_text}"
+        plain_header = re.sub(r"'{2,}", "", reference)
+        plain_header = re.sub(r" {2,}", " ", plain_header)
 
         example = attest({"text": written})[0]
 
         assert isinstance(example, Example)
-        assert example.text == written.strip()
+        assert example.text == f"{plain_header}\n{sentence_text}".strip()
 
         quotation = attest({"text": written, "type": "quotation"})[0]
 
