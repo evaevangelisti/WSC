@@ -38,7 +38,7 @@ These are independent field-level outcomes, before source recovery, sense remova
 
 ## Identifier migration
 
-New entry IDs replace ASCII spaces with underscores; headword text and existing hyphens remain unchanged. Sense, table, and alignment-query IDs inherit the entry prefix. An identifier-only migration preserves existing hash suffixes and WordNet synset IDs.
+New entry IDs replace ASCII spaces with underscores; headword text and existing hyphens remain unchanged. Sense, table, and alignment-query IDs inherit the entry prefix. An identifier-only migration preserves existing hash suffixes and supplied synset IDs.
 
 Existing collection files, alignment TSVs, and supplementary translation-cache keys must migrate together before mixing old artifacts with new extraction output. Text cleanup additionally changes sense and table hashes when their defining glosses change. Preserve an old-to-new identity map, remap retained offsets, and reconcile affected alignment decisions before publishing migrated files. The migration records text changes separately from the identifier-only rule.
 
@@ -46,7 +46,7 @@ Existing collection files, alignment TSVs, and supplementary translation-cache k
 
 The 2026-09-21 migration updates all four collections, their reports and manifests, both alignment TSVs, and the supplementary translation cache. Each collection retains 739,717 entries and 1,006,066 senses. Source recovery repairs 141 damaged table records. No NLP or model inference is repeated.
 
-Existing offset provenance is preserved; ambiguous rewritten boundaries are omitted. Unsafe alignment decisions are invalidated for 142 translation sources and one WordNet source. Historical cache records remain available. The complete results, identity mappings, exclusions, and checksums are recorded in `data/quality-audit/migration-20260921.md` and its JSON ledger.
+Existing offset provenance is preserved; ambiguous rewritten boundaries are omitted. Unsafe alignment decisions are invalidated for 142 translation sources and one synset source. Historical cache records remain available. The complete results, identity mappings, exclusions, and checksums are recorded in `data/quality-audit/migration-20260921.md` and its JSON ledger.
 
 ## API
 

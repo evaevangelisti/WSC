@@ -17,15 +17,7 @@ from typing import cast
 
 import pytest
 import responses
-from documents import (
-    WORDNET,
-    dump,
-    dump_index,
-    dump_status,
-    lexicon,
-    page,
-    wordnet_index,
-)
+from documents import dump, dump_index, dump_status, page
 from hypothesis import given
 from hypothesis import strategies as st
 from kwic import Locator
@@ -37,7 +29,7 @@ from strategies import (
     raw_examples,
     raw_senses,
     references,
-    wordnet_versions,
+    words,
     years,
 )
 from typer.testing import CliRunner, Result
@@ -50,20 +42,10 @@ from wsc.constants import (
     DUMP_URL,
     KAIKKI_URL,
     USER_AGENT,
-    WORDNET_INDEX_URL,
-    WORDNET_URL,
 )
 from wsc.models import Engine
 from wsc.reading import read_lemmas
 from wsc.upstream import cache, wiktextract
-
-_SYNSET_RECORD = {
-    "id": "oewn-08420278-n",
-    "ili": "i54321",
-    "pos": "noun",
-    "definition": "a financial institution.",
-    "members": ["bank"],
-}
 
 
 def _normalize_output(
@@ -150,29 +132,6 @@ def _serve_wikimedia(
             body=dump_status("done"),
         )
         _ = server.get(DUMP_URL.format(date=date), body=_DUMP_BODY)
-
-        yield server
-
-
-@contextmanager
-def _serve_wordnet(
-    version: str,
-) -> Generator[responses.RequestsMock]:
-    """
-    Answer in the wordnet's place, which is published away from Wikimedia.
-
-    Args:
-        version: The edition it holds.
-
-    Yields:
-        A server fixture recording requests for the selected edition.
-    """
-    with responses.RequestsMock(assert_all_requests_are_fired=False) as server:
-        _ = server.get(WORDNET_INDEX_URL, body=wordnet_index(version))
-        _ = server.get(
-            WORDNET_URL.format(version=version),
-            body=gzip.compress(lexicon(*WORDNET).encode()),
-        )
 
         yield server
 
@@ -815,7 +774,12 @@ class TestCollect:
         newer = data.draw(years.filter(lambda year: year > older))
 
         dated = [
-            data.draw(raw_examples(references=references(year)))
+            data.draw(
+                raw_examples(
+                    texts=words,
+                    references=references(year),
+                ),
+            )
             for year in (older, newer)
         ]
         entry = data.draw(
@@ -971,159 +935,10 @@ class TestHelp:
 
         assert "cache directory" in _normalize_output(result)
 
-
-class TestWordNet:
-    """Downloading the wordnet, reading it, and settling which edition that is."""
-
-    @given(wordnet_versions)
-    def test_resolves_latest_edition(
+    def test_describes_alignment_verbosity(
         self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        edition: str,
     ) -> None:
-        """Editions come out yearly, and only the index says which is the newest."""
-        cache_dir = workspace() / "cache"
+        """Alignment help exposes the opt-in detailed logging switch."""
+        result = CliRunner().invoke(app, ["align", "--help"])
 
-        with _serve_wordnet(edition):
-            result = cli("wordnet", cache_dir=cache_dir)
-
-        assert result.exit_code == 0
-        assert f"Resolved latest to {edition}" in _normalize_output(result)
-        assert (cache.wordnet_dir(cache_dir, edition) / cache.WORDNET_NAME).exists()
-
-    @given(wordnet_versions)
-    def test_fetches_selected_edition(
-        self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        edition: str,
-    ) -> None:
-        """An edition named on the command line is fetched without asking the index."""
-        cache_dir = workspace() / "cache"
-
-        with _serve_wordnet(edition) as server:
-            result = cli(
-                "wordnet",
-                "--edition",
-                edition,
-                cache_dir=cache_dir,
-            )
-
-            assert [call.request.url for call in server.calls] == [
-                WORDNET_URL.format(version=edition),
-            ]
-
-        assert result.exit_code == 0
-        assert "Resolved latest" not in _normalize_output(result)
-        assert (cache.wordnet_dir(cache_dir, edition) / cache.WORDNET_NAME).exists()
-
-    @given(wordnet_versions)
-    def test_reads_environment_edition(
-        self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        edition: str,
-    ) -> None:
-        """An edition shared with align may come from the environment."""
-        cache_dir = workspace() / "cache"
-
-        with _serve_wordnet(edition) as server:
-            result = cli(
-                "wordnet",
-                cache_dir=cache_dir,
-                env={"WSC_WORDNET_EDITION": edition},
-            )
-
-            assert [call.request.url for call in server.calls] == [
-                WORDNET_URL.format(version=edition),
-            ]
-
-        assert result.exit_code == 0
-
-    @given(wordnet_versions)
-    def test_extracts_downloaded_synsets(
-        self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        edition: str,
-    ) -> None:
-        """The archive is of no use to an alignment; the synsets in it are."""
-        cache_dir = workspace() / "cache"
-
-        with _serve_wordnet(edition):
-            result = cli("wordnet", "--edition", edition, cache_dir=cache_dir)
-
-        synsets_path = cache.wordnet_dir(cache_dir, edition) / cache.SYNSETS_NAME
-
-        assert result.exit_code == 0
-        assert [
-            json.loads(line)
-            for line in synsets_path.read_text(encoding="utf-8").splitlines()
-        ] == [_SYNSET_RECORD]
-
-    @given(wordnet_versions)
-    def test_extracts_cached_wordnet(
-        self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        fetch_wordnet: Callable[..., Path],
-        edition: str,
-    ) -> None:
-        """A fetch cut short before the read leaves the read still to do."""
-        cache_dir = workspace() / "cache"
-        _ = fetch_wordnet(cache_dir, edition)
-
-        with responses.RequestsMock() as server:
-            result = cli("wordnet", "--edition", edition, cache_dir=cache_dir)
-
-            assert not server.calls
-
-        synsets_path = cache.wordnet_dir(cache_dir, edition) / cache.SYNSETS_NAME
-
-        assert result.exit_code == 0
-        assert "Already fetched" in _normalize_output(result)
-        assert [
-            json.loads(line)
-            for line in synsets_path.read_text(encoding="utf-8").splitlines()
-        ] == [_SYNSET_RECORD]
-
-    @given(wordnet_versions)
-    def test_sends_package_identity(
-        self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        edition: str,
-    ) -> None:
-        """A download says who answers for it wherever it is sent."""
-        cache_dir = workspace() / "cache"
-        expected = USER_AGENT.format(version=version("wsc"))
-
-        with _serve_wordnet(edition) as server:
-            _ = cli("wordnet", cache_dir=cache_dir)
-
-            assert server.calls
-            assert all(
-                call.request.headers["User-Agent"] == expected for call in server.calls
-            )
-
-    @given(wordnet_versions)
-    def test_reuses_cached_synsets(
-        self,
-        workspace: Callable[[], Path],
-        cli: Callable[..., Result],
-        read_wordnet: Callable[..., Path],
-        edition: str,
-    ) -> None:
-        """An edition never changes, so once it is here there is nothing to do."""
-        cache_dir = workspace() / "cache"
-        synsets_path = read_wordnet(cache_dir, edition, ["{}"])
-
-        with responses.RequestsMock() as server:
-            result = cli("wordnet", "--edition", edition, cache_dir=cache_dir)
-
-            assert not server.calls
-
-        assert result.exit_code == 0
-        assert "Already read" in _normalize_output(result)
-        assert synsets_path.read_text(encoding="utf-8") == "{}\n"
+        assert "--verbose" in _normalize_output(result)

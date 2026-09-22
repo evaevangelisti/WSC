@@ -7,7 +7,7 @@ import pytest
 
 from wsc.alignment import build_request, requests
 from wsc.constants import PROMPTS_PATH
-from wsc.models.alignment import GlossMode
+from wsc.models.alignment import AlignmentTask, Definition, GlossMode
 from wsc.reading import read_prompts
 
 from .examples import build_query
@@ -24,7 +24,7 @@ def test_applies_prompt_edits() -> None:
         },
     )
 
-    assert set(original.tasks) == {"translations", "wordnet"}
+    assert set(original.tasks) == {"translations", "synsets"}
     assert original.system.startswith("You are a computational lexicographer")
     assert build_request(build_query(), prompts=changed).prompt.startswith(
         "Custom prompt:",
@@ -37,7 +37,7 @@ def test_renders_translation_context_as_json_lines() -> None:
 
     expected_source = json.dumps(
         {
-            "id": "s1",
+            "wiktionary_id": "s1",
             "tags": ["figurative"],
             "topics": ["finance"],
             "synonyms": ["synonym"],
@@ -47,8 +47,50 @@ def test_renders_translation_context_as_json_lines() -> None:
     )
 
     assert expected_source in prompt
-    assert '{"id":"t1","gloss":"first heading"}' in prompt
+    assert '{"target_id":"t1","gloss":"first heading"}' in prompt
     assert "target synonym" not in prompt
+
+
+def test_omits_source_examples_from_translation_prompts() -> None:
+    """Translation prompts omit Wiktionary sentence examples."""
+    query = replace(
+        build_query(),
+        source_definitions=(
+            Definition(
+                "s1",
+                ("first sense",),
+                examples=("A Wiktionary sentence example.",),
+            ),
+        ),
+    )
+
+    prompt = build_request(query).prompt
+
+    assert "A Wiktionary sentence example." not in prompt
+
+
+def test_renders_distinct_synset_glosses() -> None:
+    """Synset glosses remain separate input strings for the model."""
+    query = replace(
+        build_query(AlignmentTask.SYNSETS),
+        target_definitions=(
+            Definition(
+                "synset-1",
+                ("First source gloss.", "Second source gloss."),
+                synonyms=("term",),
+                examples=("An example.",),
+            ),
+        ),
+    )
+
+    prompt = build_request(query).prompt
+
+    assert (
+        '"target_id":"synset-1","synonyms":["term"],'
+        '"glosses":["First source gloss.","Second source gloss."],'
+        '"examples":["An example."]'
+    ) in prompt
+    assert "First source gloss. > Second source gloss." not in prompt
 
 
 @pytest.mark.parametrize("mode", list(GlossMode))

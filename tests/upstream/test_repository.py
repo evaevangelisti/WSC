@@ -1,4 +1,4 @@
-"""Tests for src/wsc/upstream/repositories/wiktionary.py."""
+"""Tests for src/wsc/upstream/repository.py."""
 
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
@@ -12,7 +12,7 @@ from hypothesis import strategies as st
 from strategies import dump_dates
 
 from wsc.constants import DUMP_INDEX_URL, DUMP_STATUS_URL
-from wsc.upstream.repositories import wiktionary
+from wsc.upstream import repository
 
 TIMEOUT = (1, 1)
 USER_AGENT = "wsc/0.1.0 (https://example.invalid)"
@@ -92,7 +92,7 @@ class TestUrl:
         self,
     ) -> None:
         """The generated address includes the requested edition and filename."""
-        assert wiktionary.url("20260801") == (
+        assert repository.url("20260801") == (
             "https://dumps.wikimedia.org/enwiktionary/20260801/"
             "enwiktionary-20260801-pages-articles.xml.bz2"
         )
@@ -111,7 +111,7 @@ class TestLatestDate:
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
 
         with _serve_wikimedia(reports):
-            assert wiktionary.latest_date(
+            assert repository.latest_date(
                 USER_AGENT,
                 TIMEOUT,
             ) == _latest_completed_date(reports)
@@ -127,7 +127,7 @@ class TestLatestDate:
         times = data.draw(st.integers(min_value=1, max_value=3))
 
         with _serve_wikimedia(reports, times) as server:
-            answer = wiktionary.latest_date(USER_AGENT, TIMEOUT)
+            answer = repository.latest_date(USER_AGENT, TIMEOUT)
 
             asked = [
                 call
@@ -147,7 +147,7 @@ class TestLatestDate:
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
 
         with _serve_wikimedia(reports) as server:
-            _ = wiktionary.latest_date(USER_AGENT, TIMEOUT)
+            _ = repository.latest_date(USER_AGENT, TIMEOUT)
 
             assert server.calls
             assert all(
@@ -165,7 +165,7 @@ class TestLatestDate:
             _serve_wikimedia(reports),
             pytest.raises(RuntimeError, match="No finished dump"),
         ):
-            _ = wiktionary.latest_date(USER_AGENT, TIMEOUT)
+            _ = repository.latest_date(USER_AGENT, TIMEOUT)
 
     def test_propagates_index_errors(
         self,
@@ -175,4 +175,4 @@ class TestLatestDate:
             _ = server.get(DUMP_INDEX_URL, status=503)
 
             with pytest.raises(requests.HTTPError):
-                _ = wiktionary.latest_date(USER_AGENT, TIMEOUT)
+                _ = repository.latest_date(USER_AGENT, TIMEOUT)

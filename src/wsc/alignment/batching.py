@@ -13,7 +13,7 @@ from ..models.alignment import (
     GlossMode,
     ModelRequest,
 )
-from .candidates import WordNetCandidates
+from .candidates import SynsetCandidates
 from .decisions import validate_result
 from .requests import build_request
 from .tasks import TASK_HANDLERS, build_queries
@@ -226,7 +226,7 @@ def _prepare_query(
 
 def prepare_batch(
     lemmas: Iterator[Lemma],
-    candidates: WordNetCandidates,
+    candidates: SynsetCandidates,
     tasks: tuple[AlignmentTask, ...],
     mode: GlossMode,
     prompts: AlignmentPrompts,
@@ -238,7 +238,7 @@ def prepare_batch(
 
     Args:
         lemmas: Remaining collected entries.
-        candidates: WordNet candidate index.
+        candidates: Synset candidate index.
         tasks: Requested alignment resources.
         mode: Wiktionary definition representation.
         prompts: Task prompt templates.

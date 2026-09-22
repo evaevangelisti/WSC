@@ -12,12 +12,6 @@ DUMP_URL = "https://dumps.wikimedia.org/enwiktionary/{date}/enwiktionary-{date}-
 KAIKKI_URL = "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz"
 """Preparsed Wiktionary entries that avoid running wiktextract locally."""
 
-WORDNET_INDEX_URL = "https://en-word.net/downloads"
-"""Where WordNet lists its editions, one file per year and format."""
-
-WORDNET_URL = "https://en-word.net/downloads/english-wordnet-{version}.xml.gz"
-"""Where one edition is published, in WN-LMF."""
-
 USER_AGENT = "wsc/{version} (https://github.com/evaevangelisti/WSC)"
 """How a request names itself, Wikimedia asking that it name someone."""
 

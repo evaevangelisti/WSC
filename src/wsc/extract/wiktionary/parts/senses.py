@@ -66,8 +66,8 @@ def parse_senses(
                 glosses,
                 etymology,
                 parse_synonyms(raw_sense.get("synonyms", []), lemma),
-                tuple(raw_sense.get("topics", [])),
                 tags,
+                tuple(raw_sense.get("topics", [])),
                 parse_sentences(
                     raw_sense.get("examples", []),
                     minimum_year,

@@ -8,5 +8,5 @@
 :hidden:
 
 wiktionary
-wordnet
+synsets
 ```

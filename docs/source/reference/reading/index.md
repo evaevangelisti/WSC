@@ -8,7 +8,7 @@
 :hidden:
 
 wiktionary
-wordnet
+synsets
 alignment
 prompts
 ```

@@ -566,6 +566,7 @@ def test_handles_arbitrary_unicode(
     ("written", "expected"),
     [
         ("lirë (i/e)", frozenset({"lirë"})),
+        ("word;/term,", frozenset({"word", "term"})),
         ("el/la/lo más", frozenset({"el más", "la más", "lo más"})),
         ("nascer/pôr do sol", frozenset({"nascer do sol", "pôr do sol"})),
         ("uJanuwari class 1a/2a", frozenset({"uJanuwari"})),

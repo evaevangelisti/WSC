@@ -6,8 +6,8 @@ from collections.abc import Iterable
 from ..models import POS, Lemma, Synset
 
 
-class WordNetCandidates:
-    """WordNet candidates retrieved by lexical form and part of speech."""
+class SynsetCandidates:
+    """Synset candidates retrieved by lexical form and part of speech."""
 
     def __init__(
         self,
@@ -17,7 +17,7 @@ class WordNetCandidates:
         Index synsets under all their lexical members.
 
         Args:
-            synsets: Cached WordNet concepts.
+            synsets: Concepts supplied for alignment.
         """
         self._members: defaultdict[tuple[str, POS], dict[str, Synset]] = defaultdict(
             dict
@@ -25,7 +25,9 @@ class WordNetCandidates:
 
         for synset in synsets:
             for member in synset.members:
-                self._members[self._normalize(member), synset.pos][synset.id] = synset
+                self._members[self._normalize(member.lemma), synset.pos][synset.id] = (
+                    synset
+                )
 
     @staticmethod
     def _normalize(
@@ -35,7 +37,7 @@ class WordNetCandidates:
         Normalize lexical lookup without changing candidate definitions.
 
         Args:
-            text: Headword or WordNet member.
+            text: Headword or synset member.
 
         Returns:
             Case-folded words separated by spaces.
@@ -50,7 +52,7 @@ class WordNetCandidates:
         Retrieve candidates including spelling variants and nominal proper names.
 
         Args:
-            lemma: Entry whose WordNet senses are requested.
+            lemma: Entry whose synsets are requested.
 
         Returns:
             Unique candidates sorted by synset identifier.
@@ -74,13 +76,40 @@ class WordNetCandidates:
 
         Args:
             lemma: Entry whose candidates are being described.
-            synset: Candidate WordNet concept.
+            synset: Candidate lexical concept.
 
         Returns:
-            Other lexical members, retaining WordNet order.
+            Other lexical members, retaining their input order.
         """
         return tuple(
-            member
+            member.lemma
             for member in synset.members
-            if self._normalize(member) != self._normalize(lemma.lemma)
+            if self._normalize(member.lemma) != self._normalize(lemma.lemma)
+        )
+
+    def source(
+        self,
+        lemma: Lemma,
+        synset: Synset,
+    ) -> str:
+        """Return the input source declared for the queried member.
+
+        Args:
+            lemma: Entry whose candidate is being described.
+            synset: Candidate lexical concept.
+
+        Returns:
+            The member source, or an empty string when none was declared.
+        """
+        forms = {self._normalize(lemma.lemma)} | {
+            self._normalize(variant) for variant in lemma.variants
+        }
+
+        return next(
+            (
+                member.source
+                for member in synset.members
+                if self._normalize(member.lemma) in forms
+            ),
+            "",
         )

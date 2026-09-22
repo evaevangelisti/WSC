@@ -6,7 +6,7 @@ from ...constants import TRANSLATION_RELATION
 from ...identifiers import query_id
 from ...models import Lemma, Sense
 from ...models.alignment import AlignmentLink, AlignmentQuery, AlignmentTask, Definition
-from ..candidates import WordNetCandidates
+from ..candidates import SynsetCandidates
 from .base import build_definitions
 
 
@@ -19,7 +19,7 @@ class TranslationHandler:
     def queries(
         self,
         lemma: Lemma,
-        candidates: WordNetCandidates,
+        candidates: SynsetCandidates,
     ) -> Iterator[AlignmentQuery]:
         """
         Construct one translation query per entry.

@@ -15,43 +15,18 @@ from ..models.alignment import (
 from .tasks import TASK_HANDLERS
 
 
-def render_definition(
+def render_source_definition(
     definition: Definition,
+    task: AlignmentTask,
     mode: GlossMode,
 ) -> str:
     """
-    Render an identifier, optional synonyms, and a definition.
+    Render one Wiktionary sense as a JSON line.
 
     Args:
         definition: Lexical definition and ancestor context.
-        mode: Source gloss representation.
-
-    Returns:
-        A definition line suitable for a model prompt.
-    """
-    synonyms = f" ({', '.join(definition.synonyms)})" if definition.synonyms else ""
-    gloss = (
-        " > ".join(definition.glosses)
-        if mode == GlossMode.FULL
-        else definition.glosses[-1]
-    )
-
-    return f"{definition.id}{synonyms} {gloss}"
-
-
-def _render_translation_definition(
-    definition: Definition,
-    mode: GlossMode,
-    *,
-    source: bool,
-) -> str:
-    """
-    Render one translation definition as an unambiguous JSON line.
-
-    Args:
-        definition: Lexical definition and optional source context.
-        mode: Source gloss representation.
-        source: Whether to include Wiktionary metadata.
+        task: Alignment task determining the source fields.
+        mode: Wiktionary gloss representation.
 
     Returns:
         A single JSON object line.
@@ -62,19 +37,51 @@ def _render_translation_definition(
         else definition.glosses[-1]
     )
 
-    record: dict[str, object] = {"id": definition.id}
+    record: dict[str, object] = {"wiktionary_id": definition.id}
 
-    if source:
-        if definition.tags:
-            record["tags"] = definition.tags
+    if definition.tags:
+        record["tags"] = definition.tags
 
-        if definition.topics:
-            record["topics"] = definition.topics
+    if definition.topics:
+        record["topics"] = definition.topics
 
+    if definition.synonyms:
+        record["synonyms"] = definition.synonyms
+
+    record["gloss"] = gloss
+
+    if task == AlignmentTask.SYNSETS and definition.examples:
+        record["examples"] = definition.examples
+
+    return json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+
+
+def render_target_definition(
+    definition: Definition,
+    task: AlignmentTask,
+) -> str:
+    """
+    Render one alignment target as a JSON line.
+
+    Args:
+        definition: Candidate definition and optional lexical context.
+        task: Alignment task determining the target fields.
+
+    Returns:
+        A single JSON object line.
+    """
+    record: dict[str, object] = {"target_id": definition.id}
+
+    if task == AlignmentTask.SYNSETS:
         if definition.synonyms:
             record["synonyms"] = definition.synonyms
 
-    record["gloss"] = gloss
+        record["glosses"] = definition.glosses
+
+        if definition.examples:
+            record["examples"] = definition.examples
+    else:
+        record["gloss"] = definition.glosses[-1]
 
     return json.dumps(record, ensure_ascii=False, separators=(",", ":"))
 
@@ -97,25 +104,15 @@ def build_request(
     """
     handler = TASK_HANDLERS[query.task]
 
-    if query.task == AlignmentTask.TRANSLATIONS:
-        source_definitions = "\n".join(
-            _render_translation_definition(source, mode, source=True)
-            for source in query.source_definitions
-        )
+    source_definitions = "\n".join(
+        render_source_definition(source, query.task, mode)
+        for source in query.source_definitions
+    )
 
-        target_definitions = "\n".join(
-            _render_translation_definition(target, GlossMode.LAST, source=False)
-            for target in query.target_definitions
-        )
-    else:
-        source_definitions = "\n".join(
-            render_definition(source, mode) for source in query.source_definitions
-        )
-
-        target_definitions = "\n".join(
-            render_definition(target, GlossMode.LAST)
-            for target in query.target_definitions
-        )
+    target_definitions = "\n".join(
+        render_target_definition(target, query.task)
+        for target in query.target_definitions
+    )
 
     prompt = Template(prompts.tasks[query.task]).substitute(
         lemma=json.dumps(query.lemma, ensure_ascii=False),

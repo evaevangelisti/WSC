@@ -31,8 +31,8 @@ def test_validates_cached_equivalences(
     assignments: tuple[tuple[str, str], ...],
 ) -> None:
     """Cached decisions obey the same equivalence constraints as model responses."""
-    query = build_query(AlignmentTask.WORDNET)
-    path = tmp_path / "wordnet.tsv"
+    query = build_query(AlignmentTask.SYNSETS)
+    path = tmp_path / "synsets.tsv"
 
     with path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.writer(stream, delimiter="\t")

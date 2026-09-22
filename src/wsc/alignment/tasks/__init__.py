@@ -4,23 +4,23 @@ from collections.abc import Iterator
 
 from ...models import Lemma
 from ...models.alignment import AlignmentQuery, AlignmentTask
-from ..candidates import WordNetCandidates
+from ..candidates import SynsetCandidates
 from .base import AlignmentHandler, build_definitions
+from .synsets import SynsetHandler
 from .translations import TranslationHandler
-from .wordnet import WordNetHandler
 
 __all__ = [
     "TASK_HANDLERS",
     "AlignmentHandler",
+    "SynsetHandler",
     "TranslationHandler",
-    "WordNetHandler",
     "build_definitions",
     "build_queries",
 ]
 
 TASK_HANDLERS: dict[AlignmentTask, AlignmentHandler] = {
     AlignmentTask.TRANSLATIONS: TranslationHandler(),
-    AlignmentTask.WORDNET: WordNetHandler(),
+    AlignmentTask.SYNSETS: SynsetHandler(),
 }
 """Register query construction, relation constraints, and result application."""
 
@@ -28,7 +28,7 @@ TASK_HANDLERS: dict[AlignmentTask, AlignmentHandler] = {
 def build_queries(
     lemma: Lemma,
     task: AlignmentTask,
-    candidates: WordNetCandidates,
+    candidates: SynsetCandidates,
 ) -> Iterator[AlignmentQuery]:
     """
     Expose complete candidate sets without semantic filtering.
@@ -36,7 +36,7 @@ def build_queries(
     Args:
         lemma: Collected entry.
         task: Resource to align.
-        candidates: Cached WordNet candidate index.
+        candidates: Synset candidate index.
 
     Yields:
         One query containing all source senses for the requested resource.

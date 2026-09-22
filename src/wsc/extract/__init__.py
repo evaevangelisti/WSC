@@ -12,13 +12,11 @@ from .wiktionary import (
     read_off_page_translations,
     write_off_page_translations,
 )
-from .wordnet import WordNetExtractor
 
 __all__ = [
     "DumpExtractor",
     "OffPageTranslations",
     "WiktionaryExtractor",
-    "WordNetExtractor",
     "build_off_page_translations",
     "build_query",
     "find_word_offsets",

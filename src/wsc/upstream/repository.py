@@ -5,7 +5,7 @@ from typing import TypedDict, cast
 
 import requests
 
-from ...constants import DUMP_INDEX_URL, DUMP_STATUS_URL, DUMP_URL
+from ..constants import DUMP_INDEX_URL, DUMP_STATUS_URL, DUMP_URL
 
 _DATE_PATTERN = re.compile(r'href="(\d{8})/"')
 

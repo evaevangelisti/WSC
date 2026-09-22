@@ -4,7 +4,7 @@ import json
 from typing import cast
 
 from ..errors import InvalidModelResponseError
-from ..models import WordNetRelation
+from ..models import SynsetRelation
 from ..models.alignment import (
     AlignmentDecision,
     AlignmentLink,
@@ -48,7 +48,7 @@ def validate_result(
         exclusive_targets = [
             link.target_id
             for link in decision.links
-            if handler.one_to_one or link.relation == WordNetRelation.EQUIVALENT
+            if handler.one_to_one or link.relation == SynsetRelation.EQUIVALENT
         ]
 
         if len(exclusive_targets) > 1 or assigned_targets.intersection(

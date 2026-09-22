@@ -7,8 +7,8 @@ from .alignment import (
     read_alignments,
 )
 from .prompts import read_prompts
+from .synsets import read_synsets
 from .wiktionary import LemmaRecord, parse_lemma, read_lemmas
-from .wordnet import read_synsets
 
 __all__ = [
     "LemmaRecord",

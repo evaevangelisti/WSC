@@ -6,10 +6,10 @@ Respond with a single JSON object and nothing else.
 
 [translations]
 template = """
-Given these Wiktionary sense definitions of the word $lemma ($pos):
-<wiktionary_definitions>
+Given these Wiktionary sense records for the word $lemma ($pos):
+<wiktionary_senses>
 $source_definitions
-</wiktionary_definitions>
+</wiktionary_senses>
 
 Associate them with the following translation-table glosses:
 <translation_table_glosses>
@@ -17,15 +17,15 @@ $target_definitions
 </translation_table_glosses>
 
 Constraints:
-- Base each association on definitions, tags, topics, and supporting synonyms.
+- Base every association on semantic evidence from the supplied glosses and any optional tags, topics, and synonyms.
 $hierarchy
-- Match definitions that express the same lexical sense.
+- Match records whose glosses express the same lexical sense.
 - Allow abbreviated wording and omitted explanatory detail.
 - Preserve the referent, participant role, defining purpose, and literal or figurative meaning.
-- Associate each Wiktionary sense definition with at most one translation-table gloss.
+- Associate each Wiktionary sense record with at most one translation-table gloss.
 - Use each translation-table ID at most once.
 - Resolve competing translation associations jointly, using null wherever semantic evidence leaves the assignment ambiguous.
-- Use null for source definitions with insufficient evidence for any association satisfying these constraints.
+- Use null for source records with insufficient evidence for any association satisfying these constraints.
 - Justify each association in at most 20 words, identifying the shared meaning that distinguishes it from competing senses.
 
 Output:
@@ -34,37 +34,38 @@ Return only the following JSON shape, one key per Wiktionary sense definition ID
 Use only the supplied IDs.
 """
 
-[wordnet]
+[synsets]
 template = """
-Given these definitions from Wiktionary for the word $lemma ($pos):
-<wiktionary_definitions>
+Given these Wiktionary sense records for the word $lemma ($pos):
+<wiktionary_senses>
 $source_definitions
-</wiktionary_definitions>
+</wiktionary_senses>
 
-Associate them with the following WordNet definitions:
-<wordnet_definitions>
+Associate them with the following synset records:
+<synsets>
 $target_definitions
-</wordnet_definitions>
+</synsets>
 
 Relations:
-- equivalent: Both definitions describe the same lexical concept.
-- wiktionary_narrower: Every instance of the Wiktionary concept belongs to the WordNet concept, with a strict defining restriction.
-- wiktionary_broader: Every instance of the WordNet concept belongs to the Wiktionary concept, with a strict defining restriction.
+- equivalent: Both records describe the same lexical concept.
+- wiktionary_narrower: Every instance of the Wiktionary concept belongs to the synset concept, with a strict defining restriction.
+- wiktionary_broader: Every instance of the synset concept belongs to the Wiktionary concept, with a strict defining restriction.
 
 Constraints:
-- Base every association on semantic evidence from the supplied definitions and supporting synonyms.
+- Base every association on semantic evidence from the supplied glosses and any optional tags, topics, synonyms, and examples.
 $hierarchy
+- Anchor a synset's concept in what its multiple glosses share.
 - Accept associations supported by conceptual equivalence or strict inclusion.
 - Distinguish defining restrictions from extra examples and explanatory wording.
 - Assign narrower or broader when a defining restriction establishes strict inclusion between the concepts.
-- Assign one relation to each accepted pair, directed from Wiktionary toward WordNet.
-- Select at most one equivalent association per Wiktionary definition and per synset, choosing the strongest semantic match.
+- Assign one relation to each accepted pair, directed from Wiktionary toward the synset.
+- Select at most one equivalent association per Wiktionary sense record and per synset.
 - Evaluate every candidate and retain each supported association satisfying these constraints.
-- Use null for source definitions with insufficient evidence for any association satisfying these constraints.
+- Use null for source records with insufficient evidence for any association satisfying these constraints.
 - Write a reason of at most 20 words identifying the decisive shared meaning or the restriction establishing inclusion.
 
 Output:
-Return only the following JSON shape, one key per Wiktionary definition ID:
+Return only the following JSON shape, one key per Wiktionary sense ID:
 {"<wiktionary_id>": null | [{"target_id": "<synset_id>", "relation": "equivalent|wiktionary_narrower|wiktionary_broader", "reason": "<=20 words"}]}
 Use only the supplied synset IDs and the three listed relations.
 """

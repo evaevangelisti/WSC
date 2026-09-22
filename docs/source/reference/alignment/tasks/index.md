@@ -10,5 +10,5 @@
 
 base
 translations
-wordnet
+synsets
 ```

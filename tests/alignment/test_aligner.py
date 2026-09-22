@@ -9,7 +9,7 @@ from hypothesis import strategies as st
 
 from wsc.alignment import (
     Aligner,
-    WordNetCandidates,
+    SynsetCandidates,
     align_query,
     build_queries,
     build_request,
@@ -21,9 +21,10 @@ from wsc.models import (
     Lemma,
     Sense,
     Synset,
+    SynsetAlignment,
+    SynsetMember,
+    SynsetRelation,
     TranslationTable,
-    WordNetAlignment,
-    WordNetRelation,
 )
 from wsc.models.alignment import (
     AlignmentResult,
@@ -153,7 +154,7 @@ def test_aligns_collection_copies() -> None:
             ),
         ],
     )
-    aligner = Aligner(model, WordNetCandidates(()), (AlignmentTask.TRANSLATIONS,))
+    aligner = Aligner(model, SynsetCandidates(()), (AlignmentTask.TRANSLATIONS,))
     (aligned,) = aligner.align([lemma])
 
     assert aligned.senses[0].translation_table == lemma.translation_tables[1]
@@ -164,23 +165,28 @@ def test_aligns_collection_copies() -> None:
 
 
 def test_preserves_directed_relations() -> None:
-    """A source retains equivalent and broader WordNet candidates."""
+    """A source retains equivalent and broader synset candidates."""
     lemma = Lemma("word.noun", "word", POS.NOUN, senses=[Sense("s", ("sense",))])
     synsets = (
-        Synset("wn1", "i1", POS.NOUN, "specific", ("word", "synonym")),
-        Synset("wn2", "i2", POS.NOUN, "general", ("word",)),
+        Synset(
+            "synset-1",
+            POS.NOUN,
+            (SynsetMember("word"), SynsetMember("synonym")),
+            ("specific",),
+        ),
+        Synset("synset-2", POS.NOUN, (SynsetMember("word"),), ("general",)),
     )
 
     response = json.dumps(
         {
             "s": [
                 {
-                    "target_id": "wn1",
+                    "target_id": "synset-1",
                     "relation": "equivalent",
                     "reason": "Same concept.",
                 },
                 {
-                    "target_id": "wn2",
+                    "target_id": "synset-2",
                     "relation": "wiktionary_narrower",
                     "reason": "The source adds a defining restriction.",
                 },
@@ -188,40 +194,45 @@ def test_preserves_directed_relations() -> None:
         },
     )
     model = Model([response])
-    aligner = Aligner(model, WordNetCandidates(synsets), (AlignmentTask.WORDNET,))
+    aligner = Aligner(model, SynsetCandidates(synsets), (AlignmentTask.SYNSETS,))
     (aligned,) = aligner.align([lemma])
 
-    assert aligned.senses[0].wordnet == (
-        WordNetAlignment("wn1", WordNetRelation.EQUIVALENT),
-        WordNetAlignment("wn2", WordNetRelation.WIKTIONARY_NARROWER),
+    assert aligned.senses[0].synsets == (
+        SynsetAlignment("synset-1", SynsetRelation.EQUIVALENT),
+        SynsetAlignment("synset-2", SynsetRelation.WIKTIONARY_NARROWER),
     )
-    assert "wn1 (synonym) specific" in model.requests[0].prompt
-    assert not lemma.senses[0].wordnet
+    expected_target = (
+        '"target_id":"synset-1","synonyms":["synonym"],'
+        '"glosses":["specific"]'
+    )
+
+    assert expected_target in model.requests[0].prompt
+    assert not lemma.senses[0].synsets
 
 
 @given(
-    relations=st.tuples(*(st.sampled_from((None, *WordNetRelation)) for _ in range(4))),
+    relations=st.tuples(*(st.sampled_from((None, *SynsetRelation)) for _ in range(4))),
 )
-@example(relations=(WordNetRelation.EQUIVALENT, WordNetRelation.EQUIVALENT, None, None))
-@example(relations=(WordNetRelation.EQUIVALENT, None, WordNetRelation.EQUIVALENT, None))
+@example(relations=(SynsetRelation.EQUIVALENT, SynsetRelation.EQUIVALENT, None, None))
+@example(relations=(SynsetRelation.EQUIVALENT, None, SynsetRelation.EQUIVALENT, None))
 @example(
     relations=(
-        WordNetRelation.EQUIVALENT,
-        WordNetRelation.WIKTIONARY_NARROWER,
-        WordNetRelation.WIKTIONARY_BROADER,
-        WordNetRelation.EQUIVALENT,
+        SynsetRelation.EQUIVALENT,
+        SynsetRelation.WIKTIONARY_NARROWER,
+        SynsetRelation.WIKTIONARY_BROADER,
+        SynsetRelation.EQUIVALENT,
     ),
 )
 @example(
     relations=(
-        WordNetRelation.WIKTIONARY_NARROWER,
-        WordNetRelation.WIKTIONARY_BROADER,
-        WordNetRelation.WIKTIONARY_BROADER,
-        WordNetRelation.WIKTIONARY_NARROWER,
+        SynsetRelation.WIKTIONARY_NARROWER,
+        SynsetRelation.WIKTIONARY_BROADER,
+        SynsetRelation.WIKTIONARY_BROADER,
+        SynsetRelation.WIKTIONARY_NARROWER,
     ),
 )
 def test_requires_unique_equivalences(
-    relations: tuple[WordNetRelation | None, ...],
+    relations: tuple[SynsetRelation | None, ...],
 ) -> None:
     """Only equivalence requires distinct sources and targets in generated graphs."""
     pairs = (("s1", "t1"), ("s1", "t2"), ("s2", "t1"), ("s2", "t2"))
@@ -233,7 +244,7 @@ def test_requires_unique_equivalences(
     equivalents = [
         (source, target)
         for source, target, relation in associations
-        if relation == WordNetRelation.EQUIVALENT
+        if relation == SynsetRelation.EQUIVALENT
     ]
 
     response = json.dumps(
@@ -251,7 +262,7 @@ def test_requires_unique_equivalences(
             for source_id in ("s1", "s2")
         },
     )
-    query = build_query(AlignmentTask.WORDNET)
+    query = build_query(AlignmentTask.SYNSETS)
     model = Model([response])
 
     if len({source for source, _ in equivalents}) != len(equivalents) or len(
@@ -277,8 +288,8 @@ def test_renders_definition_context(
     expected_gloss = "parent > first sense" if mode == GlossMode.FULL else "first sense"
 
     assert f'"synonyms":["synonym"],"gloss":"{expected_gloss}"' in prompt
-    assert '{"id":"t1","gloss":"first heading"}' in prompt
-    assert '{"id":"s2","gloss":"second sense"}' in prompt
+    assert '{"target_id":"t1","gloss":"first heading"}' in prompt
+    assert '{"wiktionary_id":"s2","gloss":"second sense"}' in prompt
     assert ("Read each" in prompt) == (mode == GlossMode.FULL)
     assert '"status"' not in prompt
 
@@ -292,39 +303,50 @@ def test_includes_variant_candidates() -> None:
         variants=frozenset({"a.b"}),
         senses=[Sense("s", ("sense",), synonyms=("variant",))],
     )
-    candidates = WordNetCandidates(
-        [Synset("wn", "ili", POS.NOUN, "definition", ("a.b",))],
+    candidates = SynsetCandidates(
+        [Synset("synset", POS.NOUN, (SynsetMember("a.b"),), ("definition",))],
     )
-    (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
+    (result,) = build_queries(lemma, AlignmentTask.SYNSETS, candidates)
 
     assert result.source_definitions[0].synonyms == ("variant",)
     assert len(result.source_definitions) == 1
-    assert result.target_definitions[0].id == "wn"
+    assert result.target_definitions[0].id == "synset"
     assert result.target_definitions[0].synonyms == ("a.b",)
-    assert result.alignment_id == "wordnet:alias.name"
+    assert result.alignment_id == "synsets:alias.name"
 
 
 def test_excludes_headword_synonyms() -> None:
-    """Candidate context does not repeat the lemma as a WordNet synonym."""
+    """Candidate context does not repeat the lemma as a synset synonym."""
     lemma = Lemma(
         "word.noun",
         "word",
         POS.NOUN,
         senses=[Sense("s", ("sense",))],
     )
-    candidates = WordNetCandidates(
-        [Synset("wn", "ili", POS.NOUN, "definition", ("word", "term", "word_form"))],
+    candidates = SynsetCandidates(
+        [
+            Synset(
+                "synset",
+                POS.NOUN,
+                (
+                    SynsetMember("word"),
+                    SynsetMember("term"),
+                    SynsetMember("word_form"),
+                ),
+                ("definition",),
+            ),
+        ],
     )
 
-    (result,) = build_queries(lemma, AlignmentTask.WORDNET, candidates)
+    (result,) = build_queries(lemma, AlignmentTask.SYNSETS, candidates)
 
     assert len(result.source_definitions) == 1
-    assert result.alignment_id == "wordnet:word.noun"
+    assert result.alignment_id == "synsets:word.noun"
     assert result.target_definitions[0].synonyms == ("term", "word_form")
 
 
 def test_queries_complete_senses() -> None:
-    """WordNet compares every Wiktionary sense in one model request."""
+    """Synsets compare every Wiktionary sense in one model request."""
     lemma = Lemma(
         "word.noun",
         "word",
@@ -337,12 +359,21 @@ def test_queries_complete_senses() -> None:
 
     (result,) = build_queries(
         lemma,
-        AlignmentTask.WORDNET,
-        WordNetCandidates([Synset("wn", "ili", POS.NOUN, "definition", ("word",))]),
+        AlignmentTask.SYNSETS,
+        SynsetCandidates(
+            [
+                Synset(
+                    "synset",
+                    POS.NOUN,
+                    (SynsetMember("word"),),
+                    ("definition",),
+                ),
+            ],
+        ),
     )
 
     assert tuple(source.id for source in result.source_definitions) == ("s1", "s2")
-    assert result.alignment_id == "wordnet:word.noun"
+    assert result.alignment_id == "synsets:word.noun"
 
 
 @given(
@@ -367,7 +398,7 @@ def test_reuses_available_source_decisions(
             for index in assigned
         ),
     )
-    candidates = WordNetCandidates(())
+    candidates = SynsetCandidates(())
     queries = tuple(build_queries(lemma, AlignmentTask.TRANSLATIONS, candidates))
     recorded: list[AlignmentResult] = []
     responses = {
@@ -490,11 +521,13 @@ def test_isolates_failed_queries(
             "invalid"
             if failed
             else json.dumps({f"s{index}": build_decision(f"t{index}")}),
-            json.dumps({f"s{index}": build_decision("wn", "equivalent")}),
+            json.dumps({f"s{index}": build_decision("synset", "equivalent")}),
         )
     ]
     model = Model(responses)
-    candidates = WordNetCandidates([Synset("wn", "i1", POS.NOUN, "meaning", ("word",))])
+    candidates = SynsetCandidates(
+        [Synset("synset", POS.NOUN, (SynsetMember("word"),), ("meaning",))],
+    )
 
     caplog.clear()
 
@@ -505,7 +538,7 @@ def test_isolates_failed_queries(
         min(4, len(responses) - start) for start in range(0, len(responses), 4)
     ]
     assert len(aligned) == len(lemmas)
-    assert len(caplog.records) == sum(failures)
+    assert not caplog.records
 
     for original, result, failed in zip(lemmas, aligned, failures, strict=True):
         assert result.translation_tables == (
@@ -516,9 +549,9 @@ def test_isolates_failed_queries(
             if failed
             else original.translation_tables[0]
         )
-        assert result.senses[0].wordnet == (
-            WordNetAlignment("wn", WordNetRelation.EQUIVALENT),
+        assert result.senses[0].synsets == (
+            SynsetAlignment("synset", SynsetRelation.EQUIVALENT),
         )
         assert original.translation_tables
         assert original.senses[0].translation_table is not None
-        assert not original.senses[0].wordnet
+        assert not original.senses[0].synsets

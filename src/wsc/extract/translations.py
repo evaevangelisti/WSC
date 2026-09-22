@@ -259,9 +259,10 @@ def clean_translations(
         return None
 
     alternatives = frozenset(
-        alternative
+        cleaned
         for alternative in _expand_alternatives(word)
-        if alternative and _INVISIBLE.fullmatch(alternative) is None
+        if (cleaned := alternative.strip(" /,;:"))
+        and _INVISIBLE.fullmatch(cleaned) is None
     )
 
     return (language, alternatives) if alternatives else None

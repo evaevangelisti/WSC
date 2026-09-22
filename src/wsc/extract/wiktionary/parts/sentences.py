@@ -223,7 +223,7 @@ def clean_sentence(
         value = remove_references(value, explicit=True)
         value = normalize_formatting(value, preserve_markup=True)
 
-    return value if value.text else None
+    return value if any(character.isalnum() for character in value.text) else None
 
 
 def parse_sentences(

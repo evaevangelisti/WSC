@@ -5,7 +5,7 @@ from typing import Protocol
 
 from ...models import Lemma, Sense
 from ...models.alignment import AlignmentLink, AlignmentQuery, Definition
-from ..candidates import WordNetCandidates
+from ..candidates import SynsetCandidates
 
 
 class AlignmentHandler(Protocol):
@@ -17,14 +17,14 @@ class AlignmentHandler(Protocol):
     def queries(
         self,
         lemma: Lemma,
-        candidates: WordNetCandidates,
+        candidates: SynsetCandidates,
     ) -> Iterator[AlignmentQuery]:
         """
         Construct resource-specific candidate sets.
 
         Args:
             lemma: Collected entry.
-            candidates: WordNet candidate index.
+            candidates: Synset candidate index.
 
         Yields:
             Complete alignment queries.
@@ -69,6 +69,7 @@ def build_definitions(
             synonyms=sense.synonyms,
             tags=sense.tags,
             topics=sense.topics,
+            examples=tuple(sentence.text for sentence in sense.sentences),
         )
         for sense in lemma.senses
     )

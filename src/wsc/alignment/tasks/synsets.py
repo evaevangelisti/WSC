@@ -1,31 +1,30 @@
-"""Construct WordNet queries and apply directed semantic associations."""
+"""Construct generic synset queries and apply semantic associations."""
 
 from collections.abc import Iterator
 
 from ...identifiers import query_id
-from ...models import Lemma, Sense, WordNetAlignment, WordNetRelation
+from ...models import Lemma, Sense, SynsetAlignment, SynsetRelation
 from ...models.alignment import AlignmentLink, AlignmentQuery, AlignmentTask, Definition
-from ..candidates import WordNetCandidates
+from ..candidates import SynsetCandidates
 from .base import build_definitions
 
 
-class WordNetHandler:
-    """Align each source sense with related WordNet concepts."""
+class SynsetHandler:
+    """Align each Wiktionary sense with supplied generic synsets."""
 
-    relations: tuple[str, ...] = tuple(WordNetRelation)
+    relations: tuple[str, ...] = tuple(SynsetRelation)
     one_to_one: bool = False
 
     def queries(
         self,
         lemma: Lemma,
-        candidates: WordNetCandidates,
+        candidates: SynsetCandidates,
     ) -> Iterator[AlignmentQuery]:
-        """
-        Construct WordNet queries with lexical members as synonyms.
+        """Construct synset queries with lexical members as synonyms.
 
         Args:
             lemma: Entry supplying source senses.
-            candidates: WordNet candidate index.
+            candidates: Synset candidate index.
 
         Yields:
             One query containing all source senses and candidates.
@@ -33,8 +32,10 @@ class WordNetHandler:
         targets = tuple(
             Definition(
                 synset.id,
-                (synset.definition,),
-                candidates.synonyms(lemma, synset),
+                synset.glosses,
+                synonyms=candidates.synonyms(lemma, synset),
+                examples=synset.examples,
+                source=candidates.source(lemma, synset),
             )
             for synset in candidates.candidates(lemma)
         )
@@ -43,8 +44,8 @@ class WordNetHandler:
 
         if sources:
             yield AlignmentQuery(
-                AlignmentTask.WORDNET,
-                query_id(AlignmentTask.WORDNET, lemma.id),
+                AlignmentTask.SYNSETS,
+                query_id(AlignmentTask.SYNSETS, lemma.id),
                 lemma.id,
                 lemma.lemma,
                 lemma.pos,
@@ -59,20 +60,27 @@ class WordNetHandler:
         query: AlignmentQuery,
         links: tuple[AlignmentLink, ...],
     ) -> None:
-        """
-        Store synset identifiers and their directed relations.
+        """Store synset identifiers, sources, and their relations.
 
         Args:
             lemma: Original collection entry.
-            senses: Copies receiving WordNet associations.
+            senses: Copies receiving synset associations.
             query: Source sense and candidate context.
-            links: Accepted WordNet associations.
+            links: Accepted synset associations.
         """
         del lemma
 
+        target_sources = {
+            target.id: target.source for target in query.target_definitions
+        }
+
         for source in query.source_definitions:
-            senses[source.id].wordnet = tuple(
-                WordNetAlignment(link.target_id, WordNetRelation(link.relation))
+            senses[source.id].synsets = tuple(
+                SynsetAlignment(
+                    link.target_id,
+                    SynsetRelation(link.relation),
+                    target_sources.get(link.target_id, ""),
+                )
                 for link in links
                 if link.source_id == source.id
             )

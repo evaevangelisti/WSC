@@ -22,7 +22,7 @@ def parse_synonyms(
     for raw_synonym in raw_synonyms:
         word = raw_synonym.get("word", "").strip()
 
-        if word and word != lemma:
+        if any(character.isalnum() for character in word) and word != lemma:
             seen[word] = None
 
     return tuple(seen)

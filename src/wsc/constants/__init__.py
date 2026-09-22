@@ -32,8 +32,6 @@ from .upstream import (
     KAIKKI_URL,
     TIMEOUT,
     USER_AGENT,
-    WORDNET_INDEX_URL,
-    WORDNET_URL,
 )
 
 __all__ = [
@@ -65,6 +63,4 @@ __all__ = [
     "TIMEOUT",
     "TRANSLATION_RELATION",
     "USER_AGENT",
-    "WORDNET_INDEX_URL",
-    "WORDNET_URL",
 ]

@@ -82,9 +82,6 @@ undated_references = st.text(alphabet=_UNDATED, min_size=1, max_size=20).filter(
 languages = st.text(alphabet=string.ascii_lowercase, min_size=2, max_size=3)
 """Wiktionary's code for one edition."""
 
-wordnet_versions = st.integers(min_value=1000, max_value=9999).map(str)
-"""The year one edition of the wordnet came out."""
-
 dump_dates = st.dates(
     min_value=date(2001, 1, 1),
     max_value=date(2099, 12, 31),

@@ -1,6 +1,6 @@
 # Wiktionary Sense Collector
 
-Collects English Wiktionary senses and aligns them with translations and WordNet synsets.
+Collects English Wiktionary senses and aligns them with translations and synsets.
 
 <!-- installation -->
 
@@ -39,7 +39,7 @@ uv tool install .
 
 Collection has three steps. Each caches its output for subsequent commands and reuse.
 
-The options a whole session shares can be set once, through `WSC_DUMP_DATE`, `WSC_WORDNET_EDITION` and `WSC_CACHE_DIR`.
+The options a whole session shares can be set once, through `WSC_DUMP_DATE` and `WSC_CACHE_DIR`.
 
 Run `wsc <command> --help` for the whole of it.
 
@@ -110,22 +110,9 @@ Each collection contains the collected senses, a manifest, and reports in JSON a
 | `report.md` | Readable tables describing coverage and offset agreement |
 | `manifest.json` | Resolved dump, source files, filters, runtime versions, and timestamps |
 
-### wordnet
-
-Downloads [Open English WordNet](https://en-word.net) and reads its synsets, worth running only if you mean to align senses.
-
-```sh
-wsc wordnet
-```
-
-| Option | Default | |
-| --- | --- | --- |
-| `--edition` | `latest` | Wordnet edition to use, as `2025` |
-| `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
-
 ### align
 
-Aligns collected senses with translations and WordNet synsets through offline [vLLM](https://vllm.ai/) inference.
+Aligns collected senses with translations and supplied synsets through offline [vLLM](https://vllm.ai/) inference.
 
 ```sh
 wsc align collection/senses.jsonl
@@ -133,7 +120,8 @@ wsc align collection/senses.jsonl
 
 | Option | Default | |
 | --- | --- | --- |
-| `--task` | both resources | `translations` or `wordnet`; repeat to select both |
+| `--task` | both resources | `translations` or `synsets`; repeat to select both |
+| `--synsets` | `synsets.jsonl` | Synsets in JSON Lines format |
 | `--model` | `openai/gpt-oss-120b` | Local model path or Hugging Face identifier |
 | `--gloss-mode` | `last` | Last gloss or full hierarchy joined with ` > ` |
 | `--prompts` | bundled `prompts.toml` | One customizable template per task |
@@ -145,7 +133,7 @@ wsc align collection/senses.jsonl
 | `--chat-template-option` | unset | Chat template `KEY=VALUE` argument; repeat to set multiple |
 | `--engine-option`, `-o` | unset | Additional vLLM engine parameter; repeat to set multiple |
 | `--reuse` | off | Reuse decisions by source ID and infer only missing senses |
-| `--wordnet-edition` | `latest` | Extracted WordNet edition; also `WSC_WORDNET_EDITION` |
+| `--verbose` | off | Show logs for individual alignment requests |
 | `--cache-dir` | platform cache | Also configurable through `WSC_CACHE_DIR` |
 | `--output-dir` | `alignment` | Directory for aligned senses and its reports |
 
@@ -153,7 +141,7 @@ Each alignment contains the aligned collection, a manifest, and one report per s
 
 | File | Contents |
 | --- | --- |
-| `senses.jsonl` | Collected entries with aligned translations and WordNet associations |
+| `senses.jsonl` | Collected entries with aligned translations and synset associations |
 | `reports/translations.json` | Evaluated, aligned, and unaligned senses, translation associations, and relation counts |
-| `reports/wordnet.json` | Evaluated, aligned, and unaligned senses, WordNet associations, and relation counts |
+| `reports/synsets.json` | Evaluated, aligned, and unaligned senses, synset associations, and relation counts |
 | `manifest.json` | Input collection, tasks, model settings, runtime versions, timestamps, and output files |

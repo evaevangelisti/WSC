@@ -4,7 +4,7 @@ import json
 from contextlib import ExitStack
 from functools import partial
 from importlib.metadata import version
-from logging import getLogger
+from logging import DEBUG, getLogger
 from pathlib import Path
 from typing import Annotated, cast
 
@@ -12,7 +12,7 @@ import typer
 
 from .alignment import (
     Aligner,
-    WordNetCandidates,
+    SynsetCandidates,
     open_alignment_recorder,
 )
 from .alignment.inference import open_model
@@ -38,11 +38,9 @@ from .constants import (
     TIMEOUT,
     USER_AGENT,
 )
-from .export import Writer, open_writer
 from .extract import (
     DumpExtractor,
     WiktionaryExtractor,
-    WordNetExtractor,
     build_off_page_translations,
     index_translation_glosses,
     narrow,
@@ -52,7 +50,7 @@ from .extract import (
     write_off_page_translations,
 )
 from .logging import configure_logging
-from .models import POS, Engine, Synset
+from .models import POS, Engine
 from .models.alignment import AlignmentResult, AlignmentTask, GlossMode, ModelSettings
 from .reading import (
     read_alignment_cache,
@@ -60,9 +58,11 @@ from .reading import (
     read_prompts,
     read_synsets,
 )
-from .upstream import cache, download, repositories, wiktextract
+from .upstream import cache, download, repository, wiktextract
 
 _LOGGER = getLogger(__name__)
+
+DEFAULT_SYNSETS_PATH = Path("synsets.jsonl")
 
 DumpDate = Annotated[
     str,
@@ -78,14 +78,6 @@ CacheDir = Annotated[
         envvar="WSC_CACHE_DIR",
         help="Where the sources and what is made of them are kept.",
         show_default="your platform's cache directory",
-    ),
-]
-
-WordNetEdition = Annotated[
-    str,
-    typer.Option(
-        envvar="WSC_WORDNET_EDITION",
-        help="WordNet edition to use, as 2025, or latest.",
     ),
 ]
 
@@ -115,17 +107,13 @@ def fetch(
 ) -> None:
     """
     Download a Wiktionary dump. Needs the network.
-
-    Args:
-        dump_date: Dump date to download, or latest.
-        cache_dir: Cache root, or None for the platform default.
     """
     user_agent = USER_AGENT.format(version=version("wsc"))
 
     date = dump_date
 
     if date == cache.LATEST:
-        date = repositories.wiktionary.latest_date(user_agent, TIMEOUT)
+        date = repository.latest_date(user_agent, TIMEOUT)
         _LOGGER.info("Resolved latest to %s", date)
 
     dump_path = cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
@@ -136,7 +124,7 @@ def fetch(
         return
 
     download(
-        repositories.wiktionary.url(date),
+        repository.url(date),
         dump_path,
         user_agent,
         TIMEOUT,
@@ -177,16 +165,6 @@ def parse(
     Parse a fetched dump with wiktextract, or take one published.
 
     The dump is then walked for the translations left behind.
-
-    Args:
-        dump_date: Fetched dump date to parse, or latest.
-        processes: Number of worker processes available to Wiktextract.
-        database_path: Persistent extraction database, or None for a temporary file.
-        archive: Whether to download the published parse instead of running Wiktextract.
-        cache_dir: Cache root, or None for the platform default.
-
-    Raises:
-        typer.BadParameter: If the requested dump has not been fetched.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -312,21 +290,6 @@ def collect(
 ) -> None:
     """
     Collect senses, statistics, and provenance into an output directory.
-
-    Args:
-        dump_date: Parsed dump date to collect, or latest.
-        pos: Parts of speech to retain, or None for all supported parts.
-        minimum_year: Earliest quotation year, or None for no lower limit.
-        maximum_year: Latest quotation year, or None for no upper limit.
-        engine: Sentence analyser used to locate headword occurrences.
-        processes: Number of worker processes available to the analyser.
-        batch_size: Number of sentences processed per batch.
-        gpu: Whether analysis requires GPU inference.
-        cache_dir: Cache root, or None for the platform default.
-        output_dir: Directory receiving the collection, manifest, and reports.
-
-    Raises:
-        typer.BadParameter: If the requested dump or parse is unavailable.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -377,61 +340,6 @@ def collect(
     _LOGGER.info("Collected %s", output_dir)
 
 
-@app.command()
-def wordnet(
-    edition: WordNetEdition = cache.LATEST,
-    cache_dir: CacheDir = None,
-) -> None:
-    """
-    Download the wordnet the senses are aligned with, and read its synsets.
-
-    Needs the network, unless the edition asked for is already here.
-
-    Args:
-        edition: WordNet edition to download, or latest.
-        cache_dir: Cache root, or None for the platform default.
-    """
-    user_agent = USER_AGENT.format(version=version("wsc"))
-
-    if edition == cache.LATEST:
-        edition = repositories.wordnet.latest_version(user_agent, TIMEOUT)
-        _LOGGER.info("Resolved latest to %s", edition)
-
-    wordnet_dir = cache.wordnet_dir(cache_dir, edition)
-
-    wordnet_path = wordnet_dir / cache.WORDNET_NAME
-
-    if wordnet_path.exists():
-        _LOGGER.info("Already fetched %s", wordnet_path)
-    else:
-        download(
-            repositories.wordnet.url(edition),
-            wordnet_path,
-            user_agent,
-            TIMEOUT,
-            CHUNK_SIZE,
-        )
-
-        _LOGGER.info("Fetched %s", wordnet_path)
-
-    output_path = wordnet_dir / cache.SYNSETS_NAME
-
-    if output_path.exists():
-        _LOGGER.info("Already read %s", output_path)
-
-        return
-
-    extractor = WordNetExtractor(None)
-
-    writer: Writer[Synset] = open_writer(output_path)
-
-    with writer:
-        for synset in extractor.extract(wordnet_path):
-            writer.write(synset)
-
-    _LOGGER.info("Read %s", output_path)
-
-
 def _parse_option(
     option: str,
 ) -> tuple[str, object]:
@@ -475,6 +383,13 @@ def align(
             help="Resource to align; repeat to select multiple tasks.",
         ),
     ] = None,
+    synsets_path: Annotated[
+        Path,
+        typer.Option(
+            "--synsets",
+            help="Generic synsets to align, relative to the current directory.",
+        ),
+    ] = DEFAULT_SYNSETS_PATH,
     model: Annotated[
         str,
         typer.Option(
@@ -552,7 +467,13 @@ def align(
             help="Reuse cached source decisions and infer only missing senses.",
         ),
     ] = False,
-    wordnet_edition: WordNetEdition = cache.LATEST,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            help="Show individual alignment failures and responses.",
+        ),
+    ] = False,
     cache_dir: CacheDir = None,
     output_dir: Annotated[
         Path,
@@ -563,29 +484,11 @@ def align(
 ) -> None:
     """
     Align collected senses with language model decisions.
-
-    Args:
-        input_path: Collected entries to align.
-        task: Resources to align, or None for all supported tasks.
-        model: Local model path or Hugging Face identifier.
-        gloss_mode: Representation of Wiktionary definitions supplied to the model.
-        prompts_path: Task prompt templates to load.
-        temperature: Generation sampling temperature.
-        maximum_tokens: Maximum generated tokens per request.
-        batch_size: Number of prompts prepared for each inference pass.
-        reasoning_parser: vLLM reasoning parser name, or None for the model default.
-        reasoning_effort: Reasoning effort accepted by the model template, or None.
-        engine_option: Additional engine settings written as KEY=VALUE pairs.
-        chat_template_option: Additional template settings written as KEY=VALUE pairs.
-        reuse: Whether cached decisions replace generation for resolved sources.
-        wordnet_edition: Cached WordNet edition to use, or latest.
-        cache_dir: Cache root, or None for the platform default.
-        output_dir: Directory receiving the aligned collection, manifest, and reports.
-
-    Raises:
-        typer.BadParameter: If input paths conflict or required resources are missing.
     """
     tasks = tuple(dict.fromkeys(task or AlignmentTask))
+
+    if verbose:
+        getLogger("wsc").setLevel(DEBUG)
 
     output_path = output_dir / ALIGNMENT_SENSES
 
@@ -617,16 +520,13 @@ def align(
         ),
     )
 
-    synsets_path: Path | None = None
-    candidates = WordNetCandidates(())
+    candidates = SynsetCandidates(())
 
-    if AlignmentTask.WORDNET in tasks:
-        synsets_path = cache.fetched_edition(cache_dir, wordnet_edition)
+    if AlignmentTask.SYNSETS in tasks:
+        if not synsets_path.is_file():
+            raise typer.BadParameter(f"No synsets at {synsets_path}")
 
-        if not synsets_path:
-            raise typer.BadParameter("WordNet is not cached; run 'wsc wordnet' first.")
-
-        candidates = WordNetCandidates(read_synsets(synsets_path))
+        candidates = SynsetCandidates(read_synsets(synsets_path))
 
     manifest = build_alignment_manifest(
         input_path,
@@ -634,7 +534,6 @@ def align(
         gloss_mode,
         prompts,
         tasks,
-        wordnet_edition if AlignmentTask.WORDNET in tasks else None,
     )
 
     evidence_dir = cache.alignment_dir(cache_dir)

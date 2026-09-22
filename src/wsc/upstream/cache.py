@@ -13,11 +13,7 @@ WIKTEXTRACT_NAME = "wiktextract.jsonl.zst"
 
 OFF_PAGE_TRANSLATIONS_NAME = "off-page-translations.json"
 
-WORDNET_NAME = "wordnet.xml.gz"
-SYNSETS_NAME = "synsets.jsonl"
-
 _WIKTIONARY = "wiktionary"
-_WORDNET = "wordnet"
 
 
 def _root(
@@ -106,51 +102,6 @@ def fetched_date(
         raise FileNotFoundError(f"No dump in {edition_dir}; fetch one first")
 
     return dates[0]
-
-
-def wordnet_dir(
-    cache_dir: Path | None,
-    version: str,
-) -> Path:
-    """
-    Name the directory holding one wordnet and everything derived from it.
-
-    Args:
-        cache_dir: Where the sources are kept, or None for the usual place.
-        version: The edition of the wordnet, as 2025.
-
-    Returns:
-        The requested cache directory path.
-    """
-    return _root(cache_dir) / _WORDNET / version
-
-
-def fetched_edition(
-    cache_dir: Path | None,
-    edition: str,
-) -> Path | None:
-    """
-    Resolve an extracted WordNet edition without network access.
-
-    Args:
-        cache_dir: Source cache directory, or the platform default.
-        edition: Requested edition or latest extracted edition.
-
-    Returns:
-        Existing synset JSONL path.
-    """
-    if edition != LATEST:
-        path = wordnet_dir(cache_dir, edition) / SYNSETS_NAME
-
-        if path.is_file():
-            return path
-    else:
-        paths = sorted((_root(cache_dir) / _WORDNET).glob(f"*/{SYNSETS_NAME}"))
-
-        if paths:
-            return paths[-1]
-
-    return None
 
 
 def alignment_dir(

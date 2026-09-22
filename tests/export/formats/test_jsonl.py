@@ -20,9 +20,9 @@ from wsc.models import (
     Quotation,
     Sense,
     Sentence,
+    SynsetAlignment,
+    SynsetRelation,
     TranslationTable,
-    WordNetAlignment,
-    WordNetRelation,
 )
 
 _WRITTEN = st.lists(lemmas, max_size=3)
@@ -92,16 +92,26 @@ def _serialize_sense(
         ("topics", sense.topics),
         ("tags", sense.tags),
         ("sentences", tuple(map(_serialize_sentence, sense.sentences))),
-        ("wikidata_ids", sense.wikidata_ids),
     ):
         if values:
             record[key] = list(values)
 
-    if sense.wordnet:
-        record["wordnet"] = [
-            {"synset_id": alignment.synset_id, "relation": alignment.relation}
-            for alignment in sense.wordnet
+    if sense.synsets:
+        record["synsets"] = [
+            {
+                key: value
+                for key, value in {
+                    "synset_id": alignment.synset_id,
+                    "relation": alignment.relation,
+                    "source": alignment.source,
+                }.items()
+                if value != ""
+            }
+            for alignment in sense.synsets
         ]
+
+    if sense.wikidata_ids:
+        record["wikidata_ids"] = list(sense.wikidata_ids)
 
     return record
 
@@ -235,7 +245,7 @@ class TestJSONLWriter:
                 "Financial institution.",
                 {"it": frozenset({"banca"})},
             ),
-            wordnet=(WordNetAlignment("i54321", WordNetRelation.EQUIVALENT),),
+            synsets=(SynsetAlignment("i54321", SynsetRelation.EQUIVALENT),),
         )
 
         text = write(Lemma("bank.noun", "bank", POS.NOUN, senses=[sense]))
@@ -249,7 +259,7 @@ class TestJSONLWriter:
                     "gloss": "Financial institution.",
                     "translations": {"it": ["banca"]},
                 },
-                "wordnet": [{"synset_id": "i54321", "relation": "equivalent"}],
+                "synsets": [{"synset_id": "i54321", "relation": "equivalent"}],
             },
         ]
 

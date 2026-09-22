@@ -7,7 +7,6 @@ from functools import partial
 from logging import getLogger
 
 from tqdm import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
 
 from ..constants import ALIGNMENT_BATCH_SIZE, DEFAULT_PROMPTS
 from ..errors import InvalidModelResponseError
@@ -23,7 +22,7 @@ from ..models.alignment import (
     ModelOutcome,
 )
 from .batching import AlignmentCache, PreparedBatch, prepare_batch
-from .candidates import WordNetCandidates
+from .candidates import SynsetCandidates
 from .decisions import parse_response
 from .requests import build_request
 from .tasks import TASK_HANDLERS
@@ -124,10 +123,10 @@ class Aligner:
     def __init__(
         self,
         model: LanguageModel | None,
-        candidates: WordNetCandidates,
+        candidates: SynsetCandidates,
         tasks: Iterable[AlignmentTask] = (
             AlignmentTask.TRANSLATIONS,
-            AlignmentTask.WORDNET,
+            AlignmentTask.SYNSETS,
         ),
         mode: GlossMode = GlossMode.LAST,
         prompts: AlignmentPrompts = DEFAULT_PROMPTS,
@@ -139,7 +138,7 @@ class Aligner:
 
         Args:
             model: Generation boundary, or None during cache replay.
-            candidates: WordNet candidate index.
+            candidates: Synset candidate index.
             tasks: Resources to align.
             mode: Wiktionary definition representation.
             prompts: Named task prompt templates.
@@ -148,7 +147,7 @@ class Aligner:
         """
         self._model: LanguageModel | None = model
 
-        self._candidates: WordNetCandidates = candidates
+        self._candidates: SynsetCandidates = candidates
 
         self._tasks: tuple[AlignmentTask, ...] = tuple(dict.fromkeys(tasks))
 
@@ -171,8 +170,7 @@ class Aligner:
             query: Query whose response failed.
             error: Generation or validation failure.
         """
-        with logging_redirect_tqdm(loggers=[getLogger("wsc")]):
-            _LOGGER.warning("Skipped %s\n\n%s", query.alignment_id, error)
+        _LOGGER.debug("Skipped %s: %s", query.alignment_id, error)
 
     def _generate_batch(
         self,
@@ -196,7 +194,7 @@ class Aligner:
 
             self._model = self._model_loader()
 
-        _LOGGER.info("Generating %s alignment prompts", len(batch.requests))
+        _LOGGER.debug("Generating %s alignment prompts", len(batch.requests))
 
         outcomes = self._model.generate_batch(batch.requests)
 

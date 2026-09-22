@@ -49,6 +49,23 @@ from wsc.models import (
 _loads: Callable[[str], object] = json.loads
 
 
+def _has_lexical_content(
+    text: str,
+) -> bool:
+    """Return whether text contains at least one letter or number.
+
+    Args:
+        text: Candidate sentence or synonym.
+
+    Returns:
+        Whether the text is more than punctuation.
+    """
+    return any(character.isalnum() for character in text)
+
+
+_LEXICAL_TEXTS = texts.filter(_has_lexical_content)
+
+
 def _is_json_entry(
     line: str,
 ) -> bool:
@@ -725,7 +742,12 @@ class TestSentences:
 
         assert all(isinstance(sentence, Example) for sentence in sentences)
         assert [sentence.text for sentence in sentences] == [
-            str(example["text"]).strip() for example in examples
+            str(example["text"]).strip()
+            for example in examples
+            if any(
+                character.isalnum()
+                for character in str(example["text"]).strip()
+            )
         ]
 
     @given(st.data())
@@ -737,7 +759,12 @@ class TestSentences:
         """A reference is what makes a sentence evidence from somewhere."""
         year = data.draw(years)
         reference = data.draw(references(year))
-        example = data.draw(raw_examples(references=st.just(reference)))
+        example = data.draw(
+            raw_examples(
+                texts=_LEXICAL_TEXTS,
+                references=st.just(reference),
+            ),
+        )
 
         quotation = attest(example)[0]
 
@@ -786,7 +813,9 @@ class TestSentences:
         examples = [data.draw(raw_examples(texts=st.just(text))) for text in written]
 
         assert [sentence.text for sentence in attest(*examples)] == [
-            text.strip() for text in written if text.strip()
+            text.strip()
+            for text in written
+            if any(character.isalnum() for character in text)
         ]
 
 
@@ -853,7 +882,7 @@ class TestKinds:
         """It read the markup; a reference is only what it left behind."""
         year = data.draw(years)
         reference = data.draw(references(year))
-        text = data.draw(texts)
+        text = data.draw(_LEXICAL_TEXTS)
 
         quotation = attest({"text": f"{reference}\n{text}", "type": "quotation"})[0]
         example = attest({"text": f"{reference}\n{text}", "type": "example"})[0]
@@ -861,7 +890,7 @@ class TestKinds:
         assert isinstance(quotation, Quotation)
         assert isinstance(example, Example)
 
-    @given(texts)
+    @given(_LEXICAL_TEXTS)
     def test_preserves_unreferenced_quotations(
         self,
         attest: Callable[..., list[Sentence]],
@@ -882,7 +911,7 @@ class TestKinds:
         """The source is in the text, which is why no reference came with it."""
         year = data.draw(years)
         reference = data.draw(references(year))
-        text = data.draw(texts)
+        text = data.draw(_LEXICAL_TEXTS)
 
         quotation = attest(
             {"text": f"{reference}\n{text}", "type": "quotation"},
@@ -895,7 +924,7 @@ class TestKinds:
             year,
         )
 
-    @given(reference=undated_references, sentence_text=texts)
+    @given(reference=undated_references, sentence_text=_LEXICAL_TEXTS)
     @example(reference="''", sentence_text="0")
     @example(reference="A ", sentence_text="0")
     def test_interprets_undated_headers(
@@ -1026,7 +1055,12 @@ class TestYears:
     ) -> None:
         """A reference is prose, so the year is taken where it is recognised."""
         year = data.draw(years)
-        example = data.draw(raw_examples(references=references(year)))
+        example = data.draw(
+            raw_examples(
+                texts=_LEXICAL_TEXTS,
+                references=references(year),
+            ),
+        )
 
         quotation = attest(example)[0]
 
@@ -1068,7 +1102,13 @@ class TestYears:
     ) -> None:
         """Both bounds are inclusive, and either stands on its own."""
         examples = [
-            data.draw(raw_examples(references=references(year))) for year in dated
+            data.draw(
+                raw_examples(
+                    texts=_LEXICAL_TEXTS,
+                    references=references(year),
+                ),
+            )
+            for year in dated
         ]
 
         sentences = attest(
@@ -1126,7 +1166,12 @@ class TestYears:
     ) -> None:
         """An undated quotation only stands in the way once a bound is set."""
         reference = data.draw(undated_references)
-        undated = data.draw(raw_examples(references=st.just(reference)))
+        undated = data.draw(
+            raw_examples(
+                texts=_LEXICAL_TEXTS,
+                references=st.just(reference),
+            ),
+        )
 
         quotation = attest(undated)[0]
 
@@ -1717,6 +1762,24 @@ class TestSynonyms:
 
         assert lemma.senses[0].synonyms == ()
 
+    @pytest.mark.parametrize("synonym", [",", ".", ";"])
+    def test_discards_punctuation_synonyms(
+        self,
+        extract: Callable[..., list[Lemma]],
+        synonym: str,
+    ) -> None:
+        """Punctuation alone does not identify a synonym."""
+        entry: RawJson = {
+            "word": "word",
+            "pos": "noun",
+            "lang_code": "en",
+            "senses": [{"glosses": ["A meaning."], "synonyms": [{"word": synonym}]}],
+        }
+
+        (lemma,) = extract([entry])
+
+        assert lemma.senses[0].synonyms == ()
+
 
 class TestStrayReferences:
     """Passing over a reference left standing where a sentence belongs."""
@@ -1749,6 +1812,6 @@ class TestStrayReferences:
         data: st.DataObject,
     ) -> None:
         """A line break separates the reference from its sentence."""
-        written = f"{year}, A Book\n{data.draw(texts)}"
+        written = f"{year}, A Book\n{data.draw(_LEXICAL_TEXTS)}"
 
         assert attest({"text": written, "type": "quotation"})[0].text

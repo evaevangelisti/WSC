@@ -12,7 +12,7 @@ class AlignmentTask(StrEnum):
     """Identify the resource aligned with Wiktionary."""
 
     TRANSLATIONS = "translations"
-    WORDNET = "wordnet"
+    SYNSETS = "synsets"
 
 
 class GlossMode(StrEnum):
@@ -80,6 +80,8 @@ class Definition:
     synonyms: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
     topics: tuple[str, ...] = ()
+    examples: tuple[str, ...] = ()
+    source: str = ""
 
 
 @dataclass(frozen=True, slots=True)

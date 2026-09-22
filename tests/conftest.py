@@ -14,7 +14,7 @@ from itertools import count
 from pathlib import Path
 
 import pytest
-from documents import WORDNET, dump, lexicon
+from documents import dump
 from engines import WhitespaceEngine
 from hypothesis import HealthCheck, settings
 from kwic import Locator
@@ -134,80 +134,6 @@ def fetch_dump() -> Callable[..., Path]:
         path = cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
         path.parent.mkdir(parents=True, exist_ok=True)
         _ = path.write_bytes(bz2.compress(dump(*pages).encode()))
-
-        return path
-
-    return build
-
-
-@pytest.fixture
-def fetch_wordnet() -> Callable[..., Path]:
-    """
-    Stand in for a finished fetch of the wordnet, without the network.
-
-    Returns:
-        A builder placing a gzipped WordNet release in the source cache.
-    """
-
-    def build(
-        cache_dir: Path,
-        version: str = "2025",
-        elements: Iterable[str] = WORDNET,
-    ) -> Path:
-        """
-        Place a compressed WordNet release in the test cache.
-
-        Args:
-            cache_dir: Isolated source cache directory.
-            version: WordNet release used to name the cache directory.
-            elements: XML elements included in the generated lexicon.
-
-        Returns:
-            The cached WordNet path.
-        """
-        path = cache.wordnet_dir(cache_dir, version) / cache.WORDNET_NAME
-        path.parent.mkdir(parents=True, exist_ok=True)
-        _ = path.write_bytes(gzip.compress(lexicon(*elements).encode()))
-
-        return path
-
-    return build
-
-
-@pytest.fixture
-def read_wordnet(
-    fetch_wordnet: Callable[..., Path],
-) -> Callable[..., Path]:
-    """
-    Stand in for a finished fetch and read of the wordnet.
-
-    Args:
-        fetch_wordnet: Places the wordnet the read would have read.
-
-    Returns:
-        A builder placing the synsets where the wordnet command would have.
-    """
-
-    def build(
-        cache_dir: Path,
-        version: str = "2025",
-        lines: Iterable[str] = (),
-    ) -> Path:
-        """
-        Place extracted synsets beside their cached source.
-
-        Args:
-            cache_dir: Isolated source cache directory.
-            version: WordNet release used to name the cache directory.
-            lines: Source lines emitted or written in their supplied order.
-
-        Returns:
-            The cached synset path.
-        """
-        _ = fetch_wordnet(cache_dir, version)
-
-        path = cache.wordnet_dir(cache_dir, version) / cache.SYNSETS_NAME
-        _ = path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
 
         return path
 

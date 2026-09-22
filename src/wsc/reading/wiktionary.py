@@ -13,9 +13,9 @@ from ..models import (
     Quotation,
     Sense,
     Sentence,
+    SynsetAlignment,
+    SynsetRelation,
     TranslationTable,
-    WordNetAlignment,
-    WordNetRelation,
     WordOffset,
     WordOffsetSource,
 )
@@ -37,11 +37,12 @@ class SentenceRecord(TypedDict):
     year: NotRequired[int]
 
 
-class AlignmentRecord(TypedDict):
-    """Serialized WordNet identifier and directed relation."""
+class SynsetAlignmentRecord(TypedDict):
+    """Serialized synset identifier and directed relation."""
 
     synset_id: str
     relation: str
+    source: NotRequired[str]
 
 
 class TranslationTableRecord(TypedDict):
@@ -59,12 +60,12 @@ class SenseRecord(TypedDict):
     glosses: list[str]
     etymology: NotRequired[str]
     synonyms: NotRequired[list[str]]
-    topics: NotRequired[list[str]]
     tags: NotRequired[list[str]]
+    topics: NotRequired[list[str]]
     sentences: NotRequired[list[SentenceRecord]]
     translation_table: NotRequired[TranslationTableRecord]
     wikidata_ids: NotRequired[list[str]]
-    wordnet: NotRequired[list[AlignmentRecord]]
+    synsets: NotRequired[list[SynsetAlignmentRecord]]
 
 
 class LemmaRecord(TypedDict):
@@ -135,8 +136,8 @@ def parse_lemma(
                 tuple(sense["glosses"]),
                 etymology=sense.get("etymology", ""),
                 synonyms=tuple(sense.get("synonyms", [])),
-                topics=tuple(sense.get("topics", [])),
                 tags=tuple(sense.get("tags", [])),
+                topics=tuple(sense.get("topics", [])),
                 sentences=[
                     _parse_sentence(item) for item in sense.get("sentences", [])
                 ],
@@ -153,11 +154,13 @@ def parse_lemma(
                     else None
                 ),
                 wikidata_ids=tuple(sense.get("wikidata_ids", [])),
-                wordnet=tuple(
-                    WordNetAlignment(
-                        item["synset_id"], WordNetRelation(item["relation"])
+                synsets=tuple(
+                    SynsetAlignment(
+                        item["synset_id"],
+                        SynsetRelation(item["relation"]),
+                        item.get("source", ""),
                     )
-                    for item in sense.get("wordnet", [])
+                    for item in sense.get("synsets", [])
                 ),
             )
             for sense in record.get("senses", [])

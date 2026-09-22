@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from ..pos import POS
-from .wordnet import WordNetAlignment
+from .synsets import SynsetAlignment
 
 type Offset = tuple[int, int]
 """Half-open code-point range."""
@@ -100,24 +100,24 @@ class Sense:
         glosses: Nonempty gloss chain ordered from ancestor to leaf.
         etymology: Etymology identifier, empty for entries with one etymology.
         synonyms: Other words standing for this meaning alone.
-        topics: Subject fields the sense belongs to, such as mathematics.
         tags: Labels of grammar and register, such as transitive or obsolete.
+        topics: Subject fields the sense belongs to, such as mathematics.
         sentences: The examples and quotations attached to this sense.
         translation_table: Translation table aligned with this sense.
+        synsets: Synsets and their semantic relations.
         wikidata_ids: The Wikidata items it was tied to, such as Q23622.
-        wordnet: WordNet concepts and their semantic relations.
     """
 
     id: str
     glosses: tuple[str, ...]
     etymology: str = ""
     synonyms: tuple[str, ...] = ()
-    topics: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
+    topics: tuple[str, ...] = ()
     sentences: list[Sentence] = field(default_factory=list)
     translation_table: TranslationTable | None = field(default=None, kw_only=True)
+    synsets: tuple[SynsetAlignment, ...] = field(default=(), kw_only=True)
     wikidata_ids: tuple[str, ...] = ()
-    wordnet: tuple[WordNetAlignment, ...] = field(default=(), kw_only=True)
 
     @property
     def gloss(
