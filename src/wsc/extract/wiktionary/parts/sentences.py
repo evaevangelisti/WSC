@@ -17,6 +17,7 @@ from ...markup import (
     is_literal_markup,
     is_unrecoverable,
     normalize_formatting,
+    normalize_statement,
     remove_references,
 )
 from ...offsets import substitute
@@ -76,12 +77,12 @@ def clean_reference(
     Returns:
         The reference without trailing colons or an unmatched opening bracket.
     """
-    reference = re.sub(r"[\s:]+$", "", reference.strip())
+    reference = reference.strip()
 
     if reference.startswith("[") and reference.count("[") > reference.count("]"):
         reference = reference[1:].lstrip()
 
-    return reference
+    return normalize_statement(reference)
 
 
 def read_source(

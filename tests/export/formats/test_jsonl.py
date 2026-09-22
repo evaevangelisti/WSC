@@ -20,6 +20,7 @@ from wsc.models import (
     Quotation,
     Sense,
     Sentence,
+    TranslationTable,
     WordNetAlignment,
     WordNetRelation,
 )
@@ -73,9 +74,14 @@ def _serialize_sense(
     """
     record: RawJson = {"id": sense.id, "glosses": list(sense.glosses)}
 
-    if sense.translations:
-        record["translations"] = {
-            language: sorted(words) for language, words in sense.translations.items()
+    if sense.translation_table is not None:
+        record["translation_table"] = {
+            "id": sense.translation_table.id,
+            "gloss": sense.translation_table.gloss,
+            "translations": {
+                language: sorted(words)
+                for language, words in sense.translation_table.translations.items()
+            },
         }
 
     if sense.etymology:
@@ -224,7 +230,11 @@ class TestJSONLWriter:
         sense = Sense(
             "bank.noun.1",
             ("A financial institution.",),
-            translations={"it": frozenset({"banca"})},
+            translation_table=TranslationTable(
+                "bank.noun.tr.1",
+                "Financial institution.",
+                {"it": frozenset({"banca"})},
+            ),
             wordnet=(WordNetAlignment("i54321", WordNetRelation.EQUIVALENT),),
         )
 
@@ -234,7 +244,11 @@ class TestJSONLWriter:
             {
                 "id": "bank.noun.1",
                 "glosses": ["A financial institution."],
-                "translations": {"it": ["banca"]},
+                "translation_table": {
+                    "id": "bank.noun.tr.1",
+                    "gloss": "Financial institution.",
+                    "translations": {"it": ["banca"]},
+                },
                 "wordnet": [{"synset_id": "i54321", "relation": "equivalent"}],
             },
         ]

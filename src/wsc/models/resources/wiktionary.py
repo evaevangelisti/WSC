@@ -74,6 +74,22 @@ type Sentence = Example | Quotation
 """Either kind of attestation."""
 
 
+@dataclass(frozen=True, slots=True)
+class TranslationTable:
+    """
+    One Wiktionary translation table.
+
+    Attributes:
+        id: Stable identifier derived from the owning lemma and table gloss.
+        gloss: Meaning heading attached to the table.
+        translations: Words grouped by language.
+    """
+
+    id: str
+    gloss: str
+    translations: dict[str, frozenset[str]]
+
+
 @dataclass(slots=True)
 class Sense:
     """
@@ -87,7 +103,7 @@ class Sense:
         topics: Subject fields the sense belongs to, such as mathematics.
         tags: Labels of grammar and register, such as transitive or obsolete.
         sentences: The examples and quotations attached to this sense.
-        translations: Words for this sense, grouped by language.
+        translation_table: Translation table aligned with this sense.
         wikidata_ids: The Wikidata items it was tied to, such as Q23622.
         wordnet: WordNet concepts and their semantic relations.
     """
@@ -99,7 +115,7 @@ class Sense:
     topics: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
     sentences: list[Sentence] = field(default_factory=list)
-    translations: dict[str, frozenset[str]] = field(default_factory=dict, kw_only=True)
+    translation_table: TranslationTable | None = field(default=None, kw_only=True)
     wikidata_ids: tuple[str, ...] = ()
     wordnet: tuple[WordNetAlignment, ...] = field(default=(), kw_only=True)
 
@@ -123,22 +139,6 @@ class Sense:
     ) -> int:
         """Nesting level: 1 for a top-level sense, 2 for a sub-sense."""
         return len(self.glosses)
-
-
-@dataclass(frozen=True, slots=True)
-class TranslationTable:
-    """
-    One Wiktionary translation table.
-
-    Attributes:
-        id: Stable identifier derived from the owning lemma and table gloss.
-        gloss: Meaning heading attached to the table.
-        translations: Words grouped by language.
-    """
-
-    id: str
-    gloss: str
-    translations: dict[str, frozenset[str]]
 
 
 @dataclass(slots=True)

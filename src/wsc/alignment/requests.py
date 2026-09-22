@@ -7,6 +7,7 @@ from ..constants import DEFAULT_PROMPTS, HIERARCHY_CONSTRAINT
 from ..models.alignment import (
     AlignmentPrompts,
     AlignmentQuery,
+    AlignmentTask,
     Definition,
     GlossMode,
     ModelRequest,
@@ -38,6 +39,46 @@ def render_definition(
     return f"{definition.id}{synonyms} {gloss}"
 
 
+def _render_translation_definition(
+    definition: Definition,
+    mode: GlossMode,
+    *,
+    source: bool,
+) -> str:
+    """
+    Render one translation definition as an unambiguous JSON line.
+
+    Args:
+        definition: Lexical definition and optional source context.
+        mode: Source gloss representation.
+        source: Whether to include Wiktionary metadata.
+
+    Returns:
+        A single JSON object line.
+    """
+    gloss = (
+        " > ".join(definition.glosses)
+        if mode == GlossMode.FULL
+        else definition.glosses[-1]
+    )
+
+    record: dict[str, object] = {"id": definition.id}
+
+    if source:
+        if definition.tags:
+            record["tags"] = definition.tags
+
+        if definition.topics:
+            record["topics"] = definition.topics
+
+        if definition.synonyms:
+            record["synonyms"] = definition.synonyms
+
+    record["gloss"] = gloss
+
+    return json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+
+
 def build_request(
     query: AlignmentQuery,
     mode: GlossMode = GlossMode.LAST,
@@ -56,16 +97,31 @@ def build_request(
     """
     handler = TASK_HANDLERS[query.task]
 
+    if query.task == AlignmentTask.TRANSLATIONS:
+        source_definitions = "\n".join(
+            _render_translation_definition(source, mode, source=True)
+            for source in query.source_definitions
+        )
+
+        target_definitions = "\n".join(
+            _render_translation_definition(target, GlossMode.LAST, source=False)
+            for target in query.target_definitions
+        )
+    else:
+        source_definitions = "\n".join(
+            render_definition(source, mode) for source in query.source_definitions
+        )
+
+        target_definitions = "\n".join(
+            render_definition(target, GlossMode.LAST)
+            for target in query.target_definitions
+        )
+
     prompt = Template(prompts.tasks[query.task]).substitute(
         lemma=json.dumps(query.lemma, ensure_ascii=False),
         pos=query.pos,
-        source_definitions="\n".join(
-            render_definition(source, mode) for source in query.source_definitions
-        ),
-        target_definitions="\n".join(
-            render_definition(target, GlossMode.LAST)
-            for target in query.target_definitions
-        ),
+        source_definitions=source_definitions,
+        target_definitions=target_definitions,
         hierarchy=HIERARCHY_CONSTRAINT if mode == GlossMode.FULL else "",
     )
 

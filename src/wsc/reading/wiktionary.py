@@ -44,6 +44,14 @@ class AlignmentRecord(TypedDict):
     relation: str
 
 
+class TranslationTableRecord(TypedDict):
+    """Serialized collected translation table."""
+
+    id: str
+    gloss: str
+    translations: dict[str, list[str]]
+
+
 class SenseRecord(TypedDict):
     """Serialized collected sense with optional aligned resources."""
 
@@ -54,17 +62,9 @@ class SenseRecord(TypedDict):
     topics: NotRequired[list[str]]
     tags: NotRequired[list[str]]
     sentences: NotRequired[list[SentenceRecord]]
-    translations: NotRequired[dict[str, list[str]]]
+    translation_table: NotRequired[TranslationTableRecord]
     wikidata_ids: NotRequired[list[str]]
     wordnet: NotRequired[list[AlignmentRecord]]
-
-
-class TranslationTableRecord(TypedDict):
-    """Serialized collected translation table."""
-
-    id: str
-    gloss: str
-    translations: dict[str, list[str]]
 
 
 class LemmaRecord(TypedDict):
@@ -140,10 +140,18 @@ def parse_lemma(
                 sentences=[
                     _parse_sentence(item) for item in sense.get("sentences", [])
                 ],
-                translations={
-                    language: frozenset(words)
-                    for language, words in sense.get("translations", {}).items()
-                },
+                translation_table=(
+                    TranslationTable(
+                        table["id"],
+                        table["gloss"],
+                        {
+                            language: frozenset(words)
+                            for language, words in table["translations"].items()
+                        },
+                    )
+                    if (table := sense.get("translation_table")) is not None
+                    else None
+                ),
                 wikidata_ids=tuple(sense.get("wikidata_ids", [])),
                 wordnet=tuple(
                     WordNetAlignment(

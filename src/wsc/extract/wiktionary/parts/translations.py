@@ -5,7 +5,7 @@ from itertools import chain
 
 from ....identifiers import translation_table_id
 from ....models import TranslationTable
-from ...translations import clean_translation, normalize_translation_gloss
+from ...translations import clean_translations, normalize_translation_gloss
 from ..schema import RawTranslation
 
 
@@ -46,11 +46,11 @@ def parse_translations(
         supplementary_translations,
     ):
         gloss = normalize_translation_gloss(heading)
-        translation = clean_translation(code, written)
+        translation = clean_translations(code, written)
 
         if gloss and translation is not None:
-            language, word = translation
-            gathered_translation_tables[gloss][language].add(word)
+            language, words = translation
+            gathered_translation_tables[gloss][language].update(words)
 
     return tuple(
         TranslationTable(

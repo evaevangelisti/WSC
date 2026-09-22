@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Iterator
+from itertools import product
 
 from ..constants.extraction import (
     SEA_LANGUAGES,
@@ -15,8 +16,8 @@ from .markup import (
     clean_definition_references,
     is_literal_markup,
     is_unrecoverable,
-    normalize_definition_punctuation,
     normalize_formatting,
+    normalize_statement,
     remove_references,
 )
 
@@ -163,21 +164,55 @@ _START = re.compile(
 )
 _ENTRY = re.compile(r"^see entry\)\s*", re.IGNORECASE)
 _INVISIBLE = re.compile("[\\s\u00ad\u200b-\u200f\u2060\ufeff]*")
+_PARENTHETICAL = re.compile(r"\s*\([^()]*\)")
+_NOUN_CLASS = re.compile(
+    r"\s+class\s+[^\s/]+(?:/[^\s]+)?(?:\s+animate)?$",
+    re.IGNORECASE,
+)
+_GENDER_BEFORE_SLASH = re.compile(r"\s+[cfmn](?=/|$)", re.IGNORECASE)
+_GENDER_SUFFIX = re.compile(r"\s+[cfmn](?:/[cfmn])*$", re.IGNORECASE)
+_TERM_PLACEHOLDER = re.compile(r"\[Term\?]", re.IGNORECASE)
+_SPACED_SLASH = re.compile(r"\s+/\s*|\s*/\s+")
+_SPACE = re.compile(r"\s+")
 
 
-def clean_translation(
+def _remove_parentheticals(word: str) -> str:
+    """Remove parenthetical annotations, including nested groups."""
+    previous = ""
+
+    while word != previous:
+        previous = word
+        word = _PARENTHETICAL.sub("", word)
+
+    return word
+
+
+def _expand_alternatives(word: str) -> tuple[str, ...]:
+    """Expand slash alternatives while retaining their shared context."""
+    complete_alternatives = _SPACED_SLASH.split(word)
+
+    return tuple(
+        " ".join(words)
+        for alternative in complete_alternatives
+        if alternative
+        for words in product(*(token.split("/") for token in alternative.split()))
+        if all(words)
+    )
+
+
+def clean_translations(
     language: str,
     word: str,
-) -> tuple[str, str] | None:
+) -> tuple[str, frozenset[str]] | None:
     """
-    Recover complete translation markup and exclude reference instructions.
+    Recover lexical translations and exclude editorial annotations.
 
     Args:
         language: The source's language code, including dialect subtags.
         word: A translated word or recognized translation template.
 
     Returns:
-        The cleaned language and word, or None when no translation is recoverable.
+        The language and lexical alternatives, or None when none are recoverable.
     """
     language, word = language.strip(), word.strip()
 
@@ -213,8 +248,23 @@ def clean_translation(
         return None
 
     word = remove_references(Attestation(word)).text.strip()
+    word = _remove_parentheticals(word)
+    word = _TERM_PLACEHOLDER.sub("", word)
+    word = _NOUN_CLASS.sub("", word)
+    word = _GENDER_SUFFIX.sub("", word)
+    word = _GENDER_BEFORE_SLASH.sub("", word)
+    word = _SPACE.sub(" ", word).strip(" /,;:")
 
-    return (language, word) if word and _INVISIBLE.fullmatch(word) is None else None
+    if "(" in word or ")" in word:
+        return None
+
+    alternatives = frozenset(
+        alternative
+        for alternative in _expand_alternatives(word)
+        if alternative and _INVISIBLE.fullmatch(alternative) is None
+    )
+
+    return (language, alternatives) if alternatives else None
 
 
 def normalize_translation_gloss(
@@ -244,9 +294,11 @@ def normalize_translation_gloss(
         return ""
 
     text = normalize_formatting(Attestation(text), preserve_markup=True).text
-    text = normalize_definition_punctuation(text)
+    text = normalize_statement(text)
 
-    return "" if " ".join(text.casefold().split()) in TRANSLATION_PLACEHOLDERS else text
+    placeholder = " ".join(text.casefold().split()).rstrip(".?!…‽")
+
+    return "" if placeholder in TRANSLATION_PLACEHOLDERS else text
 
 
 def translation_gloss_key(

@@ -34,6 +34,8 @@ from strategies import (
 
 from wsc.constants import LANGUAGE
 from wsc.extract import WiktionaryExtractor
+from wsc.extract.markup import normalize_statement
+from wsc.extract.wiktionary.parts.sentences import clean_reference
 from wsc.models import (
     POS,
     Example,
@@ -510,7 +512,9 @@ class TestSenses:
         senses: list[RawJson] = [{"glosses": chain}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
-        expected_glosses = tuple(gloss.strip() for gloss in chain if gloss.strip())
+        expected_glosses = tuple(
+            normalize_statement(gloss) for gloss in chain if gloss.strip()
+        )
 
         assert [
             sense.glosses for lemma in extract([entry]) for sense in lemma.senses
@@ -531,11 +535,7 @@ class TestSenses:
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
         normalized_chains = (
-            tuple(
-                f"{gloss[:-1]}." if gloss.endswith(":") else gloss
-                for gloss in (written.strip() for written in chain)
-                if gloss
-            )
+            tuple(normalize_statement(gloss) for gloss in chain if gloss.strip())
             for chain in chains
         )
         unique_chains = list(
@@ -627,7 +627,7 @@ class TestPseudoSenses:
         collected = extract([entry])
 
         assert [sense.glosses[0] for lemma in collected for sense in lemma.senses] == [
-            f"Meaning {index}"
+            normalize_statement(f"Meaning {index}")
             for index, (_, redirect) in enumerate(descriptions)
             if not redirect
         ]
@@ -744,7 +744,7 @@ class TestSentences:
         assert isinstance(quotation, Quotation)
         assert (quotation.text, quotation.reference) == (
             str(example["text"]).strip(),
-            reference,
+            clean_reference(reference),
         )
 
     @pytest.mark.parametrize(
@@ -818,7 +818,7 @@ class TestKinds:
         quotation = attest(raw, headword=headword)[0]
 
         assert isinstance(quotation, Quotation)
-        assert quotation.reference == reference
+        assert quotation.reference == clean_reference(reference)
         assert quotation.year == 2000
         assert quotation.text == headword
         assert quotation.word_offsets == (
@@ -842,7 +842,7 @@ class TestKinds:
         )[0]
 
         assert isinstance(quotation, Quotation)
-        assert quotation.reference == "2015, An Author, A Title [revised]"
+        assert quotation.reference == "2015, An Author, A Title [revised]."
 
     @given(st.data())
     def test_preserves_explicit_examples(
@@ -891,7 +891,7 @@ class TestKinds:
         assert isinstance(quotation, Quotation)
         assert (quotation.text, quotation.reference, quotation.year) == (
             text.strip(),
-            reference,
+            clean_reference(reference),
             year,
         )
 
@@ -919,7 +919,7 @@ class TestKinds:
         assert isinstance(quotation, Quotation)
         assert (quotation.text, quotation.reference) == (
             sentence_text.strip(),
-            reference.strip(),
+            clean_reference(reference),
         )
 
     @given(st.data())
@@ -1131,7 +1131,10 @@ class TestYears:
         quotation = attest(undated)[0]
 
         assert isinstance(quotation, Quotation)
-        assert (quotation.reference, quotation.year) == (reference.strip(), None)
+        assert (quotation.reference, quotation.year) == (
+            clean_reference(reference),
+            None,
+        )
 
     @given(st.lists(raw_examples(), max_size=3), st.data())
     def test_preserves_unfiltered_examples(
@@ -1513,7 +1516,7 @@ class TestTranslations:
 
         (lemma,) = extract([entry])
 
-        assert lemma.translation_tables[0].gloss == gloss.strip()
+        assert lemma.translation_tables[0].gloss == normalize_statement(gloss)
         assert lemma.translation_tables[0].translations == {
             language: frozenset({translation}),
         }
@@ -1550,7 +1553,9 @@ class TestTranslations:
         (lemma,) = extract([entry])
 
         table = next(
-            table for table in lemma.translation_tables if table.gloss == gloss.strip()
+            table
+            for table in lemma.translation_tables
+            if table.gloss == normalize_statement(gloss)
         )
 
         assert table.translations[language] == frozenset({first, second})
@@ -1592,7 +1597,7 @@ class TestTranslations:
 
         table = lemma.translation_tables[0]
 
-        assert table.gloss == gloss.strip()
+        assert table.gloss == normalize_statement(gloss)
         assert table.translations == {
             "it": frozenset({first}),
             "fr": frozenset({second}),

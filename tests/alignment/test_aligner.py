@@ -156,11 +156,11 @@ def test_aligns_collection_copies() -> None:
     aligner = Aligner(model, WordNetCandidates(()), (AlignmentTask.TRANSLATIONS,))
     (aligned,) = aligner.align([lemma])
 
-    assert aligned.senses[0].translations == {"it": frozenset({"due"})}
-    assert aligned.senses[1].translations == {"it": frozenset({"uno"})}
+    assert aligned.senses[0].translation_table == lemma.translation_tables[1]
+    assert aligned.senses[1].translation_table == lemma.translation_tables[0]
     assert not aligned.translation_tables
     assert lemma.translation_tables
-    assert all(not sense.translations for sense in lemma.senses)
+    assert all(sense.translation_table is None for sense in lemma.senses)
 
 
 def test_preserves_directed_relations() -> None:
@@ -274,13 +274,11 @@ def test_renders_definition_context(
     """Prompt definitions retain their identity and selected context."""
     prompt = build_request(build_query(), mode).prompt
 
-    assert (
-        "s1 (synonym) parent > first sense"
-        if mode == GlossMode.FULL
-        else "s1 (synonym) first sense"
-    ) in prompt
-    assert "t1 (target synonym) first heading" in prompt
-    assert "s2 second sense" in prompt
+    expected_gloss = "parent > first sense" if mode == GlossMode.FULL else "first sense"
+
+    assert f'"synonyms":["synonym"],"gloss":"{expected_gloss}"' in prompt
+    assert '{"id":"t1","gloss":"first heading"}' in prompt
+    assert '{"id":"s2","gloss":"second sense"}' in prompt
     assert ("Read each" in prompt) == (mode == GlossMode.FULL)
     assert '"status"' not in prompt
 
@@ -426,14 +424,19 @@ def test_reuses_available_source_decisions(
     assert [sense.id for sense in aligned.senses] == [
         sense.id for sense in lemma.senses
     ]
-    assert all(not sense.translations for sense in lemma.senses)
+    assert all(sense.translation_table is None for sense in lemma.senses)
     assert aligned.translation_tables == ()
 
     for sense in aligned.senses:
         index = int(sense.id[1:])
+        expected_table = next(
+            table
+            for table in lemma.translation_tables
+            if table.id == f"t{assigned[index]}"
+        )
 
-        assert sense.translations == (
-            {"it": frozenset({str(assigned[index])})} if decisions[index][1] else {}
+        assert sense.translation_table == (
+            expected_table if decisions[index][1] else None
         )
 
     if pending:
@@ -467,7 +470,11 @@ def test_isolates_failed_queries(
                 Sense(
                     f"s{index}",
                     ("meaning",),
-                    translations={"it": frozenset({"old"})},
+                    translation_table=TranslationTable(
+                        f"old{index}",
+                        "old meaning",
+                        {"it": frozenset({"old"})},
+                    ),
                 ),
             ],
             translation_tables=(
@@ -504,12 +511,14 @@ def test_isolates_failed_queries(
         assert result.translation_tables == (
             original.translation_tables if failed else ()
         )
-        assert result.senses[0].translations == {
-            "it": frozenset({"old" if failed else "new"}),
-        }
+        assert result.senses[0].translation_table == (
+            original.senses[0].translation_table
+            if failed
+            else original.translation_tables[0]
+        )
         assert result.senses[0].wordnet == (
             WordNetAlignment("wn", WordNetRelation.EQUIVALENT),
         )
         assert original.translation_tables
-        assert original.senses[0].translations == {"it": frozenset({"old"})}
+        assert original.senses[0].translation_table is not None
         assert not original.senses[0].wordnet

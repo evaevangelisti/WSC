@@ -278,17 +278,41 @@ _EXPLICIT = re.compile(
 _EMPTY = re.compile(r"\([ \t]*\)|[ \t]+([,.;:])")
 
 
-def normalize_definition_punctuation(text: str) -> str:
+_SENTENCE_ENDINGS = frozenset(".?!…‽")
+
+
+def normalize_statement(text: str) -> str:
     """
-    Replace a definition's final colon with a period.
+    Normalize capitalization and terminal punctuation in prose.
 
     Args:
-        text: A sense gloss or translation-table heading.
+        text: A definition or reference.
 
     Returns:
-        The definition with normalized terminal punctuation.
+        Prose beginning with a capital and ending with sentence punctuation.
     """
-    return f"{text[:-1]}." if text.endswith(":") else text
+    text = text.strip()
+
+    if not text:
+        return ""
+
+    for index, character in enumerate(text):
+        if character.isdigit():
+            break
+
+        if character.isalpha():
+            text = f"{text[:index]}{character.upper()}{text[index + 1 :]}"
+            break
+
+    if text[-1] in ",;:":
+        return f"{re.sub(r'[\s,;:]+$', '', text)}."
+
+    if text[-1] in _SENTENCE_ENDINGS:
+        return text
+
+    content = text.rstrip("'\"’”)]}")
+
+    return text if content and content[-1] in _SENTENCE_ENDINGS else f"{text}."
 
 
 def remove_references(

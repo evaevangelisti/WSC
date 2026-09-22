@@ -253,10 +253,7 @@ def prepare_batch(
     for lemma in lemmas:
         prepared_lemma = PreparedLemma(
             lemma,
-            {
-                sense.id: replace(sense, translations=dict(sense.translations))
-                for sense in lemma.senses
-            },
+            {sense.id: replace(sense) for sense in lemma.senses},
             lemma.translation_tables,
         )
 

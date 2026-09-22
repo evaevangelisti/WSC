@@ -82,7 +82,7 @@ def test_respects_translation_boundaries(
     assert noun.lemma == "entry"
     assert not noun.pointers
     assert len(noun.translations) == 1
-    assert noun.translations[0].id == translation_table_id("entry.noun", "meaning")
+    assert noun.translations[0].id == translation_table_id("entry.noun", "Meaning.")
     assert noun.translations[0].translations == {"it": frozenset(translations)}
     assert records[POS.VERB].translations[0].translations == {"fr": frozenset({"agir"})}
     assert not records[POS.VERB].pointers
@@ -191,14 +191,14 @@ def test_resolves_translation_pointers(
 
     tables = {table.gloss: table for table in result["entry.noun"]}
 
-    assert set(tables) == {"Meaning.", "target", "spaced gloss"}
+    assert set(tables) == {"Meaning.", "Target.", "Spaced gloss."}
     assert tables["Meaning."].translations == {
         "it": frozenset(translations),
         "fr": frozenset({"mot"}),
         "de": frozenset({"Wort"}),
     }
-    assert tables["target"].translations == {"it": frozenset({"single"})}
-    assert tables["spaced gloss"].translations == {"it": frozenset({"spacing"})}
+    assert tables["Target."].translations == {"it": frozenset({"single"})}
+    assert tables["Spaced gloss."].translations == {"it": frozenset({"spacing"})}
     assert all(
         table.id == translation_table_id("entry.noun", gloss)
         for gloss, table in tables.items()
@@ -293,7 +293,7 @@ def test_fills_missing_english_tables(
         entries,
     )
 
-    assert [table.gloss for table in result["entry.noun"]] == ["missing"]
+    assert [table.gloss for table in result["entry.noun"]] == ["Missing."]
     assert result["entry.noun"][0].translations == {
         "fr": frozenset({"mot"}),
     }
@@ -343,8 +343,8 @@ def test_isolates_translation_sections(
     assert record.pos == POS.NOUN
     assert not record.pointers
     assert {table.gloss: table.translations for table in record.translations} == {
-        "kept": {"it": frozenset({"prima"})},
-        "retained": {"it": frozenset({"seconda"})},
+        "Kept.": {"it": frozenset({"prima"})},
+        "Retained.": {"it": frozenset({"seconda"})},
     }
 
 
@@ -382,7 +382,7 @@ def test_reads_nested_arguments_in_document_order(
     (record,) = DumpExtractor("English").extract(source)
     (table,) = record.translations
 
-    assert table.gloss == f"To produce {first} and 10¹⁵"
+    assert table.gloss == f"To produce {first} and 10¹⁵."
     assert table.id.startswith("sample_entry.noun.tr.")
     assert table.translations == {"fr": frozenset({second})}
 

@@ -13,7 +13,7 @@ from ...constants import LANGUAGE
 from ...identifiers import lemma_id
 from ...models import TranslationTable
 from ..dump import PageTranslations
-from ..translations import clean_translation, translation_gloss_key
+from ..translations import clean_translations, translation_gloss_key
 from .merge import add_translations
 from .parts import parse_translations
 from .schema import RawEntry, parse_pos
@@ -61,7 +61,8 @@ def index_translation_glosses(
 
             if (
                 any(marker in written for marker in ("[[", "]]", "{{", "}}"))
-                and clean_translation(translation.get("lang_code", ""), written) is None
+                and clean_translations(translation.get("lang_code", ""), written)
+                is None
             ):
                 incomplete.setdefault(entry_id, set()).add(
                     translation_gloss_key(translation.get("sense", "")),

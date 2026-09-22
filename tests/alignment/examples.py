@@ -83,7 +83,13 @@ def build_query(
         "word",
         POS.NOUN,
         (
-            Definition("s1", ("parent", "first sense"), ("synonym",)),
+            Definition(
+                "s1",
+                ("parent", "first sense"),
+                ("synonym",),
+                ("figurative",),
+                ("finance",),
+            ),
             Definition("s2", ("second sense",)),
         ),
         (

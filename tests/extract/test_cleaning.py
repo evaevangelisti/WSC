@@ -10,7 +10,7 @@ from kwic import Locator
 from strategies import RawJson, words
 
 from wsc.extract import WiktionaryExtractor
-from wsc.extract.translations import clean_translation
+from wsc.extract.translations import clean_translations
 from wsc.extract.wiktionary.parts.glosses import clean_gloss
 from wsc.extract.wiktionary.parts.sentences import clean_sentence
 from wsc.models import (
@@ -70,11 +70,11 @@ def extract(
         ("A function (continuous; see Usage notes).", "A function (continuous)."),
         ("A town. See Town on Wikipedia.Wikipedia", "A town."),
         ("See done, for: Punished because of.", "Punished because of."),
-        ("See. vide(te)", "See. vide(te)"),
+        ("See. vide(te)", "See. vide(te)."),
         ("1108 Demeter, a main belt asteroid.", "1108 Demeter, a main belt asteroid."),
-        ("1599 Geneva Bible", "1599 Geneva Bible"),
-        ("1000 lambdas", "1000 lambdas"),
-        ("Compare", "Compare"),
+        ("1599 Geneva Bible", "1599 Geneva Bible."),
+        ("1000 lambdas", "1000 lambdas."),
+        ("Compare", "Compare."),
         ("See; see also.", "See; see also."),
         ("A hierarchy heading:", "A hierarchy heading."),
         (
@@ -102,7 +102,7 @@ def extract(
             "A definition. Compare fly (verb (regular)) and line (verb).",
             "A definition.",
         ),
-        ("A piece of fabric cf. gusset.", "A piece of fabric"),
+        ("A piece of fabric cf. gusset.", "A piece of fabric."),
         ("Real Madrid CF.", "Real Madrid CF."),
         (
             "To buy a ticket for a movie, see it and then go into another movie.",
@@ -124,10 +124,10 @@ def extract(
         ("A tax code (see other).", "A tax code."),
         (
             "The planting of ivy (see Ivy Day (United States), etc.",
-            "The planting of ivy",
+            "The planting of ivy.",
         ),
         ("A meaning.\nSee also: other", "A meaning."),
-        ("unknown", "unknown"),
+        ("unknown", "Unknown."),
         ("A [[leaf|leafy]] plant.", "A leafy plant."),
         ("The formula C<sub>2</sub> and 10<sup>15</sup>.", "The formula C₂ and 10¹⁵."),
         ("The set #92;mathbb#123;Z#125;.", "The set \N{DOUBLE-STRUCK CAPITAL Z}."),
@@ -378,9 +378,9 @@ def test_excludes_navigation_across_fields(
             "hyvät ja huonot ajat (but also see myötä- ja vastoinkäymiset)",
             ("fi", "hyvät ja huonot ajat"),
         ),
-        ("fi", "ilman (jotakin)", ("fi", "ilman (jotakin)")),
-        ("sq", "lirë (i/e)", ("sq", "lirë (i/e)")),
-        ("ko", "자유적(自由的)이다", ("ko", "자유적(自由的)이다")),
+        ("fi", "ilman (jotakin)", ("fi", "ilman")),
+        ("sq", "lirë (i/e)", ("sq", "lirë")),
+        ("ko", "자유적(自由的)이다", ("ko", "자유적이다")),
         ("cy", "{{t|1=cy|2=post|3=m}}", ("cy", "post")),
         ("en", "{{t+|cmn|極簡主義|tr=jíjiǎn zhǔyì}}", ("cmn", "極簡主義")),
         ("fr", "[[feuille|feuilles]]", ("fr", "feuilles")),
@@ -444,7 +444,7 @@ def test_removes_editorial_translation_tails(
     merged = extract({}, supplementary)[0]
 
     assert raw.translation_tables == merged.translation_tables
-    assert raw.translation_tables[0].gloss == heading
+    assert raw.translation_tables[0].gloss == "Cognate translations of hydrargyrum."
 
 
 def test_normalizes_translation_gloss_punctuation(
@@ -539,7 +539,7 @@ def test_handles_arbitrary_unicode(
     )
     cleaned = clean_sentence(value, quoted=True)
     gloss = clean_gloss(written)
-    translation = clean_translation("und", written)
+    translation = clean_translations("und", written)
 
     if cleaned is not None:
         assert cleaned.text
@@ -553,7 +553,42 @@ def test_handles_arbitrary_unicode(
         assert clean_gloss(gloss) == gloss
 
     if translation is not None:
-        assert clean_translation(*translation) == translation
+        language, alternatives = translation
+
+        assert all(
+            clean_translations(language, alternative)
+            == (language, frozenset({alternative}))
+            for alternative in alternatives
+        )
+
+
+@pytest.mark.parametrize(
+    ("written", "expected"),
+    [
+        ("lirë (i/e)", frozenset({"lirë"})),
+        ("el/la/lo más", frozenset({"el más", "la más", "lo más"})),
+        ("nascer/pôr do sol", frozenset({"nascer do sol", "pôr do sol"})),
+        ("uJanuwari class 1a/2a", frozenset({"uJanuwari"})),
+        ("Abtrünniger m/Abtrünnige", frozenset({"Abtrünniger", "Abtrünnige"})),
+        (
+            "kapzsi/telhetetlen ember/lény",
+            frozenset(
+                {
+                    "kapzsi ember",
+                    "kapzsi lény",
+                    "telhetetlen ember",
+                    "telhetetlen lény",
+                },
+            ),
+        ),
+    ],
+)
+def test_keeps_lexical_translation_alternatives(
+    written: str,
+    expected: frozenset[str],
+) -> None:
+    """Translation cleanup removes metadata without losing complete variants."""
+    assert clean_translations("und", written) == ("und", expected)
 
 
 @given(st.lists(words, min_size=2, max_size=5))

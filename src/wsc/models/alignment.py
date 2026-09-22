@@ -71,11 +71,15 @@ class Definition:
         id: Identifier within its side of the task.
         glosses: Definitions ordered from ancestor to leaf.
         synonyms: Lexical forms expressing this sense.
+        tags: Grammar and register labels describing this sense.
+        topics: Subject fields describing this sense.
     """
 
     id: str
     glosses: tuple[str, ...]
     synonyms: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+    topics: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

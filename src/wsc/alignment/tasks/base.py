@@ -54,7 +54,7 @@ def build_definitions(
     lemma: Lemma,
 ) -> tuple[Definition, ...]:
     """
-    Collect sense definitions and their synonyms.
+    Collect sense definitions and their lexical context.
 
     Args:
         lemma: Collected entry.
@@ -63,5 +63,12 @@ def build_definitions(
         Definitions in source order.
     """
     return tuple(
-        Definition(sense.id, sense.glosses, sense.synonyms) for sense in lemma.senses
+        Definition(
+            sense.id,
+            sense.glosses,
+            synonyms=sense.synonyms,
+            tags=sense.tags,
+            topics=sense.topics,
+        )
+        for sense in lemma.senses
     )

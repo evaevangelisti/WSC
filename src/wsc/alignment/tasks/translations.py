@@ -57,20 +57,18 @@ class TranslationHandler:
         links: tuple[AlignmentLink, ...],
     ) -> None:
         """
-        Transfer accepted translation groups into senses.
+        Transfer accepted translation tables into senses.
 
         Args:
             lemma: Original translation dictionaries.
-            senses: Copies receiving translations.
+            senses: Copies receiving translation tables.
             query: Translation group identities.
             links: One-to-one associations.
         """
         for source in query.source_definitions:
-            senses[source.id].translations = {}
+            senses[source.id].translation_table = None
 
         tables = {table.id: table for table in lemma.translation_tables}
 
         for link in links:
-            senses[link.source_id].translations = dict(
-                tables[link.target_id].translations
-            )
+            senses[link.source_id].translation_table = tables[link.target_id]

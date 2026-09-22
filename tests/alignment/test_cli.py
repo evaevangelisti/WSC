@@ -12,6 +12,7 @@ from typer.testing import CliRunner
 from wsc import cli
 from wsc.constants import ALIGNMENT_FIELDS
 from wsc.identifiers import translation_table_id
+from wsc.models import TranslationTable
 from wsc.models.alignment import (
     AlignmentTask,
     LanguageModel,
@@ -185,7 +186,11 @@ def test_replays_cached_alignment(
     output_dir = tmp_path / "output"
     aligned_lemma = next(read_lemmas(output_dir / "senses.jsonl"))
 
-    assert aligned_lemma.senses[0].translations == {"it": frozenset({"parola"})}
+    assert aligned_lemma.senses[0].translation_table == TranslationTable(
+        translation_table_id("word.noun", "gloss"),
+        "gloss",
+        {"it": frozenset({"parola"})},
+    )
     assert not aligned_lemma.translation_tables
 
     if AlignmentTask.WORDNET in tasks:
@@ -381,6 +386,14 @@ def test_reuses_partial_alignment_cache(
 
     (aligned,) = tuple(read_lemmas(tmp_path / "output" / "senses.jsonl"))
 
-    assert aligned.senses[0].translations == {"it": frozenset({"uno"})}
-    assert aligned.senses[1].translations == {"it": frozenset({"due"})}
+    assert aligned.senses[0].translation_table == TranslationTable(
+        first_target,
+        "first",
+        {"it": frozenset({"uno"})},
+    )
+    assert aligned.senses[1].translation_table == TranslationTable(
+        second_target,
+        "second",
+        {"it": frozenset({"due"})},
+    )
     assert len(cache_path.read_text().splitlines()) == 3

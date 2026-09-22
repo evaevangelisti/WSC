@@ -17,7 +17,7 @@ $target_definitions
 </translation_table_glosses>
 
 Constraints:
-- Base every association on semantic evidence from the supplied definitions and supporting synonyms.
+- Base each association on definitions, tags, topics, and supporting synonyms.
 $hierarchy
 - Match definitions that express the same lexical sense.
 - Allow abbreviated wording and omitted explanatory detail.

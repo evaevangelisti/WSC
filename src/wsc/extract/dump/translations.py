@@ -9,7 +9,7 @@ from itertools import groupby
 from ...constants.extraction import TRANSLATION_TEMPLATES
 from ...identifiers import lemma_id, translation_table_id
 from ...models import POS, TranslationTable
-from ..translations import clean_translation, normalize_translation_gloss, templates
+from ..translations import clean_translations, normalize_translation_gloss, templates
 from .markup import plain
 
 _HEADING = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$")
@@ -136,7 +136,8 @@ def read_page(
 
         for name, parameters in templates(section):
             if name in {"trans-see", "trans-top-see"}:
-                heading = normalize_translation_gloss(parameters.get("1", ""))
+                raw_heading = plain(parameters.get("1", ""))
+                heading = normalize_translation_gloss(raw_heading)
                 targets = tuple(
                     plain(value)
                     for key, value in parameters.items()
@@ -144,7 +145,7 @@ def read_page(
                 )
 
                 if heading:
-                    pointers[pos][heading] = targets or (heading,)
+                    pointers[pos][heading] = targets or (raw_heading,)
 
             elif name in {"trans-top", "trans-top-also"}:
                 gloss = normalize_translation_gloss(parameters.get("1", ""))
@@ -153,18 +154,16 @@ def read_page(
                 gloss = ""
 
             elif gloss and name in TRANSLATION_TEMPLATES:
-                translation = clean_translation(
+                translation = clean_translations(
                     parameters.get("1", ""),
                     parameters.get("2", ""),
                 )
 
                 if translation is not None:
-                    language, word = translation
+                    language, words = translation
 
                     translated = tables[pos].setdefault(gloss, {})
-                    translated[language] = translated.get(language, frozenset()) | {
-                        word
-                    }
+                    translated[language] = translated.get(language, frozenset()) | words
 
     for part_of_speech in sorted(tables.keys() | pointers.keys()):
         yield PageTranslations(

@@ -13,8 +13,8 @@ from ...markup import (
     clean_definition_references,
     is_literal_markup,
     is_unrecoverable,
-    normalize_definition_punctuation,
     normalize_formatting,
+    normalize_statement,
 )
 
 _TARGET_SEPARATOR = re.compile(r"\s*(?:[;,]|\(|$)")
@@ -142,4 +142,4 @@ def clean_gloss(
 
     text = normalize_formatting(Attestation(text), preserve_markup=True).text
 
-    return normalize_definition_punctuation(text)
+    return normalize_statement(text)
