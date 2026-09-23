@@ -15,19 +15,19 @@ class SynsetRelation(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
-class SynsetMember:
-    """One lexical member of a synset."""
-
-    lemma: str
-    source: str = ""
-
-
-@dataclass(frozen=True, slots=True)
 class SynsetAlignment:
     """Synset associated with a Wiktionary sense."""
 
     synset_id: str
     relation: SynsetRelation
+    source: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class SynsetMember:
+    """One lexical member of a synset."""
+
+    lemma: str
     source: str = ""
 
 

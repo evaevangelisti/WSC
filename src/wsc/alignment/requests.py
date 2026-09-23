@@ -115,7 +115,7 @@ def build_request(
     )
 
     prompt = Template(prompts.tasks[query.task]).substitute(
-        lemma=json.dumps(query.lemma, ensure_ascii=False),
+        lemma=query.lemma,
         pos=query.pos,
         source_definitions=source_definitions,
         target_definitions=target_definitions,
