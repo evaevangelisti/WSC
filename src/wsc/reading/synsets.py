@@ -56,6 +56,7 @@ def read_synsets(
     with path.open(encoding="utf-8") as stream:
         for line_number, line in enumerate(stream, start=1):
             record = cast(SynsetRecord, json.loads(line))
+
             members = _read_members(record["members"])
             glosses = tuple(record["glosses"])
 

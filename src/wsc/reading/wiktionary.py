@@ -42,7 +42,7 @@ class SynsetAlignmentRecord(TypedDict):
 
     synset_id: str
     relation: str
-    source: NotRequired[str]
+    sources: NotRequired[list[str]]
 
 
 class TranslationTableRecord(TypedDict):
@@ -158,7 +158,7 @@ def parse_lemma(
                     SynsetAlignment(
                         item["synset_id"],
                         SynsetRelation(item["relation"]),
-                        item.get("source", ""),
+                        tuple(item.get("sources", [])),
                     )
                     for item in sense.get("synsets", [])
                 ),

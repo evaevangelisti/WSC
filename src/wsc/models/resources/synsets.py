@@ -20,7 +20,7 @@ class SynsetAlignment:
 
     synset_id: str
     relation: SynsetRelation
-    source: str = ""
+    sources: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

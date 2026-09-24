@@ -87,29 +87,28 @@ class SynsetCandidates:
             if self._normalize(member.lemma) != self._normalize(lemma.lemma)
         )
 
-    def source(
+    def sources(
         self,
         lemma: Lemma,
         synset: Synset,
-    ) -> str:
-        """Return the input source declared for the queried member.
+    ) -> tuple[str, ...]:
+        """Return every declared input source for the queried member.
 
         Args:
             lemma: Entry whose candidate is being described.
             synset: Candidate lexical concept.
 
         Returns:
-            The member source, or an empty string when none was declared.
+            Distinct declared sources in their input order.
         """
         forms = {self._normalize(lemma.lemma)} | {
             self._normalize(variant) for variant in lemma.variants
         }
 
-        return next(
-            (
+        return tuple(
+            dict.fromkeys(
                 member.source
                 for member in synset.members
-                if self._normalize(member.lemma) in forms
+                if member.source and self._normalize(member.lemma) in forms
             ),
-            "",
         )

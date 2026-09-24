@@ -35,7 +35,7 @@ class SynsetHandler:
                 synset.glosses,
                 synonyms=candidates.synonyms(lemma, synset),
                 examples=synset.examples,
-                source=candidates.source(lemma, synset),
+                sources=candidates.sources(lemma, synset),
             )
             for synset in candidates.candidates(lemma)
         )
@@ -71,7 +71,7 @@ class SynsetHandler:
         del lemma
 
         target_sources = {
-            target.id: target.source for target in query.target_definitions
+            target.id: target.sources for target in query.target_definitions
         }
 
         for source in query.source_definitions:
@@ -79,7 +79,7 @@ class SynsetHandler:
                 SynsetAlignment(
                     link.target_id,
                     SynsetRelation(link.relation),
-                    target_sources.get(link.target_id, ""),
+                    target_sources.get(link.target_id, ()),
                 )
                 for link in links
                 if link.source_id == source.id

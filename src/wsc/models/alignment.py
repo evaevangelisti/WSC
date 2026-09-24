@@ -73,6 +73,8 @@ class Definition:
         synonyms: Lexical forms expressing this sense.
         tags: Grammar and register labels describing this sense.
         topics: Subject fields describing this sense.
+        examples: Attestations illustrating this sense.
+        sources: Input sources supporting the candidate.
     """
 
     id: str
@@ -81,7 +83,7 @@ class Definition:
     tags: tuple[str, ...] = ()
     topics: tuple[str, ...] = ()
     examples: tuple[str, ...] = ()
-    source: str = ""
+    sources: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

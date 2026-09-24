@@ -27,6 +27,7 @@ class DefinitionRecord(TypedDict):
     synonyms: NotRequired[list[str]]
     tags: NotRequired[list[str]]
     topics: NotRequired[list[str]]
+    sources: NotRequired[list[str]]
 
 
 class QueryRecord(TypedDict):
@@ -66,6 +67,7 @@ def parse_query(
                 synonyms=tuple(item.get("synonyms", ())),
                 tags=tuple(item.get("tags", ())),
                 topics=tuple(item.get("topics", ())),
+                sources=tuple(item.get("sources", ())),
             )
             for item in record["source_definitions"]
         ),
@@ -76,6 +78,7 @@ def parse_query(
                 synonyms=tuple(item.get("synonyms", ())),
                 tags=tuple(item.get("tags", ())),
                 topics=tuple(item.get("topics", ())),
+                sources=tuple(item.get("sources", ())),
             )
             for item in record["target_definitions"]
         ),
