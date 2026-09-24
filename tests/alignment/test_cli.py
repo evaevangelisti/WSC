@@ -126,7 +126,7 @@ def test_replays_cached_alignment(
                 "id": "synset",
                 "pos": "noun",
                 "glosses": ["meaning"],
-                "members": {"source": ["word"]},
+                "members": {"source1": ["word"], "source2": ["word", "different_word"]},
             },
         )
         + "\n",
@@ -194,7 +194,7 @@ def test_replays_cached_alignment(
 
     if AlignmentTask.SYNSETS in tasks:
         assert aligned_lemma.senses[0].synsets[0].synset_id == "synset"
-        assert aligned_lemma.senses[0].synsets[0].source == "source"
+        assert aligned_lemma.senses[0].synsets[0].sources == ("source1", "source2")
 
     cache_paths = list((tmp_path / "cache").glob("alignment/*.tsv"))
 

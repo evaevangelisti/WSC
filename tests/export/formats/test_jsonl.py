@@ -103,7 +103,7 @@ def _serialize_sense(
                 for key, value in {
                     "synset_id": alignment.synset_id,
                     "relation": alignment.relation,
-                    "source": alignment.source,
+                    "sources": alignment.sources,
                 }.items()
                 if value != ""
             }
