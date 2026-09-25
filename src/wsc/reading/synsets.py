@@ -8,18 +8,31 @@ from typing import NotRequired, TypedDict, cast
 from ..models import POS, Synset, SynsetMember
 
 
+class SynsetMemberRecord(TypedDict):
+    """Serialized synset member with an optional source."""
+
+    lemma: str
+    source: NotRequired[str]
+
+
 class SynsetRecord(TypedDict):
     """Serialized generic synset accepted by the align command."""
 
     id: NotRequired[str]
     pos: str
-    members: list[str] | dict[str, list[str]]
+    members: (
+        list[str | SynsetMemberRecord]
+        | dict[str, list[str | SynsetMemberRecord]]
+    )
     glosses: list[str]
     examples: NotRequired[list[str]]
 
 
 def _read_members(
-    members: list[str] | dict[str, list[str]],
+    members: (
+        list[str | SynsetMemberRecord]
+        | dict[str, list[str | SynsetMemberRecord]]
+    ),
 ) -> tuple[SynsetMember, ...]:
     """Flatten members while retaining any source declared for them.
 
@@ -29,11 +42,20 @@ def _read_members(
     Returns:
         Members in their input order.
     """
+    def read_member(
+        member: str | SynsetMemberRecord,
+        source: str = "",
+    ) -> SynsetMember:
+        if isinstance(member, str):
+            return SynsetMember(member, source)
+
+        return SynsetMember(member["lemma"], member.get("source", source))
+
     if isinstance(members, list):
-        return tuple(SynsetMember(member) for member in members)
+        return tuple(read_member(member) for member in members)
 
     return tuple(
-        SynsetMember(member, source)
+        read_member(member, source)
         for source, source_members in members.items()
         for member in source_members
     )
