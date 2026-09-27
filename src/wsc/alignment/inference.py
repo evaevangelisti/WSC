@@ -451,7 +451,7 @@ class OfflineModel:
                 for request in requests
             ],
             chat_template_kwargs=self._chat_template_kwargs or None,
-            use_tqdm=False,
+            use_tqdm=True,
         )
 
         return tuple(

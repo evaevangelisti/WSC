@@ -216,7 +216,7 @@ class FakeLanguageModel:
         """
         Return one configured completion per batched conversation.
         """
-        assert not use_tqdm
+        assert use_tqdm
 
         self.batches.append(len(messages))
 
