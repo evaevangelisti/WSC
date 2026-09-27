@@ -206,7 +206,7 @@ NAVIGATION = re.compile(
     + r"(?:but(?:\s+also)?|also)\s+see(?:\s*:\s*|\s+)|see\s*:\s*|"
     + r"see\s+(?:also\b|(?:Citations|Thesaurus|Appendix|Wikipedia):|"
     + r"(?:the\s+)?(?:quotations?|usage notes?|translations?)\b)|"
-    + r"for\s+(?:examples?|quotations?)\b[^\n]*\bsee\b)",
+    + r"for\s+(?:examples?|quotations?)\b[^\n]*\bsee\b(?=\s+\S))",
     re.IGNORECASE,
 )
 

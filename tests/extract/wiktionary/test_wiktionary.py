@@ -1006,6 +1006,17 @@ class TestKinds:
 class TestPointers:
     """Passing over what stands in for a sentence without being one."""
 
+    def test_preserves_incomplete_pointer(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """A navigation prefix without a target remains lexical text."""
+        written = "For quotations SEE"
+
+        sentences = attest({"text": written}, headword="see")
+
+        assert [sentence.text for sentence in sentences] == [written]
+
     @given(words)
     def test_excludes_citation_pointers(
         self,

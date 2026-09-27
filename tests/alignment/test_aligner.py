@@ -315,8 +315,8 @@ def test_includes_variant_candidates() -> None:
     assert result.alignment_id == "synsets:alias.name"
 
 
-def test_excludes_headword_synonyms() -> None:
-    """Candidate context does not repeat the lemma as a synset synonym."""
+def test_deduplicates_candidate_synonyms() -> None:
+    """Candidate context contains each non-headword member once."""
     lemma = Lemma(
         "word.noun",
         "word",
@@ -330,7 +330,8 @@ def test_excludes_headword_synonyms() -> None:
                 POS.NOUN,
                 (
                     SynsetMember("word"),
-                    SynsetMember("term"),
+                    SynsetMember("term", "source-1"),
+                    SynsetMember("term", "source-2"),
                     SynsetMember("word_form"),
                 ),
                 ("definition",),

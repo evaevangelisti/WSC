@@ -79,13 +79,18 @@ class SynsetCandidates:
             synset: Candidate lexical concept.
 
         Returns:
-            Other lexical members, retaining their input order.
+            Distinct lexical members in their input order.
         """
-        return tuple(
-            member.lemma
-            for member in synset.members
-            if self._normalize(member.lemma) != self._normalize(lemma.lemma)
-        )
+        normalized_lemma = self._normalize(lemma.lemma)
+        synonyms: dict[str, str] = {}
+
+        for member in synset.members:
+            normalized_member = self._normalize(member.lemma)
+
+            if normalized_member != normalized_lemma:
+                _ = synonyms.setdefault(normalized_member, member.lemma)
+
+        return tuple(synonyms.values())
 
     def sources(
         self,

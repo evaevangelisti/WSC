@@ -103,9 +103,9 @@ def _serialize_sense(
                 for key, value in {
                     "synset_id": alignment.synset_id,
                     "relation": alignment.relation,
-                    "sources": alignment.sources,
+                    "sources": list(alignment.sources),
                 }.items()
-                if value != ""
+                if value
             }
             for alignment in sense.synsets
         ]
@@ -245,7 +245,13 @@ class TestJSONLWriter:
                 "Financial institution.",
                 {"it": frozenset({"banca"})},
             ),
-            synsets=(SynsetAlignment("i54321", SynsetRelation.EQUIVALENT),),
+            synsets=(
+                SynsetAlignment(
+                    "i54321",
+                    SynsetRelation.EQUIVALENT,
+                    ("source-1", "source-2"),
+                ),
+            ),
         )
 
         text = write(Lemma("bank.noun", "bank", POS.NOUN, senses=[sense]))
@@ -259,7 +265,13 @@ class TestJSONLWriter:
                     "gloss": "Financial institution.",
                     "translations": {"it": ["banca"]},
                 },
-                "synsets": [{"synset_id": "i54321", "relation": "equivalent"}],
+                "synsets": [
+                    {
+                        "synset_id": "i54321",
+                        "relation": "equivalent",
+                        "sources": ["source-1", "source-2"],
+                    },
+                ],
             },
         ]
 
