@@ -23,6 +23,9 @@ from ...markup import (
 from ...offsets import substitute
 from ..schema import RawExample
 
+_EXAMPLE = "example"
+_QUOTATION = "quotation"
+
 _YEAR_PATTERN = re.compile(r"\b(1[0-9]{3}|20[0-9]{2})s?\b")
 
 _REFERENCE_LINE = re.compile(
@@ -44,8 +47,24 @@ _TITLE_ONLY = re.compile(
     re.IGNORECASE,
 )
 
-_EXAMPLE = "example"
-_QUOTATION = "quotation"
+_AUTHOR_CITATION = re.compile(
+    r"^[A-Z][^\n]*?\b(?:18|19|20)\d{2}\.\s+[\"“][^\"”]+[\"”]\.\s+[^\n]+$"
+)
+_FIRST_LINE = re.compile(r"^[^\n]*\n")
+_DOCUMENT_HEADER = re.compile(
+    r"^[^\n]*\bvolume\s+\d+\s+no\.?\s+\d+\s+\(pdf\)\s+from[^\n]*\n",
+    re.IGNORECASE,
+)
+_TRAILING_CITATION = re.compile(
+    r"[ \t]+[—–-][ \t]+[^—–\n]*https?://\S+[ \t]*$", re.IGNORECASE
+)
+_PARENTHETICAL_CITATION = re.compile(
+    r"[ \t]+\([^()\n]*https?://\S+[ \t]*$", re.IGNORECASE
+)
+_SOURCE_URL = re.compile(r"https?://\S+", re.IGNORECASE)
+
+_EXAMPLE_SEPARATOR = re.compile(r"[ \t]*\u2003+[ \t]*")
+_EXAMPLE_ENDINGS = frozenset(";.?!")
 
 
 def parse_year(
@@ -226,6 +245,115 @@ def clean_sentence(
     return value if any(character.isalnum() for character in value.text) else None
 
 
+def _remove_example_bibliography(
+    value: Attestation,
+) -> Attestation | None:
+    """
+    Remove unstructured source details without losing example offsets.
+
+    Args:
+        value: Unreferenced example and its known word offsets.
+
+    Returns:
+        The example without source details, or None if no example remains.
+    """
+    if _AUTHOR_CITATION.match(value.text) and _SOURCE_URL.search(value.text):
+        return None
+
+    head, separator, _ = value.text.partition("\n")
+
+    if separator and (BIBLIOGRAPHY.match(head) or _DOCUMENT_HEADER.match(value.text)):
+        value = substitute(value, _FIRST_LINE, "")
+
+    value = substitute(value, _TRAILING_CITATION, "")
+    value = substitute(value, _PARENTHETICAL_CITATION, "")
+    value = substitute(value, _SOURCE_URL, "")
+
+    value = normalize_formatting(value, preserve_markup=True)
+
+    return value if any(character.isalnum() for character in value.text) else None
+
+
+def _split_example(
+    value: Attestation,
+) -> tuple[Attestation, ...]:
+    """
+    Split layout-separated examples only when their boundaries are supported.
+
+    Args:
+        value: Cleaned unreferenced example and its known word offsets.
+
+    Returns:
+        Separate examples, or one example with normalized layout spacing.
+    """
+    separators = tuple(_EXAMPLE_SEPARATOR.finditer(value.text))
+
+    if not separators:
+        return (value,)
+
+    boundaries: list[tuple[int, int]] = []
+    start = 0
+
+    for separator in separators:
+        boundaries.append((start, separator.start()))
+        start = separator.end()
+
+    boundaries.append((start, len(value.text)))
+
+    all_segments_have_offsets = all(
+        any(
+            left <= offset.offset[0] < offset.offset[1] <= right
+            for offset in value.word_offsets
+        )
+        for left, right in boundaries
+    )
+
+    all_boundaries_are_punctuated = all(
+        value.text[left:right].rstrip().endswith(tuple(_EXAMPLE_ENDINGS))
+        for left, right in boundaries[:-1]
+    )
+
+    has_repeated_separator = any(match[0].count("\u2003") > 1 for match in separators)
+
+    if not (
+        all_segments_have_offsets
+        or all_boundaries_are_punctuated
+        or has_repeated_separator
+    ):
+        return (substitute(value, _EXAMPLE_SEPARATOR, " "),)
+
+    examples: list[Attestation] = []
+
+    for left, right in boundaries:
+        segment = value.text[left:right]
+        leading_space = len(segment) - len(segment.lstrip())
+        text = segment.strip()
+
+        if text.endswith(";"):
+            text = text[:-1].rstrip()
+
+        segment_start = left + leading_space
+        word_offsets = tuple(
+            WordOffset(
+                (
+                    offset.offset[0] - segment_start,
+                    offset.offset[1] - segment_start,
+                ),
+                offset.sources,
+            )
+            for offset in value.word_offsets
+            if segment_start
+            <= offset.offset[0]
+            < offset.offset[1]
+            <= segment_start + len(text)
+        )
+
+        if text:
+            examples.append(Attestation(text, word_offsets=word_offsets))
+
+    return tuple(examples)
+
+
 def parse_sentences(
     raw_examples: list[RawExample],
     minimum_year: int | None,
@@ -268,20 +396,33 @@ def parse_sentences(
             quoted=bool(reference),
         )
 
+        if (
+            cleaned is not None
+            and not reference
+            and raw_example.get("type") != _EXAMPLE
+        ):
+            cleaned = _remove_example_bibliography(cleaned)
+
         if cleaned is None:
             continue
 
         text, word_offsets = cleaned.text, cleaned.word_offsets
 
         if not reference:
-            sentences.append(
+            sentences.extend(
                 Example(
-                    text,
-                    word_offsets=word_offsets,
+                    example.text,
+                    word_offsets=example.word_offsets,
+                )
+                for example in _split_example(
+                    Attestation(text, word_offsets=word_offsets),
                 )
             )
 
             continue
+
+        cleaned = substitute(cleaned, _EXAMPLE_SEPARATOR, " ")
+        text, word_offsets = cleaned.text, cleaned.word_offsets
 
         year = parse_year(reference)
 

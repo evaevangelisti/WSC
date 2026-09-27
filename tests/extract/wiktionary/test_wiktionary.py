@@ -731,6 +731,59 @@ class TestPseudoSenses:
 class TestSentences:
     """The sentences illustrating a sense."""
 
+    def test_splits_layout_examples(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """Supported em-space boundaries produce separate examples."""
+        sentences = attest(
+            {
+                "text": "bank one\u2003 bank two",
+                "bold_text_offsets": [[0, 4], [10, 14]],
+            },
+            {"text": "first bank;\u2003 second bank"},
+        )
+
+        assert [sentence.text for sentence in sentences] == [
+            "bank one",
+            "bank two",
+            "first bank",
+            "second bank",
+        ]
+        assert all(
+            sentence.word_offsets[0].offset[0] < len(sentence.text)
+            for sentence in sentences
+        )
+
+    def test_preserves_ambiguous_layout_spacing(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """One unsupported em space remains ordinary sentence spacing."""
+        written = "directionally correct \u2003 [= headed in the right direction]"
+
+        sentences = attest({"text": written}, headword="directionally")
+
+        assert [sentence.text for sentence in sentences] == [
+            "directionally correct [= headed in the right direction]",
+        ]
+
+    def test_preserves_layout_inside_quotations(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """Layout spacing never splits a quotation from its reference."""
+        sentences = attest(
+            {
+                "text": "First bank.\u2003 Second bank.",
+                "ref": "2000, A Source",
+            },
+        )
+
+        assert [sentence.text for sentence in sentences] == [
+            "First bank. Second bank.",
+        ]
+
     @given(st.lists(raw_examples(), max_size=4))
     def test_classifies_unreferenced_examples(
         self,

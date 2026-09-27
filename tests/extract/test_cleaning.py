@@ -245,6 +245,119 @@ def test_cleans_sentences(
 
 
 @pytest.mark.parametrize(
+    ("written", "expected"),
+    [
+        (
+            "The sample entry remains. https://example.org/source",
+            "The sample entry remains.",
+        ),
+        (
+            "The sample entry remains. — Author, 2007 https://example.org/source",
+            "The sample entry remains.",
+        ),
+        (
+            "The sample entry remains. (A Book, 2007https://example.org/source",
+            "The sample entry remains.",
+        ),
+        (
+            "https://example.org/source The sample entry remains.",
+            "The sample entry remains.",
+        ),
+        (
+            "Aldrichimica Acta Volume 30 No 4 (pdf) from Sigma-Aldrich\n"
+            + "The sample entry remains.",
+            "The sample entry remains.",
+        ),
+    ],
+)
+def test_removes_unstructured_example_bibliography(
+    extract: Callable[..., list[Lemma]],
+    written: str,
+    expected: str,
+) -> None:
+    """Unreferenced source details leave example text and word offsets intact.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+        written: Example text containing source details.
+        expected: Example text after source removal.
+    """
+    start = written.index("sample entry")
+    result = extract(
+        {
+            "senses": [
+                {
+                    "glosses": ["A meaning."],
+                    "examples": [
+                        {
+                            "text": written,
+                            "bold_text_offsets": [[start, start + len("sample entry")]],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    (sentence,) = result[0].senses[0].sentences
+
+    assert sentence.text == expected
+    assert any(
+        sentence.text[offset.offset[0] : offset.offset[1]] == "sample entry"
+        for offset in sentence.word_offsets
+    )
+
+
+def test_preserves_urls_used_as_example_text(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """An explicit example may demonstrate a URL rather than cite a source.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+    """
+    written = "The sample entry links to https://example.org/."
+    result = extract(
+        {
+            "senses": [
+                {
+                    "glosses": ["A meaning."],
+                    "examples": [{"text": written, "type": "example"}],
+                },
+            ],
+        },
+    )
+
+    assert result[0].senses[0].sentences[0].text == written
+
+
+def test_discards_bibliography_without_example_text(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """A standalone author, title, journal, and URL do not illustrate a word.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+    """
+    written = (
+        'Pemberton, S. George and Robert W. Frey 1991. "A sample entry". '
+        + "Ichnos, 1: 317–325. https://example.org/source"
+    )
+    result = extract(
+        {
+            "senses": [
+                {
+                    "glosses": ["A meaning."],
+                    "examples": [{"text": written}],
+                },
+            ],
+        },
+    )
+
+    assert result[0].senses[0].sentences == []
+
+
+@pytest.mark.parametrize(
     "written",
     [
         "See also the life around you.",
@@ -388,6 +501,8 @@ def test_excludes_navigation_across_fields(
         ("yue", "{{|yue|洛陽}}", None),
         ("cy", "{{t|cy|post}} junk }}", None),
         ("el", "\u2060", None),
+        ("nan-tws", "[script needed]", None),
+        ("es", "[es el", None),
         ("sms", "määnpââ\N{ACUTE ACCENT}jj", ("sms", "määnpââ\N{ACUTE ACCENT}jj")),
         ("ml", "അ\u200dആ", ("ml", "അ\u200dആ")),
         (" fa-ira ", " واژه ", ("fa-ira", "واژه")),
@@ -571,6 +686,17 @@ def test_handles_arbitrary_unicode(
         ("nascer/pôr do sol", frozenset({"nascer do sol", "pôr do sol"})),
         ("uJanuwari class 1a/2a", frozenset({"uJanuwari"})),
         ("Abtrünniger m/Abtrünnige", frozenset({"Abtrünniger", "Abtrünnige"})),
+        ("Wort \\ Begriff", frozenset({"Wort", "Begriff"})),
+        ("armado [con]", frozenset({"armado"})),
+        ("[el] ala", frozenset({"ala"})),
+        ("[nocą]", frozenset({"nocą"})),
+        ("funcionario[a]", frozenset({"funcionario", "funcionaria"})),
+        ("[anglicism]skipping", frozenset({"skipping"})),
+        (
+            "لِيرَة f or لَيْرَة",
+            frozenset({"لِيرَة", "لَيْرَة"}),
+        ),
+        ("papallona de la c blanca", frozenset({"papallona de la c blanca"})),
         (
             "kapzsi/telhetetlen ember/lény",
             frozenset(
@@ -590,6 +716,117 @@ def test_keeps_lexical_translation_alternatives(
 ) -> None:
     """Translation cleanup removes metadata without losing complete variants."""
     assert clean_translations("und", written) == ("und", expected)
+
+
+@pytest.mark.parametrize(
+    ("language", "written", "expected"),
+    [
+        ("la", "Abdēra n pl and", "Abdēra"),
+        ("fr", "les îles Ioniennes f plural", "les îles Ioniennes"),
+        ("wal", "Inggilizettuwa sg or", "Inggilizettuwa"),
+        ("sv", "grönt uncountable", "grönt"),
+        ("ru", "сзыва́ть impf", "сзыва́ть"),
+        ("de", "plural", "plural"),
+        ("pt", "primeira pessoa do singular", "primeira pessoa do singular"),
+        ("uk", "приско́рювати impf прискорити", "приско́рювати impf прискорити"),
+        ("pl", "możliwe, że", "możliwe, że"),
+        ("kab", "Iwunak Yeddukklen n Temrikt", "Iwunak Yeddukklen n Temrikt"),
+    ],
+)
+def test_removes_unambiguous_translation_grammar(
+    extract: Callable[..., list[Lemma]],
+    language: str,
+    written: str,
+    expected: str,
+) -> None:
+    """Suffix metadata is removed without splitting lexical or ambiguous text.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+        language: Translation language code.
+        written: Raw translation with possible grammar notes.
+        expected: Translation retained after cleanup.
+    """
+    result = extract(
+        {
+            "translations": [
+                {"sense": "A meaning.", "lang_code": language, "word": written},
+            ],
+        },
+    )
+
+    assert result[0].translation_tables[0].translations == {
+        language: frozenset({expected}),
+    }
+
+
+@pytest.mark.parametrize(
+    ("language", "written", "expected"),
+    [
+        ("fr", "ton m ta f tes", frozenset({"ton", "ta", "tes"})),
+        ("it", "tuo m tua f tuoi m pl tue", frozenset({"tuo", "tua", "tuoi", "tue"})),
+        ("de", "Musikant m Musikantin", frozenset({"Musikant", "Musikantin"})),
+        (
+            "de",
+            "unerlaubte Entfernung f unerlaubte Entfernung von der Truppe",
+            frozenset(
+                {
+                    "unerlaubte Entfernung",
+                    "unerlaubte Entfernung von der Truppe",
+                },
+            ),
+        ),
+        ("zh", "詞典 /词典", frozenset({"詞典", "词典"})),
+        ("he", "שחור \\ שָׁחֹר", frozenset({"שחור", "שָׁחֹר"})),
+        ("de", "Wort m / Begriff", frozenset({"Wort", "Begriff"})),
+    ],
+)
+def test_separates_explicit_translation_alternatives(
+    extract: Callable[..., list[Lemma]],
+    language: str,
+    written: str,
+    expected: frozenset[str],
+) -> None:
+    """Repeated gender labels and spaced slashes delimit complete forms.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+        language: Translation language code.
+        written: Raw translation with explicit alternative boundaries.
+        expected: Complete lexical alternatives.
+    """
+    result = extract(
+        {
+            "translations": [
+                {"sense": "A meaning.", "lang_code": language, "word": written},
+            ],
+        },
+    )
+
+    assert result[0].translation_tables[0].translations == {language: expected}
+
+
+def test_discards_ambiguous_middle_gender(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """A lone internal gender label cannot safely identify both forms.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+    """
+    result = extract(
+        {
+            "translations": [
+                {
+                    "sense": "A meaning.",
+                    "lang_code": "de",
+                    "word": "Wort m Begriff",
+                },
+            ],
+        },
+    )
+
+    assert result[0].translation_tables == ()
 
 
 @given(st.lists(words, min_size=2, max_size=5))

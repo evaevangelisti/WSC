@@ -107,6 +107,10 @@ def fetch(
 ) -> None:
     """
     Download a Wiktionary dump. Needs the network.
+
+    Args:
+        dump_date: Requested dump date or latest available dump.
+        cache_dir: Directory holding downloaded and parsed sources.
     """
     user_agent = USER_AGENT.format(version=version("wsc"))
 
@@ -165,6 +169,13 @@ def parse(
     Parse a fetched dump with wiktextract, or take one published.
 
     The dump is then walked for the translations left behind.
+
+    Args:
+        dump_date: Requested dump date or latest fetched dump.
+        processes: Number of wiktextract worker processes.
+        database_path: Temporary database path for wiktextract.
+        archive: Whether to use the published parse.
+        cache_dir: Directory holding downloaded and parsed sources.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -290,6 +301,18 @@ def collect(
 ) -> None:
     """
     Collect senses, statistics, and provenance into an output directory.
+
+    Args:
+        dump_date: Requested dump date or latest fetched dump.
+        pos: Parts of speech to retain, or all when omitted.
+        minimum_year: Earliest quotation year to retain.
+        maximum_year: Latest quotation year to retain.
+        engine: Engine used to locate headwords in sentences.
+        processes: Number of sentence reading processes.
+        batch_size: Number of sentences read per batch.
+        gpu: Whether to use the graphics card.
+        cache_dir: Directory holding downloaded and parsed sources.
+        output_dir: Destination for the collection and reports.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -484,6 +507,25 @@ def align(
 ) -> None:
     """
     Align collected senses with language model decisions.
+
+    Args:
+        input_path: Collected JSON Lines file to align.
+        task: Alignment resources to process, or both when omitted.
+        synsets_path: JSON Lines file containing candidate synsets.
+        model: Local model path or Hugging Face identifier.
+        gloss_mode: Wiktionary gloss representation in prompts.
+        prompts_path: Custom task prompt templates.
+        temperature: Model sampling temperature.
+        maximum_tokens: Maximum output tokens per request.
+        batch_size: Number of prompts prepared per inference pass.
+        reasoning_parser: Parser for model reasoning output.
+        reasoning_effort: Reasoning effort accepted by the model.
+        engine_option: Additional vLLM engine options.
+        chat_template_option: Additional chat template options.
+        reuse: Whether to reuse cached source decisions.
+        verbose: Whether to log individual failures and responses.
+        cache_dir: Directory holding alignment decisions.
+        output_dir: Destination for aligned senses and reports.
     """
     tasks = tuple(dict.fromkeys(task or AlignmentTask))
 
