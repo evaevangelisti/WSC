@@ -1,4 +1,6 @@
-"""Candidate construction independent of model predictions."""
+"""
+Candidate construction independent of model predictions.
+"""
 
 from collections import defaultdict
 from collections.abc import Iterable
@@ -7,7 +9,9 @@ from ..models import POS, Lemma, Synset
 
 
 class SynsetCandidates:
-    """Synset candidates retrieved by lexical form and part of speech."""
+    """
+    Synset candidates retrieved by lexical form and part of speech.
+    """
 
     def __init__(
         self,
@@ -97,7 +101,8 @@ class SynsetCandidates:
         lemma: Lemma,
         synset: Synset,
     ) -> tuple[str, ...]:
-        """Return every declared input source for the queried member.
+        """
+        Return every declared input source for the queried member.
 
         Args:
             lemma: Entry whose candidate is being described.

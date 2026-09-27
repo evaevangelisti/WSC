@@ -58,7 +58,9 @@ wsc fetch
 
 ### parse
 
-Reads the dump with [wiktextract](https://github.com/tatuylonen/wiktextract), which turns Wiktionary's markup into entries, keeping the fields the collector reads.
+Reads the dump with [wiktextract](https://github.com/tatuylonen/wiktextract), which turns Wiktionary's markup into entries. 
+
+The same dump pass collects supplemental translations and explicit Wikidata sense IDs.
 
 ```sh
 wsc parse

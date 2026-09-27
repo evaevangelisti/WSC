@@ -1,4 +1,6 @@
-"""Tests for src/wsc/upstream/download.py."""
+"""
+Tests for src/wsc/upstream/download.py.
+"""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -37,7 +39,9 @@ def fetch(
 
 
 class TestDownload:
-    """Retrieval through a .part file, so a failed attempt can be resumed."""
+    """
+    Retrieval through a .part file, so a failed attempt can be resumed.
+    """
 
     @given(_BODIES, _CHUNK_SIZES)
     def test_writes_download(
@@ -46,7 +50,9 @@ class TestDownload:
         body: bytes,
         chunk_size: int,
     ) -> None:
-        """The bytes the server sent are the bytes that land on disk."""
+        """
+        The bytes the server sent are the bytes that land on disk.
+        """
         output_path = workspace() / "dump.xml.bz2"
 
         with responses.RequestsMock() as server:
@@ -62,7 +68,9 @@ class TestDownload:
         workspace: Callable[[], Path],
         directories: list[str],
     ) -> None:
-        """The first fetch of an edition writes where no directory exists yet."""
+        """
+        The first fetch of an edition writes where no directory exists yet.
+        """
         output_path = workspace().joinpath(*directories) / "dump.xml.bz2"
 
         with responses.RequestsMock() as server:
@@ -78,7 +86,9 @@ class TestDownload:
         workspace: Callable[[], Path],
         body: bytes,
     ) -> None:
-        """The .part file is removed once its contents are in place."""
+        """
+        The .part file is removed once its contents are in place.
+        """
         directory = workspace()
 
         with responses.RequestsMock() as server:
@@ -92,7 +102,9 @@ class TestDownload:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """Wikimedia asks that requests name whoever answers for them."""
+        """
+        Wikimedia asks that requests name whoever answers for them.
+        """
         with responses.RequestsMock() as server:
             _ = server.get(URL, body=b"a dump")
 
@@ -104,7 +116,9 @@ class TestDownload:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """A first attempt has no bytes behind it, so it asks for the whole file."""
+        """
+        A first attempt has no bytes behind it, so it asks for the whole file.
+        """
         with responses.RequestsMock() as server:
             _ = server.get(URL, body=b"a dump")
 
@@ -120,7 +134,9 @@ class TestDownload:
         rest: bytes,
         chunk_size: int,
     ) -> None:
-        """A transfer resumes from the .part file a failed attempt left behind."""
+        """
+        A transfer resumes from the .part file a failed attempt left behind.
+        """
         output_path = workspace() / "dump.xml.bz2"
         _ = output_path.with_name("dump.xml.bz2.part").write_bytes(downloaded)
 
@@ -142,7 +158,9 @@ class TestDownload:
         downloaded: bytes,
         body: bytes,
     ) -> None:
-        """A 200 answers with the whole file, so what came before is dropped."""
+        """
+        A 200 answers with the whole file, so what came before is dropped.
+        """
         output_path = workspace() / "dump.xml.bz2"
         _ = output_path.with_name("dump.xml.bz2.part").write_bytes(downloaded)
 
@@ -160,7 +178,9 @@ class TestDownload:
         downloaded: bytes,
         status: int,
     ) -> None:
-        """The .part file left behind is the whole of what resuming builds on."""
+        """
+        The .part file left behind is the whole of what resuming builds on.
+        """
         output_path = workspace() / "dump.xml.bz2"
         partial_path = output_path.with_name("dump.xml.bz2.part")
         _ = partial_path.write_bytes(downloaded)
@@ -179,7 +199,9 @@ class TestDownload:
         workspace: Callable[[], Path],
         status: int,
     ) -> None:
-        """A dump that is not there leaves no file behind."""
+        """
+        A dump that is not there leaves no file behind.
+        """
         directory = workspace()
 
         with responses.RequestsMock() as server:

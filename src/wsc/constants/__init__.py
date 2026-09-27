@@ -1,4 +1,6 @@
-"""Shared constants grouped by responsibility."""
+"""
+Shared constants grouped by responsibility.
+"""
 
 from .alignment import (
     ALIGNMENT_BATCH_SIZE,

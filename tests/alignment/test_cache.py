@@ -1,4 +1,6 @@
-"""Exercise reusable alignment decision persistence."""
+"""
+Exercise reusable alignment decision persistence.
+"""
 
 import csv
 import json
@@ -30,7 +32,9 @@ def test_validates_cached_equivalences(
     tmp_path: Path,
     assignments: tuple[tuple[str, str], ...],
 ) -> None:
-    """Cached decisions obey the same equivalence constraints as model responses."""
+    """
+    Cached decisions obey the same equivalence constraints as model responses.
+    """
     query = build_query(AlignmentTask.SYNSETS)
     path = tmp_path / "synsets.tsv"
 
@@ -64,7 +68,9 @@ def test_flushes_replayable_decisions(
     *,
     abstain: bool,
 ) -> None:
-    """Incremental TSV rows retain Unicode, quoting, links, and abstentions."""
+    """
+    Incremental TSV rows retain Unicode, quoting, links, and abstentions.
+    """
     directory = workspace()
     sample = build_query(task)
     response = json.dumps(
@@ -108,7 +114,9 @@ def test_flushes_replayable_decisions(
 def test_preserves_completed_cache(
     tmp_path: Path,
 ) -> None:
-    """An interrupted rewrite preserves the completed decision table."""
+    """
+    An interrupted rewrite preserves the completed decision table.
+    """
     path = tmp_path / "translations.tsv"
     _ = path.write_text("previous decisions", encoding="utf-8")
 

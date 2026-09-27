@@ -1,4 +1,6 @@
-"""Parsing of a Wiktionary dump with wiktextract, and taking a parse already made."""
+"""
+Parsing of a Wiktionary dump with wiktextract, and taking a parse already made.
+"""
 
 import json
 import subprocess
@@ -15,7 +17,9 @@ _READING = "Reading the dump"
 _NARROWING = "Narrowing the extraction"
 
 type Narrow = Callable[[object], object]
-"""Cuts one entry down to the fields that will be read of it."""
+"""
+Cuts one entry down to the fields that will be read of it.
+"""
 
 
 def _write(

@@ -1,4 +1,6 @@
-"""Gathering the entries Wiktionary splits by etymology into one."""
+"""
+Gathering the entries Wiktionary splits by etymology into one.
+"""
 
 from collections.abc import Iterable, Iterator
 from dataclasses import replace

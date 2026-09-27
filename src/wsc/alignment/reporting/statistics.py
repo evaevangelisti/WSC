@@ -1,4 +1,6 @@
-"""Count resolved senses and associations for each alignment task."""
+"""
+Count resolved senses and associations for each alignment task.
+"""
 
 from collections import Counter
 from collections.abc import Iterable

@@ -1,4 +1,6 @@
-"""Exercise JSON Lines input for generic synsets."""
+"""
+Exercise JSON Lines input for generic synsets.
+"""
 
 import json
 from pathlib import Path
@@ -10,7 +12,8 @@ from wsc.reading import read_synsets
 def test_reads_synsets_with_generated_ids_and_member_sources(
     tmp_path: Path,
 ) -> None:
-    """Absent identifiers and member sources survive input normalization.
+    """
+    Absent identifiers and member sources survive input normalization.
 
     Args:
         tmp_path: Isolated directory for the source file.

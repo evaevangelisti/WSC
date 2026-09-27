@@ -1,4 +1,6 @@
-"""Build common manifest fields."""
+"""
+Build common manifest fields.
+"""
 
 from datetime import UTC, datetime
 from pathlib import Path

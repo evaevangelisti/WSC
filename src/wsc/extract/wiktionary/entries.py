@@ -1,4 +1,6 @@
-"""Walking the entries of a wiktextract file."""
+"""
+Walking the entries of a wiktextract file.
+"""
 
 import json
 from collections.abc import Iterator

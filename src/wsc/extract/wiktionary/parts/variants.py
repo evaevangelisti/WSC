@@ -1,4 +1,6 @@
-"""How else a lemma is spelled, gathered from the entries stating so."""
+"""
+How else a lemma is spelled, gathered from the entries stating so.
+"""
 
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
@@ -11,7 +13,9 @@ from .glosses import is_variant_gloss, referenced_lemma
 _ALT_OF = "alt-of"
 
 type Variants = dict[tuple[str, POS], frozenset[str]]
-"""Variant lemmas grouped by headword and part of speech."""
+"""
+Variant lemmas grouped by headword and part of speech.
+"""
 
 
 def _read_pointed_lemmas(

@@ -30,7 +30,9 @@ _UNIVERSAL_TAGS = {
 
 
 class TestQueries:
-    """What one entry is looked for by."""
+    """
+    What one entry is looked for by.
+    """
 
     @given(words, _PARTS_OF_SPEECH, _FORMS)
     def test_preserves_query_forms(
@@ -39,7 +41,9 @@ class TestQueries:
         pos: POS,
         forms: frozenset[str],
     ) -> None:
-        """A sentence attests the lemma in whatever form it needs."""
+        """
+        A sentence attests the lemma in whatever form it needs.
+        """
         query = build_query(headword, pos, forms)
 
         assert query.lemma == headword
@@ -52,12 +56,16 @@ class TestQueries:
         pos: POS,
         forms: frozenset[str],
     ) -> None:
-        """Wiktionary writes adj where Universal Dependencies writes ADJ."""
+        """
+        Wiktionary writes adj where Universal Dependencies writes ADJ.
+        """
         assert build_query(headword, pos, forms).pos == _UNIVERSAL_TAGS[pos]
 
 
 class TestSearches:
-    """What comes back for a batch of sentences."""
+    """
+    What comes back for a batch of sentences.
+    """
 
     @given(st.lists(words, max_size=6))
     def test_returns_sentence_offsets(
@@ -65,7 +73,9 @@ class TestSearches:
         locator: Locator,
         headwords: list[str],
     ) -> None:
-        """A sentence attesting nothing is still a sentence that was read."""
+        """
+        A sentence attesting nothing is still a sentence that was read.
+        """
         searches = [
             (f"1 {headword} 2", build_query(headword, POS.NOUN, frozenset({headword})))
             for headword in headwords
@@ -79,7 +89,9 @@ class TestSearches:
         locator: Locator,
         headwords: list[str],
     ) -> None:
-        """The ranges come back beside the sentence they were read out of."""
+        """
+        The ranges come back beside the sentence they were read out of.
+        """
         searches = [
             (f"1 {headword} 2", build_query(headword, POS.NOUN, frozenset({headword})))
             for headword in headwords
@@ -99,7 +111,9 @@ class TestSearches:
         locator: Locator,
         headword: str,
     ) -> None:
-        """A sentence may attest the lemma more than once, and each occurrence once."""
+        """
+        A sentence may attest the lemma more than once, and each occurrence once.
+        """
         text = f"{headword} and {headword} again {headword}"
 
         (offsets,) = find_word_offsets(
@@ -112,7 +126,9 @@ class TestSearches:
 
 
 class TestFallback:
-    """Matching the listed forms where the reading found nothing."""
+    """
+    Matching the listed forms where the reading found nothing.
+    """
 
     @given(words)
     def test_matches_unrecognized_forms(
@@ -120,7 +136,9 @@ class TestFallback:
         locator: Locator,
         headword: str,
     ) -> None:
-        """The engine reads every word as a noun, so a verb is never read off."""
+        """
+        The engine reads every word as a noun, so a verb is never read off.
+        """
         text = f"1 {headword} 2"
 
         (offsets,) = find_word_offsets(
@@ -136,7 +154,9 @@ class TestFallback:
         locator: Locator,
         data: st.DataObject,
     ) -> None:
-        """A sentence illustrating a sense need not spell the lemma out."""
+        """
+        A sentence illustrating a sense need not spell the lemma out.
+        """
         text = data.draw(st.text(alphabet="123 ", max_size=20))
         headword = data.draw(words)
 
@@ -153,7 +173,9 @@ class TestFallback:
         locator: Locator,
         data: st.DataObject,
     ) -> None:
-        """Each sentence is answered for itself, whichever found it."""
+        """
+        Each sentence is answered for itself, whichever found it.
+        """
         recognized_word = data.draw(words)
         fallback_word = data.draw(
             words.filter(lambda word: word.casefold() != recognized_word.casefold()),

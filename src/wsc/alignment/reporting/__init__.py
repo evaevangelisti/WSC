@@ -1,4 +1,6 @@
-"""Expose alignment statistics, provenance, and output publication."""
+"""
+Expose alignment statistics, provenance, and output publication.
+"""
 
 from .manifest import build_manifest
 from .statistics import AlignmentStatistics

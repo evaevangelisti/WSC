@@ -1,4 +1,6 @@
-"""How the pipeline reads and writes the files it keeps."""
+"""
+How the pipeline reads and writes the files it keeps.
+"""
 
 import bz2
 import gzip

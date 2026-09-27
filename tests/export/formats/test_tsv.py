@@ -1,4 +1,6 @@
-"""General tabular export independent of lexical resources."""
+"""
+General tabular export independent of lexical resources.
+"""
 
 import csv
 from collections.abc import Callable
@@ -32,7 +34,9 @@ def test_preserves_tabular_rows(
     fields: list[str],
     rows: list[dict[str, str | int | float | bool | None]],
 ) -> None:
-    """Arbitrary text, absent cells, and scalars follow the standard CSV contract."""
+    """
+    Arbitrary text, absent cells, and scalars follow the standard CSV contract.
+    """
     path = workspace() / "inventory.tsv"
 
     with TSVWriter(path, fields) as writer:
@@ -55,7 +59,9 @@ def test_preserves_tabular_rows(
 def test_rejects_undeclared_columns(
     tmp_path: Path,
 ) -> None:
-    """A malformed row never replaces previously completed output."""
+    """
+    A malformed row never replaces previously completed output.
+    """
     path = tmp_path / "inventory.tsv"
     original = "name\nprevious\n"
     _ = path.write_text(original, encoding="utf-8")
@@ -73,7 +79,9 @@ def test_rejects_undeclared_columns(
 def test_requires_open_writer(
     tmp_path: Path,
 ) -> None:
-    """Writing before entry or after closure fails without changing output."""
+    """
+    Writing before entry or after closure fails without changing output.
+    """
     path = tmp_path / "inventory.tsv"
     writer = TSVWriter(path, ("name",))
 

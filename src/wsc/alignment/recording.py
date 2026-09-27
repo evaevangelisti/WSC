@@ -1,4 +1,6 @@
-"""Record alignment decisions incrementally in resource-specific tables."""
+"""
+Record alignment decisions incrementally in resource-specific tables.
+"""
 
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack

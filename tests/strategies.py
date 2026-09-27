@@ -22,7 +22,9 @@ from wsc.models import (
 )
 
 type RawJson = dict[str, object]
-"""One decoded JSON object, as wiktextract writes them."""
+"""
+One decoded JSON object, as wiktextract writes them.
+"""
 
 _LETTERS = st.characters(categories=("Ll", "Lu"), max_codepoint=0x24F)
 
@@ -36,7 +38,9 @@ _REFERENCE_SHAPES = [
 _UNDATED = string.ascii_letters + " ,.'"
 
 words = st.text(alphabet=_LETTERS, min_size=1, max_size=8)
-"""One written form, whether a headword or an inflection of one."""
+"""
+One written form, whether a headword or an inflection of one.
+"""
 
 _LEXICAL_CHARACTERS = st.characters(
     categories=("L", "M", "N", "P", "S"),
@@ -54,33 +58,51 @@ texts = (
         lambda text: not any(marker in text for marker in ("Ã©", "â€¢", "â€“")),
     )
 )
-"""Visible Unicode prose; cleanup properties generate damaged strings separately."""
+"""
+Visible Unicode prose; cleanup properties generate damaged strings separately.
+"""
 
 glosses = texts
-"""Plain lexical headings without navigation or display artifacts."""
+"""
+Plain lexical headings without navigation or display artifacts.
+"""
 
 definitions = glosses.map(lambda gloss: f"A meaning: {gloss}")
-"""Lexical definitions with Unicode text after a non-redirect opening."""
+"""
+Lexical definitions with Unicode text after a non-redirect opening.
+"""
 
 sentence_kinds = st.sampled_from(["example", "quotation"])
-"""What wiktextract calls a sentence, where it says which kind it read."""
+"""
+What wiktextract calls a sentence, where it says which kind it read.
+"""
 
 form_tags = st.sampled_from(["form-of", "alt-of"])
-"""Identify tags marking inflected forms."""
+"""
+Identify tags marking inflected forms.
+"""
 
 blanks = st.text(alphabet=" \t\n", min_size=1, max_size=3)
-"""What reads as nothing at all once it has been stripped."""
+"""
+What reads as nothing at all once it has been stripped.
+"""
 
 years = st.integers(min_value=1000, max_value=2099)
-"""A year a reference may name, from the first century of printing to this one."""
+"""
+A year a reference may name, from the first century of printing to this one.
+"""
 
 undated_references = st.text(alphabet=_UNDATED, min_size=1, max_size=20).filter(
     lambda reference: bool(reference.strip()),
 )
-"""A source naming no year, which is a quotation nothing can date."""
+"""
+A source naming no year, which is a quotation nothing can date.
+"""
 
 languages = st.text(alphabet=string.ascii_lowercase, min_size=2, max_size=3)
-"""Wiktionary's code for one edition."""
+"""
+Wiktionary's code for one edition.
+"""
 
 dump_dates = st.dates(
     min_value=date(2001, 1, 1),
@@ -88,16 +110,24 @@ dump_dates = st.dates(
 ).map(
     lambda day: day.strftime("%Y%m%d"),
 )
-"""The day a dump began, as the directory holding it is named."""
+"""
+The day a dump began, as the directory holding it is named.
+"""
 
 parts_of_speech: st.SearchStrategy[POS] = st.sampled_from(POS)
-"""One part of speech the collector keeps."""
+"""
+One part of speech the collector keeps.
+"""
 
 etymologies = st.integers(min_value=1, max_value=9).map(str)
-"""Which etymology of a page an entry sits under, as Wiktionary numbers them."""
+"""
+Which etymology of a page an entry sits under, as Wiktionary numbers them.
+"""
 
 pos_codes = parts_of_speech.map(lambda pos: pos.value)
-"""Wiktextract's code for one of them."""
+"""
+Wiktextract's code for one of them.
+"""
 
 unknown_pos_codes = st.text(
     alphabet=string.ascii_lowercase,
@@ -106,7 +136,9 @@ unknown_pos_codes = st.text(
 ).filter(
     lambda code: code not in {"name", *(pos.value for pos in POS)},
 )
-"""A part of speech Wiktionary describes and the collector does not keep."""
+"""
+A part of speech Wiktionary describes and the collector does not keep.
+"""
 
 
 _OFFSETS = st.integers(min_value=0, max_value=60)
@@ -183,7 +215,9 @@ identifiers = st.tuples(
 ).map(
     _join_words,
 )
-"""An identifier of the shape an extraction writes."""
+"""
+An identifier of the shape an extraction writes.
+"""
 
 
 @st.composite
@@ -391,7 +425,9 @@ sentences: st.SearchStrategy[Sentence] = st.one_of(
         word_offsets=_WORD_OFFSETS,
     ),
 )
-"""One sentence a sense carries, of either kind."""
+"""
+One sentence a sense carries, of either kind.
+"""
 
 senses = st.builds(
     Sense,
@@ -404,7 +440,9 @@ senses = st.builds(
     st.lists(sentences, max_size=3),
     _LABEL_LISTS,
 )
-"""One meaning of a lemma, filled the way an extraction fills it."""
+"""
+One meaning of a lemma, filled the way an extraction fills it.
+"""
 
 translations = st.dictionaries(
     glosses,
@@ -416,7 +454,9 @@ translations = st.dictionaries(
     ),
     max_size=2,
 )
-"""What other languages call a lemma, gathered under the glosses translated."""
+"""
+What other languages call a lemma, gathered under the glosses translated.
+"""
 
 lemmas = parts_of_speech.flatmap(
     lambda pos: st.builds(
@@ -438,4 +478,6 @@ lemmas = parts_of_speech.flatmap(
         ),
     ),
 )
-"""One lemma, as an extraction hands it to a writer."""
+"""
+One lemma, as an extraction hands it to a writer.
+"""

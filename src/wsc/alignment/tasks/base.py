@@ -1,4 +1,6 @@
-"""Define task handlers and shared Wiktionary sense construction."""
+"""
+Define task handlers and shared Wiktionary sense construction.
+"""
 
 from collections.abc import Iterator
 from typing import Protocol
@@ -9,7 +11,9 @@ from ..candidates import SynsetCandidates
 
 
 class AlignmentHandler(Protocol):
-    """Define the extension points for an alignment task."""
+    """
+    Define the extension points for an alignment task.
+    """
 
     relations: tuple[str, ...]
     one_to_one: bool

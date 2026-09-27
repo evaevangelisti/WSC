@@ -1,4 +1,6 @@
-"""The meanings an entry holds."""
+"""
+The meanings an entry holds.
+"""
 
 from ....identifiers import sense_id
 from ....models import Sense
@@ -73,7 +75,6 @@ def parse_senses(
                     minimum_year,
                     maximum_year,
                 ),
-                tuple(raw_sense.get("wikidata", [])),
             )
         )
 

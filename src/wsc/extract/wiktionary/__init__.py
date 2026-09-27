@@ -1,4 +1,6 @@
-"""Reading of what wiktextract made of a Wiktionary dump."""
+"""
+Reading of what wiktextract made of a Wiktionary dump.
+"""
 
 from .entries import read_entries
 from .extractor import WiktionaryExtractor

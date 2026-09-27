@@ -1,4 +1,6 @@
-"""Publish aligned senses, task reports, and provenance together."""
+"""
+Publish aligned senses, task reports, and provenance together.
+"""
 
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime

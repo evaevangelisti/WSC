@@ -1,4 +1,6 @@
-"""Generate decisions through offline vLLM inference."""
+"""
+Generate decisions through offline vLLM inference.
+"""
 
 from __future__ import annotations
 
@@ -18,14 +20,18 @@ _LOGGER = getLogger(__name__)
 
 
 class _ChatRequest(Protocol):
-    """Describe the vLLM chat request fields used during inference."""
+    """
+    Describe the vLLM chat request fields used during inference.
+    """
 
     messages: Sequence[dict[str, str]]
     chat_template_kwargs: dict[str, object] | None
 
 
 class _Completion(Protocol):
-    """Describe one generated completion returned by vLLM."""
+    """
+    Describe one generated completion returned by vLLM.
+    """
 
     finish_reason: str | None
     text: str
@@ -33,13 +39,17 @@ class _Completion(Protocol):
 
 
 class _RequestOutput(Protocol):
-    """Describe the completion list returned for one request."""
+    """
+    Describe the completion list returned for one request.
+    """
 
     outputs: Sequence[_Completion]
 
 
 class _Tokenizer(Protocol):
-    """Describe the tokenizer operation used by Harmony parsing."""
+    """
+    Describe the tokenizer operation used by Harmony parsing.
+    """
 
     def decode(
         self,
@@ -61,7 +71,9 @@ class _Tokenizer(Protocol):
 
 
 class _ReasoningParser(Protocol):
-    """Describe the reasoning parser operations used by the adapter."""
+    """
+    Describe the reasoning parser operations used by the adapter.
+    """
 
     def extract_content_ids(
         self,
@@ -97,7 +109,9 @@ class _ReasoningParser(Protocol):
 
 
 class _ReasoningParserFactory(Protocol):
-    """Construct one reasoning parser for each completion."""
+    """
+    Construct one reasoning parser for each completion.
+    """
 
     def __call__(
         self,
@@ -119,7 +133,9 @@ class _ReasoningParserFactory(Protocol):
 
 
 class _ParserManager(Protocol):
-    """Resolve the parser registered in the vLLM configuration."""
+    """
+    Resolve the parser registered in the vLLM configuration.
+    """
 
     @staticmethod
     def get_reasoning_parser(
@@ -138,25 +154,33 @@ class _ParserManager(Protocol):
 
 
 class _StructuredOutputsConfiguration(Protocol):
-    """Describe the configured reasoning parser name."""
+    """
+    Describe the configured reasoning parser name.
+    """
 
     reasoning_parser: str | None
 
 
 class _VllmConfiguration(Protocol):
-    """Describe the vLLM configuration fields used by the adapter."""
+    """
+    Describe the vLLM configuration fields used by the adapter.
+    """
 
     structured_outputs_config: _StructuredOutputsConfiguration
 
 
 class _Engine(Protocol):
-    """Describe the vLLM engine configuration boundary."""
+    """
+    Describe the vLLM engine configuration boundary.
+    """
 
     vllm_config: _VllmConfiguration
 
 
 class _LanguageModel(Protocol):
-    """Describe the offline vLLM operations used by the adapter."""
+    """
+    Describe the offline vLLM operations used by the adapter.
+    """
 
     llm_engine: _Engine
 
@@ -195,7 +219,9 @@ class _LanguageModel(Protocol):
 
 
 class OfflineModel:
-    """Use the offline vLLM engine for local models."""
+    """
+    Use the offline vLLM engine for local models.
+    """
 
     def __init__(
         self,

@@ -1,4 +1,6 @@
-"""Name lexical entries, senses, translation tables, and alignment queries."""
+"""
+Name lexical entries, senses, translation tables, and alignment queries.
+"""
 
 from collections.abc import Iterable
 from hashlib import blake2b

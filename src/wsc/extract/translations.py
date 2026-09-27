@@ -1,4 +1,6 @@
-"""Read translation templates and normalize tables consistently across sources."""
+"""
+Read translation templates and normalize tables consistently across sources.
+"""
 
 import re
 from collections.abc import Iterator
@@ -267,7 +269,8 @@ def _expand_square_optionals(
 def _split_gender_alternatives(
     word: str,
 ) -> tuple[str, ...]:
-    """Split gender-marked forms when their boundaries are supported.
+    """
+    Split gender-marked forms when their boundaries are supported.
 
     Args:
         word: Translation that may embed masculine or feminine labels.
@@ -306,7 +309,8 @@ def _split_gender_alternatives(
 def _expand_alternatives(
     word: str,
 ) -> tuple[str, ...]:
-    """Expand explicit and optional alternatives with their shared context.
+    """
+    Expand explicit and optional alternatives with their shared context.
 
     Args:
         word: Translation containing alternative forms or segments.

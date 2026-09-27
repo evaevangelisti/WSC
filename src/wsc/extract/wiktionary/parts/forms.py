@@ -1,4 +1,6 @@
-"""The shapes an occurrence of a headword may take."""
+"""
+The shapes an occurrence of a headword may take.
+"""
 
 from ..schema import RawForm
 

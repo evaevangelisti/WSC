@@ -1,4 +1,6 @@
-"""What Wikimedia's dump repository holds, and where."""
+"""
+What Wikimedia's dump repository holds, and where.
+"""
 
 import re
 from typing import TypedDict, cast

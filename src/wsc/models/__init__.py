@@ -1,4 +1,6 @@
-"""Data structures passed around the pipeline."""
+"""
+Data structures passed around the pipeline.
+"""
 
 from .alignment import (
     AlignmentDecision,

@@ -1,4 +1,6 @@
-"""Command line for collecting senses out of Wiktionary."""
+"""
+Command line for collecting senses out of Wiktionary.
+"""
 
 import json
 from contextlib import ExitStack
@@ -32,23 +34,19 @@ from .constants import (
     CHUNK_SIZE,
     COLLECTION_DIR,
     KAIKKI_URL,
-    LANGUAGE_SECTION,
     PROCESSES,
     PROMPTS_PATH,
     TIMEOUT,
     USER_AGENT,
 )
 from .extract import (
-    DumpExtractor,
     WiktionaryExtractor,
-    build_off_page_translations,
-    index_translation_glosses,
+    extract_dump_resources,
     narrow,
     open_locator,
-    read_entries,
     read_off_page_translations,
-    write_off_page_translations,
 )
+from .extract.dump.wikidata import read_wikidata_ids
 from .logging import configure_logging
 from .models import POS, Engine
 from .models.alignment import AlignmentResult, AlignmentTask, GlossMode, ModelSettings
@@ -87,15 +85,40 @@ app = typer.Typer(
 )
 
 
+def parse_option(
+    option: str,
+) -> tuple[str, object]:
+    """
+    Parse one ``key=value`` engine or chat template option.
+
+    Args:
+        option: Raw option supplied on the command line.
+
+    Returns:
+        The option name and its parsed value.
+
+    Raises:
+        BadParameter: If the option is not in ``key=value`` form.
+    """
+    name, separator, raw_value = option.partition("=")
+
+    if not separator:
+        raise typer.BadParameter(f"Expected key=value, got {option!r}")
+
+    try:
+        value = cast(object, json.loads(raw_value))
+    except json.JSONDecodeError:
+        value = raw_value
+
+    return name, value
+
+
 @app.callback()
 def configure(
     context: typer.Context,
 ) -> None:
     """
     Configure logs for the selected command.
-
-    Args:
-        context: Command context that owns the logging handler.
     """
     context.with_resource(configure_logging())
 
@@ -107,10 +130,6 @@ def fetch(
 ) -> None:
     """
     Download a Wiktionary dump. Needs the network.
-
-    Args:
-        dump_date: Requested dump date or latest available dump.
-        cache_dir: Directory holding downloaded and parsed sources.
     """
     user_agent = USER_AGENT.format(version=version("wsc"))
 
@@ -168,14 +187,7 @@ def parse(
     """
     Parse a fetched dump with wiktextract, or take one published.
 
-    The dump is then walked for the translations left behind.
-
-    Args:
-        dump_date: Requested dump date or latest fetched dump.
-        processes: Number of wiktextract worker processes.
-        database_path: Temporary database path for wiktextract.
-        archive: Whether to use the published parse.
-        cache_dir: Directory holding downloaded and parsed sources.
+    The dump is then walked for translations and explicit Wikidata IDs.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -190,14 +202,22 @@ def parse(
         raise typer.BadParameter(f"No dump at {dump_path}; fetch it first")
 
     output_path = dump_dir / cache.WIKTEXTRACT_NAME
-    off_page_translations_path = dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
 
-    if output_path.exists() and off_page_translations_path.exists():
+    off_page_translations_path = dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
+    wikidata_ids_path = dump_dir / cache.WIKIDATA_IDS_NAME
+
+    if (
+        output_path.exists()
+        and off_page_translations_path.exists()
+        and wikidata_ids_path.exists()
+    ):
         _LOGGER.info("Already parsed %s", output_path)
 
         return
 
-    if not output_path.exists():
+    refresh = not output_path.exists()
+
+    if refresh:
         if archive:
             archive_path = dump_dir / cache.ARCHIVE_NAME
 
@@ -223,19 +243,13 @@ def parse(
         if skipped_lines:
             _LOGGER.warning("Skipped %s lines without entries", skipped_lines)
 
-    parsed_glosses = index_translation_glosses(
-        read_entries(output_path, "Indexing translation tables"),
+    extract_dump_resources(
+        dump_path,
+        output_path,
+        off_page_translations_path,
+        wikidata_ids_path,
+        refresh=refresh,
     )
-
-    off_page_translations = build_off_page_translations(
-        DumpExtractor(LANGUAGE_SECTION).extract(dump_path, parsed_glosses),
-        read_entries(output_path, "Answering the pointers"),
-    )
-
-    write_off_page_translations(off_page_translations_path, off_page_translations)
-
-    translated = len(off_page_translations)
-    _LOGGER.info("Parsed %s: %s off-page translation entries", output_path, translated)
 
 
 @app.command()
@@ -301,18 +315,6 @@ def collect(
 ) -> None:
     """
     Collect senses, statistics, and provenance into an output directory.
-
-    Args:
-        dump_date: Requested dump date or latest fetched dump.
-        pos: Parts of speech to retain, or all when omitted.
-        minimum_year: Earliest quotation year to retain.
-        maximum_year: Latest quotation year to retain.
-        engine: Engine used to locate headwords in sentences.
-        processes: Number of sentence reading processes.
-        batch_size: Number of sentences read per batch.
-        gpu: Whether to use the graphics card.
-        cache_dir: Directory holding downloaded and parsed sources.
-        output_dir: Destination for the collection and reports.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -327,6 +329,14 @@ def collect(
         raise typer.BadParameter(f"Nothing parsed at {input_path}; parse it first")
 
     off_page_translations_path = dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
+    wikidata_ids_path = dump_dir / cache.WIKIDATA_IDS_NAME
+
+    if not wikidata_ids_path.exists():
+        raise typer.BadParameter(
+            f"No Wikidata IDs at {wikidata_ids_path}; parse it first"
+        )
+
+    wikidata_ids = read_wikidata_ids(wikidata_ids_path)
     off_page_translations = (
         read_off_page_translations(off_page_translations_path)
         if off_page_translations_path.exists()
@@ -339,6 +349,7 @@ def collect(
         maximum_year,
         open_locator(engine, processes, batch_size, gpu=gpu),
         off_page_translations,
+        wikidata_ids,
     )
 
     settings = CollectionSettings(
@@ -354,6 +365,7 @@ def collect(
     manifest = build_manifest(
         input_path,
         off_page_translations_path if off_page_translations_path.exists() else None,
+        wikidata_ids_path,
         date,
         settings,
     )
@@ -361,34 +373,6 @@ def collect(
     write_collection(extractor.extract(input_path), output_dir, manifest)
 
     _LOGGER.info("Collected %s", output_dir)
-
-
-def _parse_option(
-    option: str,
-) -> tuple[str, object]:
-    """
-    Parse a single ``key=value`` option.
-
-    Args:
-        option: Raw engine or chat template argument.
-
-    Returns:
-        The option name and its parsed value.
-
-    Raises:
-        BadParameter: If the argument is not in ``key=value`` form.
-    """
-    name, separator, raw_value = option.partition("=")
-
-    if not separator:
-        raise typer.BadParameter(f"Expected key=value, got {option!r}")
-
-    try:
-        value = cast(object, json.loads(raw_value))
-    except json.JSONDecodeError:
-        value = raw_value
-
-    return name, value
 
 
 @app.command()
@@ -507,25 +491,6 @@ def align(
 ) -> None:
     """
     Align collected senses with language model decisions.
-
-    Args:
-        input_path: Collected JSON Lines file to align.
-        task: Alignment resources to process, or both when omitted.
-        synsets_path: JSON Lines file containing candidate synsets.
-        model: Local model path or Hugging Face identifier.
-        gloss_mode: Wiktionary gloss representation in prompts.
-        prompts_path: Custom task prompt templates.
-        temperature: Model sampling temperature.
-        maximum_tokens: Maximum output tokens per request.
-        batch_size: Number of prompts prepared per inference pass.
-        reasoning_parser: Parser for model reasoning output.
-        reasoning_effort: Reasoning effort accepted by the model.
-        engine_option: Additional vLLM engine options.
-        chat_template_option: Additional chat template options.
-        reuse: Whether to reuse cached source decisions.
-        verbose: Whether to log individual failures and responses.
-        cache_dir: Directory holding alignment decisions.
-        output_dir: Destination for aligned senses and reports.
     """
     tasks = tuple(dict.fromkeys(task or AlignmentTask))
 
@@ -550,13 +515,13 @@ def align(
         reasoning_effort=reasoning_effort,
         engine_options=tuple(
             sorted(
-                (_parse_option(item) for item in engine_option or ()),
+                (parse_option(item) for item in engine_option or ()),
                 key=lambda pair: pair[0],
             )
         ),
         chat_template_options=tuple(
             sorted(
-                (_parse_option(item) for item in chat_template_option or ()),
+                (parse_option(item) for item in chat_template_option or ()),
                 key=lambda pair: pair[0],
             )
         ),

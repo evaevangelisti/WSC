@@ -1,4 +1,6 @@
-"""Extraction of lemmas from wiktextract output."""
+"""
+Extraction of lemmas from wiktextract output.
+"""
 
 from collections.abc import Iterator, Sequence
 from dataclasses import replace
@@ -41,6 +43,7 @@ class WiktionaryExtractor:
         maximum_year: int | None,
         locator: Locator,
         off_page_translations: dict[str, tuple[TranslationTable, ...]] | None = None,
+        wikidata_ids: dict[str, tuple[str, ...]] | None = None,
     ) -> None:
         """
         Set the filters every extraction will answer to.
@@ -51,6 +54,7 @@ class WiktionaryExtractor:
             maximum_year: Newest quotation to keep, or None for no bound.
             locator: The search the lemma is located with.
             off_page_translations: Optional translations from linked pages.
+            wikidata_ids: Explicit sense identifiers extracted from the dump.
         """
         self._allowed_pos: frozenset[POS] | None = allowed_pos
 
@@ -62,6 +66,7 @@ class WiktionaryExtractor:
         self._off_page_translations: dict[str, tuple[TranslationTable, ...]] = (
             off_page_translations or {}
         )
+        self._wikidata_ids: dict[str, tuple[str, ...]] = wikidata_ids or {}
 
     def _parse_entry(
         self,
@@ -95,6 +100,9 @@ class WiktionaryExtractor:
 
         if not senses:
             return None
+
+        for sense in senses:
+            sense.wikidata_ids = self._wikidata_ids.get(sense.id, ())
 
         return Lemma(
             entry_id,

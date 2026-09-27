@@ -1,4 +1,6 @@
-"""Render collection statistics as readable Markdown tables."""
+"""
+Render collection statistics as readable Markdown tables.
+"""
 
 from collections.abc import Iterable
 from dataclasses import dataclass

@@ -1,4 +1,6 @@
-"""Where the sources and what is made of them are kept."""
+"""
+Where the sources and what is made of them are kept.
+"""
 
 from pathlib import Path
 
@@ -12,6 +14,7 @@ ARCHIVE_NAME = "archive.jsonl.gz"
 WIKTEXTRACT_NAME = "wiktextract.jsonl.zst"
 
 OFF_PAGE_TRANSLATIONS_NAME = "off-page-translations.json"
+WIKIDATA_IDS_NAME = "wikidata-ids.json"
 
 _WIKTIONARY = "wiktionary"
 

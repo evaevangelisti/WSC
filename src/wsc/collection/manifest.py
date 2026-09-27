@@ -1,4 +1,6 @@
-"""Record the sources and settings used to collect a dump."""
+"""
+Record the sources and settings used to collect a dump.
+"""
 
 from dataclasses import asdict, dataclass
 from importlib.metadata import version
@@ -39,6 +41,7 @@ class CollectionSettings:
 def build_manifest(
     input_path: Path,
     off_page_path: Path | None,
+    wikidata_ids_path: Path,
     dump_date: str,
     settings: CollectionSettings,
 ) -> dict[str, object]:
@@ -48,6 +51,7 @@ def build_manifest(
     Args:
         input_path: Parsed Wiktextract entries.
         off_page_path: Supplemental translations, or None when unavailable.
+        wikidata_ids_path: Explicit sense identifiers read from the dump.
         dump_date: Resolved dump date.
         settings: Filters and engine options used by the extractor.
 
@@ -62,6 +66,7 @@ def build_manifest(
             "off_page_translations": describe_source(off_page_path)
             if off_page_path
             else None,
+            "wikidata_ids": describe_source(wikidata_ids_path),
         },
         "settings": asdict(settings),
         "runtime": {

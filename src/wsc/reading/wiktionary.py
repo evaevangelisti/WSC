@@ -1,4 +1,6 @@
-"""Read collected JSONL records without repeating extraction."""
+"""
+Read collected JSONL records without repeating extraction.
+"""
 
 import json
 from collections.abc import Iterator
@@ -22,14 +24,18 @@ from ..models import (
 
 
 class OffsetRecord(TypedDict):
-    """Serialized candidate range and its proposing methods."""
+    """
+    Serialized candidate range and its proposing methods.
+    """
 
     offset: tuple[int, int]
     sources: list[str]
 
 
 class SentenceRecord(TypedDict):
-    """Serialized example or quotation."""
+    """
+    Serialized example or quotation.
+    """
 
     text: str
     word_offsets: NotRequired[list[OffsetRecord]]
@@ -38,7 +44,9 @@ class SentenceRecord(TypedDict):
 
 
 class SynsetAlignmentRecord(TypedDict):
-    """Serialized synset identifier and directed relation."""
+    """
+    Serialized synset identifier and directed relation.
+    """
 
     synset_id: str
     relation: str
@@ -46,7 +54,9 @@ class SynsetAlignmentRecord(TypedDict):
 
 
 class TranslationTableRecord(TypedDict):
-    """Serialized collected translation table."""
+    """
+    Serialized collected translation table.
+    """
 
     id: str
     gloss: str
@@ -54,7 +64,9 @@ class TranslationTableRecord(TypedDict):
 
 
 class SenseRecord(TypedDict):
-    """Serialized collected sense with optional aligned resources."""
+    """
+    Serialized collected sense with optional aligned resources.
+    """
 
     id: str
     glosses: list[str]
@@ -69,7 +81,9 @@ class SenseRecord(TypedDict):
 
 
 class LemmaRecord(TypedDict):
-    """Serialized collected lemma."""
+    """
+    Serialized collected lemma.
+    """
 
     id: str
     lemma: str

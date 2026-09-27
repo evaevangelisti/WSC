@@ -1,4 +1,6 @@
-"""Domain model for Wiktionary entries parsed by wiktextract."""
+"""
+Domain model for Wiktionary entries parsed by wiktextract.
+"""
 
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -7,7 +9,9 @@ from ..pos import POS
 from .synsets import SynsetAlignment
 
 type Offset = tuple[int, int]
-"""Half-open code-point range."""
+"""
+Half-open code-point range.
+"""
 
 
 class WordOffsetSource(StrEnum):
@@ -53,7 +57,9 @@ class Attestation:
 
 @dataclass(frozen=True, slots=True)
 class Example(Attestation):
-    """A usage example written by a Wiktionary editor."""
+    """
+    A usage example written by a Wiktionary editor.
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,7 +77,9 @@ class Quotation(Attestation):
 
 
 type Sentence = Example | Quotation
-"""Either kind of attestation."""
+"""
+Either kind of attestation.
+"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,21 +131,27 @@ class Sense:
     def gloss(
         self,
     ) -> str:
-        """The sense's own gloss, without its parents."""
+        """
+        The sense's own gloss, without its parents.
+        """
         return self.glosses[-1]
 
     @property
     def definition(
         self,
     ) -> str:
-        """The gloss chain joined into a self-contained definition."""
+        """
+        The gloss chain joined into a self-contained definition.
+        """
         return " ".join(self.glosses)
 
     @property
     def depth(
         self,
     ) -> int:
-        """Nesting level: 1 for a top-level sense, 2 for a sub-sense."""
+        """
+        Nesting level: 1 for a top-level sense, 2 for a sub-sense.
+        """
         return len(self.glosses)
 
 

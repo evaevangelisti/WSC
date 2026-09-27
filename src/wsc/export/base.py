@@ -1,4 +1,6 @@
-"""Atomic writing, shared by every output format."""
+"""
+Atomic writing, shared by every output format.
+"""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -85,7 +87,9 @@ class Writer[T](ABC):
     def _close(
         self,
     ) -> None:
-        """Flush any buffered output and release what _open acquired."""
+        """
+        Flush any buffered output and release what _open acquired.
+        """
 
     @abstractmethod
     def write(

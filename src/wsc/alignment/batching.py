@@ -1,4 +1,6 @@
-"""Prepare bounded inference batches and merge cached source decisions."""
+"""
+Prepare bounded inference batches and merge cached source decisions.
+"""
 
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field, replace
@@ -85,7 +87,9 @@ class PreparedQuery:
     def complete(
         self,
     ) -> bool:
-        """Return whether every current source has a decision."""
+        """
+        Return whether every current source has a decision.
+        """
         return len(self.decisions) == len(self.query.source_definitions)
 
     def merge(

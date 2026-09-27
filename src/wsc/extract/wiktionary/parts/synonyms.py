@@ -1,4 +1,6 @@
-"""Other words standing for what a sense means."""
+"""
+Other words standing for what a sense means.
+"""
 
 from ..schema import RawSynonym
 

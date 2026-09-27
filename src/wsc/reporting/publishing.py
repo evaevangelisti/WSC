@@ -1,4 +1,6 @@
-"""Publish staged report artifacts atomically."""
+"""
+Publish staged report artifacts atomically.
+"""
 
 import json
 from collections.abc import Iterable, Mapping

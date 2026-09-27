@@ -33,7 +33,9 @@ _UNKNOWN = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=6).filt
 
 
 class TestOpenWriter:
-    """Picking a format off the suffix of the path."""
+    """
+    Picking a format off the suffix of the path.
+    """
 
     @given(_CASES)
     def test_accepts_mixed_case(
@@ -41,7 +43,9 @@ class TestOpenWriter:
         workspace: Callable[[], Path],
         suffix: str,
     ) -> None:
-        """A suffix in capitals names the same format as one in lowercase."""
+        """
+        A suffix in capitals names the same format as one in lowercase.
+        """
         writer: Writer[Lemma] = open_writer(workspace() / f"senses{suffix}")
 
         assert isinstance(writer, Writer)
@@ -52,7 +56,9 @@ class TestOpenWriter:
         workspace: Callable[[], Path],
         suffix: str,
     ) -> None:
-        """Entering the writer opens the file."""
+        """
+        Entering the writer opens the file.
+        """
         directory = workspace()
 
         _: Writer[Lemma] = open_writer(directory / f"senses{suffix}")
@@ -65,7 +71,9 @@ class TestOpenWriter:
         workspace: Callable[[], Path],
         suffix: str,
     ) -> None:
-        """The refusal names the formats there are, since one of them is the answer."""
+        """
+        The refusal names the formats there are, since one of them is the answer.
+        """
         with pytest.raises(ValueError, match="Unknown format") as refusal:
             _: Writer[Lemma] = open_writer(workspace() / f"senses.{suffix}")
 
@@ -76,6 +84,8 @@ class TestOpenWriter:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """A name with no suffix names no format."""
+        """
+        A name with no suffix names no format.
+        """
         with pytest.raises(ValueError, match="Unknown format"):
             _: Writer[Lemma] = open_writer(workspace() / "senses")

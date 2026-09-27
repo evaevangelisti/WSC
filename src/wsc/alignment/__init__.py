@@ -1,4 +1,6 @@
-"""Expose language model alignment and decision persistence."""
+"""
+Expose language model alignment and decision persistence.
+"""
 
 from .aligner import Aligner, align_query
 from .candidates import SynsetCandidates

@@ -12,17 +12,21 @@ from typing import cast
 from ...constants import LANGUAGE
 from ...identifiers import lemma_id
 from ...models import TranslationTable
-from ..dump import PageTranslations
+from ..dump.translations import PageTranslations
 from ..translations import clean_translations, translation_gloss_key
 from .merge import add_translations
 from .parts import parse_translations
 from .schema import RawEntry, parse_pos
 
 type OffPageTranslations = dict[str, tuple[TranslationTable, ...]]
-"""What each entry is translated by elsewhere, by the name of the entry."""
+"""
+What each entry is translated by elsewhere, by the name of the entry.
+"""
 
 type TranslationGlosses = dict[str, frozenset[str]]
-"""Normalized translation glosses already supplied for each entry."""
+"""
+Normalized translation glosses already supplied for each entry.
+"""
 
 
 def index_translation_glosses(

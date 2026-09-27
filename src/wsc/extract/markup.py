@@ -1,4 +1,6 @@
-"""Normalize shared display markup and bounded editorial references."""
+"""
+Normalize shared display markup and bounded editorial references.
+"""
 
 import re
 from html import unescape

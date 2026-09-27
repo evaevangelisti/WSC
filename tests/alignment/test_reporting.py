@@ -1,4 +1,6 @@
-"""Exercise alignment report publication through its public API."""
+"""
+Exercise alignment report publication through its public API.
+"""
 
 import json
 from collections.abc import Callable, Iterator
@@ -26,12 +28,16 @@ def test_counts_published_decisions(
     assignments: list[tuple[bool, bool]],
     tasks: list[AlignmentTask],
 ) -> None:
-    """Reports account for links and abstentions, including empty task selections."""
+    """
+    Reports account for links and abstentions, including empty task selections.
+    """
     statistics = AlignmentStatistics(tasks)
     output_dir = workspace() / "alignment"
 
     def entries() -> Iterator[Lemma]:
-        """Accumulate resolved decisions while publication consumes each entry."""
+        """
+        Accumulate resolved decisions while publication consumes each entry.
+        """
         for index, (first, second) in enumerate(assignments):
             for task in tasks:
                 relation = (
@@ -103,7 +109,9 @@ def test_preserves_unpublished_alignment(
     *,
     existing: bool,
 ) -> None:
-    """An interrupted run preserves previous files and removes staged output."""
+    """
+    An interrupted run preserves previous files and removes staged output.
+    """
     output_dir = tmp_path / "alignment"
     statistics = AlignmentStatistics(AlignmentTask)
     entry = Lemma("word.noun", "word", POS.NOUN)

@@ -1,4 +1,6 @@
-"""Construct generic synset queries and apply semantic associations."""
+"""
+Construct generic synset queries and apply semantic associations.
+"""
 
 from collections.abc import Iterator
 
@@ -10,7 +12,9 @@ from .base import build_definitions
 
 
 class SynsetHandler:
-    """Align each Wiktionary sense with supplied generic synsets."""
+    """
+    Align each Wiktionary sense with supplied generic synsets.
+    """
 
     relations: tuple[str, ...] = tuple(SynsetRelation)
     one_to_one: bool = False
@@ -20,7 +24,8 @@ class SynsetHandler:
         lemma: Lemma,
         candidates: SynsetCandidates,
     ) -> Iterator[AlignmentQuery]:
-        """Construct synset queries with lexical members as synonyms.
+        """
+        Construct synset queries with lexical members as synonyms.
 
         Args:
             lemma: Entry supplying source senses.
@@ -60,7 +65,8 @@ class SynsetHandler:
         query: AlignmentQuery,
         links: tuple[AlignmentLink, ...],
     ) -> None:
-        """Store synset identifiers, sources, and their relations.
+        """
+        Store synset identifiers, sources, and their relations.
 
         Args:
             lemma: Original collection entry.

@@ -1,4 +1,6 @@
-"""Walking the pages a Wiktionary dump holds, in the markup they were written in."""
+"""
+Walking the pages a Wiktionary dump holds, in the markup they were written in.
+"""
 
 from collections.abc import Iterator
 from pathlib import Path

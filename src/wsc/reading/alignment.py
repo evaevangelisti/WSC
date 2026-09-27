@@ -1,4 +1,6 @@
-"""Read alignment queries and persisted language model decisions."""
+"""
+Read alignment queries and persisted language model decisions.
+"""
 
 from __future__ import annotations
 
@@ -20,7 +22,9 @@ from ..models.alignment import (
 
 
 class DefinitionRecord(TypedDict):
-    """Represent a serialized lexical definition."""
+    """
+    Represent a serialized lexical definition.
+    """
 
     id: str
     glosses: list[str]
@@ -31,7 +35,9 @@ class DefinitionRecord(TypedDict):
 
 
 class QueryRecord(TypedDict):
-    """Represent an alignment query in caches and annotation exports."""
+    """
+    Represent an alignment query in caches and annotation exports.
+    """
 
     task: str
     alignment_id: str

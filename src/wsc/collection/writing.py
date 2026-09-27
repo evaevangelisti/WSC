@@ -1,4 +1,6 @@
-"""Write collected senses, statistics, and provenance together."""
+"""
+Write collected senses, statistics, and provenance together.
+"""
 
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime

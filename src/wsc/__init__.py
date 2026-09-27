@@ -1,1 +1,3 @@
-"""Collection of word senses out of Wiktionary."""
+"""
+Collection of word senses out of Wiktionary.
+"""

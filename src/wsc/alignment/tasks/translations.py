@@ -1,4 +1,6 @@
-"""Construct translation queries and apply accepted associations."""
+"""
+Construct translation queries and apply accepted associations.
+"""
 
 from collections.abc import Iterator
 
@@ -11,7 +13,9 @@ from .base import build_definitions
 
 
 class TranslationHandler:
-    """Align translation groups with distinct Wiktionary senses."""
+    """
+    Align translation groups with distinct Wiktionary senses.
+    """
 
     relations: tuple[str, ...] = (TRANSLATION_RELATION,)
     one_to_one: bool = True

@@ -1,4 +1,6 @@
-"""The sentences illustrating one sense of an entry."""
+"""
+The sentences illustrating one sense of an entry.
+"""
 
 import re
 

@@ -1,4 +1,6 @@
-"""Exercise offline vLLM inference without loading model weights."""
+"""
+Exercise offline vLLM inference without loading model weights.
+"""
 
 import json
 import sys
@@ -17,18 +19,24 @@ from .examples import build_decision, build_query
 
 
 class FakeSamplingParameters:
-    """Capture generation settings passed to vLLM."""
+    """
+    Capture generation settings passed to vLLM.
+    """
 
     def __init__(
         self,
         **kwargs: object,
     ) -> None:
-        """Store the sampling settings."""
+        """
+        Store the sampling settings.
+        """
         self.values: dict[str, object] = kwargs
 
 
 class FakeTokenizer:
-    """Decode fake completion token identifiers."""
+    """
+    Decode fake completion token identifiers.
+    """
 
     def decode(
         self,
@@ -36,7 +44,9 @@ class FakeTokenizer:
         *,
         skip_special_tokens: bool,
     ) -> str:
-        """Return the configured final response."""
+        """
+        Return the configured final response.
+        """
         assert skip_special_tokens
 
         return "".join(chr(token) for token in token_ids if token >= 0)
@@ -44,7 +54,9 @@ class FakeTokenizer:
 
 @dataclass
 class FakeChatRequest:
-    """Carry the request fields used by offline parsing and sampling."""
+    """
+    Carry the request fields used by offline parsing and sampling.
+    """
 
     model: str
     messages: list[dict[str, str]]
@@ -52,7 +64,9 @@ class FakeChatRequest:
 
 
 class FakeParser:
-    """Separate reasoning and final content at a synthetic boundary token."""
+    """
+    Separate reasoning and final content at a synthetic boundary token.
+    """
 
     instances: ClassVar[list[FakeParser]] = []
 
@@ -62,7 +76,9 @@ class FakeParser:
         tokenizer: FakeTokenizer,
         **kwargs: object,
     ) -> None:
-        """Store parser context without loading a tokenizer vocabulary."""
+        """
+        Store parser context without loading a tokenizer vocabulary.
+        """
         self.tokenizer: FakeTokenizer = tokenizer
         self.options: dict[str, object] = kwargs
 
@@ -73,7 +89,9 @@ class FakeParser:
         model_output: str,
         request: FakeChatRequest,
     ) -> tuple[str | None, str | None]:
-        """Use template context to distinguish final text from reasoning."""
+        """
+        Use template context to distinguish final text from reasoning.
+        """
         assert request.chat_template_kwargs == self.options["chat_template_kwargs"]
 
         options = request.chat_template_kwargs or {}
@@ -87,13 +105,17 @@ class FakeParser:
 
 
 class FakeHarmonyParser(FakeParser):
-    """Extract Harmony content exclusively from generated token identifiers."""
+    """
+    Extract Harmony content exclusively from generated token identifiers.
+    """
 
     def extract_content_ids(
         self,
         input_ids: list[int],
     ) -> list[int]:
-        """Separate Harmony content at a synthetic channel boundary."""
+        """
+        Separate Harmony content at a synthetic channel boundary.
+        """
         if -1 not in input_ids:
             return []
 
@@ -105,18 +127,24 @@ class FakeHarmonyParser(FakeParser):
         model_output: str,
         request: FakeChatRequest,
     ) -> tuple[str | None, str | None]:
-        """Reject text extraction as the vLLM 0.17.0 GPT-OSS parser does."""
+        """
+        Reject text extraction as the vLLM 0.17.0 GPT-OSS parser does.
+        """
         del model_output, request
 
         raise NotImplementedError
 
 
 class FakeCustomHarmonyParser(FakeHarmonyParser):
-    """Represent a custom GPT-OSS parser registered under another name."""
+    """
+    Represent a custom GPT-OSS parser registered under another name.
+    """
 
 
 class FakeParserManager:
-    """Resolve the parser registered for an explicit reasoning format."""
+    """
+    Resolve the parser registered for an explicit reasoning format.
+    """
 
     selections: ClassVar[list[str]] = []
 
@@ -125,7 +153,9 @@ class FakeParserManager:
         cls,
         name: str,
     ) -> type[FakeParser]:
-        """Return the parser selected in the engine configuration."""
+        """
+        Return the parser selected in the engine configuration.
+        """
         cls.selections.append(name)
 
         if name == "openai_gptoss":
@@ -138,7 +168,9 @@ class FakeParserManager:
 
 
 class FakeLanguageModel:
-    """Return one configured vLLM completion without loading a model."""
+    """
+    Return one configured vLLM completion without loading a model.
+    """
 
     response: str = json.dumps({"s1": build_decision("t1"), "s2": None})
     finish_reason: str | None = "stop"
@@ -149,7 +181,9 @@ class FakeLanguageModel:
         self,
         **kwargs: object,
     ) -> None:
-        """Store engine settings without loading model weights."""
+        """
+        Store engine settings without loading model weights.
+        """
         self.settings: dict[str, object] = kwargs
         self.llm_engine: SimpleNamespace = SimpleNamespace(
             vllm_config=SimpleNamespace(
@@ -166,7 +200,9 @@ class FakeLanguageModel:
     def get_tokenizer(
         self,
     ) -> FakeTokenizer:
-        """Return the fake tokenizer used by the reasoning parser."""
+        """
+        Return the fake tokenizer used by the reasoning parser.
+        """
         return FakeTokenizer()
 
     def chat(
@@ -177,7 +213,9 @@ class FakeLanguageModel:
         chat_template_kwargs: dict[str, object] | None,
         use_tqdm: bool,
     ) -> list[object]:
-        """Return one configured completion per batched conversation."""
+        """
+        Return one configured completion per batched conversation.
+        """
         assert not use_tqdm
 
         self.batches.append(len(messages))
@@ -213,7 +251,9 @@ class FakeLanguageModel:
 def fake_vllm_modules(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Provide a fake vLLM package for the lazy provider imports."""
+    """
+    Provide a fake vLLM package for the lazy provider imports.
+    """
     FakeLanguageModel.instances.clear()
     FakeParser.instances.clear()
     FakeParserManager.selections.clear()
@@ -273,7 +313,9 @@ def fake_vllm_modules(
 
 @pytest.mark.usefixtures("_vllm_modules")
 def test_forwards_generation_settings() -> None:
-    """The vLLM adapter forwards settings and returns validated JSON."""
+    """
+    The vLLM adapter forwards settings and returns validated JSON.
+    """
     from wsc.alignment.inference import open_model
 
     settings = ModelSettings(
@@ -311,7 +353,9 @@ def test_forwards_generation_settings() -> None:
 
 @pytest.mark.usefixtures("_vllm_modules")
 def test_batches_engine_requests() -> None:
-    """Several prompts reach vLLM through one inference call."""
+    """
+    Several prompts reach vLLM through one inference call.
+    """
     from wsc.alignment.inference import open_model
 
     model = open_model(ModelSettings("local-model"))
@@ -349,7 +393,9 @@ def test_batches_engine_requests() -> None:
 def test_rejects_incomplete_output(
     finish_reason: str | None,
 ) -> None:
-    """Incomplete offline completions raise an explicit generation error."""
+    """
+    Incomplete offline completions raise an explicit generation error.
+    """
     from wsc.alignment.inference import open_model
 
     FakeLanguageModel.finish_reason = finish_reason
@@ -361,7 +407,9 @@ def test_rejects_incomplete_output(
 def test_reports_missing_backend(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Importing the package remains possible when the optional backend is absent."""
+    """
+    Importing the package remains possible when the optional backend is absent.
+    """
     monkeypatch.setitem(sys.modules, "vllm", None)
 
     from wsc.alignment.inference import open_model
@@ -380,7 +428,9 @@ def test_uses_selected_parser(
     parser: str,
     reason: str,
 ) -> None:
-    """Only final tokens reach JSON validation, even when reasoning contains JSON."""
+    """
+    Only final tokens reach JSON validation, even when reasoning contains JSON.
+    """
     from wsc.alignment.inference import open_model
 
     response = json.dumps(
@@ -420,7 +470,9 @@ def test_uses_selected_parser(
 def test_rejects_empty_responses(
     parser: str | None,
 ) -> None:
-    """A stopped generation still requires nonempty final content."""
+    """
+    A stopped generation still requires nonempty final content.
+    """
     from wsc.alignment.inference import open_model
 
     FakeLanguageModel.response = "reasoning</think> \n\t" if parser else " \n\t"
@@ -438,7 +490,9 @@ def test_rejects_empty_responses(
 def test_requires_final_channel(
     parser: str,
 ) -> None:
-    """Reasoning JSON cannot be accepted as the final decision."""
+    """
+    Reasoning JSON cannot be accepted as the final decision.
+    """
     from wsc.alignment.inference import open_model
 
     FakeLanguageModel.token_ids = list(map(ord, FakeLanguageModel.response))
@@ -452,7 +506,9 @@ def test_requires_final_channel(
 
 @pytest.mark.usefixtures("_vllm_modules")
 def test_preserves_disabled_thinking() -> None:
-    """Template options reach parsing when a reasoning model generates plain JSON."""
+    """
+    Template options reach parsing when a reasoning model generates plain JSON.
+    """
     from wsc.alignment.inference import open_model
 
     result = align_query(
@@ -475,7 +531,9 @@ def test_preserves_disabled_thinking() -> None:
 def test_prioritizes_explicit_parser(
     parser: str | None,
 ) -> None:
-    """Generation and extraction use the same parser after option precedence."""
+    """
+    Generation and extraction use the same parser after option precedence.
+    """
     from wsc.alignment.inference import open_model
 
     response = FakeLanguageModel.response
@@ -500,7 +558,9 @@ def test_prioritizes_explicit_parser(
 
 @pytest.mark.usefixtures("_vllm_modules")
 def test_isolates_harmony_parsers() -> None:
-    """Repeated generations parse independent final channels for local checkpoints."""
+    """
+    Repeated generations parse independent final channels for local checkpoints.
+    """
     from wsc.alignment.inference import open_model
 
     response = FakeLanguageModel.response

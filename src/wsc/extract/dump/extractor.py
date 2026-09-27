@@ -1,6 +1,8 @@
-"""Extraction of the translations wiktextract leaves behind."""
+"""
+Extraction of the translations wiktextract leaves behind.
+"""
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import replace
 from pathlib import Path
 
@@ -48,9 +50,26 @@ class DumpExtractor:
         Yields:
             One record per part of speech a page translates elsewhere.
         """
+        yield from self.extract_pages(read_pages(input_path), parsed_glosses)
+
+    def extract_pages(
+        self,
+        pages: Iterable[tuple[str, str]],
+        parsed_glosses: Mapping[str, frozenset[str]] | None = None,
+    ) -> Iterator[PageTranslations]:
+        """
+        Read supplemental translations from an existing page walk.
+
+        Args:
+            pages: Page titles and markup from the dump.
+            parsed_glosses: Table glosses already supplied by Wiktextract.
+
+        Yields:
+            One record per part of speech a page translates elsewhere.
+        """
         known_glosses = parsed_glosses or {}
 
-        for title, markup in read_pages(input_path):
+        for title, markup in pages:
             if not (
                 title.endswith(SUBPAGE_SUFFIX)
                 or _POINTER in markup

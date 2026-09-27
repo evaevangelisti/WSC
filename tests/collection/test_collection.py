@@ -1,4 +1,6 @@
-"""Exercise complete collection artifacts through the public writing API."""
+"""
+Exercise complete collection artifacts through the public writing API.
+"""
 
 import json
 from collections.abc import Callable, Iterator
@@ -27,7 +29,9 @@ from wsc.models import (
 def _read_document(
     path: Path,
 ) -> RawJson:
-    """Read a generated JSON document without discarding numeric values."""
+    """
+    Read a generated JSON document without discarding numeric values.
+    """
     return cast(RawJson, json.loads(path.read_text(encoding="utf-8")))
 
 
@@ -36,7 +40,9 @@ def test_preserves_collection_totals(
     workspace: Callable[[], Path],
     entries: list[Lemma],
 ) -> None:
-    """One-pass output accounts for every entry and its evidence."""
+    """
+    One-pass output accounts for every entry and its evidence.
+    """
     output_dir = workspace() / "collection"
 
     write_collection(iter(entries), output_dir, {"dump_date": "20260801"})
@@ -116,7 +122,9 @@ def test_preserves_collection_totals(
 def test_reports_lexical_evidence(
     tmp_path: Path,
 ) -> None:
-    """Reports distinguish ambiguous IDs, repeated translations, and offset sources."""
+    """
+    Reports distinguish ambiguous IDs, repeated translations, and offset sources.
+    """
     entry = Lemma(
         "bank.noun",
         "bank",
@@ -197,7 +205,9 @@ def test_reports_lexical_evidence(
 def test_reports_offset_violations(
     tmp_path: Path,
 ) -> None:
-    """Overlapping source proposals remain distinct from malformed offsets."""
+    """
+    Overlapping source proposals remain distinct from malformed offsets.
+    """
     entry = Lemma(
         "cat.noun",
         "cat",
@@ -244,7 +254,9 @@ def test_preserves_failed_collection(
     existing: bool,
     failure: str,
 ) -> None:
-    """Failures publish no partial reports and preserve any previous collection."""
+    """
+    Failures publish no partial reports and preserve any previous collection.
+    """
     output_dir = tmp_path / "collection"
     entry = Lemma("bank.noun", "bank", POS.NOUN)
     expected: dict[str, bytes] = {}
@@ -287,7 +299,9 @@ def test_preserves_failed_collection(
 def test_replaces_complete_collection(
     tmp_path: Path,
 ) -> None:
-    """An empty rerun replaces stale records and reports from the previous run."""
+    """
+    An empty rerun replaces stale records and reports from the previous run.
+    """
     write_collection([Lemma("bank.noun", "bank", POS.NOUN)], tmp_path, {})
     write_collection([], tmp_path, {"dump_date": "20260901"})
 

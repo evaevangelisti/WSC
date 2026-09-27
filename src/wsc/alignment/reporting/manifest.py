@@ -1,4 +1,6 @@
-"""Describe the sources and settings used to align collected senses."""
+"""
+Describe the sources and settings used to align collected senses.
+"""
 
 from dataclasses import asdict
 from datetime import UTC, datetime

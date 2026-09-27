@@ -1,4 +1,6 @@
-"""Read generic synsets supplied as JSON Lines."""
+"""
+Read generic synsets supplied as JSON Lines.
+"""
 
 import json
 from collections.abc import Iterator
@@ -9,7 +11,9 @@ from ..models import POS, Synset, SynsetMember
 
 
 class SynsetRecord(TypedDict):
-    """Serialized generic synset accepted by the align command."""
+    """
+    Serialized generic synset accepted by the align command.
+    """
 
     id: NotRequired[str]
     pos: str
@@ -21,7 +25,8 @@ class SynsetRecord(TypedDict):
 def _read_members(
     members: list[str] | dict[str, list[str]],
 ) -> tuple[SynsetMember, ...]:
-    """Flatten members while retaining any source declared for them.
+    """
+    Flatten members while retaining any source declared for them.
 
     Args:
         members: Plain members or members grouped by their source.
@@ -42,7 +47,8 @@ def _read_members(
 def read_synsets(
     path: Path,
 ) -> Iterator[Synset]:
-    """Stream generic synsets from a JSON Lines file.
+    """
+    Stream generic synsets from a JSON Lines file.
 
     Args:
         path: Input JSON Lines file.

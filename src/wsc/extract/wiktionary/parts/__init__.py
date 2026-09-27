@@ -1,4 +1,6 @@
-"""What one entry is made of, one module apiece."""
+"""
+What one entry is made of, one module apiece.
+"""
 
 from .forms import parse_forms
 from .senses import parse_senses

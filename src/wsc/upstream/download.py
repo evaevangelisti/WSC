@@ -1,4 +1,6 @@
-"""Retrieval of remote files."""
+"""
+Retrieval of remote files.
+"""
 
 from collections.abc import Iterator
 from pathlib import Path

@@ -45,7 +45,9 @@ def _open(
 
 
 class _UnclosableWriter(JSONLWriter[Lemma]):
-    """A writer that cannot be closed, however well the writing itself went."""
+    """
+    A writer that cannot be closed, however well the writing itself went.
+    """
 
     @override
     def _close(
@@ -100,7 +102,9 @@ def _interrupt_writing(
 
 
 class TestWriter:
-    """Writing through a .part file, so a run cut short leaves nothing."""
+    """
+    Writing through a .part file, so a run cut short leaves nothing.
+    """
 
     @given(_DIRECTORIES, _WRITTEN)
     def test_publishes_complete_output(
@@ -109,7 +113,9 @@ class TestWriter:
         directories: list[str],
         written: list[Lemma],
     ) -> None:
-        """Writing creates parent directories and publishes output only on closure."""
+        """
+        Writing creates parent directories and publishes output only on closure.
+        """
         output_path = workspace().joinpath(*directories) / "senses.jsonl"
 
         with _open(output_path) as writer:
@@ -127,7 +133,9 @@ class TestWriter:
         written: list[Lemma],
         original: bytes,
     ) -> None:
-        """A failed replacement preserves completed output and removes partial data."""
+        """
+        A failed replacement preserves completed output and removes partial data.
+        """
         directory = workspace()
         output_path = directory / "senses.jsonl"
         _ = output_path.write_bytes(original)
@@ -144,7 +152,9 @@ class TestWriter:
         workspace: Callable[[], Path],
         written: list[Lemma],
     ) -> None:
-        """Whatever the format acquired is released, a block that failed included."""
+        """
+        Whatever the format acquired is released, a block that failed included.
+        """
         writer = _open(workspace() / "senses.jsonl")
 
         with pytest.raises(RuntimeError, match="something went wrong"):

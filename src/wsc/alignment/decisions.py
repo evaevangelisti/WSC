@@ -1,4 +1,6 @@
-"""Decode and validate lexical alignment decisions."""
+"""
+Decode and validate lexical alignment decisions.
+"""
 
 import json
 from typing import cast

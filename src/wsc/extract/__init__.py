@@ -1,6 +1,9 @@
-"""Reading of source dictionaries into models."""
+"""
+Reading of source dictionaries into models.
+"""
 
 from .dump import DumpExtractor
+from .dump.resources import extract_dump_resources
 from .offsets import build_query, find_word_offsets, match_forms, open_locator
 from .wiktionary import (
     OffPageTranslations,
@@ -19,6 +22,7 @@ __all__ = [
     "WiktionaryExtractor",
     "build_off_page_translations",
     "build_query",
+    "extract_dump_resources",
     "find_word_offsets",
     "index_translation_glosses",
     "match_forms",

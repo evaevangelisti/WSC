@@ -1,4 +1,6 @@
-"""Share manifest and report publication helpers."""
+"""
+Share manifest and report publication helpers.
+"""
 
 from .manifest import describe_source
 from .publishing import publish_files, stage_json

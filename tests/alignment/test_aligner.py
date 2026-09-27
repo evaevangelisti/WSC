@@ -1,4 +1,6 @@
-"""Exercise generated decisions through the public alignment API."""
+"""
+Exercise generated decisions through the public alignment API.
+"""
 
 import json
 from dataclasses import replace
@@ -41,7 +43,9 @@ def test_preserves_translation_bijection(
     *,
     abstain: bool,
 ) -> None:
-    """Generated assignments retain explicit omissions and distinct targets."""
+    """
+    Generated assignments retain explicit omissions and distinct targets.
+    """
     response = json.dumps(
         {
             "s1": build_decision(targets[0]),
@@ -79,7 +83,9 @@ def test_preserves_translation_bijection(
 def test_rejects_invalid_assignments(
     response: dict[str, object],
 ) -> None:
-    """Missing, contradictory, and invented associations fail validation."""
+    """
+    Missing, contradictory, and invented associations fail validation.
+    """
     with pytest.raises(ValueError, match=r"Expected|Invalid|One-to-one|Repeated"):
         _ = align_query(build_query(), Model([json.dumps(response)]))
 
@@ -88,7 +94,9 @@ def test_rejects_invalid_assignments(
 def test_rejects_invalid_reasons(
     reason: object,
 ) -> None:
-    """Associations require textual evidence containing more than whitespace."""
+    """
+    Associations require textual evidence containing more than whitespace.
+    """
     response = json.dumps(
         {
             "s1": [{"target_id": "t1", "relation": "translation", "reason": reason}],
@@ -104,13 +112,17 @@ def test_rejects_invalid_reasons(
 def test_rejects_invalid_json(
     response: str,
 ) -> None:
-    """Malformed model responses remain visible failures."""
+    """
+    Malformed model responses remain visible failures.
+    """
     with pytest.raises(ValueError, match=r"Expected|Expecting"):
         _ = parse_response(build_query(), response)
 
 
 def test_skips_empty_candidates() -> None:
-    """Empty candidate sets produce explicit empty decisions."""
+    """
+    Empty candidate sets produce explicit empty decisions.
+    """
     model = Model([])
     empty = align_query(replace(build_query(), target_definitions=()), model)
 
@@ -120,7 +132,9 @@ def test_skips_empty_candidates() -> None:
 
 
 def test_aligns_collection_copies() -> None:
-    """Translations move to copied senses while source entries remain intact."""
+    """
+    Translations move to copied senses while source entries remain intact.
+    """
     lemma = Lemma(
         "word.noun",
         "word",
@@ -165,7 +179,9 @@ def test_aligns_collection_copies() -> None:
 
 
 def test_preserves_directed_relations() -> None:
-    """A source retains equivalent and broader synset candidates."""
+    """
+    A source retains equivalent and broader synset candidates.
+    """
     lemma = Lemma("word.noun", "word", POS.NOUN, senses=[Sense("s", ("sense",))])
     synsets = (
         Synset(
@@ -202,8 +218,7 @@ def test_preserves_directed_relations() -> None:
         SynsetAlignment("synset-2", SynsetRelation.WIKTIONARY_NARROWER),
     )
     expected_target = (
-        '"target_id":"synset-1","synonyms":["synonym"],'
-        '"glosses":["specific"]'
+        '"target_id":"synset-1","synonyms":["synonym"],"glosses":["specific"]'
     )
 
     assert expected_target in model.requests[0].prompt
@@ -234,7 +249,9 @@ def test_preserves_directed_relations() -> None:
 def test_requires_unique_equivalences(
     relations: tuple[SynsetRelation | None, ...],
 ) -> None:
-    """Only equivalence requires distinct sources and targets in generated graphs."""
+    """
+    Only equivalence requires distinct sources and targets in generated graphs.
+    """
     pairs = (("s1", "t1"), ("s1", "t2"), ("s2", "t1"), ("s2", "t2"))
     associations = [
         (source, target, relation)
@@ -282,7 +299,9 @@ def test_requires_unique_equivalences(
 def test_renders_definition_context(
     mode: GlossMode,
 ) -> None:
-    """Prompt definitions retain their identity and selected context."""
+    """
+    Prompt definitions retain their identity and selected context.
+    """
     prompt = build_request(build_query(), mode).prompt
 
     expected_gloss = "parent > first sense" if mode == GlossMode.FULL else "first sense"
@@ -295,7 +314,9 @@ def test_renders_definition_context(
 
 
 def test_includes_variant_candidates() -> None:
-    """Variant lookup preserves dotted forms and sense-specific synonyms."""
+    """
+    Variant lookup preserves dotted forms and sense-specific synonyms.
+    """
     lemma = Lemma(
         "alias.name",
         "alias",
@@ -316,7 +337,9 @@ def test_includes_variant_candidates() -> None:
 
 
 def test_deduplicates_candidate_synonyms() -> None:
-    """Candidate context contains each non-headword member once."""
+    """
+    Candidate context contains each non-headword member once.
+    """
     lemma = Lemma(
         "word.noun",
         "word",
@@ -347,7 +370,9 @@ def test_deduplicates_candidate_synonyms() -> None:
 
 
 def test_queries_complete_senses() -> None:
-    """Synsets compare every Wiktionary sense in one model request."""
+    """
+    Synsets compare every Wiktionary sense in one model request.
+    """
     lemma = Lemma(
         "word.noun",
         "word",
@@ -385,7 +410,9 @@ def test_reuses_available_source_decisions(
     decisions: list[tuple[bool, bool]],
     targets: st.DataObject,
 ) -> None:
-    """Any cached subset preserves decisions, order, and deferred model loading."""
+    """
+    Any cached subset preserves decisions, order, and deferred model loading.
+    """
     assigned = targets.draw(st.permutations(tuple(range(len(decisions)))))
     lemma = Lemma(
         "word.noun",
@@ -418,7 +445,9 @@ def test_reuses_available_source_decisions(
     loads: list[None] = []
 
     def load_model() -> Model:
-        """Record deferred construction when at least one source needs inference."""
+        """
+        Record deferred construction when at least one source needs inference.
+        """
         loads.append(None)
 
         return model
@@ -492,7 +521,9 @@ def test_isolates_failed_queries(
     failures: list[bool],
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Failures preserve source data while later resources and entries still align."""
+    """
+    Failures preserve source data while later resources and entries still align.
+    """
     lemmas = [
         Lemma(
             f"word{index}.noun",

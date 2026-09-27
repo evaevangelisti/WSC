@@ -1,4 +1,6 @@
-"""What other languages call an entry."""
+"""
+What other languages call an entry.
+"""
 
 from collections import defaultdict
 from itertools import chain

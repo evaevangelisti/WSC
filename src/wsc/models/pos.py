@@ -1,4 +1,6 @@
-"""The parts of speech every source is read into."""
+"""
+The parts of speech every source is read into.
+"""
 
 from enum import StrEnum
 

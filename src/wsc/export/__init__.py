@@ -1,4 +1,6 @@
-"""Writing of extracted data to disk."""
+"""
+Writing of extracted data to disk.
+"""
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -11,7 +13,9 @@ if TYPE_CHECKING:
 
 
 class _Factory(Protocol):
-    """Builds the writer of one format, generic where a plain callable is not."""
+    """
+    Builds the writer of one format, generic where a plain callable is not.
+    """
 
     def __call__[T: "DataclassInstance"](
         self,

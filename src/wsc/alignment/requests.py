@@ -1,4 +1,6 @@
-"""Render lexical definitions, task prompts, and constrained response schemas."""
+"""
+Render lexical definitions, task prompts, and constrained response schemas.
+"""
 
 import json
 from string import Template

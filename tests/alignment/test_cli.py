@@ -1,4 +1,6 @@
-"""Exercise command-level inference and cached decision replay."""
+"""
+Exercise command-level inference and cached decision replay.
+"""
 
 import csv
 import json
@@ -24,7 +26,9 @@ from wsc.reading import read_lemmas
 
 
 class Model:
-    """Generate a valid association for the candidate supplied by the command."""
+    """
+    Generate a valid association for the candidate supplied by the command.
+    """
 
     def __init__(
         self,
@@ -97,7 +101,9 @@ def test_replays_cached_alignment(
     monkeypatch: pytest.MonkeyPatch,
     tasks: tuple[AlignmentTask, ...],
 ) -> None:
-    """Cached replay preserves the aligned collection and original input."""
+    """
+    Cached replay preserves the aligned collection and original input.
+    """
     input_path = tmp_path / "input.jsonl"
     original_content = (
         json.dumps(
@@ -267,7 +273,9 @@ def test_replays_cached_alignment(
 def test_rejects_input_overwrite(
     tmp_path: Path,
 ) -> None:
-    """In-place alignment fails before loading models."""
+    """
+    In-place alignment fails before loading models.
+    """
     input_path = tmp_path / "input.jsonl"
     _ = input_path.write_text("original", encoding="utf-8")
     result = CliRunner().invoke(
@@ -283,7 +291,9 @@ def test_reuses_partial_alignment_cache(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Reuse requests only sources absent from the task TSV."""
+    """
+    Reuse requests only sources absent from the task TSV.
+    """
     input_path = tmp_path / "input.jsonl"
     first_target = translation_table_id("word.noun", "first")
     second_target = translation_table_id("word.noun", "second")

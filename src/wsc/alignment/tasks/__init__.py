@@ -1,4 +1,6 @@
-"""Expose alignment task handlers and query construction."""
+"""
+Expose alignment task handlers and query construction.
+"""
 
 from collections.abc import Iterator
 
@@ -22,7 +24,9 @@ TASK_HANDLERS: dict[AlignmentTask, AlignmentHandler] = {
     AlignmentTask.TRANSLATIONS: TranslationHandler(),
     AlignmentTask.SYNSETS: SynsetHandler(),
 }
-"""Register query construction, relation constraints, and result application."""
+"""
+Register query construction, relation constraints, and result application.
+"""
 
 
 def build_queries(

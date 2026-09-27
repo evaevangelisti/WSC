@@ -1,9 +1,13 @@
-"""Output paths shared by collection writing and its command line."""
+"""
+Output paths shared by collection writing and its command line.
+"""
 
 from pathlib import Path
 
 COLLECTION_DIR = Path("collection")
-"""Default destination for collected entries and their reports."""
+"""
+Default destination for collected entries and their reports.
+"""
 
 COLLECTION_FILES = {
     "senses": "senses.jsonl",
@@ -11,4 +15,6 @@ COLLECTION_FILES = {
     "report": "report.md",
     "manifest": "manifest.json",
 }
-"""Collection filenames ordered for publication, with the manifest last."""
+"""
+Collection filenames ordered for publication, with the manifest last.
+"""

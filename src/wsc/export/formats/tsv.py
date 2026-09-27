@@ -1,4 +1,6 @@
-"""TSV output with caller-defined columns and rows."""
+"""
+TSV output with caller-defined columns and rows.
+"""
 
 import csv
 from collections.abc import Mapping, Sequence
@@ -9,7 +11,9 @@ from ..base import Writer
 
 
 class TSVWriter(Writer[Mapping[str, object]]):
-    """Write mappings as tab-separated rows under caller-defined columns."""
+    """
+    Write mappings as tab-separated rows under caller-defined columns.
+    """
 
     def __init__(
         self,
@@ -56,7 +60,9 @@ class TSVWriter(Writer[Mapping[str, object]]):
     def _close(
         self,
     ) -> None:
-        """Flush and close the tabular stream."""
+        """
+        Flush and close the tabular stream.
+        """
         if self._file is not None:
             self._file.close()
             self._file = None

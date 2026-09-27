@@ -1,22 +1,38 @@
-"""Source locations and download defaults."""
+"""
+Source locations and download defaults.
+"""
 
 DUMP_INDEX_URL = "https://dumps.wikimedia.org/enwiktionary/"
-"""Where the edition lists its dumps, one directory per day one began."""
+"""
+Where the edition lists its dumps, one directory per day one began.
+"""
 
 DUMP_STATUS_URL = "https://dumps.wikimedia.org/enwiktionary/{date}/dumpstatus.json"
-"""Where one dump reports its jobs, and so whether it finished."""
+"""
+Where one dump reports its jobs, and so whether it finished.
+"""
 
 DUMP_URL = "https://dumps.wikimedia.org/enwiktionary/{date}/enwiktionary-{date}-pages-articles.xml.bz2"
-"""The archive of pages sitting inside a dump, which is the dump itself."""
+"""
+The archive of pages sitting inside a dump, which is the dump itself.
+"""
 
 KAIKKI_URL = "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz"
-"""Preparsed Wiktionary entries that avoid running wiktextract locally."""
+"""
+Preparsed Wiktionary entries that avoid running wiktextract locally.
+"""
 
 USER_AGENT = "wsc/{version} (https://github.com/evaevangelisti/WSC)"
-"""How a request names itself, Wikimedia asking that it name someone."""
+"""
+How a request names itself, Wikimedia asking that it name someone.
+"""
 
 TIMEOUT = (10, 60)
-"""Timeout in seconds for each connection and read operation."""
+"""
+Timeout in seconds for each connection and read operation.
+"""
 
 CHUNK_SIZE = 1024 * 1024
-"""How much of a download is held in memory before it reaches the disk."""
+"""
+How much of a download is held in memory before it reaches the disk.
+"""

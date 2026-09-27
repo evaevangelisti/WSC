@@ -1,4 +1,6 @@
-"""Accumulate collection statistics without retaining individual records."""
+"""
+Accumulate collection statistics without retaining individual records.
+"""
 
 from collections import Counter
 from dataclasses import dataclass, field, fields

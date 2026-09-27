@@ -17,7 +17,6 @@ _DUMP_INDEX = """<html>
 _DUMP_LINK = '<a href="{date}/">{date}/</a>      01-Aug-2026 09:12       -\n'
 
 
-
 def dump_index(
     *dates: str,
 ) -> str:

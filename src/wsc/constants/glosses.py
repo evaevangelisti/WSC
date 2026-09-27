@@ -1,4 +1,6 @@
-"""Define prefixes classifying Wiktionary glosses."""
+"""
+Define prefixes classifying Wiktionary glosses.
+"""
 
 FORM_GLOSS_PREFIXES = frozenset(
     {
@@ -79,10 +81,14 @@ FORM_GLOSS_PREFIXES = frozenset(
         "third-person singular simple present",
     }
 )
-"""Identify inflection descriptions excluded from lexical senses."""
+"""
+Identify inflection descriptions excluded from lexical senses.
+"""
 
 SYNONYM_GLOSS_PREFIXES = frozenset({"synonym", "synonym of"})
-"""Identify synonym redirects excluded from lexical senses."""
+"""
+Identify synonym redirects excluded from lexical senses.
+"""
 
 VARIANT_GLOSS_PREFIXES = frozenset(
     {
@@ -146,4 +152,6 @@ VARIANT_GLOSS_PREFIXES = frozenset(
         "verbal noun of",
     }
 )
-"""Identify variant descriptions and editorial placeholders."""
+"""
+Identify variant descriptions and editorial placeholders.
+"""

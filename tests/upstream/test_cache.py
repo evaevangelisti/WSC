@@ -1,4 +1,6 @@
-"""Tests for src/wsc/upstream/cache.py."""
+"""
+Tests for src/wsc/upstream/cache.py.
+"""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -15,7 +17,9 @@ _FETCHED = st.lists(dump_dates, min_size=1, max_size=4, unique=True)
 
 
 class TestDumpDirectory:
-    """Naming the directory one dump sits in."""
+    """
+    Naming the directory one dump sits in.
+    """
 
     @given(dump_dates)
     def test_builds_dated_path(
@@ -23,7 +27,9 @@ class TestDumpDirectory:
         workspace: Callable[[], Path],
         date: str,
     ) -> None:
-        """One directory per source, then per dump."""
+        """
+        One directory per source, then per dump.
+        """
         cache_dir = workspace()
 
         assert cache.dump_dir(cache_dir, date) == cache_dir / "wiktionary" / date
@@ -33,7 +39,9 @@ class TestDumpDirectory:
         self,
         date: str,
     ) -> None:
-        """None is what the command line passes when no cache was named."""
+        """
+        None is what the command line passes when no cache was named.
+        """
         assert cache.dump_dir(None, date) == (
             Path(user_cache_dir("wsc")) / "wiktionary" / date
         )
@@ -44,7 +52,9 @@ class TestDumpDirectory:
         workspace: Callable[[], Path],
         date: str,
     ) -> None:
-        """Naming a dump is not fetching one, so the disk is left alone."""
+        """
+        Naming a dump is not fetching one, so the disk is left alone.
+        """
         directory = workspace()
 
         _ = cache.dump_dir(directory / "cache", date)
@@ -53,7 +63,9 @@ class TestDumpDirectory:
 
 
 class TestFetchedDate:
-    """Settling which fetched dump to work on."""
+    """
+    Settling which fetched dump to work on.
+    """
 
     @given(_FETCHED)
     def test_resolves_fetched_dates(
@@ -62,7 +74,9 @@ class TestFetchedDate:
         fetch_dump: Callable[..., Path],
         dates: list[str],
     ) -> None:
-        """A dump is known by the directory it sits in, and those are there."""
+        """
+        A dump is known by the directory it sits in, and those are there.
+        """
         cache_dir = workspace()
 
         for date in dates:
@@ -77,7 +91,9 @@ class TestFetchedDate:
         fetch_dump: Callable[..., Path],
         dates: list[str],
     ) -> None:
-        """Latest is answered from the cache, so a machine offline runs the same."""
+        """
+        Latest is answered from the cache, so a machine offline runs the same.
+        """
         cache_dir = workspace()
 
         for date in dates:
@@ -93,7 +109,9 @@ class TestFetchedDate:
         dates: list[str],
         data: st.DataObject,
     ) -> None:
-        """A dump is a directory, so whatever else lands there is not one."""
+        """
+        A dump is a directory, so whatever else lands there is not one.
+        """
         cache_dir = workspace()
 
         for date in dates:
@@ -112,7 +130,9 @@ class TestFetchedDate:
         dates: list[str],
         data: st.DataObject,
     ) -> None:
-        """The date asked for is named in the refusal, since it is the one to fetch."""
+        """
+        The date asked for is named in the refusal, since it is the one to fetch.
+        """
         cache_dir = workspace()
 
         for date in dates:
@@ -127,7 +147,9 @@ class TestFetchedDate:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """An empty cache is reported, and the report says what to do about it."""
+        """
+        An empty cache is reported, and the report says what to do about it.
+        """
         with pytest.raises(FileNotFoundError, match="fetch one first"):
             _ = cache.fetched_date(workspace(), cache.LATEST)
 
@@ -135,6 +157,8 @@ class TestFetchedDate:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """A cache nobody has written to yet reads as an empty one."""
+        """
+        A cache nobody has written to yet reads as an empty one.
+        """
         with pytest.raises(FileNotFoundError):
             _ = cache.fetched_date(workspace() / "missing", cache.LATEST)

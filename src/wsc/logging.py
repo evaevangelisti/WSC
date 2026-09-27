@@ -1,4 +1,6 @@
-"""Configure command logs without changing the application's root logger."""
+"""
+Configure command logs without changing the application's root logger.
+"""
 
 import logging
 from collections.abc import Generator

@@ -1,4 +1,6 @@
-"""Exercise off-page translations through complete source documents."""
+"""
+Exercise off-page translations through complete source documents.
+"""
 
 import bz2
 from collections.abc import Callable
@@ -36,7 +38,9 @@ def test_respects_translation_boundaries(
     *,
     compressed: bool,
 ) -> None:
-    """Duplicate translations merge without leaking across sections or tables."""
+    """
+    Duplicate translations merge without leaking across sections or tables.
+    """
     markup = "\n".join(
         [
             "==French==",
@@ -97,7 +101,9 @@ def test_resolves_translation_pointers(
     translations: list[str],
     template: str,
 ) -> None:
-    """Pointers resolve by part of speech and retain stable destination identities."""
+    """
+    Pointers resolve by part of speech and retain stable destination identities.
+    """
     directory = workspace()
     source = directory / "dump.xml"
     _ = source.write_text(
@@ -208,7 +214,9 @@ def test_resolves_translation_pointers(
 def test_resolves_name_pointers(
     workspace: Callable[[], Path],
 ) -> None:
-    """Proper-noun pointers match Wiktextract's name code."""
+    """
+    Proper-noun pointers match Wiktextract's name code.
+    """
     source = workspace() / "dump.xml"
     _ = source.write_text(
         dump(
@@ -247,7 +255,9 @@ def test_resolves_name_pointers(
 def test_fills_missing_english_tables(
     workspace: Callable[[], Path],
 ) -> None:
-    """Raw markup supplies only tables absent from the parsed entry."""
+    """
+    Raw markup supplies only tables absent from the parsed entry.
+    """
     source = workspace() / "dump.xml"
     _ = source.write_text(
         dump(
@@ -306,7 +316,9 @@ def test_isolates_translation_sections(
     level: int,
     boundary: str,
 ) -> None:
-    """Section changes close unfinished tables and release the previous POS."""
+    """
+    Section changes close unfinished tables and release the previous POS.
+    """
     heading = "=" * level
     boundary_heading = "=" * (3 if boundary == "Etymology 2" else level)
     transition = (
@@ -362,7 +374,9 @@ def test_reads_nested_arguments_in_document_order(
     numbered: bool,
     multiline: bool,
 ) -> None:
-    """Piped links, numbered parameters, and same-line table boundaries retain words."""
+    """
+    Piped links, numbered parameters, and same-line table boundaries retain words.
+    """
     separator = "\n" if multiline else ""
     heading = f"To produce [[leaf|{first}]] and 10<sup>15</sup>"
     arguments = f"1=fr|2=[[leaf|{second}]]" if numbered else f"fr|[[leaf|{second}]]"
@@ -399,7 +413,9 @@ def test_uses_last_parameter_assignment(
     arguments: str,
     expected: str,
 ) -> None:
-    """Explicit numbering and implicit positions obey source-order assignment."""
+    """
+    Explicit numbering and implicit positions obey source-order assignment.
+    """
     markup = (
         "==English==\n===Noun===\n{{trans-top|meaning}}"
         + f"{{{{t|{arguments}}}}}"
@@ -416,7 +432,9 @@ def test_uses_last_parameter_assignment(
 def test_recovers_partially_damaged_parsed_tables(
     workspace: Callable[[], Path],
 ) -> None:
-    """A usable word cannot hide a truncated translation from source recovery."""
+    """
+    A usable word cannot hide a truncated translation from source recovery.
+    """
     entries: list[RawEntry] = [
         {
             "word": "leaf",

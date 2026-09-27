@@ -1,4 +1,6 @@
-"""Classify glosses that describe forms, variants, and synonyms."""
+"""
+Classify glosses that describe forms, variants, and synonyms.
+"""
 
 import re
 

@@ -1,6 +1,7 @@
-"""Translation tables read from raw Wiktionary markup."""
+"""
+Translation tables read from raw Wiktionary markup.
+"""
 
-import re
 from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
@@ -10,17 +11,7 @@ from ...constants.extraction import TRANSLATION_TEMPLATES
 from ...identifiers import lemma_id, translation_table_id
 from ...models import POS, TranslationTable
 from ..translations import clean_translations, normalize_translation_gloss, templates
-from .markup import plain
-
-_HEADING = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$")
-
-_POS_BY_HEADING: dict[str, POS] = {
-    "Noun": POS.NOUN,
-    "Proper noun": POS.PROPN,
-    "Verb": POS.VERB,
-    "Adjective": POS.ADJECTIVE,
-    "Adverb": POS.ADVERB,
-}
+from .markup import plain, section_lines
 
 SUBPAGE_SUFFIX = "/translations"
 
@@ -43,52 +34,6 @@ class PageTranslations:
     pointers: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
-def _sections(
-    markup: str,
-    language_section: str,
-) -> Iterator[tuple[POS | None, str]]:
-    """
-    Walk the lines of a page sitting under a part of speech we keep.
-
-    Args:
-        markup: What the page is written in.
-        language_section: What the edition heads its own language with.
-
-    Yields:
-        The current part of speech and line, or None at a section boundary.
-    """
-    reading_language = False
-
-    pos: POS | None = None
-    pos_level = 0
-
-    for line in markup.splitlines():
-        found_heading = _HEADING.match(line)
-
-        if not found_heading:
-            if reading_language and pos is not None:
-                yield pos, line
-
-            continue
-
-        heading = found_heading.group(2)
-        level = len(found_heading.group(1))
-
-        if level == 2:
-            reading_language = heading == language_section
-
-        if level <= pos_level:
-            pos = None
-
-        found_pos = _POS_BY_HEADING.get(heading)
-
-        if reading_language and found_pos is not None:
-            pos = found_pos
-            pos_level = level
-
-        yield None, line
-
-
 def _section_texts(
     markup: str,
     language_section: str,
@@ -103,7 +48,9 @@ def _section_texts(
     Yields:
         Part of speech and complete text for each consecutive section.
     """
-    sections = groupby(_sections(markup, language_section), key=lambda item: item[0])
+    sections = groupby(
+        section_lines(markup, language_section), key=lambda item: item[0]
+    )
 
     for pos, lines in sections:
         if pos is not None:

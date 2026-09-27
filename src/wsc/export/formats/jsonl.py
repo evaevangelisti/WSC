@@ -1,4 +1,6 @@
-"""JSONL output, one JSON object per line."""
+"""
+JSONL output, one JSON object per line.
+"""
 
 import json
 from collections.abc import Mapping, Sequence
@@ -18,7 +20,9 @@ type Json = (
 
 
 class JSONLWriter[T: "DataclassInstance"](Writer[T]):
-    """Write dataclasses as JSON objects, one per line."""
+    """
+    Write dataclasses as JSON objects, one per line.
+    """
 
     def __init__(
         self,
@@ -50,7 +54,9 @@ class JSONLWriter[T: "DataclassInstance"](Writer[T]):
     def _close(
         self,
     ) -> None:
-        """Close the file, flushing whatever is still buffered."""
+        """
+        Close the file, flushing whatever is still buffered.
+        """
         if self._file is not None:  # pragma: no branch
             self._file.close()
             self._file = None

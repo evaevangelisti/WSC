@@ -1,4 +1,6 @@
-"""Apply generated lexical associations to collected senses."""
+"""
+Apply generated lexical associations to collected senses.
+"""
 
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor
@@ -118,7 +120,9 @@ def align_query(
 
 
 class Aligner:
-    """Align resources through language model decisions or cached results."""
+    """
+    Align resources through language model decisions or cached results.
+    """
 
     def __init__(
         self,

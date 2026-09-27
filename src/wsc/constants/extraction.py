@@ -1,28 +1,44 @@
-"""Extraction defaults and lexical normalization policies."""
+"""
+Extraction defaults and lexical normalization policies.
+"""
 
 LANGUAGE = "en"
-"""Wiktionary's code for the edition read, and for the language kept in it."""
+"""
+Wiktionary's code for the edition read, and for the language kept in it.
+"""
 
 LANGUAGE_SECTION = "English"
-"""Language heading used to locate English entries in Wiktionary pages."""
+"""
+Language heading used to locate English entries in Wiktionary pages.
+"""
 
 COMPRESSION_LEVEL = 10
-"""How hard a parsed dump is packed, written once and read whole every time."""
+"""
+How hard a parsed dump is packed, written once and read whole every time.
+"""
 
 SPACY_PIPELINE = "en_core_web_trf"
-"""Transformer pipeline selected for accurate sentence lemmatization."""
+"""
+Transformer pipeline selected for accurate sentence lemmatization.
+"""
 
 BATCH_SIZE = 8
-"""Small extraction batches limit padding when quotation lengths vary."""
+"""
+Small extraction batches limit padding when quotation lengths vary.
+"""
 
 PROCESSES = 1
-"""Single-process extraction avoids contention with Torch's own parallelism."""
+"""
+Single-process extraction avoids contention with Torch's own parallelism.
+"""
 
 
 TRANSLATION_TEMPLATES = frozenset(
     {"t", "t+", "tt", "tt+", "t-check", "t+check", "t-simple"}
 )
-"""Templates whose first two arguments identify a language and translated word."""
+"""
+Templates whose first two arguments identify a language and translated word.
+"""
 
 TRANSLATION_PLACEHOLDERS = frozenset(
     {
@@ -34,14 +50,20 @@ TRANSLATION_PLACEHOLDERS = frozenset(
         "sense",
     }
 )
-"""Headings that cannot identify a translation sense."""
+"""
+Headings that cannot identify a translation sense.
+"""
 
 SEA_LANGUAGES = frozenset({"de", "af", "fy", "sco"})
-"""Languages in the audit where initial See can name a sea or lake."""
+"""
+Languages in the audit where initial See can name a sea or lake.
+"""
 
 MOJIBAKE_REPLACEMENTS = {
     "Ã©": "é",
     "â€¢": "•",
     "â€“": "–",
 }
-"""Unambiguous encoding artifacts observed in English attestations."""
+"""
+Unambiguous encoding artifacts observed in English attestations.
+"""

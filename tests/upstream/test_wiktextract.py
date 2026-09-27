@@ -88,7 +88,9 @@ class _SilentProcess:
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        """Stand in for a process left, which has nothing to release."""
+        """
+        Stand in for a process left, which has nothing to release.
+        """
 
 
 @pytest.fixture
@@ -186,7 +188,9 @@ def read(
 
 
 class TestParse:
-    """Turning a dump into the compressed JSONL wiktextract makes of it."""
+    """
+    Turning a dump into the compressed JSONL wiktextract makes of it.
+    """
 
     @_SPAWNS
     @given(st.lists(_ENTRY_LINES | _REPORT_LINES, max_size=8), _ENTRY_LINES, st.data())
@@ -199,7 +203,9 @@ class TestParse:
         entry: str,
         data: st.DataObject,
     ) -> None:
-        """Wiktextract reports itself down the same stream as the entries."""
+        """
+        Wiktextract reports itself down the same stream as the entries.
+        """
         position = data.draw(st.integers(min_value=0, max_value=len(lines)))
         written = [*lines[:position], entry, *lines[position:]]
 
@@ -292,7 +298,9 @@ class TestParse:
         stub_wiktextract: Callable[..., list[list[str]]],
         directories: list[str],
     ) -> None:
-        """A parse may be the first thing written where it is going."""
+        """
+        A parse may be the first thing written where it is going.
+        """
         _ = stub_wiktextract(['{"word": "bank"}'])
 
         output_path = workspace().joinpath(*directories) / "wiktextract.jsonl.zst"
@@ -309,7 +317,9 @@ class TestParse:
         stub_wiktextract: Callable[..., list[list[str]]],
         lines: list[str],
     ) -> None:
-        """The .part file is removed once its contents are in place."""
+        """
+        The .part file is removed once its contents are in place.
+        """
         _ = stub_wiktextract(lines)
 
         directory = workspace()
@@ -327,7 +337,9 @@ class TestParse:
         stub_wiktextract: Callable[..., list[list[str]]],
         lines: list[str],
     ) -> None:
-        """An archive of no entries is a file of no bytes, which nothing reads."""
+        """
+        An archive of no entries is a file of no bytes, which nothing reads.
+        """
         _ = stub_wiktextract(lines)
 
         directory = workspace()
@@ -348,7 +360,9 @@ class TestParse:
         dump_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """A missing output stream raises an explicit error."""
+        """
+        A missing output stream raises an explicit error.
+        """
 
         def popen(
             _command: list[str],
@@ -390,7 +404,9 @@ class TestParse:
         lines: list[str],
         return_code: int,
     ) -> None:
-        """A run cut short leaves nothing that passes for finished."""
+        """
+        A run cut short leaves nothing that passes for finished.
+        """
         _ = stub_wiktextract(lines, return_code=return_code)
 
         directory = workspace()
@@ -407,7 +423,9 @@ class TestParse:
 
 
 class TestNarrowFile:
-    """Published archives retain every field consumed by collection."""
+    """
+    Published archives retain every field consumed by collection.
+    """
 
     @given(st.lists(raw_entries(), min_size=1, max_size=4))
     def test_preserves_collected_entries(
@@ -417,7 +435,9 @@ class TestNarrowFile:
         locator: Locator,
         entries: list[RawJson],
     ) -> None:
-        """Narrowing preserves extraction results and leaves archive bytes untouched."""
+        """
+        Narrowing preserves extraction results and leaves archive bytes untouched.
+        """
         directory = workspace()
         archive_path = write_entries(directory / "archive.jsonl.gz", entries)
         archive_bytes = archive_path.read_bytes()
@@ -442,7 +462,9 @@ class TestNarrowFile:
         *,
         valid_entry: bool,
     ) -> None:
-        """Incomplete JSON is counted; unusable archives preserve prior output."""
+        """
+        Incomplete JSON is counted; unusable archives preserve prior output.
+        """
         archive_path = tmp_path / "archive.jsonl.gz"
         output_path = tmp_path / "wiktextract.jsonl.zst"
         content = 'report\n{"word":\n'

@@ -1,4 +1,6 @@
-"""Locating a lemma inside the sentences that attest it."""
+"""
+Locating a lemma inside the sentences that attest it.
+"""
 
 import re
 from collections.abc import Callable, Iterable, Iterator

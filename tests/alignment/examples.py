@@ -1,4 +1,6 @@
-"""Build model responses and lexical queries for alignment tests."""
+"""
+Build model responses and lexical queries for alignment tests.
+"""
 
 from collections.abc import Sequence
 
@@ -13,7 +15,9 @@ from wsc.models.alignment import (
 
 
 class Model:
-    """Return configured responses and retain the generated requests."""
+    """
+    Return configured responses and retain the generated requests.
+    """
 
     def __init__(
         self,

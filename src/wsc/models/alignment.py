@@ -1,4 +1,6 @@
-"""Define inputs, decisions, and model contracts for lexical alignment."""
+"""
+Define inputs, decisions, and model contracts for lexical alignment.
+"""
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -9,14 +11,18 @@ from .pos import POS
 
 
 class AlignmentTask(StrEnum):
-    """Identify the resource aligned with Wiktionary."""
+    """
+    Identify the resource aligned with Wiktionary.
+    """
 
     TRANSLATIONS = "translations"
     SYNSETS = "synsets"
 
 
 class GlossMode(StrEnum):
-    """Select the Wiktionary definition representation."""
+    """
+    Select the Wiktionary definition representation.
+    """
 
     LAST = "last"
     FULL = "full"
@@ -161,7 +167,9 @@ class AlignmentResult:
     def links(
         self,
     ) -> tuple[AlignmentLink, ...]:
-        """Return accepted associations in source order."""
+        """
+        Return accepted associations in source order.
+        """
         return tuple(link for decision in self.decisions for link in decision.links)
 
 
@@ -196,7 +204,9 @@ class ModelOutcome:
 
 
 class LanguageModel(Protocol):
-    """Generate structured alignment decisions."""
+    """
+    Generate structured alignment decisions.
+    """
 
     def generate(
         self,

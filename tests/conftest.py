@@ -21,6 +21,7 @@ from kwic import Locator
 from strategies import RawJson
 
 from wsc.extract import write_off_page_translations
+from wsc.extract.dump.wikidata import write_wikidata_ids
 from wsc.upstream import cache
 
 # Filesystem properties use isolated directories for each generated example.
@@ -176,6 +177,7 @@ def parse_dump(
 
         dump_dir = cache.dump_dir(cache_dir, date)
         write_off_page_translations(dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME, {})
+        write_wikidata_ids(dump_dir / cache.WIKIDATA_IDS_NAME, {})
 
         return write_entries(dump_dir / cache.WIKTEXTRACT_NAME, entries)
 

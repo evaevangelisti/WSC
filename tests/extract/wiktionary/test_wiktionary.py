@@ -1,4 +1,6 @@
-"""Tests for src/wsc/extract/wiktionary/."""
+"""
+Tests for src/wsc/extract/wiktionary/.
+"""
 
 import json
 import re
@@ -52,7 +54,8 @@ _loads: Callable[[str], object] = json.loads
 def _has_lexical_content(
     text: str,
 ) -> bool:
-    """Return whether text contains at least one letter or number.
+    """
+    Return whether text contains at least one letter or number.
 
     Args:
         text: Candidate sentence or synonym.
@@ -303,7 +306,9 @@ def attest(
 
 
 class TestOpening:
-    """Reading the file however it was compressed."""
+    """
+    Reading the file however it was compressed.
+    """
 
     @given(st.lists(raw_entries(), max_size=3))
     def test_reads_compressed_entries(
@@ -311,7 +316,9 @@ class TestOpening:
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
-        """A parse writes zstd, but a file found elsewhere may be plain or gzipped."""
+        """
+        A parse writes zstd, but a file found elsewhere may be plain or gzipped.
+        """
         plain_lemmas = extract(entries, name="wiktextract.jsonl")
 
         assert extract(entries, name="wiktextract.jsonl.zst") == plain_lemmas
@@ -319,7 +326,9 @@ class TestOpening:
 
 
 class TestEntries:
-    """Which entries are read at all."""
+    """
+    Which entries are read at all.
+    """
 
     @given(st.data())
     def test_selects_english_entries(
@@ -327,7 +336,9 @@ class TestEntries:
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
     ) -> None:
-        """The extractor keeps English entries from multilingual dumps."""
+        """
+        The extractor keeps English entries from multilingual dumps.
+        """
         editions = data.draw(
             st.lists(languages, min_size=1, max_size=3, unique=True).map(
                 lambda drawn: [*drawn, LANGUAGE],
@@ -348,7 +359,9 @@ class TestEntries:
         entries: list[RawJson],
         data: st.DataObject,
     ) -> None:
-        """The filter narrows what is kept, and never widens it."""
+        """
+        The filter narrows what is kept, and never widens it.
+        """
         allowed = data.draw(st.sets(parts_of_speech, min_size=1))
 
         assert extract(entries, allowed_pos=frozenset(allowed)) == [
@@ -363,7 +376,9 @@ class TestEntries:
         unreadable: RawJson,
         data: st.DataObject,
     ) -> None:
-        """An entry with no headword, no part of speech kept or no gloss is skipped."""
+        """
+        An entry with no headword, no part of speech kept or no gloss is skipped.
+        """
         position = data.draw(st.integers(min_value=0, max_value=len(entries)))
         mixed = [*entries[:position], unreadable, *entries[position:]]
 
@@ -377,7 +392,9 @@ class TestEntries:
         report: str,
         data: st.DataObject,
     ) -> None:
-        """Wiktextract reports itself among the entries, so not every line is one."""
+        """
+        Wiktextract reports itself among the entries, so not every line is one.
+        """
         position = data.draw(st.integers(min_value=0, max_value=len(entries)))
         lines = [json.dumps(entry) for entry in entries]
 
@@ -391,7 +408,9 @@ class TestEntries:
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
-        """The whitespace an editor left around a headword is not part of it."""
+        """
+        The whitespace an editor left around a headword is not part of it.
+        """
         entry_keys = dict.fromkeys(
             (str(entry["word"]).strip(), entry["pos"]) for entry in entries
         )
@@ -407,7 +426,9 @@ class TestEntries:
         pos: POS,
         data: st.DataObject,
     ) -> None:
-        """The values are wiktextract's own codes, so a code converts directly."""
+        """
+        The values are wiktextract's own codes, so a code converts directly.
+        """
         entry = data.draw(raw_entries(pos_codes=st.just(pos.value)))
 
         assert extract([entry])[0].pos is pos
@@ -418,12 +439,16 @@ class TestEntries:
         extract: Callable[..., list[Lemma]],
         entry: RawJson,
     ) -> None:
-        """Wiktextract's name code represents a proper noun."""
+        """
+        Wiktextract's name code represents a proper noun.
+        """
         assert extract([entry])[0].pos is POS.PROPN
 
 
 class TestIdentifiers:
-    """How a lemma and its senses are named."""
+    """
+    How a lemma and its senses are named.
+    """
 
     @given(st.lists(raw_entries(), max_size=5))
     def test_prefixes_entry_identifiers(
@@ -431,7 +456,9 @@ class TestIdentifiers:
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
-        """An entry is named bank.noun, and a sense adds a digest of its own."""
+        """
+        An entry is named bank.noun, and a sense adds a digest of its own.
+        """
         for lemma in extract(entries):
             entry_id = f"{lemma.lemma}.{lemma.pos}"
 
@@ -444,7 +471,9 @@ class TestIdentifiers:
         extract: Callable[..., list[Lemma]],
         entries: list[RawJson],
     ) -> None:
-        """Two senses reading the same way are the same sense, wherever they sit."""
+        """
+        Two senses reading the same way are the same sense, wherever they sit.
+        """
         sense_glosses: dict[str, tuple[str, ...]] = {}
 
         for lemma in extract(entries):
@@ -460,7 +489,9 @@ class TestIdentifiers:
         senses: list[RawJson],
         data: st.DataObject,
     ) -> None:
-        """A page reordered upstream reads back under the identifiers it had."""
+        """
+        A page reordered upstream reads back under the identifiers it had.
+        """
         headword = data.draw(words)
         entry: RawJson = {
             "word": headword,
@@ -481,42 +512,9 @@ class TestIdentifiers:
 
 
 class TestSenses:
-    """What a sense carries over."""
-
-    @given(
-        st.lists(
-            st.lists(
-                st.integers(min_value=1, max_value=20).map(lambda value: f"Q{value}"),
-                unique=True,
-                max_size=5,
-            ),
-            min_size=2,
-            max_size=4,
-        ),
-    )
-    def test_merges_wikidata_identifiers(
-        self,
-        extract: Callable[..., list[Lemma]],
-        identifiers: list[list[str]],
-    ) -> None:
-        """Repeated senses retain distinct Wikidata identifiers in encounter order."""
-        entry: RawJson = {
-            "word": "bank",
-            "pos": "noun",
-            "lang_code": "en",
-            "senses": [
-                {"glosses": ["a financial institution"], "wikidata": group}
-                for group in identifiers
-            ],
-        }
-
-        senses = extract([entry])[0].senses
-        expected = tuple(
-            dict.fromkeys(identifier for group in identifiers for identifier in group),
-        )
-
-        assert len(senses) == 1
-        assert senses[0].wikidata_ids == expected
+    """
+    What a sense carries over.
+    """
 
     @given(st.lists(st.one_of(definitions, blanks), min_size=1, max_size=4), st.data())
     def test_preserves_gloss_hierarchy(
@@ -525,7 +523,9 @@ class TestSenses:
         chain: list[str],
         data: st.DataObject,
     ) -> None:
-        """The chain is what lets a sub-sense be read on its own, whitespace aside."""
+        """
+        The chain is what lets a sub-sense be read on its own, whitespace aside.
+        """
         senses: list[RawJson] = [{"glosses": chain}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
@@ -547,7 +547,9 @@ class TestSenses:
         chains: list[list[str]],
         data: st.DataObject,
     ) -> None:
-        """A parent is not replaced by what nests under it: it has examples too."""
+        """
+        A parent is not replaced by what nests under it: it has examples too.
+        """
         senses: list[RawJson] = [{"glosses": chain} for chain in chains]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
@@ -578,7 +580,9 @@ class TestSenses:
         topics: list[str],
         data: st.DataObject,
     ) -> None:
-        """Labels of grammar are not subject fields, and neither takes the other."""
+        """
+        Labels of grammar are not subject fields, and neither takes the other.
+        """
         entry = data.draw(
             raw_entries(
                 senses=st.lists(
@@ -595,7 +599,9 @@ class TestSenses:
 
 
 class TestPseudoSenses:
-    """Exclude senses describing inflected forms."""
+    """
+    Exclude senses describing inflected forms.
+    """
 
     @given(
         descriptions=st.lists(
@@ -623,7 +629,9 @@ class TestPseudoSenses:
         descriptions: list[tuple[str, bool]],
         separator: str,
     ) -> None:
-        """Untagged redirects are excluded only when they begin a hierarchy gloss."""
+        """
+        Untagged redirects are excluded only when they begin a hierarchy gloss.
+        """
         senses: list[RawJson] = [
             {
                 "glosses": [
@@ -656,7 +664,9 @@ class TestPseudoSenses:
         tag: str,
         data: st.DataObject,
     ) -> None:
-        """Inflection senses point to definitions under another entry."""
+        """
+        Inflection senses point to definitions under another entry.
+        """
         senses: list[RawJson] = [{"glosses": ["Plural of bank."], "tags": [tag]}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
@@ -670,7 +680,9 @@ class TestPseudoSenses:
         inflecting: list[bool],
         data: st.DataObject,
     ) -> None:
-        """A form is no sense, so it leaves no identifier behind."""
+        """
+        A form is no sense, so it leaves no identifier behind.
+        """
         senses: list[RawJson] = [
             {"glosses": [f"Sense {position}."], **({"tags": [tag]} if drop else {})}
             for position, drop in enumerate(inflecting)
@@ -695,7 +707,9 @@ class TestPseudoSenses:
         tag: str,
         data: st.DataObject,
     ) -> None:
-        """Only the entry that defines something comes through."""
+        """
+        Only the entry that defines something comes through.
+        """
         headword = data.draw(words)
         inflected_entry: RawJson = {
             "word": headword,
@@ -721,7 +735,9 @@ class TestPseudoSenses:
         tags: list[str],
         data: st.DataObject,
     ) -> None:
-        """Only the two inflection tags exclude a sense."""
+        """
+        Only the two inflection tags exclude a sense.
+        """
         senses: list[RawJson] = [{"glosses": ["A meaning."], "tags": tags}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
@@ -729,13 +745,17 @@ class TestPseudoSenses:
 
 
 class TestSentences:
-    """The sentences illustrating a sense."""
+    """
+    The sentences illustrating a sense.
+    """
 
     def test_splits_layout_examples(
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """Supported em-space boundaries produce separate examples."""
+        """
+        Supported em-space boundaries produce separate examples.
+        """
         sentences = attest(
             {
                 "text": "bank one\u2003 bank two",
@@ -759,7 +779,9 @@ class TestSentences:
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """One unsupported em space remains ordinary sentence spacing."""
+        """
+        One unsupported em space remains ordinary sentence spacing.
+        """
         written = "directionally correct \u2003 [= headed in the right direction]"
 
         sentences = attest({"text": written}, headword="directionally")
@@ -772,7 +794,9 @@ class TestSentences:
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """Layout spacing never splits a quotation from its reference."""
+        """
+        Layout spacing never splits a quotation from its reference.
+        """
         sentences = attest(
             {
                 "text": "First bank.\u2003 Second bank.",
@@ -790,17 +814,16 @@ class TestSentences:
         attest: Callable[..., list[Sentence]],
         examples: list[RawJson],
     ) -> None:
-        """An editor wrote it, so there is no source to name."""
+        """
+        An editor wrote it, so there is no source to name.
+        """
         sentences = attest(*examples)
 
         assert all(isinstance(sentence, Example) for sentence in sentences)
         assert [sentence.text for sentence in sentences] == [
             str(example["text"]).strip()
             for example in examples
-            if any(
-                character.isalnum()
-                for character in str(example["text"]).strip()
-            )
+            if any(character.isalnum() for character in str(example["text"]).strip())
         ]
 
     @given(st.data())
@@ -809,7 +832,9 @@ class TestSentences:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """A reference is what makes a sentence evidence from somewhere."""
+        """
+        A reference is what makes a sentence evidence from somewhere.
+        """
         year = data.draw(years)
         reference = data.draw(references(year))
         example = data.draw(
@@ -848,7 +873,9 @@ class TestSentences:
         written: str,
         expected: str | None,
     ) -> None:
-        """A source-title directive is editorial text rather than quoted evidence."""
+        """
+        A source-title directive is editorial text rather than quoted evidence.
+        """
         sentences = attest({"text": written, "ref": "2015, A Title"})
 
         assert [sentence.text for sentence in sentences] == (
@@ -862,7 +889,9 @@ class TestSentences:
         written: list[str],
         data: st.DataObject,
     ) -> None:
-        """A sentence of whitespace illustrates nothing."""
+        """
+        A sentence of whitespace illustrates nothing.
+        """
         examples = [data.draw(raw_examples(texts=st.just(text))) for text in written]
 
         assert [sentence.text for sentence in attest(*examples)] == [
@@ -873,7 +902,9 @@ class TestSentences:
 
 
 class TestKinds:
-    """Reading a sentence as the kind wiktextract says it is."""
+    """
+    Reading a sentence as the kind wiktextract says it is.
+    """
 
     @given(
         suffix=st.text(alphabet=" :\t\u00a0", min_size=1),
@@ -888,7 +919,9 @@ class TestKinds:
         *,
         embedded: bool,
     ) -> None:
-        """Reference cleanup preserves internal colons, quotation dates, and offsets."""
+        """
+        Reference cleanup preserves internal colons, quotation dates, and offsets.
+        """
         reference = "2000, A Title: A Subtitle, London: Publisher, https://example.org"
         written = reference + suffix
         raw: RawJson = (
@@ -915,7 +948,9 @@ class TestKinds:
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """An unmatched export delimiter does not become reference content."""
+        """
+        An unmatched export delimiter does not become reference content.
+        """
         quotation = attest(
             {
                 "text": "A quoted sentence.",
@@ -932,7 +967,9 @@ class TestKinds:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """It read the markup; a reference is only what it left behind."""
+        """
+        It read the markup; a reference is only what it left behind.
+        """
         year = data.draw(years)
         reference = data.draw(references(year))
         text = data.draw(_LEXICAL_TEXTS)
@@ -949,7 +986,9 @@ class TestKinds:
         attest: Callable[..., list[Sentence]],
         written: str,
     ) -> None:
-        """An export tells the two apart by the reference, and it has none."""
+        """
+        An export tells the two apart by the reference, and it has none.
+        """
         example = attest({"text": written, "type": "quotation"})[0]
 
         assert isinstance(example, Example)
@@ -961,7 +1000,9 @@ class TestKinds:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """The source is in the text, which is why no reference came with it."""
+        """
+        The source is in the text, which is why no reference came with it.
+        """
         year = data.draw(years)
         reference = data.draw(references(year))
         text = data.draw(_LEXICAL_TEXTS)
@@ -986,7 +1027,9 @@ class TestKinds:
         reference: str,
         sentence_text: str,
     ) -> None:
-        """A break alone proves nothing: prose runs over lines too."""
+        """
+        A break alone proves nothing: prose runs over lines too.
+        """
         written = f"{reference}\n{sentence_text}"
         plain_header = re.sub(r"'{2,}", "", reference)
         plain_header = re.sub(r" {2,}", " ", plain_header)
@@ -1010,7 +1053,9 @@ class TestKinds:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """Its own word comes first, whatever its opening line looks like."""
+        """
+        Its own word comes first, whatever its opening line looks like.
+        """
         year = data.draw(years)
         written = f"{data.draw(references(year))}\n{data.draw(texts)}"
 
@@ -1025,7 +1070,9 @@ class TestKinds:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """Splitting there would leave the reference, which attests nothing."""
+        """
+        Splitting there would leave the reference, which attests nothing.
+        """
         year = data.draw(years)
         written = f"{year}, A Book\n{data.draw(blanks)}"
 
@@ -1037,7 +1084,9 @@ class TestKinds:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """A headword named in a book title is not an occurrence of it."""
+        """
+        A headword named in a book title is not an occurrence of it.
+        """
         headword = data.draw(words)
         year = data.draw(years)
         reference = f"{year}, {headword}, A Book"
@@ -1057,13 +1106,17 @@ class TestKinds:
 
 
 class TestPointers:
-    """Passing over what stands in for a sentence without being one."""
+    """
+    Passing over what stands in for a sentence without being one.
+    """
 
     def test_preserves_incomplete_pointer(
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """A navigation prefix without a target remains lexical text."""
+        """
+        A navigation prefix without a target remains lexical text.
+        """
         written = "For quotations SEE"
 
         sentences = attest({"text": written}, headword="see")
@@ -1076,7 +1129,9 @@ class TestPointers:
         attest: Callable[..., list[Sentence]],
         headword: str,
     ) -> None:
-        """It navigates somewhere; it attests nothing."""
+        """
+        It navigates somewhere; it attests nothing.
+        """
         assert attest({"text": _build_pointer(headword)}, headword=headword) == []
 
     @given(words, sentence_kinds)
@@ -1086,7 +1141,9 @@ class TestPointers:
         headword: str,
         kind: str,
     ) -> None:
-        """An example type cannot turn a citation link into lexical evidence."""
+        """
+        An example type cannot turn a citation link into lexical evidence.
+        """
         written = _build_pointer(headword)
 
         sentences = attest({"text": written, "type": kind}, headword=headword)
@@ -1100,7 +1157,9 @@ class TestPointers:
         headword: str,
         data: st.DataObject,
     ) -> None:
-        """Pointer detection requires the complete template."""
+        """
+        Pointer detection requires the complete template.
+        """
         written = f"For quotations {data.draw(texts)}"
 
         sentences = attest({"text": written}, headword=headword)
@@ -1109,7 +1168,9 @@ class TestPointers:
 
 
 class TestYears:
-    """Reading a year off a reference, and filtering on it."""
+    """
+    Reading a year off a reference, and filtering on it.
+    """
 
     @given(st.data())
     def test_extracts_reference_year(
@@ -1117,7 +1178,9 @@ class TestYears:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """A reference is prose, so the year is taken where it is recognised."""
+        """
+        A reference is prose, so the year is taken where it is recognised.
+        """
         year = data.draw(years)
         example = data.draw(
             raw_examples(
@@ -1149,7 +1212,9 @@ class TestYears:
         reference: str,
         expected: int | None,
     ) -> None:
-        """The shapes are Wiktionary's own, and the year opens each of them."""
+        """
+        The shapes are Wiktionary's own, and the year opens each of them.
+        """
         quotation = attest({"text": "He runs.", "ref": reference})[0]
 
         assert isinstance(quotation, Quotation)
@@ -1164,7 +1229,9 @@ class TestYears:
         maximum_year: int | None,
         data: st.DataObject,
     ) -> None:
-        """Both bounds are inclusive, and either stands on its own."""
+        """
+        Both bounds are inclusive, and either stands on its own.
+        """
         examples = [
             data.draw(
                 raw_examples(
@@ -1198,7 +1265,9 @@ class TestYears:
         minimum_year: int | None,
         data: st.DataObject,
     ) -> None:
-        """A bound is asked for to leave something out, never to let something in."""
+        """
+        A bound is asked for to leave something out, never to let something in.
+        """
         dated_examples = [
             data.draw(raw_examples(references=references(data.draw(years))))
             for _ in examples
@@ -1217,7 +1286,9 @@ class TestYears:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """A quotation nothing can date cannot be shown to be inside a bound."""
+        """
+        A quotation nothing can date cannot be shown to be inside a bound.
+        """
         undated = data.draw(raw_examples(references=undated_references))
 
         assert attest(undated, minimum_year=data.draw(years)) == []
@@ -1228,7 +1299,9 @@ class TestYears:
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
-        """An undated quotation only stands in the way once a bound is set."""
+        """
+        An undated quotation only stands in the way once a bound is set.
+        """
         reference = data.draw(undated_references)
         undated = data.draw(
             raw_examples(
@@ -1252,7 +1325,9 @@ class TestYears:
         examples: list[RawJson],
         data: st.DataObject,
     ) -> None:
-        """The bounds reach quotations alone, an example carrying no date."""
+        """
+        The bounds reach quotations alone, an example carrying no date.
+        """
         year = data.draw(years)
         excluded_quotation = data.draw(raw_examples(references=references(year)))
 
@@ -1266,7 +1341,9 @@ class TestYears:
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
     ) -> None:
-        """A sense is what its gloss says, whatever evidence the bounds leave it."""
+        """
+        A sense is what its gloss says, whatever evidence the bounds leave it.
+        """
         year = data.draw(years)
         example = data.draw(raw_examples(references=references(year)))
         entry = data.draw(
@@ -1285,7 +1362,9 @@ class TestYears:
 
 
 class TestWordOffsets:
-    """Where the lemma occurs in the sentences attesting it."""
+    """
+    Where the lemma occurs in the sentences attesting it.
+    """
 
     @given(words, st.data())
     def test_locates_sentence_lemma(
@@ -1294,7 +1373,9 @@ class TestWordOffsets:
         headword: str,
         data: st.DataObject,
     ) -> None:
-        """The headword is a form of itself, so it is looked for like the rest."""
+        """
+        The headword is a form of itself, so it is looked for like the rest.
+        """
         example = data.draw(raw_examples(texts=st.just(f"1 {headword} 2")))
 
         assert attest(example, headword=headword)[0].word_offsets == (
@@ -1308,7 +1389,9 @@ class TestWordOffsets:
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """Agreement remains distinguishable from either method alone."""
+        """
+        Agreement remains distinguishable from either method alone.
+        """
         sentences = attest(
             {
                 "text": "a bank account",
@@ -1330,7 +1413,9 @@ class TestWordOffsets:
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """A later review needs both proposals where the methods disagree."""
+        """
+        A later review needs both proposals where the methods disagree.
+        """
         sentences = attest(
             {
                 "text": "a bank account",
@@ -1347,7 +1432,9 @@ class TestWordOffsets:
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """An invalid source range cannot identify text for review."""
+        """
+        An invalid source range cannot identify text for review.
+        """
         sentences = attest(
             {
                 "text": "a bank account",
@@ -1363,7 +1450,9 @@ class TestWordOffsets:
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
-        """Bold ranges remain relative to the exported sentence."""
+        """
+        Bold ranges remain relative to the exported sentence.
+        """
         reference = "2026, bank"
         start = len(reference) + 1
         sentences = attest(
@@ -1392,7 +1481,9 @@ class TestWordOffsets:
         inflection: str,
         data: st.DataObject,
     ) -> None:
-        """A sentence attests the lemma in whatever form it needs."""
+        """
+        A sentence attests the lemma in whatever form it needs.
+        """
         form = data.draw(raw_forms(forms=_pad_word(inflection)))
         example = data.draw(raw_examples(texts=st.just(f"1 {inflection} 2")))
 
@@ -1410,7 +1501,9 @@ class TestWordOffsets:
         tag: str,
         data: st.DataObject,
     ) -> None:
-        """An inflection table names itself, its template and its transliterations."""
+        """
+        An inflection table names itself, its template and its transliterations.
+        """
         service_form = data.draw(
             words.filter(lambda form: form.casefold() != headword.casefold()),
         )
@@ -1432,7 +1525,9 @@ class TestWordOffsets:
         cell: str,
         data: st.DataObject,
     ) -> None:
-        """A dash stands for a form that does not exist, and blank for none at all."""
+        """
+        A dash stands for a form that does not exist, and blank for none at all.
+        """
         form = data.draw(raw_forms(forms=st.just(cell)))
         example = data.draw(raw_examples(texts=st.just(f"1 {headword} - 2")))
 
@@ -1447,7 +1542,9 @@ class TestWordOffsets:
 
 
 class TestVariants:
-    """How else a lemma is spelled, which one thing says."""
+    """
+    How else a lemma is spelled, which one thing says.
+    """
 
     @given(
         words,
@@ -1463,7 +1560,9 @@ class TestVariants:
         pos: POS,
         data: st.DataObject,
     ) -> None:
-        """Another spelling sits on a page of its own and points back."""
+        """
+        Another spelling sits on a page of its own and points back.
+        """
         variant_entry: RawJson = {
             "word": spelling,
             "pos": pos.value,
@@ -1494,7 +1593,9 @@ class TestVariants:
         spelling: str,
         data: st.DataObject,
     ) -> None:
-        """Proper-noun spellings use Wiktextract's name code."""
+        """
+        Proper-noun spellings use Wiktextract's name code.
+        """
         variant_entry: RawJson = {
             "word": spelling,
             "pos": "name",
@@ -1525,7 +1626,9 @@ class TestVariants:
         spelling: str,
         data: st.DataObject,
     ) -> None:
-        """Plural forms are excluded from spelling variants."""
+        """
+        Plural forms are excluded from spelling variants.
+        """
         inflected_entry: RawJson = {
             "word": spelling,
             "pos": "noun",
@@ -1554,7 +1657,9 @@ class TestVariants:
         spelling: str,
         data: st.DataObject,
     ) -> None:
-        """An Alternative forms section names derivations as readily as spellings."""
+        """
+        An Alternative forms section names derivations as readily as spellings.
+        """
         form = data.draw(
             raw_forms(forms=st.just(spelling), tags=st.just(["alternative"])),
         )
@@ -1574,7 +1679,9 @@ class TestVariants:
         spelling: str,
         data: st.DataObject,
     ) -> None:
-        """A spelling of the noun says nothing about how the verb is written."""
+        """
+        A spelling of the noun says nothing about how the verb is written.
+        """
         variant_entry: RawJson = {
             "word": spelling,
             "pos": "verb",
@@ -1597,7 +1704,9 @@ class TestVariants:
 
 
 class TestTranslations:
-    """What other languages call the entry, which Wiktionary hangs off the entry."""
+    """
+    What other languages call the entry, which Wiktionary hangs off the entry.
+    """
 
     @given(
         words,
@@ -1613,7 +1722,9 @@ class TestTranslations:
         gloss: str,
         data: st.DataObject,
     ) -> None:
-        """The gloss is stripped, an editor having written it by hand."""
+        """
+        The gloss is stripped, an editor having written it by hand.
+        """
         translation_record = data.draw(
             raw_translations(
                 translations=st.just(translation),
@@ -1646,7 +1757,9 @@ class TestTranslations:
         gloss: str,
         data: st.DataObject,
     ) -> None:
-        """One meaning is often said more than one way in the same language."""
+        """
+        One meaning is often said more than one way in the same language.
+        """
         translation_records = [
             data.draw(
                 raw_translations(
@@ -1683,7 +1796,9 @@ class TestTranslations:
         gloss: str,
         data: st.DataObject,
     ) -> None:
-        """A displayed see-also reference does not become part of the table gloss."""
+        """
+        A displayed see-also reference does not become part of the table gloss.
+        """
         referenced_gloss = f"{gloss} — see also alternative\ncleanup note"
         translation_records = [
             data.draw(
@@ -1719,7 +1834,9 @@ class TestTranslations:
         key: str,
         data: st.DataObject,
     ) -> None:
-        """A translation is filed under its gloss and its language, or nowhere."""
+        """
+        A translation is filed under its gloss and its language, or nowhere.
+        """
         translation_record = data.draw(raw_translations())
         translation_record[key] = data.draw(blanks)
 
@@ -1735,7 +1852,9 @@ class TestTranslations:
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
     ) -> None:
-        """Wiktionary writes a translation table for a fraction of its entries."""
+        """
+        Wiktionary writes a translation table for a fraction of its entries.
+        """
         entry = data.draw(raw_entries(translations=st.just([])))
 
         (lemma,) = extract([entry])
@@ -1744,7 +1863,9 @@ class TestTranslations:
 
 
 class TestSynonyms:
-    """Other words standing for what a sense means."""
+    """
+    Other words standing for what a sense means.
+    """
 
     @given(words, words, st.data())
     def test_associates_sense_synonyms(
@@ -1754,7 +1875,9 @@ class TestSynonyms:
         synonym: str,
         data: st.DataObject,
     ) -> None:
-        """A synonym under a sense stands for that meaning alone."""
+        """
+        A synonym under a sense stands for that meaning alone.
+        """
         synonym_record = data.draw(raw_synonyms(words=st.just(synonym)))
         sense = data.draw(raw_senses(synonyms=st.just([synonym_record])))
         entry = data.draw(
@@ -1774,7 +1897,9 @@ class TestSynonyms:
         second: str,
         data: st.DataObject,
     ) -> None:
-        """A sense may be put more than one way, and order is what is read."""
+        """
+        A sense may be put more than one way, and order is what is read.
+        """
         synonym_records = [
             data.draw(raw_synonyms(words=st.just(word))) for word in (first, second)
         ]
@@ -1801,7 +1926,9 @@ class TestSynonyms:
         headword: str,
         data: st.DataObject,
     ) -> None:
-        """A word is not offered as another way to say itself."""
+        """
+        A word is not offered as another way to say itself.
+        """
         synonym_record = data.draw(raw_synonyms(words=st.just(headword)))
         sense = data.draw(raw_senses(synonyms=st.just([synonym_record])))
         entry = data.draw(
@@ -1818,7 +1945,9 @@ class TestSynonyms:
         extract: Callable[..., list[Lemma]],
         data: st.DataObject,
     ) -> None:
-        """Most senses offer no synonym at all."""
+        """
+        Most senses offer no synonym at all.
+        """
         sense = data.draw(raw_senses(synonyms=st.just([])))
         entry = data.draw(raw_entries(senses=st.just([sense])))
 
@@ -1832,7 +1961,9 @@ class TestSynonyms:
         extract: Callable[..., list[Lemma]],
         synonym: str,
     ) -> None:
-        """Punctuation alone does not identify a synonym."""
+        """
+        Punctuation alone does not identify a synonym.
+        """
         entry: RawJson = {
             "word": "word",
             "pos": "noun",
@@ -1846,7 +1977,9 @@ class TestSynonyms:
 
 
 class TestStrayReferences:
-    """Passing over a reference left standing where a sentence belongs."""
+    """
+    Passing over a reference left standing where a sentence belongs.
+    """
 
     @given(years)
     def test_excludes_stray_references(
@@ -1854,7 +1987,9 @@ class TestStrayReferences:
         attest: Callable[..., list[Sentence]],
         year: int,
     ) -> None:
-        """A citation on one line names a source and attests nothing."""
+        """
+        A citation on one line names a source and attests nothing.
+        """
         assert attest({"text": f"{year}, John Milton, A Book"}) == []
 
     @given(years)
@@ -1863,7 +1998,9 @@ class TestStrayReferences:
         attest: Callable[..., list[Sentence]],
         year: int,
     ) -> None:
-        """A year is how a sentence about a year opens, and it is a sentence."""
+        """
+        A year is how a sentence about a year opens, and it is a sentence.
+        """
         written = f"{year} saw the release of many great films."
 
         assert attest({"text": written})[0].text == written
@@ -1875,7 +2012,9 @@ class TestStrayReferences:
         year: int,
         data: st.DataObject,
     ) -> None:
-        """A line break separates the reference from its sentence."""
+        """
+        A line break separates the reference from its sentence.
+        """
         written = f"{year}, A Book\n{data.draw(_LEXICAL_TEXTS)}"
 
         assert attest({"text": written, "type": "quotation"})[0].text

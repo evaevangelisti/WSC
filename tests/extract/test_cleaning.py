@@ -1,4 +1,6 @@
-"""Exercise audited text policies through extraction and offset-preserving cleanup."""
+"""
+Exercise audited text policies through extraction and offset-preserving cleanup.
+"""
 
 from collections.abc import Callable, Iterable
 from pathlib import Path
@@ -28,13 +30,17 @@ def extract(
     write_entries: Callable[[Path, Iterable[RawJson]], Path],
     locator: Locator,
 ) -> Callable[[RawJson, tuple[TranslationTable, ...]], list[Lemma]]:
-    """Run the public extractor with both raw and supplementary source text."""
+    """
+    Run the public extractor with both raw and supplementary source text.
+    """
 
     def run(
         fields: RawJson,
         supplementary: tuple[TranslationTable, ...] = (),
     ) -> list[Lemma]:
-        """Collect a defining entry with the supplied fields."""
+        """
+        Collect a defining entry with the supplied fields.
+        """
         entry: RawJson = {
             "word": "sample entry",
             "pos": "noun",
@@ -153,7 +159,9 @@ def test_cleans_definitions(
     written: str,
     expected: str | None,
 ) -> None:
-    """Definitions retain meaning while damaged leaves cannot broaden to parents."""
+    """
+    Definitions retain meaning while damaged leaves cannot broaden to parents.
+    """
     result = extract({"senses": [{"glosses": ["A parent.", written]}]})
 
     if expected is None:
@@ -174,7 +182,9 @@ def test_removes_navigation_levels(
     extract: Callable[..., list[Lemma]],
     written: str,
 ) -> None:
-    """A navigation-only hierarchy level does not erase its defining parent."""
+    """
+    A navigation-only hierarchy level does not erase its defining parent.
+    """
     result = extract({"senses": [{"glosses": ["A meaning.", written]}]})
 
     assert result[0].senses[0].glosses == ("A meaning.",)
@@ -227,7 +237,9 @@ def test_cleans_sentences(
     written: str,
     expected: str | None,
 ) -> None:
-    """Typed examples still exclude metadata and preserve literal and multiline text."""
+    """
+    Typed examples still exclude metadata and preserve literal and multiline text.
+    """
     result = extract(
         {
             "senses": [
@@ -275,7 +287,8 @@ def test_removes_unstructured_example_bibliography(
     written: str,
     expected: str,
 ) -> None:
-    """Unreferenced source details leave example text and word offsets intact.
+    """
+    Unreferenced source details leave example text and word offsets intact.
 
     Args:
         extract: Public extractor for a supplied Wiktextract entry.
@@ -311,7 +324,8 @@ def test_removes_unstructured_example_bibliography(
 def test_preserves_urls_used_as_example_text(
     extract: Callable[..., list[Lemma]],
 ) -> None:
-    """An explicit example may demonstrate a URL rather than cite a source.
+    """
+    An explicit example may demonstrate a URL rather than cite a source.
 
     Args:
         extract: Public extractor for a supplied Wiktextract entry.
@@ -334,7 +348,8 @@ def test_preserves_urls_used_as_example_text(
 def test_discards_bibliography_without_example_text(
     extract: Callable[..., list[Lemma]],
 ) -> None:
-    """A standalone author, title, journal, and URL do not illustrate a word.
+    """
+    A standalone author, title, journal, and URL do not illustrate a word.
 
     Args:
         extract: Public extractor for a supplied Wiktextract entry.
@@ -372,7 +387,9 @@ def test_preserves_quoted_content(
     extract: Callable[..., list[Lemma]],
     written: str,
 ) -> None:
-    """Genuine quotations keep navigation-like prose, URLs, and chemical brackets."""
+    """
+    Genuine quotations keep navigation-like prose, URLs, and chemical brackets.
+    """
     result = extract(
         {
             "senses": [
@@ -407,7 +424,9 @@ def test_removes_separate_editorial_lines(
     reference: str,
     position: str,
 ) -> None:
-    """Removing editorial lines preserves quoted prose and exact token provenance."""
+    """
+    Removing editorial lines preserves quoted prose and exact token provenance.
+    """
     lines = [f"A {token}.", f"Another {token}."]
     lines.insert({"before": 0, "between": 1, "after": 2}[position], reference)
     written = "\n".join(lines)
@@ -445,7 +464,9 @@ def test_excludes_navigation_across_fields(
     spacing: str,
     bullet: str,
 ) -> None:
-    """Colon navigation is excluded consistently across both translation sources."""
+    """
+    Colon navigation is excluded consistently across both translation sources.
+    """
     written = f"{bullet}{prefix}{spacing}:{spacing}another entry"
     result = extract(
         {
@@ -516,7 +537,9 @@ def test_cleans_both_translation_sources(
     written: str,
     expected: tuple[str, str] | None,
 ) -> None:
-    """Raw and supplementary translations follow the same field-specific policy."""
+    """
+    Raw and supplementary translations follow the same field-specific policy.
+    """
     heading = "A '''meaning''' (see other)."
     supplementary = (
         TranslationTable("old", heading, {language: frozenset({written})}),
@@ -548,7 +571,9 @@ def test_removes_editorial_translation_tails(
     extract: Callable[..., list[Lemma]],
     reference: str,
 ) -> None:
-    """An incomplete editorial link does not erase its complete defining heading."""
+    """
+    An incomplete editorial link does not erase its complete defining heading.
+    """
     heading = "cognate translations of hydrargyrum"
     written = f"{heading} — {reference}"
     supplementary = (
@@ -565,7 +590,9 @@ def test_removes_editorial_translation_tails(
 def test_normalizes_translation_gloss_punctuation(
     extract: Callable[..., list[Lemma]],
 ) -> None:
-    """Translation headings use the same terminal punctuation as sense glosses."""
+    """
+    Translation headings use the same terminal punctuation as sense glosses.
+    """
     result = extract(
         {
             "translations": [
@@ -595,7 +622,9 @@ def test_excludes_supplementary_placeholders(
     extract: Callable[..., list[Lemma]],
     heading: str,
 ) -> None:
-    """A supplementary table must carry a definition before semantic alignment."""
+    """
+    A supplementary table must carry a definition before semantic alignment.
+    """
     result = extract(
         {}, (TranslationTable("old", heading, {"it": frozenset({"parola"})}),)
     )
@@ -617,7 +646,9 @@ def test_relocates_existing_ranges(
     *,
     quoted: bool,
 ) -> None:
-    """Exact substitutions keep repeated tokens and all offset provenance aligned."""
+    """
+    Exact substitutions keep repeated tokens and all offset provenance aligned.
+    """
     written = "".join(prefix) + " " + token + " " + token
     start = len(written) - len(token)
     value = Attestation(
@@ -645,7 +676,9 @@ def test_relocates_existing_ranges(
 def test_handles_arbitrary_unicode(
     written: str,
 ) -> None:
-    """Malformed input remains deterministic and never produces invalid ranges."""
+    """
+    Malformed input remains deterministic and never produces invalid ranges.
+    """
     value = Attestation(
         written,
         word_offsets=(WordOffset((0, len(written)), (WordOffsetSource.BOLD,)),)
@@ -714,7 +747,9 @@ def test_keeps_lexical_translation_alternatives(
     written: str,
     expected: frozenset[str],
 ) -> None:
-    """Translation cleanup removes metadata without losing complete variants."""
+    """
+    Translation cleanup removes metadata without losing complete variants.
+    """
     assert clean_translations("und", written) == ("und", expected)
 
 
@@ -739,7 +774,8 @@ def test_removes_unambiguous_translation_grammar(
     written: str,
     expected: str,
 ) -> None:
-    """Suffix metadata is removed without splitting lexical or ambiguous text.
+    """
+    Suffix metadata is removed without splitting lexical or ambiguous text.
 
     Args:
         extract: Public extractor for a supplied Wiktextract entry.
@@ -787,7 +823,8 @@ def test_separates_explicit_translation_alternatives(
     written: str,
     expected: frozenset[str],
 ) -> None:
-    """Repeated gender labels and spaced slashes delimit complete forms.
+    """
+    Repeated gender labels and spaced slashes delimit complete forms.
 
     Args:
         extract: Public extractor for a supplied Wiktextract entry.
@@ -809,7 +846,8 @@ def test_separates_explicit_translation_alternatives(
 def test_discards_ambiguous_middle_gender(
     extract: Callable[..., list[Lemma]],
 ) -> None:
-    """A lone internal gender label cannot safely identify both forms.
+    """
+    A lone internal gender label cannot safely identify both forms.
 
     Args:
         extract: Public extractor for a supplied Wiktextract entry.
@@ -834,7 +872,9 @@ def test_uses_underscores_only_in_identifiers(
     extract: Callable[..., list[Lemma]],
     fragments: list[str],
 ) -> None:
-    """Every child identifier shares the normalized headword without changing text."""
+    """
+    Every child identifier shares the normalized headword without changing text.
+    """
     headword = " ".join(fragments) + "-suffix"
     fields: RawJson = {
         "word": headword,

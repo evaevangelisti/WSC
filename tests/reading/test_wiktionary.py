@@ -1,4 +1,6 @@
-"""Collected entries retain their evidence through JSONL export and reading."""
+"""
+Collected entries retain their evidence through JSONL export and reading.
+"""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -17,7 +19,9 @@ def test_restores_collected_evidence(
     workspace: Callable[[], Path],
     entries: list[Lemma],
 ) -> None:
-    """Reading restores variants, translation tables, quotations, and offset sources."""
+    """
+    Reading restores variants, translation tables, quotations, and offset sources.
+    """
     path = workspace() / "senses.jsonl"
     writer: Writer[Lemma] = open_writer(path)
 

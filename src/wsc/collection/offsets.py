@@ -1,4 +1,6 @@
-"""Inspect offset coverage and agreement between extraction methods."""
+"""
+Inspect offset coverage and agreement between extraction methods.
+"""
 
 import re
 import unicodedata

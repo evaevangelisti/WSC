@@ -1,4 +1,6 @@
-"""Read task-specific alignment prompts from TOML."""
+"""
+Read task-specific alignment prompts from TOML.
+"""
 
 import tomllib
 from pathlib import Path
@@ -8,7 +10,9 @@ from ..models.alignment import AlignmentPrompts
 
 
 class PromptRecord(TypedDict):
-    """Represent serialized task prompts."""
+    """
+    Represent serialized task prompts.
+    """
 
     template: str
 

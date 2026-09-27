@@ -196,7 +196,9 @@ def write(
 
 
 class TestJSONLWriter:
-    """One JSON object per line."""
+    """
+    One JSON object per line.
+    """
 
     @given(_WRITTEN)
     def test_writes_json_lines(
@@ -204,7 +206,9 @@ class TestJSONLWriter:
         write: Callable[..., str],
         written: list[Lemma],
     ) -> None:
-        """A line at a time is what lets a reader stream the file back."""
+        """
+        A line at a time is what lets a reader stream the file back.
+        """
         text = write(*written)
 
         assert text.count("\n") == len(written)
@@ -216,7 +220,9 @@ class TestJSONLWriter:
         write: Callable[..., str],
         written: list[Lemma],
     ) -> None:
-        """Nothing the extractor gathered is dropped, and nothing empty is kept."""
+        """
+        Nothing the extractor gathered is dropped, and nothing empty is kept.
+        """
         lines = [line for line in write(*written).split("\n") if line]
 
         assert [json.loads(line) for line in lines] == [
@@ -229,14 +235,18 @@ class TestJSONLWriter:
         write: Callable[..., str],
         headword: str,
     ) -> None:
-        """Serialized text preserves Unicode characters."""
+        """
+        Serialized text preserves Unicode characters.
+        """
         assert headword in write(Lemma(f"{headword}.noun.1", headword, POS.NOUN))
 
     def test_writes_alignment_fields(
         self,
         write: Callable[..., str],
     ) -> None:
-        """An alignment becomes part of its sense's record."""
+        """
+        An alignment becomes part of its sense's record.
+        """
         sense = Sense(
             "bank.noun.1",
             ("A financial institution.",),
@@ -279,7 +289,9 @@ class TestJSONLWriter:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """The file is opened on entry, so there is nowhere to write before it."""
+        """
+        The file is opened on entry, so there is nowhere to write before it.
+        """
         writer: Writer[Lemma] = open_writer(workspace() / "senses.jsonl")
 
         with pytest.raises(RuntimeError, match="context manager"):
@@ -289,7 +301,9 @@ class TestJSONLWriter:
         self,
         workspace: Callable[[], Path],
     ) -> None:
-        """Closing releases the file handle."""
+        """
+        Closing releases the file handle.
+        """
         writer: Writer[Lemma] = open_writer(workspace() / "senses.jsonl")
         lemma = Lemma("bank.noun.1", "bank", POS.NOUN)
 

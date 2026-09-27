@@ -1,4 +1,6 @@
-"""Public readers for collected resources and alignment evidence."""
+"""
+Public readers for collected resources and alignment evidence.
+"""
 
 from .alignment import (
     QueryRecord,

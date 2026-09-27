@@ -1,4 +1,6 @@
-"""The analysers a sentence may be read with."""
+"""
+The analysers a sentence may be read with.
+"""
 
 from enum import StrEnum
 

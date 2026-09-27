@@ -14,7 +14,9 @@ _CHAINS = st.lists(glosses, min_size=1, max_size=4)
 
 
 class TestSense:
-    """One meaning, read off its gloss chain."""
+    """
+    One meaning, read off its gloss chain.
+    """
 
     @given(identifiers, _CHAINS)
     def test_returns_leaf_gloss(
@@ -22,7 +24,9 @@ class TestSense:
         identifier: str,
         chain: list[str],
     ) -> None:
-        """A sub-sense exposes its own final gloss."""
+        """
+        A sub-sense exposes its own final gloss.
+        """
         sense = Sense(identifier, tuple(chain))
 
         assert sense.gloss == chain[-1]
@@ -34,7 +38,9 @@ class TestSense:
         identifier: str,
         chain: list[str],
     ) -> None:
-        """A sub-sense stands alone only once its parents are read into it."""
+        """
+        A sub-sense stands alone only once its parents are read into it.
+        """
         definition = Sense(identifier, tuple(chain)).definition
 
         assert all(gloss in definition for gloss in chain)
@@ -45,7 +51,9 @@ class TestSense:
         identifier: str,
         gloss: str,
     ) -> None:
-        """A top-level sense has no parent to be read into it."""
+        """
+        A top-level sense has no parent to be read into it.
+        """
         sense = Sense(identifier, (gloss,))
 
         assert sense.definition == sense.gloss
@@ -57,7 +65,9 @@ class TestSense:
         chain: list[str],
         gloss: str,
     ) -> None:
-        """Nesting is what the chain records, so its length is the level."""
+        """
+        Nesting is what the chain records, so its length is the level.
+        """
         sense = Sense(identifier, tuple(chain))
         nested = Sense(identifier, (*chain, gloss))
 

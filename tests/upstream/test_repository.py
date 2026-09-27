@@ -1,4 +1,6 @@
-"""Tests for src/wsc/upstream/repository.py."""
+"""
+Tests for src/wsc/upstream/repository.py.
+"""
 
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
@@ -86,12 +88,16 @@ def _latest_completed_date(
 
 
 class TestUrl:
-    """Where the archive of pages for one dump sits."""
+    """
+    Where the archive of pages for one dump sits.
+    """
 
     def test_builds_dated_url(
         self,
     ) -> None:
-        """The generated address includes the requested edition and filename."""
+        """
+        The generated address includes the requested edition and filename.
+        """
         assert repository.url("20260801") == (
             "https://dumps.wikimedia.org/enwiktionary/20260801/"
             "enwiktionary-20260801-pages-articles.xml.bz2"
@@ -99,7 +105,9 @@ class TestUrl:
 
 
 class TestLatestDate:
-    """The most recent dump that has finished being built."""
+    """
+    The most recent dump that has finished being built.
+    """
 
     @given(_LISTINGS, st.data())
     def test_selects_completed_dump(
@@ -107,7 +115,9 @@ class TestLatestDate:
         reports: dict[str, str],
         data: st.DataObject,
     ) -> None:
-        """The newest directory is not the answer: the newest finished one is."""
+        """
+        The newest directory is not the answer: the newest finished one is.
+        """
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
 
         with _serve_wikimedia(reports):
@@ -122,7 +132,9 @@ class TestLatestDate:
         reports: dict[str, str],
         data: st.DataObject,
     ) -> None:
-        """The index names a dump on more than one line, and it is one dump."""
+        """
+        The index names a dump on more than one line, and it is one dump.
+        """
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
         times = data.draw(st.integers(min_value=1, max_value=3))
 
@@ -143,7 +155,9 @@ class TestLatestDate:
         reports: dict[str, str],
         data: st.DataObject,
     ) -> None:
-        """Wikimedia asks that requests name whoever answers for them."""
+        """
+        Wikimedia asks that requests name whoever answers for them.
+        """
         reports[data.draw(st.sampled_from(sorted(reports)))] = "done"
 
         with _serve_wikimedia(reports) as server:
@@ -160,7 +174,9 @@ class TestLatestDate:
         self,
         reports: dict[str, str],
     ) -> None:
-        """No dump finished, or none listed at all, means nothing to fetch."""
+        """
+        No dump finished, or none listed at all, means nothing to fetch.
+        """
         with (
             _serve_wikimedia(reports),
             pytest.raises(RuntimeError, match="No finished dump"),
@@ -170,7 +186,9 @@ class TestLatestDate:
     def test_propagates_index_errors(
         self,
     ) -> None:
-        """A server that cannot answer is not a server saying there are no dumps."""
+        """
+        A server that cannot answer is not a server saying there are no dumps.
+        """
         with responses.RequestsMock() as server:
             _ = server.get(DUMP_INDEX_URL, status=503)
 

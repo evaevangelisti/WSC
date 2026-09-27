@@ -1,4 +1,6 @@
-"""Exercise custom alignment task prompts."""
+"""
+Exercise custom alignment task prompts.
+"""
 
 import json
 from dataclasses import replace
@@ -14,7 +16,9 @@ from .examples import build_query
 
 
 def test_applies_prompt_edits() -> None:
-    """Custom prompt content reaches the rendered model request."""
+    """
+    Custom prompt content reaches the rendered model request.
+    """
     original = read_prompts(PROMPTS_PATH)
     changed = replace(
         original,
@@ -32,7 +36,9 @@ def test_applies_prompt_edits() -> None:
 
 
 def test_renders_translation_context_as_json_lines() -> None:
-    """Translation prompts distinguish source context from target headings."""
+    """
+    Translation prompts distinguish source context from target headings.
+    """
     prompt = build_request(build_query()).prompt
 
     expected_source = json.dumps(
@@ -52,7 +58,9 @@ def test_renders_translation_context_as_json_lines() -> None:
 
 
 def test_omits_source_examples_from_translation_prompts() -> None:
-    """Translation prompts omit Wiktionary sentence examples."""
+    """
+    Translation prompts omit Wiktionary sentence examples.
+    """
     query = replace(
         build_query(),
         source_definitions=(
@@ -70,7 +78,9 @@ def test_omits_source_examples_from_translation_prompts() -> None:
 
 
 def test_renders_distinct_synset_glosses() -> None:
-    """Synset glosses remain separate input strings for the model."""
+    """
+    Synset glosses remain separate input strings for the model.
+    """
     query = replace(
         build_query(AlignmentTask.SYNSETS),
         target_definitions=(
@@ -98,7 +108,9 @@ def test_applies_hierarchy_constraint(
     monkeypatch: pytest.MonkeyPatch,
     mode: GlossMode,
 ) -> None:
-    """Hierarchy instructions affect only prompts carrying complete gloss paths."""
+    """
+    Hierarchy instructions affect only prompts carrying complete gloss paths.
+    """
     query = build_query()
     original = build_request(query, mode)
 

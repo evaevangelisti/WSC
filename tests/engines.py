@@ -15,7 +15,9 @@ _WORD = re.compile(r"\S+")
 
 
 class WhitespaceEngine(Engine):
-    """Cuts a context on whitespace and reads every word as the noun it spells."""
+    """
+    Cuts a context on whitespace and reads every word as the noun it spells.
+    """
 
     @override
     def analyse_all(

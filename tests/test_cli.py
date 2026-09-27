@@ -8,7 +8,7 @@ import bz2
 import gzip
 import json
 import string
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Iterable
 from compression import zstd
 from contextlib import contextmanager
 from importlib.metadata import version
@@ -300,7 +300,9 @@ def collected() -> Callable[[Path], list[RawJson]]:
 
 
 class TestFetch:
-    """Downloading a dump, and settling which one that is."""
+    """
+    Downloading a dump, and settling which one that is.
+    """
 
     @given(dump_dates)
     def test_resolves_latest_dump(
@@ -309,7 +311,9 @@ class TestFetch:
         cli: Callable[..., Result],
         date: str,
     ) -> None:
-        """Latest is the newest finished dump, and only Wikimedia knows which."""
+        """
+        Latest is the newest finished dump, and only Wikimedia knows which.
+        """
         cache_dir = workspace() / "cache"
 
         with _serve_wikimedia(date):
@@ -328,7 +332,9 @@ class TestFetch:
         cli: Callable[..., Result],
         date: str,
     ) -> None:
-        """A dump named on the command line is fetched without asking the index."""
+        """
+        A dump named on the command line is fetched without asking the index.
+        """
         cache_dir = workspace() / "cache"
 
         with _serve_wikimedia(date) as server:
@@ -352,7 +358,9 @@ class TestFetch:
         cli: Callable[..., Result],
         date: str,
     ) -> None:
-        """Wikimedia asks that requests name whoever answers for them."""
+        """
+        Wikimedia asks that requests name whoever answers for them.
+        """
         cache_dir = workspace() / "cache"
         expected = USER_AGENT.format(version=version("wsc"))
 
@@ -372,7 +380,9 @@ class TestFetch:
         fetch_dump: Callable[..., Path],
         date: str,
     ) -> None:
-        """A dump is tens of gigabytes, and is not downloaded twice."""
+        """
+        A dump is tens of gigabytes, and is not downloaded twice.
+        """
         cache_dir = workspace() / "cache"
         _ = fetch_dump(cache_dir, date)
 
@@ -391,7 +401,9 @@ class TestFetch:
 
 
 class TestParse:
-    """What a parse settles, wiktextract standing in for itself."""
+    """
+    What a parse settles, wiktextract standing in for itself.
+    """
 
     @given(dump_dates, st.integers(min_value=1, max_value=16))
     def test_forwards_parser_settings(
@@ -403,7 +415,9 @@ class TestParse:
         date: str,
         processes: int,
     ) -> None:
-        """The dump to read, the file to write and the options are handed over."""
+        """
+        The dump to read, the file to write and the options are handed over.
+        """
         cache_dir = workspace() / "cache"
 
         calls = stub_parse()
@@ -438,7 +452,9 @@ class TestParse:
         stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
         name: str,
     ) -> None:
-        """A database of one's own is what a run without the network needs."""
+        """
+        A database of one's own is what a run without the network needs.
+        """
         directory = workspace()
         cache_dir = directory / "cache"
 
@@ -466,7 +482,9 @@ class TestParse:
         dates: list[str],
         data: st.DataObject,
     ) -> None:
-        """A dump named on the command line is the one parsed, latest or not."""
+        """
+        A dump named on the command line is the one parsed, latest or not.
+        """
         cache_dir = workspace() / "cache"
 
         calls = stub_parse()
@@ -488,7 +506,9 @@ class TestParse:
         stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
         skipped_lines: int,
     ) -> None:
-        """Far more than a few hundred means something went wrong, so it is said."""
+        """
+        Far more than a few hundred means something went wrong, so it is said.
+        """
         cache_dir = workspace() / "cache"
 
         _ = stub_parse(skipped_lines=skipped_lines)
@@ -507,7 +527,9 @@ class TestParse:
         fetch_dump: Callable[..., Path],
         stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
     ) -> None:
-        """A parse with nothing to report reports nothing."""
+        """
+        A parse with nothing to report reports nothing.
+        """
         cache_dir = workspace() / "cache"
 
         _ = stub_parse()
@@ -525,7 +547,9 @@ class TestParse:
         parse_dump: Callable[..., Path],
         entries: list[RawJson],
     ) -> None:
-        """A parse takes the better part of a day, and is not repeated for nothing."""
+        """
+        A parse takes the better part of a day, and is not repeated for nothing.
+        """
         cache_dir = workspace() / "cache"
         _ = parse_dump(cache_dir, entries)
 
@@ -539,7 +563,9 @@ class TestParse:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
     ) -> None:
-        """Parsing reads a dump, so there has to be one to read."""
+        """
+        Parsing reads a dump, so there has to be one to read.
+        """
         result = cli(
             "parse",
             cache_dir=workspace() / "cache",
@@ -555,7 +581,9 @@ class TestParse:
         cli: Callable[..., Result],
         date: str,
     ) -> None:
-        """A fetch cut short leaves the directory behind without the dump in it."""
+        """
+        A fetch cut short leaves the directory behind without the dump in it.
+        """
         cache_dir = workspace() / "cache"
         cache.dump_dir(cache_dir, date).mkdir(parents=True)
 
@@ -573,14 +601,17 @@ def test_collects_published_archive(
     *,
     cached: bool,
 ) -> None:
-    """Archive collection retains lexical evidence and supplemental translations."""
+    """
+    Archive collection retains lexical evidence and supplemental translations.
+    """
     dump_path = fetch_dump(
         tmp_path,
         pages=[
             page(
                 "Rome",
                 "==English==\n===Proper noun===\n{{trans-top|capital}}\n"
-                + "{{t|it|Roma}}\n{{trans-bottom}}",
+                + "{{t|it|Roma}}\n{{trans-bottom}}\n"
+                + "# {{senseid|en|Q220}} A capital city.",
             ),
         ],
     )
@@ -615,6 +646,8 @@ def test_collects_published_archive(
         "".join(f"{json.dumps(record)}\n" for record in records).encode(),
     )
     archive_path = dump_path.with_name(cache.ARCHIVE_NAME)
+    _ = dump_path.with_name(cache.OFF_PAGE_TRANSLATIONS_NAME).write_text("{}")
+    _ = dump_path.with_name(cache.WIKIDATA_IDS_NAME).write_text("{}")
 
     if cached:
         _ = archive_path.write_bytes(archive_bytes)
@@ -654,8 +687,118 @@ def test_collects_published_archive(
     assert entry.translation_tables[0].translations == {"it": frozenset({"Roma"})}
 
 
+def test_collects_only_explicit_dump_wikidata_ids(
+    tmp_path: Path,
+    cli: Callable[..., Result],
+    fetch_dump: Callable[..., Path],
+    write_entries: Callable[[Path, Iterable[RawJson]], Path],
+) -> None:
+    """
+    Parent IDs do not reach children, and etymologies remain separate.
+    """
+    dump_path = fetch_dump(
+        tmp_path,
+        pages=[
+            page(
+                "bird",
+                "==English==\n===Etymology 1===\n====Noun====\n"
+                + "# {{senseid|en|Q10}} A bird.\n"
+                + "## {{senseid|en|Q11}} A black bird.\n"
+                + "## A white bird.\n"
+                + "# {{senseid|en|Q14}} A creature.\n"
+                + "## A small creature.\n"
+                + "===Etymology 2===\n====Noun====\n"
+                + "# {{senseid|en|Q12}} A bird.\n"
+                + "# {{senseid|en|Q13}} A bird.\n"
+                + "==French==\n===Noun===\n# {{senseid|fr|Q99}} A bird.",
+            ),
+            page(
+                "Paris",
+                "==English==\n===Proper noun===\n"
+                + "# {{senseid|en|Q90}} {{place|en|city|in|France}}.",
+            ),
+        ],
+    )
+    entries: list[RawJson] = [
+        {
+            "word": "bird",
+            "pos": "noun",
+            "lang_code": "en",
+            "etymology_number": "1",
+            "senses": [
+                {"glosses": ["A bird."], "wikidata": ["Q10"]},
+                {"glosses": ["A bird.", "A black bird."], "wikidata": ["Q10", "Q11"]},
+                {"glosses": ["A bird.", "A white bird."], "wikidata": ["Q10"]},
+                {"glosses": ["A creature.", "A small creature."], "wikidata": ["Q14"]},
+            ],
+        },
+        {
+            "word": "bird",
+            "pos": "noun",
+            "lang_code": "en",
+            "etymology_number": "2",
+            "senses": [
+                {"glosses": ["A bird."], "wikidata": ["Q10"]},
+                {"glosses": ["A bird."], "wikidata": ["Q10"]},
+            ],
+        },
+        {
+            "word": "Paris",
+            "pos": "name",
+            "lang_code": "en",
+            "senses": [
+                {"glosses": ["A city in France."]},
+            ],
+        },
+    ]
+    _ = write_entries(dump_path.with_name(cache.WIKTEXTRACT_NAME), entries)
+
+    parsed = cli("parse", cache_dir=tmp_path)
+
+    assert parsed.exit_code == 0, parsed.output
+    identifiers_path = dump_path.with_name(cache.WIKIDATA_IDS_NAME)
+    assert identifiers_path.exists()
+
+    identifiers_path.unlink()
+    reparsed = cli("parse", cache_dir=tmp_path)
+
+    assert reparsed.exit_code == 0, reparsed.output
+    assert identifiers_path.exists()
+
+    output_dir = tmp_path / "collection"
+    collected = cli(
+        "collect",
+        "--engine",
+        "lemminflect",
+        "--output-dir",
+        str(output_dir),
+        cache_dir=tmp_path,
+    )
+
+    assert collected.exit_code == 0, collected.output
+
+    entries_by_id = {
+        entry.id: entry for entry in read_lemmas(output_dir / "senses.jsonl")
+    }
+    entry = entries_by_id["bird.noun"]
+    associations = {
+        (sense.etymology, sense.glosses): sense.wikidata_ids for sense in entry.senses
+    }
+
+    assert associations == {
+        ("1", ("A bird.",)): ("Q10",),
+        ("1", ("A bird.", "A black bird.")): ("Q11",),
+        ("1", ("A bird.", "A white bird.")): (),
+        ("1", ("A creature.", "A small creature.")): (),
+        ("2", ("A bird.",)): ("Q12", "Q13"),
+    }
+    assert entries_by_id["Paris.propn"].senses[0].wikidata_ids == ("Q90",)
+
+
 class TestCollect:
-    """Collecting the senses of a parsed dump into an output directory."""
+    """
+    Collecting the senses of a parsed dump into an output directory.
+    """
 
     def test_writes_default_directory(
         self,
@@ -664,7 +807,9 @@ class TestCollect:
         parse_dump: Callable[..., Path],
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """An omitted output option creates all artifacts in collection."""
+        """
+        An omitted output option creates all artifacts in collection.
+        """
         directory = workspace()
         cache_dir = directory / "cache"
         input_path = parse_dump(cache_dir, [])
@@ -702,7 +847,9 @@ class TestCollect:
         collected: Callable[[Path], list[RawJson]],
         entries: list[RawJson],
     ) -> None:
-        """The whole pipeline runs, from a parsed dump to a file on disk."""
+        """
+        The whole pipeline runs, from a parsed dump to a file on disk.
+        """
         directory = workspace()
         cache_dir = directory / "cache"
         _ = parse_dump(cache_dir, entries)
@@ -726,7 +873,9 @@ class TestCollect:
         entries: list[RawJson],
         data: st.DataObject,
     ) -> None:
-        """A filter named on the command line reaches the extractor."""
+        """
+        A filter named on the command line reaches the extractor.
+        """
         directory = workspace()
         cache_dir = directory / "cache"
         _ = parse_dump(cache_dir, entries)
@@ -769,7 +918,9 @@ class TestCollect:
         option: str,
         data: st.DataObject,
     ) -> None:
-        """The oldest and the newest reach the extractor as themselves."""
+        """
+        The oldest and the newest reach the extractor as themselves.
+        """
         older = data.draw(years)
         newer = data.draw(years.filter(lambda year: year > older))
 
@@ -824,7 +975,9 @@ class TestCollect:
         date: str,
         data: st.DataObject,
     ) -> None:
-        """A dump named on the command line is the one read, latest or not."""
+        """
+        A dump named on the command line is the one read, latest or not.
+        """
         directory = workspace()
         cache_dir = directory / "cache"
 
@@ -864,7 +1017,9 @@ class TestCollect:
         date: str,
         entries: list[RawJson],
     ) -> None:
-        """An option a whole session shares is read from the environment."""
+        """
+        An option a whole session shares is read from the environment.
+        """
         directory = workspace()
         cache_dir = directory / "cache"
         _ = parse_dump(cache_dir, entries, date)
@@ -890,7 +1045,9 @@ class TestCollect:
         cli: Callable[..., Result],
         fetch_dump: Callable[..., Path],
     ) -> None:
-        """A fetched dump is not a parsed one, and the refusal says which is missing."""
+        """
+        A fetched dump is not a parsed one, and the refusal says which is missing.
+        """
         directory = workspace()
         cache_dir = directory / "cache"
         _ = fetch_dump(cache_dir)
@@ -910,7 +1067,9 @@ class TestCollect:
         workspace: Callable[[], Path],
         cli: Callable[..., Result],
     ) -> None:
-        """An empty cache produces an explicit error."""
+        """
+        An empty cache produces an explicit error.
+        """
         directory = workspace()
 
         result = cli(
@@ -925,12 +1084,16 @@ class TestCollect:
 
 
 class TestHelp:
-    """What the command line says about itself."""
+    """
+    What the command line says about itself.
+    """
 
     def test_describes_default_cache(
         self,
     ) -> None:
-        """None is not an answer a reader can act on, so the help says what it means."""
+        """
+        None is not an answer a reader can act on, so the help says what it means.
+        """
         result = CliRunner().invoke(app, ["fetch", "--help"])
 
         assert "cache directory" in _normalize_output(result)
@@ -938,7 +1101,9 @@ class TestHelp:
     def test_describes_alignment_verbosity(
         self,
     ) -> None:
-        """Alignment help exposes the opt-in detailed logging switch."""
+        """
+        Alignment help exposes the opt-in detailed logging switch.
+        """
         result = CliRunner().invoke(app, ["align", "--help"])
 
         assert "--verbose" in _normalize_output(result)

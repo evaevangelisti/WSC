@@ -1,4 +1,6 @@
-"""What each source is read into, one module apiece."""
+"""
+What each source is read into, one module apiece.
+"""
 
 from .synsets import Synset, SynsetAlignment, SynsetMember, SynsetRelation
 from .wiktionary import (
