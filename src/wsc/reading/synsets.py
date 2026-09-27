@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
+from ..files import open_compressed
 from ..models import POS, Synset, SynsetMember
 
 
@@ -59,7 +60,7 @@ def read_synsets(
     Raises:
         ValueError: If a record has no members or no glosses.
     """
-    with path.open(encoding="utf-8") as stream:
+    with open_compressed(path, "rt") as stream:
         for line_number, line in enumerate(stream, start=1):
             record = cast(SynsetRecord, json.loads(line))
 

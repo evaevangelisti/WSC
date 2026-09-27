@@ -6,6 +6,7 @@ import tomllib
 from pathlib import Path
 from typing import TypedDict, cast
 
+from ..files import COMPRESSED_SUFFIXES, open_compressed
 from ..models.alignment import AlignmentPrompts
 
 
@@ -29,11 +30,15 @@ def read_prompts(
     Returns:
         Prompt templates used by alignment inference.
     """
-    with path.open("rb") as stream:
+    with open_compressed(path, "rb") as stream:
         records = cast(dict[str, object], tomllib.load(stream))
 
+    name = (
+        path.with_suffix("").stem if path.suffix in COMPRESSED_SUFFIXES else path.stem
+    )
+
     return AlignmentPrompts(
-        path.stem,
+        name,
         cast(str, records["system"]),
         {
             task: cast(PromptRecord, record)["template"]

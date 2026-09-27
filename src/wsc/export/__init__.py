@@ -5,6 +5,7 @@ Writing of extracted data to disk.
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
+from ..files import format_suffix
 from .base import Writer
 from .formats.tsv import TSVWriter
 
@@ -70,11 +71,12 @@ def open_writer[T: "DataclassInstance"](
     Raises:
         ValueError: If the suffix names no known format.
     """
-    factory = _WRITERS.get(output_path.suffix.lower())
+    suffix = format_suffix(output_path)
+    factory = _WRITERS.get(suffix)
 
     if factory is None:
         known = ", ".join(sorted(_WRITERS))
-        raise ValueError(f"Unknown format {output_path.suffix!r}; try one of {known}")
+        raise ValueError(f"Unknown format {suffix!r}; try one of {known}")
 
     return factory(output_path)
 

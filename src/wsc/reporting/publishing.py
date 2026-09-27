@@ -6,6 +6,8 @@ import json
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 
+from ..files import open_compressed
+
 
 def stage_json(
     path: Path,
@@ -20,10 +22,8 @@ def stage_json(
         path: Staging path for the JSON document.
         document: JSON-compatible document to serialize.
     """
-    _ = path.write_text(
-        json.dumps(document, ensure_ascii=False, indent=4) + "\n",
-        encoding="utf-8",
-    )
+    with open_compressed(path, "wt") as stream:
+        _ = stream.write(json.dumps(document, ensure_ascii=False, indent=4) + "\n")
 
 
 def publish_files(

@@ -10,6 +10,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
+from ..files import open_compressed
 from ..models import POS
 from ..models.alignment import (
     AlignmentDecision,
@@ -113,7 +114,7 @@ def read_alignment_cache(
 
     cache: dict[str, dict[str, AlignmentDecision]] = {}
 
-    with path.open(encoding="utf-8", newline="") as stream:
+    with open_compressed(path, "rt", newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
 
         if tuple(reader.fieldnames or ()) != ALIGNMENT_FIELDS:

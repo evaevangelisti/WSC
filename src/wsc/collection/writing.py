@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 
 from ..constants import COLLECTION_FILES
 from ..export.formats.jsonl import JSONLWriter
+from ..files import Compression, compressed_name, open_compressed
 from ..models import Lemma
 from ..reporting import publish_files, stage_json
 from .markdown import render_markdown
@@ -19,6 +20,7 @@ def write_collection(
     entries: Iterable[Lemma],
     output_dir: Path,
     manifest: Mapping[str, object],
+    compression: Compression | None = None,
 ) -> None:
     """
     Write the collection and its reports after extraction completes successfully.
@@ -29,8 +31,13 @@ def write_collection(
         entries: Collected entries, consumed once.
         output_dir: Destination directory for the four collection files.
         manifest: Source and configuration provenance.
+        compression: Format used to compress the generated files.
     """
     statistics = Statistics()
+    files = {
+        key: compressed_name(name, compression)
+        for key, name in COLLECTION_FILES.items()
+    }
 
     started_at = datetime.now(UTC).isoformat()
 
@@ -39,7 +46,7 @@ def write_collection(
     with TemporaryDirectory(prefix=".collection-", dir=output_dir.parent) as directory:
         staging_dir = Path(directory)
 
-        with JSONLWriter[Lemma](staging_dir / COLLECTION_FILES["senses"]) as writer:
+        with JSONLWriter[Lemma](staging_dir / files["senses"]) as writer:
             for entry in entries:
                 writer.write(entry)
                 statistics.add(entry)
@@ -50,16 +57,14 @@ def write_collection(
             **manifest,
             "started_at": started_at,
             "completed_at": datetime.now(UTC).isoformat(),
-            "files": COLLECTION_FILES,
+            "files": files,
             "totals": report["totals"],
         }
 
-        stage_json(staging_dir / COLLECTION_FILES["statistics"], report)
-        stage_json(staging_dir / COLLECTION_FILES["manifest"], provenance)
+        stage_json(staging_dir / files["statistics"], report)
+        stage_json(staging_dir / files["manifest"], provenance)
 
-        _ = (staging_dir / COLLECTION_FILES["report"]).write_text(
-            render_markdown(statistics),
-            encoding="utf-8",
-        )
+        with open_compressed(staging_dir / files["report"], "wt") as stream:
+            _ = stream.write(render_markdown(statistics))
 
-        publish_files(staging_dir, output_dir, COLLECTION_FILES.values())
+        publish_files(staging_dir, output_dir, files.values())

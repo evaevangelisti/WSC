@@ -73,6 +73,7 @@ wsc parse
 | `--processes` | `1` | Processes wiktextract may run, at 4 GB each |
 | `--db-path` | a temporary file | Where the pages extracted from the dump are kept |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
+| `--compression` | off | Compress generated supplemental resources as `gz`, `bz2`, or `zst` |
 
 ### collect
 
@@ -96,6 +97,7 @@ wsc collect
 | `--gpu` | off | Read on the graphics card |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
 | `--output-dir` | `collection` | Directory for the collection and its reports |
+| `--compression` | off | Compress generated files as `gz`, `bz2`, or `zst` |
 
 | Engine | Reads with | Speed |
 | --- | --- | --- |
@@ -138,6 +140,9 @@ wsc align collection/senses.jsonl
 | `--verbose` | off | Show logs for individual alignment requests |
 | `--cache-dir` | platform cache | Also configurable through `WSC_CACHE_DIR` |
 | `--output-dir` | `alignment` | Directory for aligned senses and its reports |
+| `--compression` | off | Compress aligned files and alignment cache tables as `gz`, `bz2`, or `zst` |
+
+Input paths accept plain, `.gz`, `.bz2`, and `.zst` files.
 
 Each alignment contains the aligned collection, a manifest, and one report per selected task:
 

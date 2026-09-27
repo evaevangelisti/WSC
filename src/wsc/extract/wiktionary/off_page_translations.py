@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import cast
 
 from ...constants import LANGUAGE
+from ...files import open_compressed
 from ...identifiers import lemma_id
 from ...models import TranslationTable
 from ..dump.translations import PageTranslations
@@ -239,9 +240,8 @@ def write_off_page_translations(
         for entry_id, tables in sorted(off_page.items())
     }
 
-    _ = output_path.write_text(
-        json.dumps(written, ensure_ascii=False), encoding="utf-8"
-    )
+    with open_compressed(output_path, "wt") as stream:
+        _ = stream.write(json.dumps(written, ensure_ascii=False))
 
 
 def read_off_page_translations(
@@ -256,10 +256,8 @@ def read_off_page_translations(
     Returns:
         The tables to add to each entry, by the name of the entry.
     """
-    read = cast(
-        dict[str, list[dict[str, object]]],
-        json.loads(input_path.read_text(encoding="utf-8")),
-    )
+    with open_compressed(input_path, "rt") as stream:
+        read = cast(dict[str, list[dict[str, object]]], json.load(stream))
 
     return {
         entry_id: tuple(

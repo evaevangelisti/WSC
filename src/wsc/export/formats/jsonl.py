@@ -9,6 +9,7 @@ from dataclasses import fields, is_dataclass
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, cast, override
 
+from ...files import open_compressed
 from ..base import Writer
 
 if TYPE_CHECKING:
@@ -48,7 +49,7 @@ class JSONLWriter[T: "DataclassInstance"](Writer[T]):
         Args:
             path: Where to write; always the .part file, never the final one.
         """
-        self._file = path.open("w", encoding="utf-8")
+        self._file = open_compressed(path, "wt")
 
     @override
     def _close(

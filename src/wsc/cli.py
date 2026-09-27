@@ -47,6 +47,7 @@ from .extract import (
     read_off_page_translations,
 )
 from .extract.dump.wikidata import read_wikidata_ids
+from .files import Compression, compressed_name, existing_file
 from .logging import configure_logging
 from .models import POS, Engine
 from .models.alignment import AlignmentResult, AlignmentTask, GlossMode, ModelSettings
@@ -139,7 +140,7 @@ def fetch(
         date = repository.latest_date(user_agent, TIMEOUT)
         _LOGGER.info("Resolved latest to %s", date)
 
-    dump_path = cache.dump_dir(cache_dir, date) / cache.DUMP_NAME
+    dump_path = existing_file(cache.dump_dir(cache_dir, date) / cache.DUMP_NAME)
 
     if dump_path.exists():
         _LOGGER.info("Already fetched %s", dump_path)
@@ -183,6 +184,10 @@ def parse(
         ),
     ] = False,
     cache_dir: CacheDir = None,
+    compression: Annotated[
+        Compression | None,
+        typer.Option(help="Compress supplemental dump resources."),
+    ] = None,
 ) -> None:
     """
     Parse a fetched dump with wiktextract, or take one published.
@@ -196,15 +201,29 @@ def parse(
 
     dump_dir = cache.dump_dir(cache_dir, date)
 
-    dump_path = dump_dir / cache.DUMP_NAME
+    dump_path = existing_file(dump_dir / cache.DUMP_NAME)
 
     if not dump_path.exists():
         raise typer.BadParameter(f"No dump at {dump_path}; fetch it first")
 
-    output_path = dump_dir / cache.WIKTEXTRACT_NAME
+    output_path = existing_file(dump_dir / cache.WIKTEXTRACT_NAME)
 
-    off_page_translations_path = dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
-    wikidata_ids_path = dump_dir / cache.WIKIDATA_IDS_NAME
+    off_page_translations_path = existing_file(
+        dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
+    )
+    wikidata_ids_path = existing_file(dump_dir / cache.WIKIDATA_IDS_NAME)
+
+    if not off_page_translations_path.exists():
+        off_page_translations_path = dump_dir / compressed_name(
+            cache.OFF_PAGE_TRANSLATIONS_NAME,
+            compression,
+        )
+
+    if not wikidata_ids_path.exists():
+        wikidata_ids_path = dump_dir / compressed_name(
+            cache.WIKIDATA_IDS_NAME,
+            compression,
+        )
 
     if (
         output_path.exists()
@@ -219,7 +238,7 @@ def parse(
 
     if refresh:
         if archive:
-            archive_path = dump_dir / cache.ARCHIVE_NAME
+            archive_path = existing_file(dump_dir / cache.ARCHIVE_NAME)
 
             if not archive_path.exists():
                 download(
@@ -312,6 +331,10 @@ def collect(
             help="Directory for the collected senses, reports, and manifest.",
         ),
     ] = COLLECTION_DIR,
+    compression: Annotated[
+        Compression | None,
+        typer.Option(help="Compress the collection and its reports."),
+    ] = None,
 ) -> None:
     """
     Collect senses, statistics, and provenance into an output directory.
@@ -323,13 +346,15 @@ def collect(
 
     dump_dir = cache.dump_dir(cache_dir, date)
 
-    input_path = dump_dir / cache.WIKTEXTRACT_NAME
+    input_path = existing_file(dump_dir / cache.WIKTEXTRACT_NAME)
 
     if not input_path.exists():
         raise typer.BadParameter(f"Nothing parsed at {input_path}; parse it first")
 
-    off_page_translations_path = dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
-    wikidata_ids_path = dump_dir / cache.WIKIDATA_IDS_NAME
+    off_page_translations_path = existing_file(
+        dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
+    )
+    wikidata_ids_path = existing_file(dump_dir / cache.WIKIDATA_IDS_NAME)
 
     if not wikidata_ids_path.exists():
         raise typer.BadParameter(
@@ -370,7 +395,7 @@ def collect(
         settings,
     )
 
-    write_collection(extractor.extract(input_path), output_dir, manifest)
+    write_collection(extractor.extract(input_path), output_dir, manifest, compression)
 
     _LOGGER.info("Collected %s", output_dir)
 
@@ -488,6 +513,10 @@ def align(
             help="Directory for aligned senses and its reports.",
         ),
     ] = ALIGNMENT_DIR,
+    compression: Annotated[
+        Compression | None,
+        typer.Option(help="Compress aligned senses, reports, and cache tables."),
+    ] = None,
 ) -> None:
     """
     Align collected senses with language model decisions.
@@ -497,7 +526,11 @@ def align(
     if verbose:
         getLogger("wsc").setLevel(DEBUG)
 
-    output_path = output_dir / ALIGNMENT_SENSES
+    input_path = existing_file(input_path)
+    synsets_path = existing_file(synsets_path)
+    prompts_path = existing_file(prompts_path)
+
+    output_path = output_dir / compressed_name(ALIGNMENT_SENSES, compression)
 
     if input_path.resolve() == output_path.resolve():
         raise typer.BadParameter("Input and output paths must be different")
@@ -544,7 +577,15 @@ def align(
     )
 
     evidence_dir = cache.alignment_dir(cache_dir)
-    evidence_paths = {task: evidence_dir / f"{task}.tsv" for task in tasks}
+    evidence_paths = {
+        selected: evidence_dir / compressed_name(f"{selected}.tsv", compression)
+        for selected in tasks
+    }
+
+    if reuse:
+        evidence_paths = {
+            selected: existing_file(path) for selected, path in evidence_paths.items()
+        }
 
     _LOGGER.info(
         "%s alignment cache: %s",
@@ -598,6 +639,7 @@ def align(
             output_dir,
             statistics,
             manifest,
+            compression,
         )
 
     _LOGGER.info("Aligned %s", output_dir)

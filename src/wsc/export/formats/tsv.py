@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import IO, override
 
+from ...files import open_compressed
 from ..base import Writer
 
 
@@ -46,7 +47,7 @@ class TSVWriter(Writer[Mapping[str, object]]):
         Args:
             path: Temporary output path.
         """
-        self._file = path.open("w", encoding="utf-8", newline="")
+        self._file = open_compressed(path, "wt", newline="")
 
         self._writer = csv.DictWriter(
             self._file,

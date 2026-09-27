@@ -43,7 +43,9 @@ from wsc.constants import (
     KAIKKI_URL,
     USER_AGENT,
 )
+from wsc.identifiers import lemma_id, sense_id
 from wsc.models import Engine
+from wsc.models.pos import POS
 from wsc.reading import read_lemmas
 from wsc.upstream import cache, wiktextract
 
@@ -557,6 +559,68 @@ class TestParse:
 
         assert result.exit_code == 0
         assert "Already parsed" in _normalize_output(result)
+
+    def test_extracts_missing_wikidata_ids_without_reparsing(
+        self,
+        tmp_path: Path,
+        cli: Callable[..., Result],
+        fetch_dump: Callable[..., Path],
+        parse_dump: Callable[..., Path],
+        stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
+    ) -> None:
+        """
+        Missing compressed ID cache is rebuilt from the existing parsed dump.
+        """
+        cache_dir = tmp_path / "cache"
+        parsed_path = parse_dump(
+            cache_dir,
+            [
+                {
+                    "word": "bird",
+                    "pos": "noun",
+                    "lang_code": "en",
+                    "senses": [{"glosses": ["A bird."]}],
+                },
+            ],
+        )
+        _ = fetch_dump(
+            cache_dir,
+            pages=[
+                page("bird", "==English==\n===Noun===\n# A bird. {{senseid|en|Q42}}")
+            ],
+        )
+
+        dump_dir = cache.dump_dir(cache_dir, "20260801")
+        compressed_parse = parsed_path.with_suffix(".gz")
+        _ = compressed_parse.write_bytes(
+            gzip.compress(zstd.decompress(parsed_path.read_bytes())),
+        )
+        parsed_path.unlink()
+        (dump_dir / cache.WIKIDATA_IDS_NAME).unlink()
+        calls = stub_parse()
+
+        result = cli("parse", "--compression", "zst", cache_dir=cache_dir)
+
+        assert result.exit_code == 0
+        assert calls == []
+        assert json.loads(
+            zstd.decompress(
+                (dump_dir / f"{cache.WIKIDATA_IDS_NAME}.zst").read_bytes(),
+            ),
+        ) == {sense_id(lemma_id("bird", POS.NOUN), "", ("A bird.",)): ["Q42"]}
+
+        output_dir = tmp_path / "collection"
+        collected = cli(
+            "collect",
+            "--output-dir",
+            str(output_dir),
+            cache_dir=cache_dir,
+        )
+
+        assert collected.exit_code == 0
+        entry = next(read_lemmas(output_dir / "senses.jsonl"))
+
+        assert entry.senses[0].wikidata_ids == ("Q42",)
 
     def test_rejects_unfetched_dump(
         self,
