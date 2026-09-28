@@ -31,6 +31,7 @@ from wsc.models import (
 from wsc.models.alignment import (
     AlignmentResult,
     AlignmentTask,
+    Definition,
     GlossMode,
 )
 
@@ -58,6 +59,70 @@ def test_preserves_translation_bijection(
     assert result.decisions[0].links[0].target_id == targets[0]
     assert len(result.links) == (1 if abstain else 2)
     assert len({link.target_id for link in result.links}) == len(result.links)
+
+
+@pytest.mark.parametrize(
+    ("source_id", "target_id"),
+    [
+        ('word_"quoted".noun.12345678', 'heading_"quoted".tr.12345678'),
+        ("word\\backslash.noun.12345678", "heading\\backslash.tr.12345678"),
+        ("café.noun.12345678", "entrée.tr.12345678"),
+    ],
+)
+def test_preserves_resource_ids_in_schema_and_decisions(
+    source_id: str,
+    target_id: str,
+) -> None:
+    """
+    Resource identifiers appear unchanged in schemas and accepted decisions.
+    """
+    query = replace(
+        build_query(),
+        source_definitions=(Definition(source_id, ("sense",)),),
+        target_definitions=(Definition(target_id, ("heading",)),),
+    )
+    model = Model([json.dumps({source_id: build_decision(target_id)})])
+
+    result = align_query(query, model)
+
+    assert model.requests[0].schema["required"] == [source_id]
+    assert (
+        f'"wiktionary_id":{json.dumps(source_id, ensure_ascii=False)}'
+        in model.requests[0].prompt
+    )
+    assert (
+        f'"target_id":{json.dumps(target_id, ensure_ascii=False)}'
+        in model.requests[0].prompt
+    )
+    assert result.decisions[0].source_id == source_id
+    assert result.links[0].target_id == target_id
+
+
+def test_aligns_resource_ids_in_a_batch() -> None:
+    """
+    Batch alignment attaches translations to their original sense IDs.
+    """
+    source_id = 'word_"quoted".noun.12345678'
+    table = TranslationTable(
+        'word_"quoted".noun.tr.12345678',
+        "heading",
+        {"it": frozenset({"parola"})},
+    )
+    lemma = Lemma(
+        'word_"quoted".noun',
+        'word "quoted"',
+        POS.NOUN,
+        senses=[Sense(source_id, ("sense",))],
+        translation_tables=(table,),
+    )
+    model = Model([json.dumps({source_id: build_decision(table.id)})])
+    aligner = Aligner(model, SynsetCandidates(()), (AlignmentTask.TRANSLATIONS,))
+
+    (aligned,) = aligner.align([lemma])
+
+    assert aligned.senses[0].id == source_id
+    assert aligned.senses[0].translation_table == table
+    assert not aligned.translation_tables
 
 
 @pytest.mark.parametrize(

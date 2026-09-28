@@ -94,38 +94,6 @@ class Statistics:
     translations: int = 0
     translation_languages: Counter[str] = field(default_factory=Counter)
 
-    def add(
-        self,
-        entry: Lemma,
-    ) -> None:
-        """
-        Count one collected entry and its evidence.
-
-        Args:
-            entry: The same entry passed to the JSONL writer.
-        """
-        self.entries[entry.pos] += 1
-
-        self.senses_per_entry[len(entry.senses)] += 1
-
-        self.variant_entries += bool(entry.variants)
-        self.variants += len(entry.variants)
-
-        self.translated_entries += bool(entry.translation_tables)
-        self.translation_tables += len(entry.translation_tables)
-
-        for table in entry.translation_tables:
-            for language, words in table.translations.items():
-                self.translation_languages[language] += len(words)
-                self.translations += len(words)
-
-        for sense in entry.senses:
-            self.senses[entry.pos] += 1
-            self._count_sense(sense)
-
-            for sentence in sense.sentences:
-                self._count_sentence(entry, sentence)
-
     def _count_sense(
         self,
         sense: Sense,
@@ -197,6 +165,38 @@ class Statistics:
             for offset in offsets
             for start, end in (offset.offset,)
         )
+
+    def add(
+        self,
+        entry: Lemma,
+    ) -> None:
+        """
+        Count one collected entry and its evidence.
+
+        Args:
+            entry: The same entry passed to the JSONL writer.
+        """
+        self.entries[entry.pos] += 1
+
+        self.senses_per_entry[len(entry.senses)] += 1
+
+        self.variant_entries += bool(entry.variants)
+        self.variants += len(entry.variants)
+
+        self.translated_entries += bool(entry.translation_tables)
+        self.translation_tables += len(entry.translation_tables)
+
+        for table in entry.translation_tables:
+            for language, words in table.translations.items():
+                self.translation_languages[language] += len(words)
+                self.translations += len(words)
+
+        for sense in entry.senses:
+            self.senses[entry.pos] += 1
+            self._count_sense(sense)
+
+            for sentence in sense.sentences:
+                self._count_sentence(entry, sentence)
 
     def to_dict(
         self,

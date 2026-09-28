@@ -3,6 +3,7 @@ Exercise offline vLLM inference without loading model weights.
 """
 
 import json
+import logging
 import sys
 from dataclasses import dataclass
 from types import ModuleType, SimpleNamespace
@@ -31,6 +32,12 @@ class FakeSamplingParameters:
         Store the sampling settings.
         """
         self.values: dict[str, object] = kwargs
+
+
+class FakeEngineDeadError(Exception):
+    """
+    Represent an unrecoverable vLLM worker failure.
+    """
 
 
 class FakeTokenizer:
@@ -291,6 +298,15 @@ def fake_vllm_modules(
     monkeypatch.setitem(sys.modules, "vllm", vllm)
     monkeypatch.setitem(sys.modules, "vllm.reasoning", parser)
 
+    engine_exceptions = ModuleType("vllm.v1.engine.exceptions")
+    monkeypatch.setattr(
+        engine_exceptions,
+        "EngineDeadError",
+        FakeEngineDeadError,
+        raising=False,
+    )
+    monkeypatch.setitem(sys.modules, engine_exceptions.__name__, engine_exceptions)
+
     harmony = ModuleType("vllm.reasoning.gptoss_reasoning_parser")
     monkeypatch.setattr(
         harmony,
@@ -386,6 +402,65 @@ def test_batches_engine_requests() -> None:
         FakeLanguageModel.response,
         FakeLanguageModel.response,
     )
+
+
+@pytest.mark.usefixtures("_vllm_modules")
+def test_reports_xgrammar_record_after_engine_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    A failed engine run identifies the rejected prompt without verbose logging.
+    """
+    from wsc.alignment.inference import open_model
+
+    def fail_chat(
+        self: FakeLanguageModel,
+        *,
+        messages: list[list[dict[str, str]]],
+        sampling_params: list[FakeSamplingParameters],
+        chat_template_kwargs: dict[str, object] | None,
+        use_tqdm: bool,
+    ) -> list[object]:
+        """
+        Simulate the engine dying during grammar compilation.
+        """
+        del self, messages, sampling_params, chat_template_kwargs, use_tqdm
+
+        raise FakeEngineDeadError
+
+    class FakeGrammar:
+        """
+        Reject the same schema when inspected after engine failure.
+        """
+
+        @staticmethod
+        def from_json_schema(schema: dict[str, object]) -> None:
+            """
+            Report the schema error from the failed worker.
+            """
+            if schema["title"] != "broken":
+                return
+
+            raise RuntimeError("EBNF lexer error")
+
+    xgrammar = ModuleType("xgrammar")
+    monkeypatch.setattr(xgrammar, "Grammar", FakeGrammar, raising=False)
+    monkeypatch.setitem(sys.modules, "xgrammar", xgrammar)
+    monkeypatch.setattr(FakeLanguageModel, "chat", fail_chat)
+
+    requests = (
+        ModelRequest("system", "first record", {"title": "valid"}),
+        ModelRequest("system", "second record", {"title": "broken"}),
+    )
+
+    with caplog.at_level(logging.ERROR), pytest.raises(FakeEngineDeadError):
+        _ = open_model(ModelSettings("local-model")).generate_batch(requests)
+
+    assert "XGrammar rejected request 1" in caplog.text
+    assert "Prompt:\nsecond record" in caplog.text
+    assert '"title": "broken"' in caplog.text
+    assert "first record" not in caplog.text
 
 
 @pytest.mark.parametrize("finish_reason", ["length", "content_filter", None])

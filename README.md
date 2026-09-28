@@ -97,7 +97,7 @@ wsc collect
 | `--gpu` | off | Read on the graphics card |
 | `--cache-dir` | your platform's cache directory | Where the sources and what is made of them are kept |
 | `--output-dir` | `collection` | Directory for the collection and its reports |
-| `--compression` | off | Compress generated files as `gz`, `bz2`, or `zst` |
+| `--compression` | off | Archive the collection directory as `tar.gz`, `tar.bz2`, or `tar.zst` |
 
 | Engine | Reads with | Speed |
 | --- | --- | --- |
@@ -140,9 +140,9 @@ wsc align collection/senses.jsonl
 | `--verbose` | off | Show logs for individual alignment requests |
 | `--cache-dir` | platform cache | Also configurable through `WSC_CACHE_DIR` |
 | `--output-dir` | `alignment` | Directory for aligned senses and its reports |
-| `--compression` | off | Compress aligned files and alignment cache tables as `gz`, `bz2`, or `zst` |
+| `--compression` | off | Archive the alignment directory as `tar.gz`, `tar.bz2`, or `tar.zst` |
 
-Input paths accept plain, `.gz`, `.bz2`, and `.zst` files.
+Input paths accept plain, `.gz`, `.bz2`, and `.zst` JSONL files or a collection `.tar.gz`, `.tar.bz2`, or `.tar.zst` archive. The alignment cache remains in plain TSV files for `--reuse`.
 
 Each alignment contains the aligned collection, a manifest, and one report per selected task:
 

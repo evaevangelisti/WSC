@@ -5,16 +5,19 @@ Exercise command-level inference and cached decision replay.
 import csv
 import json
 from collections.abc import Sequence
+from compression import zstd
 from pathlib import Path
-from typing import cast
+from typing import cast, override
 
 import pytest
 from typer.testing import CliRunner
 
 from wsc import cli
+from wsc.collection import write_collection
 from wsc.constants import ALIGNMENT_FIELDS
+from wsc.files import Compression
 from wsc.identifiers import translation_table_id
-from wsc.models import TranslationTable
+from wsc.models import POS, Lemma, Sense, TranslationTable
 from wsc.models.alignment import (
     AlignmentTask,
     LanguageModel,
@@ -22,7 +25,7 @@ from wsc.models.alignment import (
     ModelRequest,
     ModelSettings,
 )
-from wsc.reading import read_lemmas
+from wsc.reading import read_alignment_cache, read_lemmas
 
 
 class Model:
@@ -93,6 +96,111 @@ class Model:
             One successful outcome per request.
         """
         return tuple(ModelOutcome(self.generate(request)) for request in requests)
+
+
+def test_aligns_compressed_collection_into_one_archive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Archive input and output preserve plain cache tables for reuse.
+
+    Args:
+        tmp_path: Isolated collection and alignment destinations.
+        monkeypatch: Replacement for model loading.
+    """
+    table = TranslationTable(
+        translation_table_id("word.noun", "gloss"),
+        "gloss",
+        {"it": frozenset({"parola"})},
+    )
+    lemma = Lemma(
+        "word.noun",
+        "word",
+        POS.NOUN,
+        senses=[Sense("s", ("meaning",))],
+        translation_tables=(table,),
+    )
+    write_collection([lemma], tmp_path / "collection", {}, Compression.ZSTANDARD)
+
+    def load_model(settings: ModelSettings) -> LanguageModel:
+        """
+        Supply a deterministic model for archived alignment.
+
+        Args:
+            settings: Inference settings supplied by the command.
+
+        Returns:
+            A local model producing one translation decision.
+        """
+        del settings
+
+        return Model()
+
+    monkeypatch.setattr(cli, "open_model", load_model)
+
+    result = CliRunner().invoke(
+        cli.app,
+        [
+            "align",
+            str(tmp_path / "collection.tar.zst"),
+            "--task",
+            "translations",
+            "--output-dir",
+            str(tmp_path / "alignment"),
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--compression",
+            "zst",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (
+        next(read_lemmas(tmp_path / "alignment.tar.zst")).senses[0].translation_table
+        == table
+    )
+    cache_path = tmp_path / "cache" / "alignment" / "translations.tsv"
+    assert cache_path.is_file()
+
+    _ = cache_path.with_suffix(".tsv.zst").write_bytes(
+        zstd.compress(cache_path.read_bytes())
+    )
+    cache_path.unlink()
+
+    def reject_model(settings: ModelSettings) -> LanguageModel:
+        """
+        Reject model loading when every decision is cached.
+
+        Args:
+            settings: Unexpected inference settings.
+
+        Raises:
+            AssertionError: If cached alignment starts inference.
+        """
+        raise AssertionError(f"Unexpected model loading: {settings.model}")
+
+    monkeypatch.setattr(cli, "open_model", reject_model)
+
+    reused = CliRunner().invoke(
+        cli.app,
+        [
+            "align",
+            str(tmp_path / "collection.tar.zst"),
+            "--task",
+            "translations",
+            "--output-dir",
+            str(tmp_path / "alignment"),
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--compression",
+            "zst",
+            "--reuse",
+        ],
+    )
+
+    assert reused.exit_code == 0, reused.output
+    assert cache_path.is_file()
 
 
 @pytest.mark.parametrize("tasks", [(AlignmentTask.TRANSLATIONS,), tuple(AlignmentTask)])
@@ -407,3 +515,188 @@ def test_reuses_partial_alignment_cache(
         {"it": frozenset({"due"})},
     )
     assert len(cache_path.read_text().splitlines()) == 3
+
+
+def test_resumes_after_model_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    A failed batch leaves earlier decisions in the ordinary TSV cache.
+    """
+    input_path = tmp_path / "input.jsonl"
+    targets = {
+        word: translation_table_id(f"{word}.noun", word) for word in ("first", "second")
+    }
+    records = (
+        {
+            "id": f"{word}.noun",
+            "lemma": word,
+            "pos": "noun",
+            "senses": [{"id": f"{word}.noun.1", "glosses": [word]}],
+            "translation_tables": [
+                {
+                    "id": targets[word],
+                    "gloss": word,
+                    "translations": {"it": [word]},
+                },
+            ],
+        }
+        for word in targets
+    )
+    _ = input_path.write_text(
+        "".join(f"{json.dumps(record)}\n" for record in records),
+        encoding="utf-8",
+    )
+
+    class FailingModel(Model):
+        """
+        Fail after one completed translation decision.
+        """
+
+        @override
+        def generate_batch(
+            self,
+            requests: Sequence[ModelRequest],
+        ) -> tuple[ModelOutcome, ...]:
+            """
+            Return one decision before simulating an engine failure.
+
+            Args:
+                requests: Single-request batch supplied by the aligner.
+
+            Returns:
+                First successful outcome in submission order.
+
+            Raises:
+                RuntimeError: When the second batch is submitted.
+            """
+            self.requests.extend(requests)
+
+            if len(self.requests) > 1:
+                raise RuntimeError("engine died")
+
+            return (
+                ModelOutcome(
+                    json.dumps(
+                        {
+                            "first.noun.1": [
+                                {
+                                    "target_id": targets["first"],
+                                    "relation": "translation",
+                                    "reason": "Same meaning.",
+                                },
+                            ],
+                        },
+                    ),
+                ),
+            )
+
+    failing_model = FailingModel()
+
+    def load_failing_model(settings: ModelSettings) -> LanguageModel:
+        """
+        Return the model that fails on its second request.
+
+        Args:
+            settings: Unused inference configuration.
+
+        Returns:
+            The test model.
+        """
+        del settings
+
+        return failing_model
+
+    monkeypatch.setattr(cli, "open_model", load_failing_model)
+    arguments = [
+        "align",
+        str(input_path),
+        "--task",
+        "translations",
+        "--batch-size",
+        "1",
+        "--cache-dir",
+        str(tmp_path / "cache"),
+        "--output-dir",
+        str(tmp_path / "output"),
+    ]
+
+    failed = CliRunner().invoke(cli.app, arguments)
+
+    assert failed.exit_code != 0
+    assert isinstance(failed.exception, RuntimeError)
+    assert str(failed.exception) == "engine died"
+    assert failed.exception.__notes__ == [
+        "Failed alignment batch (1): translations:second.noun"
+    ]
+
+    cache_path = tmp_path / "cache" / "alignment" / "translations.tsv"
+    assert cache_path.exists()
+    assert not list(cache_path.parent.glob("*.part"))
+    assert set(read_alignment_cache(cache_path)) == {"translations:first.noun"}
+
+    class ResumeModel(Model):
+        """
+        Resolve only the still-uncached second lemma.
+        """
+
+        @override
+        def generate_batch(
+            self,
+            requests: Sequence[ModelRequest],
+        ) -> tuple[ModelOutcome, ...]:
+            """
+            Return the remaining translation association.
+
+            Args:
+                requests: Single uncached alignment request.
+
+            Returns:
+                One successful model outcome.
+            """
+            self.requests.extend(requests)
+
+            return (
+                ModelOutcome(
+                    json.dumps(
+                        {
+                            "second.noun.1": [
+                                {
+                                    "target_id": targets["second"],
+                                    "relation": "translation",
+                                    "reason": "Same meaning.",
+                                },
+                            ],
+                        },
+                    ),
+                ),
+            )
+
+    resume_model = ResumeModel()
+
+    def load_resume_model(settings: ModelSettings) -> LanguageModel:
+        """
+        Return the model resolving the remaining request.
+
+        Args:
+            settings: Unused inference configuration.
+
+        Returns:
+            The test model.
+        """
+        del settings
+
+        return resume_model
+
+    monkeypatch.setattr(cli, "open_model", load_resume_model)
+
+    resumed = CliRunner().invoke(cli.app, [*arguments, "--reuse"])
+
+    assert resumed.exit_code == 0, resumed.output
+    assert len(resume_model.requests) == 1
+    assert resume_model.requests[0].schema["required"] == ["second.noun.1"]
+    assert set(read_alignment_cache(cache_path)) == {
+        "translations:first.noun",
+        "translations:second.noun",
+    }

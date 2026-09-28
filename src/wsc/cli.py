@@ -22,6 +22,7 @@ from .alignment.reporting import AlignmentStatistics, write_alignment
 from .alignment.reporting import (
     build_manifest as build_alignment_manifest,
 )
+from .archives import archive_path
 from .collection import CollectionSettings, build_manifest, write_collection
 from .constants import (
     ALIGNMENT_BATCH_SIZE,
@@ -333,7 +334,7 @@ def collect(
     ] = COLLECTION_DIR,
     compression: Annotated[
         Compression | None,
-        typer.Option(help="Compress the collection and its reports."),
+        typer.Option(help="Archive the collection directory with compression."),
     ] = None,
 ) -> None:
     """
@@ -397,7 +398,10 @@ def collect(
 
     write_collection(extractor.extract(input_path), output_dir, manifest, compression)
 
-    _LOGGER.info("Collected %s", output_dir)
+    published_path = (
+        archive_path(output_dir, compression) if compression else output_dir
+    )
+    _LOGGER.info("Collected %s", published_path)
 
 
 @app.command()
@@ -515,7 +519,7 @@ def align(
     ] = ALIGNMENT_DIR,
     compression: Annotated[
         Compression | None,
-        typer.Option(help="Compress aligned senses, reports, and cache tables."),
+        typer.Option(help="Archive the alignment directory with compression."),
     ] = None,
 ) -> None:
     """
@@ -530,10 +534,17 @@ def align(
     synsets_path = existing_file(synsets_path)
     prompts_path = existing_file(prompts_path)
 
-    output_path = output_dir / compressed_name(ALIGNMENT_SENSES, compression)
+    output_path = (
+        archive_path(output_dir, compression)
+        if compression
+        else output_dir / ALIGNMENT_SENSES
+    )
 
     if input_path.resolve() == output_path.resolve():
         raise typer.BadParameter("Input and output paths must be different")
+
+    if output_dir.is_file():
+        raise typer.BadParameter(f"Output directory is a file: {output_dir}")
 
     if not input_path.is_file():
         raise typer.BadParameter(f"No collection at {input_path}")
@@ -577,15 +588,7 @@ def align(
     )
 
     evidence_dir = cache.alignment_dir(cache_dir)
-    evidence_paths = {
-        selected: evidence_dir / compressed_name(f"{selected}.tsv", compression)
-        for selected in tasks
-    }
-
-    if reuse:
-        evidence_paths = {
-            selected: existing_file(path) for selected, path in evidence_paths.items()
-        }
+    evidence_paths = {selected: evidence_dir / f"{selected}.tsv" for selected in tasks}
 
     _LOGGER.info(
         "%s alignment cache: %s",
@@ -594,7 +597,7 @@ def align(
     )
 
     alignment_cache = {
-        selected: read_alignment_cache(path)
+        selected: read_alignment_cache(existing_file(path))
         for selected, path in evidence_paths.items()
         if reuse
     }
@@ -642,4 +645,7 @@ def align(
             compression,
         )
 
-    _LOGGER.info("Aligned %s", output_dir)
+    published_path = (
+        archive_path(output_dir, compression) if compression else output_dir
+    )
+    _LOGGER.info("Aligned %s", published_path)

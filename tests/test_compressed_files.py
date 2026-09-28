@@ -5,8 +5,10 @@ Exercise compressed inputs and outputs through their public readers and writers.
 import bz2
 import gzip
 import json
+import tarfile
 from collections.abc import Callable
 from compression import zstd
+from io import BytesIO
 from pathlib import Path
 from typing import cast
 
@@ -98,26 +100,37 @@ def test_compressed_pipeline_files(
 
     collection_dir = tmp_path / "collection"
     write_collection([lemma], collection_dir, {}, compression)
+    collection_archive_path = tmp_path / f"collection.tar{suffix}"
+
+    assert not collection_dir.exists()
+    assert collection_archive_path.read_bytes().startswith(signature)
+
+    with tarfile.open(
+        fileobj=BytesIO(decompress(collection_archive_path.read_bytes())), mode="r:"
+    ) as archive:
+        collection_files = {
+            member.name: content.read()
+            for member in archive
+            if member.isfile()
+            if (content := archive.extractfile(member)) is not None
+        }
 
     collection_manifest = cast(
-        dict[str, object],
-        json.loads(
-            decompress((collection_dir / f"manifest.json{suffix}").read_bytes()),
-        ),
+        dict[str, object], json.loads(collection_files["collection/manifest.json"])
     )
 
-    collection_files = cast(dict[str, str], collection_manifest["files"])
+    manifest_files = cast(dict[str, str], collection_manifest["files"])
 
-    assert set(collection_files.values()) == {
-        f"senses.jsonl{suffix}",
-        f"report.json{suffix}",
-        f"report.md{suffix}",
-        f"manifest.json{suffix}",
+    assert set(manifest_files.values()) == {
+        "senses.jsonl",
+        "report.json",
+        "report.md",
+        "manifest.json",
     }
-    for name in collection_files.values():
-        assert decompress((collection_dir / name).read_bytes())
+    for name in manifest_files.values():
+        assert collection_files[f"collection/{name}"]
 
-    assert tuple(read_lemmas(collection_dir / f"senses.jsonl{suffix}")) == (lemma,)
+    assert tuple(read_lemmas(collection_archive_path)) == (lemma,)
 
     alignment_dir = tmp_path / "alignment"
     write_alignment(
@@ -127,21 +140,32 @@ def test_compressed_pipeline_files(
         {},
         compression,
     )
+    alignment_archive_path = tmp_path / f"alignment.tar{suffix}"
+
+    assert not alignment_dir.exists()
+    assert alignment_archive_path.read_bytes().startswith(signature)
+
+    with tarfile.open(
+        fileobj=BytesIO(decompress(alignment_archive_path.read_bytes())), mode="r:"
+    ) as archive:
+        alignment_files = {
+            member.name: content.read()
+            for member in archive
+            if member.isfile()
+            if (content := archive.extractfile(member)) is not None
+        }
 
     alignment_manifest = cast(
-        dict[str, object],
-        json.loads(
-            decompress((alignment_dir / f"manifest.json{suffix}").read_bytes()),
-        ),
+        dict[str, object], json.loads(alignment_files["alignment/manifest.json"])
     )
-    alignment_files = cast(dict[str, object], alignment_manifest["files"])
-    report_files = cast(dict[str, str], alignment_files["reports"])
+    manifest_files = cast(dict[str, object], alignment_manifest["files"])
+    report_files = cast(dict[str, str], manifest_files["reports"])
 
-    assert alignment_files["senses"] == f"senses.jsonl{suffix}"
+    assert manifest_files["senses"] == "senses.jsonl"
     assert set(report_files.values()) == {
-        f"reports/{task}.json{suffix}" for task in AlignmentTask
+        f"reports/{task}.json" for task in AlignmentTask
     }
     for name in report_files.values():
-        assert decompress((alignment_dir / name).read_bytes())
+        assert alignment_files[f"alignment/{name}"]
 
-    assert tuple(read_lemmas(alignment_dir / f"senses.jsonl{suffix}")) == (lemma,)
+    assert tuple(read_lemmas(alignment_archive_path)) == (lemma,)

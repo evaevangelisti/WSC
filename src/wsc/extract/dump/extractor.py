@@ -35,23 +35,6 @@ class DumpExtractor:
         """
         self._language_section: str = language_section
 
-    def extract(
-        self,
-        input_path: Path,
-        parsed_glosses: Mapping[str, frozenset[str]] | None = None,
-    ) -> Iterator[PageTranslations]:
-        """
-        Read dump translations missing from the parsed entries.
-
-        Args:
-            input_path: The dump to read, compressed or not.
-            parsed_glosses: Table glosses already supplied by Wiktextract.
-
-        Yields:
-            One record per part of speech a page translates elsewhere.
-        """
-        yield from self.extract_pages(read_pages(input_path), parsed_glosses)
-
     def extract_pages(
         self,
         pages: Iterable[tuple[str, str]],
@@ -103,3 +86,20 @@ class DumpExtractor:
 
                 if extracted_page.translations or extracted_page.pointers:
                     yield extracted_page
+
+    def extract(
+        self,
+        input_path: Path,
+        parsed_glosses: Mapping[str, frozenset[str]] | None = None,
+    ) -> Iterator[PageTranslations]:
+        """
+        Read dump translations missing from the parsed entries.
+
+        Args:
+            input_path: The dump to read, compressed or not.
+            parsed_glosses: Table glosses already supplied by Wiktextract.
+
+        Yields:
+            One record per part of speech a page translates elsewhere.
+        """
+        yield from self.extract_pages(read_pages(input_path), parsed_glosses)

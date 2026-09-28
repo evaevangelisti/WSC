@@ -11,6 +11,15 @@ from ..files import open_compressed
 from ..models import POS, Synset, SynsetMember
 
 
+class SynsetMemberRecord(TypedDict):
+    """
+    Lexical member with an optional declared source.
+    """
+
+    lemma: str
+    source: NotRequired[str]
+
+
 class SynsetRecord(TypedDict):
     """
     Serialized generic synset accepted by the align command.
@@ -18,13 +27,13 @@ class SynsetRecord(TypedDict):
 
     id: NotRequired[str]
     pos: str
-    members: list[str] | dict[str, list[str]]
+    members: list[str | SynsetMemberRecord] | dict[str, list[str]]
     glosses: list[str]
     examples: NotRequired[list[str]]
 
 
 def _read_members(
-    members: list[str] | dict[str, list[str]],
+    members: list[str | SynsetMemberRecord] | dict[str, list[str]],
 ) -> tuple[SynsetMember, ...]:
     """
     Flatten members while retaining any source declared for them.
@@ -36,7 +45,12 @@ def _read_members(
         Members in their input order.
     """
     if isinstance(members, list):
-        return tuple(SynsetMember(member) for member in members)
+        return tuple(
+            SynsetMember(member)
+            if isinstance(member, str)
+            else SynsetMember(member["lemma"], member.get("source", ""))
+            for member in members
+        )
 
     return tuple(
         SynsetMember(member, source)

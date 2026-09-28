@@ -4,6 +4,7 @@ Generate decisions through offline vLLM inference.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Sequence
 from importlib import import_module
 from logging import getLogger
@@ -218,6 +219,33 @@ class _LanguageModel(Protocol):
         ...
 
 
+class _Grammar(Protocol):
+    """
+    Describe XGrammar's JSON schema parser.
+    """
+
+    @staticmethod
+    def from_json_schema(schema: dict[str, object]) -> object:
+        """
+        Convert a response schema into a grammar.
+
+        Args:
+            schema: JSON schema submitted to vLLM.
+
+        Returns:
+            The compiled grammar.
+        """
+        ...
+
+
+class _XGrammarModule(Protocol):
+    """
+    Expose the grammar class from the optional vLLM dependency.
+    """
+
+    Grammar: type[_Grammar]
+
+
 class OfflineModel:
     """
     Use the offline vLLM engine for local models.
@@ -324,29 +352,6 @@ class OfflineModel:
 
         return text
 
-    def generate(
-        self,
-        request: ModelRequest,
-    ) -> str:
-        """
-        Generate and parse a structured completion without an API server.
-
-        Args:
-            request: Alignment prompt and response schema.
-
-        Returns:
-            Final JSON text without reasoning content.
-
-        Raises:
-            ValueError: If generation is incomplete or has no final text.
-        """
-        [outcome] = self.generate_batch((request,))
-
-        if outcome.text is None:
-            raise ValueError(outcome.error)
-
-        return outcome.text
-
     def _build_chat_request(
         self,
         request: ModelRequest,
@@ -409,6 +414,40 @@ class OfflineModel:
 
         return ModelOutcome(text.strip())
 
+    def _report_invalid_schemas(
+        self,
+        requests: Sequence[ModelRequest],
+    ) -> None:
+        """
+        Print records whose schemas fail after the inference engine dies.
+
+        Args:
+            requests: Submitted prompts and schemas in engine order.
+        """
+        xgrammar = cast(_XGrammarModule, cast(object, import_module("xgrammar")))
+
+        failures = 0
+
+        for index, request in enumerate(requests):
+            try:
+                _ = xgrammar.Grammar.from_json_schema(request.schema)
+            except RuntimeError as error:
+                failures += 1
+
+                _LOGGER.error(
+                    "XGrammar rejected request %s: %s\nPrompt:\n%s\nSchema:\n%s",
+                    index,
+                    error,
+                    request.prompt,
+                    json.dumps(request.schema, ensure_ascii=False, indent=2),
+                )
+
+        if not failures:
+            _LOGGER.error(
+                "XGrammar could not reproduce a schema error in %s failed requests",
+                len(requests),
+            )
+
     def generate_batch(
         self,
         requests: Sequence[ModelRequest],
@@ -437,27 +476,61 @@ class OfflineModel:
             sampling.StructuredOutputsParams,
         )
 
+        engine_exceptions = import_module("vllm.v1.engine.exceptions")
+        engine_dead_error = cast(
+            type[Exception],
+            engine_exceptions.EngineDeadError,
+        )
+
         chat_requests = [self._build_chat_request(request) for request in requests]
 
-        outputs = self._llm.chat(
-            messages=[list(request.messages) for request in chat_requests],
-            sampling_params=[
-                sampling_factory(
-                    temperature=self._settings.temperature,
-                    max_tokens=self._settings.maximum_tokens,
-                    structured_outputs=structured_factory(json=request.schema),
-                    skip_special_tokens=False,
-                )
-                for request in requests
-            ],
-            chat_template_kwargs=self._chat_template_kwargs or None,
-            use_tqdm=True,
-        )
+        try:
+            outputs = self._llm.chat(
+                messages=[list(request.messages) for request in chat_requests],
+                sampling_params=[
+                    sampling_factory(
+                        temperature=self._settings.temperature,
+                        max_tokens=self._settings.maximum_tokens,
+                        structured_outputs=structured_factory(json=request.schema),
+                        skip_special_tokens=False,
+                    )
+                    for request in requests
+                ],
+                chat_template_kwargs=self._chat_template_kwargs or None,
+                use_tqdm=True,
+            )
+        except engine_dead_error:
+            self._report_invalid_schemas(requests)
+
+            raise
 
         return tuple(
             self._collect(output, request)
             for output, request in zip(outputs, chat_requests, strict=True)
         )
+
+    def generate(
+        self,
+        request: ModelRequest,
+    ) -> str:
+        """
+        Generate and parse a structured completion without an API server.
+
+        Args:
+            request: Alignment prompt and response schema.
+
+        Returns:
+            Final JSON text without reasoning content.
+
+        Raises:
+            ValueError: If generation is incomplete or has no final text.
+        """
+        [outcome] = self.generate_batch((request,))
+
+        if outcome.text is None:
+            raise ValueError(outcome.error)
+
+        return outcome.text
 
 
 def open_model(

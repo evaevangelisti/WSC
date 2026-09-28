@@ -13,8 +13,9 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wsc.alignment import open_alignment_recorder, parse_response
+from wsc.alignment import open_alignment_recorder, parse_response, serialize_alignment
 from wsc.constants import ALIGNMENT_FIELDS
+from wsc.export import TSVWriter
 from wsc.models.alignment import AlignmentTask
 from wsc.reading import read_alignment_cache, read_alignments
 
@@ -111,14 +112,26 @@ def test_flushes_replayable_decisions(
     assert not list(directory.glob("*.part"))
 
 
+@pytest.mark.parametrize("suffix", [".tsv", ".tsv.zst"])
 def test_preserves_completed_cache(
     tmp_path: Path,
+    suffix: str,
 ) -> None:
     """
-    An interrupted rewrite preserves the completed decision table.
+    Interrupted inference publishes new decisions beside earlier ones.
     """
-    path = tmp_path / "translations.tsv"
-    _ = path.write_text("previous decisions", encoding="utf-8")
+    path = tmp_path / f"translations{suffix}"
+    query = build_query()
+    first_query = replace(query, source_definitions=query.source_definitions[:1])
+    second_query = replace(query, source_definitions=query.source_definitions[1:])
+    previous = parse_response(
+        first_query,
+        json.dumps({"s1": build_decision("t1")}),
+    )
+
+    with TSVWriter(path, ALIGNMENT_FIELDS) as writer:
+        for row in serialize_alignment(previous):
+            writer.write(row)
 
     def interrupt() -> None:
         """
@@ -132,12 +145,15 @@ def test_preserves_completed_cache(
                 stack,
                 {AlignmentTask.TRANSLATIONS: path},
             )
-            recorder(parse_response(build_query(), '{"s1": null, "s2": null}'))
+            recorder(parse_response(second_query, '{"s2": null}'))
 
             raise RuntimeError("interrupted")
 
     with pytest.raises(RuntimeError, match="interrupted"):
         interrupt()
 
-    assert path.read_text(encoding="utf-8") == "previous decisions"
+    decisions = read_alignment_cache(path)[query.alignment_id]
+
+    assert decisions["s1"] == previous.decisions[0]
+    assert not decisions["s2"].links
     assert not list(tmp_path.glob("*.part"))

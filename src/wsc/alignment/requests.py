@@ -106,14 +106,15 @@ def build_request(
     """
     handler = TASK_HANDLERS[query.task]
 
+    sources = query.source_definitions
+    targets = query.target_definitions
+
     source_definitions = "\n".join(
-        render_source_definition(source, query.task, mode)
-        for source in query.source_definitions
+        render_source_definition(source, query.task, mode) for source in sources
     )
 
     target_definitions = "\n".join(
-        render_target_definition(target, query.task)
-        for target in query.target_definitions
+        render_target_definition(target, query.task) for target in targets
     )
 
     prompt = Template(prompts.tasks[query.task]).substitute(
@@ -129,7 +130,7 @@ def build_request(
         "properties": {
             "target_id": {
                 "type": "string",
-                "enum": [target.id for target in query.target_definitions],
+                "enum": [target.id for target in targets],
             },
             "relation": {"type": "string", "enum": list(handler.relations)},
             "reason": {"type": "string"},
@@ -150,10 +151,9 @@ def build_request(
     schema: dict[str, object] = {
         "type": "object",
         "properties": {
-            source.id: {"anyOf": [associations, {"type": "null"}]}
-            for source in query.source_definitions
+            source.id: {"anyOf": [associations, {"type": "null"}]} for source in sources
         },
-        "required": [source.id for source in query.source_definitions],
+        "required": [source.id for source in sources],
         "additionalProperties": False,
     }
 

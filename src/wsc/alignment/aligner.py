@@ -2,6 +2,7 @@
 Apply generated lexical associations to collected senses.
 """
 
+import sys
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -200,7 +201,18 @@ class Aligner:
 
         _LOGGER.debug("Generating %s alignment prompts", len(batch.requests))
 
-        outcomes = self._model.generate_batch(batch.requests)
+        try:
+            outcomes = self._model.generate_batch(batch.requests)
+        finally:
+            if (error := sys.exception()) is not None:
+                first = batch.queries[0].query.alignment_id
+                last = batch.queries[-1].query.alignment_id
+
+                interval = first if first == last else f"{first} through {last}"
+
+                error.add_note(
+                    f"Failed alignment batch ({len(batch.requests)}): {interval}"
+                )
 
         for prepared, outcome in zip(
             batch.queries,

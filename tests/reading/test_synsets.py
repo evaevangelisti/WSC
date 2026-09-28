@@ -34,7 +34,7 @@ def test_reads_synsets_with_generated_ids_and_member_sources(
                     {
                         "id": "provided",
                         "pos": "verb",
-                        "members": ["act"],
+                        "members": ["act", {"lemma": "perform", "source": "lexicon"}],
                         "glosses": ["Perform an action."],
                     },
                 ),
@@ -54,3 +54,7 @@ def test_reads_synsets_with_generated_ids_and_member_sources(
     )
     assert first.examples == ("An example.",)
     assert second.id == "provided"
+    assert second.members == (
+        SynsetMember("act"),
+        SynsetMember("perform", "lexicon"),
+    )

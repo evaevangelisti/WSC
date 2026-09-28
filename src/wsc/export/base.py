@@ -29,6 +29,26 @@ class Writer[T](ABC):
         self._output_path: Path = output_path
         self._partial_path: Path = output_path.with_name(f"{output_path.name}.part")
 
+    @abstractmethod
+    def _open(
+        self,
+        path: Path,
+    ) -> None:
+        """
+        Acquire whatever the format needs in order to write.
+
+        Args:
+            path: Where to write; always the .part file, never the final one.
+        """
+
+    @abstractmethod
+    def _close(
+        self,
+    ) -> None:
+        """
+        Flush any buffered output and release what _open acquired.
+        """
+
     def __enter__(
         self,
     ) -> Self:
@@ -70,26 +90,6 @@ class Writer[T](ABC):
                 _ = self._partial_path.replace(self._output_path)
             else:
                 self._partial_path.unlink(missing_ok=True)
-
-    @abstractmethod
-    def _open(
-        self,
-        path: Path,
-    ) -> None:
-        """
-        Acquire whatever the format needs in order to write.
-
-        Args:
-            path: Where to write; always the .part file, never the final one.
-        """
-
-    @abstractmethod
-    def _close(
-        self,
-    ) -> None:
-        """
-        Flush any buffered output and release what _open acquired.
-        """
 
     @abstractmethod
     def write(

@@ -13,6 +13,21 @@ class SynsetCandidates:
     Synset candidates retrieved by lexical form and part of speech.
     """
 
+    @staticmethod
+    def _normalize(
+        text: str,
+    ) -> str:
+        """
+        Normalize lexical lookup without changing candidate definitions.
+
+        Args:
+            text: Headword or synset member.
+
+        Returns:
+            Case-folded words separated by spaces.
+        """
+        return " ".join(text.replace("_", " ").casefold().split())
+
     def __init__(
         self,
         synsets: Iterable[Synset],
@@ -32,21 +47,6 @@ class SynsetCandidates:
                 self._members[self._normalize(member.lemma), synset.pos][synset.id] = (
                     synset
                 )
-
-    @staticmethod
-    def _normalize(
-        text: str,
-    ) -> str:
-        """
-        Normalize lexical lookup without changing candidate definitions.
-
-        Args:
-            text: Headword or synset member.
-
-        Returns:
-            Case-folded words separated by spaces.
-        """
-        return " ".join(text.replace("_", " ").casefold().split())
 
     def candidates(
         self,

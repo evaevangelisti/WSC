@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
+from ..archives import archive_lines
 from ..files import open_compressed
 from ..models import (
     POS,
@@ -193,6 +194,22 @@ def parse_lemma(
     )
 
 
+def _jsonl_lines(
+    path: Path,
+) -> Iterator[str]:
+    """
+    Read lines from a plain or individually compressed JSONL file.
+
+    Args:
+        path: Source JSONL file.
+
+    Yields:
+        Serialized JSONL lines.
+    """
+    with open_compressed(path, "rt") as stream:
+        yield from stream
+
+
 def read_lemmas(
     path: Path,
 ) -> Iterator[Lemma]:
@@ -200,11 +217,17 @@ def read_lemmas(
     Stream collected entries without loading the corpus into memory.
 
     Args:
-        path: Collected JSONL file, optionally compressed.
+        path: Collected JSONL file or compressed collection archive.
 
     Yields:
         Reconstructed collection entries.
     """
-    with open_compressed(path, "rt") as stream:
-        for line in stream:
-            yield parse_lemma(cast(LemmaRecord, json.loads(line)))
+    if path.name.endswith((".tar.gz", ".tar.bz2", ".tar.zst")):
+        from ..constants import COLLECTION_FILES
+
+        lines = archive_lines(path, COLLECTION_FILES["senses"])
+    else:
+        lines = _jsonl_lines(path)
+
+    for line in lines:
+        yield parse_lemma(cast(LemmaRecord, json.loads(line)))

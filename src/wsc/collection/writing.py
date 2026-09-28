@@ -7,9 +7,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from ..archives import publish_archive
 from ..constants import COLLECTION_FILES
 from ..export.formats.jsonl import JSONLWriter
-from ..files import Compression, compressed_name, open_compressed
+from ..files import Compression
 from ..models import Lemma
 from ..reporting import publish_files, stage_json
 from .markdown import render_markdown
@@ -25,19 +26,16 @@ def write_collection(
     """
     Write the collection and its reports after extraction completes successfully.
 
-    Files are staged together, then replaced individually with the manifest last.
+    Files are staged together, then published after collection completes.
 
     Args:
         entries: Collected entries, consumed once.
-        output_dir: Destination directory for the four collection files.
+        output_dir: Directory name used for output or its archive.
         manifest: Source and configuration provenance.
-        compression: Format used to compress the generated files.
+        compression: Format used to compress the output directory.
     """
     statistics = Statistics()
-    files = {
-        key: compressed_name(name, compression)
-        for key, name in COLLECTION_FILES.items()
-    }
+    files = COLLECTION_FILES
 
     started_at = datetime.now(UTC).isoformat()
 
@@ -64,7 +62,12 @@ def write_collection(
         stage_json(staging_dir / files["statistics"], report)
         stage_json(staging_dir / files["manifest"], provenance)
 
-        with open_compressed(staging_dir / files["report"], "wt") as stream:
+        with (staging_dir / files["report"]).open("w", encoding="utf-8") as stream:
             _ = stream.write(render_markdown(statistics))
+
+        if compression:
+            publish_archive(staging_dir, output_dir, compression)
+
+            return
 
         publish_files(staging_dir, output_dir, files.values())
