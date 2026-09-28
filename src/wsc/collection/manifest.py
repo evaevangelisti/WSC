@@ -42,6 +42,7 @@ def build_manifest(
     input_path: Path,
     off_page_path: Path | None,
     wikidata_ids_path: Path,
+    markup_index_path: Path,
     dump_date: str,
     settings: CollectionSettings,
 ) -> dict[str, object]:
@@ -52,6 +53,7 @@ def build_manifest(
         input_path: Parsed Wiktextract entries.
         off_page_path: Supplemental translations, or None when unavailable.
         wikidata_ids_path: Explicit sense identifiers read from the dump.
+        markup_index_path: Mathematical source and score contexts from the dump.
         dump_date: Resolved dump date.
         settings: Filters and engine options used by the extractor.
 
@@ -67,6 +69,7 @@ def build_manifest(
             if off_page_path
             else None,
             "wikidata_ids": describe_source(wikidata_ids_path),
+            "markup_index": describe_source(markup_index_path),
         },
         "settings": asdict(settings),
         "runtime": {

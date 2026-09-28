@@ -12,6 +12,7 @@ from ....models import (
     WordOffset,
     WordOffsetSource,
 )
+from ...dump.source_markup import MathSource, restore_mathematics
 from ...markup import (
     BIBLIOGRAPHY,
     METADATA,
@@ -66,7 +67,13 @@ _PARENTHETICAL_CITATION = re.compile(
 _SOURCE_URL = re.compile(r"https?://\S+", re.IGNORECASE)
 
 _EXAMPLE_SEPARATOR = re.compile(r"[ \t]*\u2003+[ \t]*")
+_SPACED_SEMICOLON = re.compile(r";[ \t]{2,}")
+_SEMICOLON_SEPARATOR = re.compile(r";[ \t]+")
 _EXAMPLE_ENDINGS = frozenset(";.?!")
+
+_MUSIC_SCORE = re.compile(r"\{\\(?:key|clef|time)\b[^{}]*\}")
+_TRAILING_SCORE_NUMBER = re.compile(r"\n\s*\d+\s*$")
+_NUMERIC_ONLY = re.compile(r"\d+(?:[\s.,:;/-]\d+)*")
 
 
 def parse_year(
@@ -200,10 +207,43 @@ def _parse_bold_offsets(
     )
 
 
+def _clean_unquoted_sentence(
+    value: Attestation,
+    score_prefixes: tuple[str, ...] | None = None,
+) -> Attestation | None:
+    """
+    Remove metadata and audio-score fragments from an unquoted example.
+
+    Args:
+        value: Example after formatting and reference lines are removed.
+        score_prefixes: Source contexts for examples containing scores.
+
+    Returns:
+        The remaining example, or None when it contains only metadata.
+    """
+    if score_prefixes is None or any(
+        value.text.startswith(prefix) for prefix in score_prefixes
+    ):
+        value = substitute(value, _TRAILING_SCORE_NUMBER, "")
+    value = normalize_formatting(value, preserve_markup=True)
+
+    if METADATA.match(value.text) or NAVIGATION.match(value.text):
+        return None
+
+    if "\n" not in value.text and BIBLIOGRAPHY.match(value.text):
+        return None
+
+    value = remove_references(value, explicit=True)
+
+    return normalize_formatting(value, preserve_markup=True)
+
+
 def clean_sentence(
     value: Attestation,
     *,
     quoted: bool,
+    mathematics: tuple[MathSource, ...] = (),
+    score_prefixes: tuple[str, ...] | None = None,
 ) -> Attestation | None:
     """
     Clean an attestation and relocate its existing word offsets.
@@ -211,16 +251,28 @@ def clean_sentence(
     Args:
         value: Sentence text and ranges in its original coordinate system.
         quoted: Whether an actual source reference accompanies the sentence.
+        mathematics: Original formulae and their source contexts.
+        score_prefixes: Source contexts for examples containing scores.
 
     Returns:
         A cleaned attestation, or None for metadata or unrecoverable fragments.
     """
     literal = is_literal_markup(value.text)
+
+    value = restore_mathematics(value, mathematics)
+
+    if not quoted and not literal:
+        value = substitute(value, _SPACED_SEMICOLON, ";\u2003")
+
     value = normalize_formatting(value, preserve_markup=literal)
 
     if not literal:
         value = substitute(value, _REFERENCE_LINE, "")
         value = substitute(value, _TITLE_REFERENCE, "")
+
+        if not quoted:
+            value = substitute(value, _MUSIC_SCORE, "")
+
         value = normalize_formatting(value, preserve_markup=True)
 
     if not value.text:
@@ -229,20 +281,22 @@ def clean_sentence(
     if not literal and _TITLE_ONLY.fullmatch(value.text):
         return None
 
-    if not literal and (
-        is_unrecoverable(value.text) or "{{" in value.text or "}}" in value.text
+    if not literal and is_unrecoverable(
+        value.text,
+        mathematical_sources=tuple(formula.source for formula in mathematics),
     ):
         return None
 
     if not quoted and not literal:
-        if METADATA.match(value.text) or NAVIGATION.match(value.text):
+        cleaned = _clean_unquoted_sentence(value, score_prefixes)
+
+        if cleaned is None:
             return None
 
-        if "\n" not in value.text and BIBLIOGRAPHY.match(value.text):
-            return None
+        value = cleaned
 
-        value = remove_references(value, explicit=True)
-        value = normalize_formatting(value, preserve_markup=True)
+    if not quoted and _NUMERIC_ONLY.fullmatch(value.text):
+        return None
 
     return value if any(character.isalnum() for character in value.text) else None
 
@@ -289,6 +343,26 @@ def _split_example(
         Separate examples, or one example with normalized layout spacing.
     """
     separators = tuple(_EXAMPLE_SEPARATOR.finditer(value.text))
+
+    if not separators and len(value.word_offsets) > 1:
+        candidates = tuple(_SEMICOLON_SEPARATOR.finditer(value.text))
+        boundaries = [
+            (left, right)
+            for left, right in zip(
+                (0, *(separator.end() for separator in candidates)),
+                (*(separator.start() for separator in candidates), len(value.text)),
+                strict=True,
+            )
+        ]
+
+        if candidates and all(
+            any(
+                left <= offset.offset[0] < offset.offset[1] <= right
+                for offset in value.word_offsets
+            )
+            for left, right in boundaries
+        ):
+            separators = candidates
 
     if not separators:
         return (value,)
@@ -360,6 +434,9 @@ def parse_sentences(
     raw_examples: list[RawExample],
     minimum_year: int | None,
     maximum_year: int | None,
+    *,
+    mathematics: tuple[MathSource, ...] = (),
+    score_prefixes: tuple[str, ...] | None = None,
 ) -> list[Sentence]:
     """
     Collect the sentences illustrating one sense.
@@ -371,6 +448,8 @@ def parse_sentences(
         raw_examples: What wiktextract listed under the sense.
         minimum_year: Oldest quotation to keep, or None for no bound.
         maximum_year: Newest quotation to keep, or None for no bound.
+        mathematics: Original formulae and their source contexts.
+        score_prefixes: Source contexts for examples containing scores.
 
     Returns:
         The sentences that survive it, in the order they were listed.
@@ -396,6 +475,8 @@ def parse_sentences(
         cleaned = clean_sentence(
             Attestation(text, word_offsets=word_offsets),
             quoted=bool(reference),
+            mathematics=mathematics,
+            score_prefixes=score_prefixes,
         )
 
         if (

@@ -775,6 +775,63 @@ class TestSentences:
             for sentence in sentences
         )
 
+    def test_splits_semicolon_examples_with_independent_bold_ranges(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Separate examples flattened by Wiktextract when both name the lemma.
+        """
+        text = "she helped the blind man across; the river is half a mile across"
+        sentences = attest(
+            {
+                "text": text,
+                "bold_text_offsets": [[25, 31], [58, 64]],
+                "type": "example",
+            },
+            headword="across",
+        )
+
+        assert [sentence.text for sentence in sentences] == [
+            "she helped the blind man across",
+            "the river is half a mile across",
+        ]
+        assert [sentence.word_offsets[0].offset for sentence in sentences] == [
+            (25, 31),
+            (25, 31),
+        ]
+
+    def test_splits_double_spaced_semicolon_without_bold_ranges(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        A double space supplies a boundary when Wiktextract kept the layout.
+        """
+        sentences = attest(
+            {"text": "first bank;  second bank", "type": "example"},
+        )
+
+        assert [sentence.text for sentence in sentences] == [
+            "first bank",
+            "second bank",
+        ]
+
+    def test_excludes_audio_scores_and_keeps_their_prose(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Score renderings supply neither words nor usable example notation.
+        """
+        sentences = attest(
+            {"text": "1"},
+            {"text": r"{\key a \major a' b' cis d e fis gis a2}"},
+            {"text": "A chord on bank:\n2"},
+        )
+
+        assert [sentence.text for sentence in sentences] == ["A chord on bank:"]
+
     def test_preserves_ambiguous_layout_spacing(
         self,
         attest: Callable[..., list[Sentence]],
@@ -823,7 +880,7 @@ class TestSentences:
         assert [sentence.text for sentence in sentences] == [
             str(example["text"]).strip()
             for example in examples
-            if any(character.isalnum() for character in str(example["text"]).strip())
+            if any(character.isalpha() for character in str(example["text"]).strip())
         ]
 
     @given(st.data())
@@ -897,7 +954,7 @@ class TestSentences:
         assert [sentence.text for sentence in attest(*examples)] == [
             text.strip()
             for text in written
-            if any(character.isalnum() for character in text)
+            if any(character.isalpha() for character in text)
         ]
 
 
@@ -1019,8 +1076,8 @@ class TestKinds:
         )
 
     @given(reference=undated_references, sentence_text=_LEXICAL_TEXTS)
-    @example(reference="''", sentence_text="0")
-    @example(reference="A ", sentence_text="0")
+    @example(reference="''", sentence_text="a")
+    @example(reference="A ", sentence_text="a")
     def test_interprets_undated_headers(
         self,
         attest: Callable[..., list[Sentence]],

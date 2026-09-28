@@ -5,17 +5,11 @@ Normalize shared display markup and bounded editorial references.
 import re
 from html import unescape
 
-from wiktextract.clean import (
-    math_map,
-    mathbb_fn,
-    mathcal_fn,
-    mathfrak_fn,
-    to_subscript,
-    to_superscript,
-)
+from wiktextract.clean import math_map, to_subscript, to_superscript
 
 from ..constants.extraction import MOJIBAKE_REPLACEMENTS
 from ..models import Attestation
+from .mathematics import KNOWN_MATH_COMMANDS, latexize
 from .offsets import substitute
 
 _ENTITY = re.compile(r"&(?:#[xX][0-9a-fA-F]+|#\d+|[A-Za-z][A-Za-z0-9]+);")
@@ -30,11 +24,29 @@ _LAYOUT = re.compile("[\u00ad\u200b\u2060\ufeff]")
 _EDGES = re.compile(r"^\s+|\s+$")
 _SPACES = re.compile(r"[ \t]{2,}")
 _MOJIBAKE = re.compile("|".join(re.escape(value) for value in MOJIBAKE_REPLACEMENTS))
-_MATH_ALPHABET = re.compile(r"\\(mathbb|mathcal|mathfrak)\{([A-Za-z0-9]+)\}")
-_MATH_SYMBOL = re.compile(r"\\([A-Za-z]+)\b")
+_LATEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
+_LEADING_MATH = re.compile(
+    r"^[a-z](?=\s*(?:[=+<>\u00d7\u00f7\u2212]|\\(?:in|leq|geq|times|approx|subseteq?)\b))"
+)
+_GROUPED_COMMANDS = frozenset(
+    {
+        "mathbb",
+        "mathcal",
+        "mathfrak",
+        "mathbf",
+        "mathit",
+        "frac",
+        "dfrac",
+        "tfrac",
+        "sqrt",
+        "operatorname",
+        "text",
+    }
+)
+_SYMBOL_COMMANDS = frozenset({"surd"})
 
 _BROKEN_MATH = re.compile(
-    r"\\[A-Za-z]+|\b(?:mathbf|mathbb|mathcal|dfrac|tfrac|operatorname|displaystyle)\b(?=[_{(])"
+    r"(?<!\\)\b(?:mathbf|mathbb|mathcal|mathfrak|dfrac|tfrac|operatorname|displaystyle)\b(?=[_{(])"
 )
 
 _WIKI_FRAGMENT = re.compile(r"(?<!\[)\[\[[A-Za-z][^]\n]*\]?(?!\])")
@@ -70,21 +82,43 @@ def is_literal_markup(
 
 def is_unrecoverable(
     text: str,
+    *,
+    mathematical_sources: tuple[str, ...] = (),
 ) -> bool:
     """
     Recognize mathematical and template fragments requiring their source.
 
     Args:
         text: Display text after supported formatting has been normalized.
+        mathematical_sources: Complete formulae recovered from source markup.
 
     Returns:
         Whether damaged notation or unresolved markup remains.
     """
-    return bool(
+    for source in mathematical_sources:
+        text = text.replace(source, "")
+
+    if (
         _BROKEN_MATH.search(text)
         or _TEMPLATE_ERROR.search(text)
         or _WIKI_FRAGMENT.search(text)
         or "\ufffd" in text
+        or "{{" in text
+        or "}}" in text
+    ):
+        return True
+
+    return any(
+        (
+            match[1] not in math_map
+            and match[1] not in _GROUPED_COMMANDS
+            and match[1] not in _SYMBOL_COMMANDS
+            and match[1] not in KNOWN_MATH_COMMANDS
+        )
+        or (
+            match[1] in _GROUPED_COMMANDS and text[match.end() : match.end() + 1] != "{"
+        )
+        for match in _LATEX_COMMAND.finditer(text)
     )
 
 
@@ -103,40 +137,6 @@ def _script(
     render = to_superscript if match[1].casefold() == "sup" else to_subscript
 
     return render(match[2])
-
-
-def _math_alphabet(
-    match: re.Match[str],
-) -> str:
-    """
-    Render complete mathematical alphabet groups without guessing operators.
-
-    Args:
-        match: A supported mathematical alphabet command and its complete argument.
-
-    Returns:
-        The argument rendered in the requested mathematical alphabet.
-    """
-    renderers = {"mathbb": mathbb_fn, "mathcal": mathcal_fn, "mathfrak": mathfrak_fn}
-
-    return renderers[match[1]](match[2])
-
-
-def _math_symbol(
-    match: re.Match[str],
-) -> str:
-    """
-    Render known single-symbol commands without guessing missing boundaries.
-
-    Args:
-        match: A complete mathematical command name.
-
-    Returns:
-        A known single Unicode symbol, or the unchanged command.
-    """
-    symbol = math_map.get(match[1], "")
-
-    return symbol if len(symbol) == 1 else match[0]
 
 
 def normalize_formatting(
@@ -171,8 +171,6 @@ def normalize_formatting(
             lambda match: unescape("&" + match[0]),
         )
 
-        value = substitute(value, _MATH_ALPHABET, _math_alphabet)
-        value = substitute(value, _MATH_SYMBOL, _math_symbol)
         value = substitute(value, _REFERENCE, "")
         value = substitute(value, _SCRIPT, _script)
         value = substitute(value, _TAG, "")
@@ -187,6 +185,8 @@ def normalize_formatting(
         )
 
         value = substitute(value, _EMPHASIS, "")
+
+        value = latexize(value)
 
     if not preserve_markup:
         value = substitute(value, _SPACES, " ")
@@ -283,7 +283,9 @@ _EMPTY = re.compile(r"\([ \t]*\)|[ \t]+([,.;:])")
 _SENTENCE_ENDINGS = frozenset(".?!…‽")
 
 
-def normalize_statement(text: str) -> str:
+def normalize_statement(
+    text: str,
+) -> str:
     """
     Normalize capitalization and terminal punctuation in prose.
 
@@ -298,12 +300,19 @@ def normalize_statement(text: str) -> str:
     if not text:
         return ""
 
+    command = _LATEX_COMMAND.search(text)
+    mathematical_lead = _LEADING_MATH.match(text) is not None
+
     for index, character in enumerate(text):
         if character.isdigit():
             break
 
         if character.isalpha():
-            text = f"{text[:index]}{character.upper()}{text[index + 1 :]}"
+            if not mathematical_lead and (
+                command is None or not command.start() <= index < command.end()
+            ):
+                text = f"{text[:index]}{character.upper()}{text[index + 1 :]}"
+
             break
 
     if text[-1] in ",;:":

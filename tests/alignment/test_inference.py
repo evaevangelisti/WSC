@@ -435,7 +435,9 @@ def test_reports_xgrammar_record_after_engine_failure(
         """
 
         @staticmethod
-        def from_json_schema(schema: dict[str, object]) -> None:
+        def from_json_schema(
+            schema: dict[str, object],
+        ) -> None:
             """
             Report the schema error from the failed worker.
             """

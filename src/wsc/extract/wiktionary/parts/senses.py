@@ -4,6 +4,7 @@ The meanings an entry holds.
 
 from ....identifiers import sense_id
 from ....models import Sense
+from ...dump.source_markup import MathSource
 from ..schema import RawSense
 from .glosses import clean_gloss, is_form_gloss, is_synonym_gloss, is_variant_gloss
 from .sentences import parse_sentences
@@ -19,6 +20,9 @@ def parse_senses(
     etymology: str,
     minimum_year: int | None,
     maximum_year: int | None,
+    *,
+    mathematics: tuple[MathSource, ...] = (),
+    score_prefixes: tuple[str, ...] | None = None,
 ) -> list[Sense]:
     """
     Collect the senses of one entry.
@@ -30,6 +34,8 @@ def parse_senses(
         etymology: Which etymology of the entry the senses sit under.
         minimum_year: Oldest quotation to keep, or None for no bound.
         maximum_year: Newest quotation to keep, or None for no bound.
+        mathematics: Original formulae and their source contexts.
+        score_prefixes: Source contexts for examples containing scores.
 
     Returns:
         The senses that carry at least one gloss and define something.
@@ -52,7 +58,9 @@ def parse_senses(
         ):
             continue
 
-        cleaned_glosses = [clean_gloss(gloss) for gloss in original_glosses]
+        cleaned_glosses = [
+            clean_gloss(gloss, mathematics=mathematics) for gloss in original_glosses
+        ]
 
         if any(gloss is None for gloss in cleaned_glosses):
             continue
@@ -74,6 +82,8 @@ def parse_senses(
                     raw_sense.get("examples", []),
                     minimum_year,
                     maximum_year,
+                    mathematics=mathematics,
+                    score_prefixes=score_prefixes,
                 ),
             )
         )

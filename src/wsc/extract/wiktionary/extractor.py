@@ -10,8 +10,9 @@ from kwic import Locator, Query
 from tqdm import tqdm
 
 from ...constants import LANGUAGE
-from ...identifiers import lemma_id
-from ...models import POS, Lemma, TranslationTable
+from ...identifiers import lemma_id, sense_id
+from ...models import POS, Lemma, Sense, TranslationTable
+from ..dump.source_markup import MarkupIndex
 from ..offsets import build_query, find_word_offsets
 from .entries import read_entries
 from .merge import merge_lemmas, merge_word_offsets
@@ -44,6 +45,7 @@ class WiktionaryExtractor:
         locator: Locator,
         off_page_translations: dict[str, tuple[TranslationTable, ...]] | None = None,
         wikidata_ids: dict[str, tuple[str, ...]] | None = None,
+        markup_index: MarkupIndex | None = None,
     ) -> None:
         """
         Set the filters every extraction will answer to.
@@ -55,6 +57,7 @@ class WiktionaryExtractor:
             locator: The search the lemma is located with.
             off_page_translations: Optional translations from linked pages.
             wikidata_ids: Explicit sense identifiers extracted from the dump.
+            markup_index: Original formulae and score contexts from the dump.
         """
         self._allowed_pos: frozenset[POS] | None = allowed_pos
 
@@ -67,6 +70,8 @@ class WiktionaryExtractor:
             off_page_translations or {}
         )
         self._wikidata_ids: dict[str, tuple[str, ...]] = wikidata_ids or {}
+        self._markup_index: MarkupIndex = markup_index or {}
+        self._score_provenance_available: bool = markup_index is not None
 
     def _parse_entry(
         self,
@@ -88,6 +93,7 @@ class WiktionaryExtractor:
             The lemma, or None where no sense of it survived the filters.
         """
         entry_id = lemma_id(lemma, pos)
+        page_markup = self._markup_index.get(lemma)
 
         senses = parse_senses(
             entry.get("senses", []),
@@ -96,24 +102,51 @@ class WiktionaryExtractor:
             entry.get("etymology_number", ""),
             self._minimum_year,
             self._maximum_year,
+            mathematics=page_markup.mathematics if page_markup else (),
+            score_prefixes=(page_markup.score_prefixes if page_markup else ())
+            if self._score_provenance_available
+            else None,
         )
 
         if not senses:
             return None
 
+        existing_ids = {sense.id for sense in senses}
+        expanded_senses: list[Sense] = []
+
         for sense in senses:
+            for depth in range(1, len(sense.glosses)):
+                ancestor_glosses = sense.glosses[:depth]
+                ancestor_id = sense_id(entry_id, sense.etymology, ancestor_glosses)
+
+                if (
+                    ancestor_id in self._wikidata_ids
+                    and ancestor_id not in existing_ids
+                ):
+                    expanded_senses.append(
+                        Sense(
+                            ancestor_id,
+                            ancestor_glosses,
+                            sense.etymology,
+                            wikidata_ids=self._wikidata_ids[ancestor_id],
+                        )
+                    )
+                    existing_ids.add(ancestor_id)
+
             sense.wikidata_ids = self._wikidata_ids.get(sense.id, ())
+            expanded_senses.append(sense)
 
         return Lemma(
             entry_id,
             lemma,
             pos,
             variants.get((lemma, pos), frozenset()),
-            senses,
+            expanded_senses,
             parse_translations(
                 entry.get("translations", []),
                 self._off_page_translations.get(entry_id),
                 entry_id,
+                mathematics=page_markup.mathematics if page_markup else (),
             ),
         )
 

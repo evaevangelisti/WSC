@@ -60,7 +60,8 @@ wsc fetch
 
 Reads the dump with [wiktextract](https://github.com/tatuylonen/wiktextract), which turns Wiktionary's markup into entries. 
 
-The same dump pass collects supplemental translations and explicit Wikidata sense IDs.
+The same dump pass collects supplemental translations, explicit Wikidata sense IDs, and source markup for mathematical formulae and musical scores.
+These three caches are stored in the dump's `resources/` directory.
 
 ```sh
 wsc parse

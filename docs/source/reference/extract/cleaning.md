@@ -18,7 +18,7 @@ An unusable leaf definition excludes its sense instead of silently replacing it 
 
 ## Coverage and limits
 
-These policies address every category in the collection audit, but pattern handling is not a guarantee of semantic correctness. Ambiguous prose remains conservative: genuine quotations and ordinary examples containing “see” are preserved. Unsupported TeX and incomplete markup are excluded when the cleaner cannot recover their meaning. Complete mathematical alphabet groups, known symbol commands, and HTML superscripts and subscripts can be rendered without guessing missing command boundaries.
+These policies address every category in the collection audit, but pattern handling is not a guarantee of semantic correctness. Ambiguous prose remains conservative: genuine quotations and ordinary examples containing “see” are preserved. Original `<math>` content is restored when its source context identifies the parsed occurrence; other recognized mathematical symbols are converted to LaTeX. Unsupported fragments without recoverable source and incomplete markup are excluded. Score suffixes are removed only when the dump identifies their example context.
 
 Previously truncated supplementary glosses and translations require recovery from the cached source. The corrected parser prevents the same truncation in future extractions; it cannot reconstruct missing characters from an existing JSONL value. Source retrieval, existing collection migration, and alignment reconciliation are separate from these extraction rules.
 

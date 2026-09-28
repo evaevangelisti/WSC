@@ -10,6 +10,7 @@ from ....constants.glosses import (
     VARIANT_GLOSS_PREFIXES,
 )
 from ....models import Attestation
+from ...dump.source_markup import MathSource, restore_mathematics
 from ...markup import (
     BIBLIOGRAPHY,
     clean_definition_references,
@@ -120,20 +121,30 @@ def referenced_lemma(
 
 def clean_gloss(
     text: str,
+    *,
+    mathematics: tuple[MathSource, ...] = (),
 ) -> str | None:
     """
     Clean a definition without inventing missing lexical content.
 
     Args:
         text: A sense definition.
+        mathematics: Original formulae and their source contexts.
 
     Returns:
         A definition, an empty navigation gloss, or None for damaged content.
     """
     literal = is_literal_markup(text)
-    text = normalize_formatting(Attestation(text), preserve_markup=literal).text
 
-    if not literal and (is_unrecoverable(text) or "{{" in text or "}}" in text):
+    value = Attestation(text)
+    value = restore_mathematics(value, mathematics)
+
+    text = normalize_formatting(value, preserve_markup=literal).text
+
+    if not literal and is_unrecoverable(
+        text,
+        mathematical_sources=tuple(formula.source for formula in mathematics),
+    ):
         return None
 
     if BIBLIOGRAPHY.match(text):

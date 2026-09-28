@@ -135,8 +135,19 @@ def extract(
         ("A meaning.\nSee also: other", "A meaning."),
         ("unknown", "Unknown."),
         ("A [[leaf|leafy]] plant.", "A leafy plant."),
-        ("The formula C<sub>2</sub> and 10<sup>15</sup>.", "The formula C₂ and 10¹⁵."),
-        ("The set #92;mathbb#123;Z#125;.", "The set \N{DOUBLE-STRUCK CAPITAL Z}."),
+        (
+            "The formula C<sub>2</sub> and 10<sup>15</sup>.",
+            "The formula C_{2} and 10^{15}.",
+        ),
+        ("The set #92;mathbb#123;Z#125;.", r"The set \mathbb{Z}."),
+        (
+            "x \u2208 \u211d and x\u00b2 \u2265 \u22121.",
+            r"x \in \mathbb{R} and x^{2} \geq -1.",
+        ),
+        (
+            "\U0001d465 + \U0001d466 = \U0001d467.",
+            r"\mathit{x} + \mathit{y} = \mathit{z}.",
+        ),
         ("A meaning. https://example.org/source", "A meaning."),
         ("A meaning. https://example.org/a, https://example.org/b.", "A meaning."),
         ("A meaning https://example.org/a, https://example.org/b.", "A meaning."),
@@ -150,8 +161,9 @@ def extract(
         (r"The relation \forallx\existsy.", None),
         (
             r"The relation x \in \mathbb{Z}.",
-            "The relation x ∈ \N{DOUBLE-STRUCK CAPITAL Z}.",
+            r"The relation x \in \mathbb{Z}.",
         ),
+        ("The product x⋅y.", r"The product x\cdot y."),
     ],
 )
 def test_cleans_definitions(
@@ -221,7 +233,7 @@ def test_removes_navigation_levels(
         ("A sam\u00adple\u2060 entry.", "A sample entry."),
         (
             "A #92;mathbb#123;Z#125; sample entry.",
-            "A \N{DOUBLE-STRUCK CAPITAL Z} sample entry.",
+            r"A \mathbb{Z} sample entry.",
         ),
         ("A #92;forallx sample entry.", None),
         ("A {{unexpanded|sample}} entry.", None),
@@ -722,6 +734,7 @@ def test_handles_arbitrary_unicode(
         ("Wort \\ Begriff", frozenset({"Wort", "Begriff"})),
         ("armado [con]", frozenset({"armado"})),
         ("[el] ala", frozenset({"ala"})),
+        ("\U0001d400", frozenset({r"\mathbf{A}"})),
         ("[nocą]", frozenset({"nocą"})),
         ("funcionario[a]", frozenset({"funcionario", "funcionaria"})),
         ("[anglicism]skipping", frozenset({"skipping"})),

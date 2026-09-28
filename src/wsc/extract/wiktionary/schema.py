@@ -71,6 +71,7 @@ class RawSense(TypedDict, total=False):
         tags: Labels of grammar and register.
         topics: Subject fields the sense belongs to.
         examples: The sentences illustrating it.
+        wikidata: Wikidata items, including identifiers inherited from ancestors.
         alt_of: The lemma it states itself to be another spelling of.
         synonyms: Other words standing for this sense alone.
     """
@@ -79,6 +80,7 @@ class RawSense(TypedDict, total=False):
     tags: list[str]
     topics: list[str]
     examples: list[RawExample]
+    wikidata: list[str]
     alt_of: list[RawTarget]
     synonyms: list[RawSynonym]
 

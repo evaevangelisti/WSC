@@ -123,7 +123,9 @@ def test_aligns_compressed_collection_into_one_archive(
     )
     write_collection([lemma], tmp_path / "collection", {}, Compression.ZSTANDARD)
 
-    def load_model(settings: ModelSettings) -> LanguageModel:
+    def load_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
         """
         Supply a deterministic model for archived alignment.
 
@@ -168,7 +170,9 @@ def test_aligns_compressed_collection_into_one_archive(
     )
     cache_path.unlink()
 
-    def reject_model(settings: ModelSettings) -> LanguageModel:
+    def reject_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
         """
         Reject model loading when every decision is cached.
 
@@ -594,7 +598,9 @@ def test_resumes_after_model_failure(
 
     failing_model = FailingModel()
 
-    def load_failing_model(settings: ModelSettings) -> LanguageModel:
+    def load_failing_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
         """
         Return the model that fails on its second request.
 
@@ -675,7 +681,9 @@ def test_resumes_after_model_failure(
 
     resume_model = ResumeModel()
 
-    def load_resume_model(settings: ModelSettings) -> LanguageModel:
+    def load_resume_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
         """
         Return the model resolving the remaining request.
 

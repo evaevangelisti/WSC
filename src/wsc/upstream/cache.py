@@ -6,6 +6,8 @@ from pathlib import Path
 
 from platformdirs import user_cache_dir
 
+from ..files import COMPRESSED_SUFFIXES
+
 LATEST = "latest"
 
 DUMP_NAME = "dump.xml.bz2"
@@ -15,6 +17,8 @@ WIKTEXTRACT_NAME = "wiktextract.jsonl.zst"
 
 OFF_PAGE_TRANSLATIONS_NAME = "off-page-translations.json"
 WIKIDATA_IDS_NAME = "wikidata-ids.json"
+MARKUP_INDEX_NAME = "markup-index.json"
+RESOURCE_DIRECTORY = "resources"
 
 _WIKTIONARY = "wiktionary"
 
@@ -64,6 +68,51 @@ def dump_dir(
         The requested cache directory path.
     """
     return _edition_dir(cache_dir) / date
+
+
+def resource_dir(
+    dump_directory: Path,
+) -> Path:
+    """
+    Locate supplemental resources for one dump.
+
+    Args:
+        dump_directory: Directory holding the dump.
+
+    Returns:
+        Directory for derived resources.
+    """
+    return dump_directory / RESOURCE_DIRECTORY
+
+
+def migrate_resources(
+    dump_directory: Path,
+) -> Path:
+    """
+    Move existing supplemental resources into their shared directory.
+
+    Args:
+        dump_directory: Directory holding the dump and legacy resources.
+
+    Returns:
+        Directory for derived resources.
+    """
+    directory = resource_dir(dump_directory)
+
+    for name in (
+        OFF_PAGE_TRANSLATIONS_NAME,
+        WIKIDATA_IDS_NAME,
+        MARKUP_INDEX_NAME,
+    ):
+        for suffix in ("", *COMPRESSED_SUFFIXES):
+            source = dump_directory / f"{name}{suffix}"
+            destination = directory / source.name
+
+            if source.is_file() and not destination.exists():
+                directory.mkdir(parents=True, exist_ok=True)
+                _ = source.replace(destination)
+
+    return directory
 
 
 def fetched_date(

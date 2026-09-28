@@ -9,6 +9,7 @@
 
 pages
 markup
+source_markup
 translations
 extractor
 ```

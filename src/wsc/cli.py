@@ -47,6 +47,7 @@ from .extract import (
     open_locator,
     read_off_page_translations,
 )
+from .extract.dump.source_markup import read_markup_index
 from .extract.dump.wikidata import read_wikidata_ids
 from .files import Compression, compressed_name, existing_file
 from .logging import configure_logging
@@ -193,7 +194,7 @@ def parse(
     """
     Parse a fetched dump with wiktextract, or take one published.
 
-    The dump is then walked for translations and explicit Wikidata IDs.
+    The dump is then walked for translations, Wikidata IDs, and source markup.
     """
     try:
         date = cache.fetched_date(cache_dir, dump_date)
@@ -201,6 +202,7 @@ def parse(
         raise typer.BadParameter(str(error)) from error
 
     dump_dir = cache.dump_dir(cache_dir, date)
+    resource_dir = cache.migrate_resources(dump_dir)
 
     dump_path = existing_file(dump_dir / cache.DUMP_NAME)
 
@@ -210,18 +212,21 @@ def parse(
     output_path = existing_file(dump_dir / cache.WIKTEXTRACT_NAME)
 
     off_page_translations_path = existing_file(
-        dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
+        resource_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
     )
-    wikidata_ids_path = existing_file(dump_dir / cache.WIKIDATA_IDS_NAME)
+    wikidata_ids_path = existing_file(resource_dir / cache.WIKIDATA_IDS_NAME)
+    markup_index_path = existing_file(
+        resource_dir / compressed_name(cache.MARKUP_INDEX_NAME, compression)
+    )
 
     if not off_page_translations_path.exists():
-        off_page_translations_path = dump_dir / compressed_name(
+        off_page_translations_path = resource_dir / compressed_name(
             cache.OFF_PAGE_TRANSLATIONS_NAME,
             compression,
         )
 
     if not wikidata_ids_path.exists():
-        wikidata_ids_path = dump_dir / compressed_name(
+        wikidata_ids_path = resource_dir / compressed_name(
             cache.WIKIDATA_IDS_NAME,
             compression,
         )
@@ -230,6 +235,7 @@ def parse(
         output_path.exists()
         and off_page_translations_path.exists()
         and wikidata_ids_path.exists()
+        and markup_index_path.exists()
     ):
         _LOGGER.info("Already parsed %s", output_path)
 
@@ -268,6 +274,7 @@ def parse(
         output_path,
         off_page_translations_path,
         wikidata_ids_path,
+        markup_index_path,
         refresh=refresh,
     )
 
@@ -346,6 +353,7 @@ def collect(
         raise typer.BadParameter(str(error)) from error
 
     dump_dir = cache.dump_dir(cache_dir, date)
+    resource_dir = cache.migrate_resources(dump_dir)
 
     input_path = existing_file(dump_dir / cache.WIKTEXTRACT_NAME)
 
@@ -353,16 +361,23 @@ def collect(
         raise typer.BadParameter(f"Nothing parsed at {input_path}; parse it first")
 
     off_page_translations_path = existing_file(
-        dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
+        resource_dir / cache.OFF_PAGE_TRANSLATIONS_NAME
     )
-    wikidata_ids_path = existing_file(dump_dir / cache.WIKIDATA_IDS_NAME)
+    wikidata_ids_path = existing_file(resource_dir / cache.WIKIDATA_IDS_NAME)
+    markup_index_path = existing_file(resource_dir / cache.MARKUP_INDEX_NAME)
 
     if not wikidata_ids_path.exists():
         raise typer.BadParameter(
             f"No Wikidata IDs at {wikidata_ids_path}; parse it first"
         )
 
+    if not markup_index_path.exists():
+        raise typer.BadParameter(
+            f"No source markup at {markup_index_path}; parse it first"
+        )
+
     wikidata_ids = read_wikidata_ids(wikidata_ids_path)
+    markup_index = read_markup_index(markup_index_path)
     off_page_translations = (
         read_off_page_translations(off_page_translations_path)
         if off_page_translations_path.exists()
@@ -376,6 +391,7 @@ def collect(
         open_locator(engine, processes, batch_size, gpu=gpu),
         off_page_translations,
         wikidata_ids,
+        markup_index,
     )
 
     settings = CollectionSettings(
@@ -392,6 +408,7 @@ def collect(
         input_path,
         off_page_translations_path if off_page_translations_path.exists() else None,
         wikidata_ids_path,
+        markup_index_path,
         date,
         settings,
     )

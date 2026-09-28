@@ -590,6 +590,155 @@ class TestParse:
         assert result.exit_code == 0
         assert "Already parsed" in _normalize_output(result)
 
+    def test_moves_existing_resources_without_reparsing(
+        self,
+        tmp_path: Path,
+        cli: Callable[..., Result],
+        parse_dump: Callable[..., Path],
+    ) -> None:
+        """
+        Existing supplemental caches move without rebuilding the dump.
+        """
+        cache_dir = tmp_path / "cache"
+        parsed_path = parse_dump(cache_dir, [])
+        resource_dir = cache.resource_dir(parsed_path.parent)
+
+        for name in (
+            cache.OFF_PAGE_TRANSLATIONS_NAME,
+            cache.WIKIDATA_IDS_NAME,
+            cache.MARKUP_INDEX_NAME,
+        ):
+            _ = (resource_dir / name).replace(parsed_path.parent / name)
+
+        result = cli("parse", cache_dir=cache_dir)
+
+        assert result.exit_code == 0, result.output
+        assert "Already parsed" in _normalize_output(result)
+        assert all(
+            (resource_dir / name).exists() and not (parsed_path.parent / name).exists()
+            for name in (
+                cache.OFF_PAGE_TRANSLATIONS_NAME,
+                cache.WIKIDATA_IDS_NAME,
+                cache.MARKUP_INDEX_NAME,
+            )
+        )
+
+    def test_recovers_math_and_identifies_score_examples(
+        self,
+        tmp_path: Path,
+        cli: Callable[..., Result],
+        fetch_dump: Callable[..., Path],
+        parse_dump: Callable[..., Path],
+    ) -> None:
+        """
+        Source tags restore formulae and identify score-only suffixes.
+        """
+        cache_dir = tmp_path / "cache"
+        _ = parse_dump(
+            cache_dir,
+            [
+                {
+                    "word": "ratio",
+                    "pos": "noun",
+                    "lang_code": "en",
+                    "senses": [
+                        {
+                            "glosses": ["A ratio of (1/2)."],
+                            "wikidata": ["Q42"],
+                            "examples": [
+                                {"text": "The ratio is (1/2).", "type": "example"},
+                                {"text": "Alpha is \u03b1.", "type": "example"},
+                                {"text": "\u03b1 is a symbol.", "type": "example"},
+                                {
+                                    "text": r"Choose \binomnk options.",
+                                    "type": "example",
+                                },
+                                {
+                                    "text": (
+                                        "I consequently definen!!=n·(n-2)!!."
+                                        "Starting with 1."
+                                    ),
+                                    "type": "example",
+                                },
+                                {"text": "A chord on ratio:\n2", "type": "example"},
+                                {"text": "Chapter:\n3", "type": "example"},
+                            ],
+                        },
+                        {"glosses": ["Another ratio of (1/2)."]},
+                    ],
+                    "translations": [
+                        {
+                            "sense": "A ratio of (1/2)",
+                            "lang_code": "fr",
+                            "word": "moitié",
+                        },
+                        {
+                            "sense": "\u03c0",
+                            "lang_code": "fr",
+                            "word": "pi",
+                        },
+                    ],
+                },
+            ],
+        )
+        _ = fetch_dump(
+            cache_dir,
+            pages=[
+                page(
+                    "ratio",
+                    "==English==\n===Noun===\n"
+                    + "# A ratio of <math>\\left(\\frac{1}{2}\\right)</math>. "
+                    + "{{senseid|en|Q42}}\n"
+                    + "#* The ratio is <math>\\left(\\frac{1}{2}\\right)</math>.\n"
+                    + "#* Alpha is <math>\\alpha</math>.\n"
+                    + "#* <math>\\alpha</math> is a symbol.\n"
+                    + "#* Choose <math>\\binom{n}{k}</math> options.\n"
+                    + "#* I consequently define"
+                    + "<math display=block>n!!=n\\cdot (n-2)!!.</math>"
+                    + "Starting with 1.\n"
+                    + '#* A chord on ratio: <score sound="1">\\key c \\major</score>\n'
+                    + "{{trans-top|A ratio of "
+                    + "<math>\\left(\\frac{1}{2}\\right)</math>}}\n"
+                    + "{{trans-top|<math>\\pi</math>}}",
+                ),
+            ],
+        )
+
+        markup_path = (
+            cache.resource_dir(cache.dump_dir(cache_dir, "20260801"))
+            / cache.MARKUP_INDEX_NAME
+        )
+        markup_path.unlink()
+        (markup_path.parent / cache.WIKIDATA_IDS_NAME).unlink()
+
+        parsed = cli("parse", cache_dir=cache_dir)
+        output_dir = tmp_path / "collection"
+        collected = cli("collect", "--output-dir", str(output_dir), cache_dir=cache_dir)
+
+        assert parsed.exit_code == 0, parsed.output
+        assert "MATH FRAC/BINOM ERROR" not in parsed.output
+        assert collected.exit_code == 0, collected.output
+
+        entry = next(read_lemmas(output_dir / "senses.jsonl"))
+        sense, unrelated = entry.senses
+
+        assert sense.glosses == (r"A ratio of \left(\frac{1}{2}\right).",)
+        assert sense.wikidata_ids == ("Q42",)
+        assert unrelated.glosses == ("Another ratio of (1/2).",)
+        assert [sentence.text for sentence in sense.sentences] == [
+            r"The ratio is \left(\frac{1}{2}\right).",
+            r"Alpha is \alpha.",
+            r"\alpha is a symbol.",
+            r"Choose \binom{n}{k} options.",
+            r"I consequently define n!!=n\cdot (n-2)!!. Starting with 1.",
+            "A chord on ratio:",
+            "Chapter:\n3",
+        ]
+        assert [table.gloss for table in entry.translation_tables] == [
+            r"A ratio of \left(\frac{1}{2}\right).",
+            r"\pi.",
+        ]
+
     def test_extracts_missing_wikidata_ids_without_reparsing(
         self,
         tmp_path: Path,
@@ -621,12 +770,14 @@ class TestParse:
         )
 
         dump_dir = cache.dump_dir(cache_dir, "20260801")
+        resource_dir = cache.resource_dir(dump_dir)
         compressed_parse = parsed_path.with_suffix(".gz")
         _ = compressed_parse.write_bytes(
             gzip.compress(zstd.decompress(parsed_path.read_bytes())),
         )
         parsed_path.unlink()
-        (dump_dir / cache.WIKIDATA_IDS_NAME).unlink()
+        (resource_dir / cache.WIKIDATA_IDS_NAME).unlink()
+        (resource_dir / cache.MARKUP_INDEX_NAME).unlink()
         calls = stub_parse()
 
         result = cli("parse", "--compression", "zst", cache_dir=cache_dir)
@@ -635,9 +786,10 @@ class TestParse:
         assert calls == []
         assert json.loads(
             zstd.decompress(
-                (dump_dir / f"{cache.WIKIDATA_IDS_NAME}.zst").read_bytes(),
+                (resource_dir / f"{cache.WIKIDATA_IDS_NAME}.zst").read_bytes(),
             ),
         ) == {sense_id(lemma_id("bird", POS.NOUN), "", ("A bird.",)): ["Q42"]}
+        assert (resource_dir / f"{cache.MARKUP_INDEX_NAME}.zst").exists()
 
         output_dir = tmp_path / "collection"
         collected = cli(
@@ -727,7 +879,8 @@ class TestParse:
         )
         calls = stub_parse()
         identifiers_path = (
-            cache.dump_dir(tmp_path, "20260801") / cache.WIKIDATA_IDS_NAME
+            cache.resource_dir(cache.dump_dir(tmp_path, "20260801"))
+            / cache.WIKIDATA_IDS_NAME
         )
         _ = identifiers_path.rename(identifiers_path.with_suffix(".json.backup"))
 
@@ -744,8 +897,13 @@ class TestParse:
             sense_id(
                 lemma_id("millisecond", POS.NOUN),
                 "",
-                ("An SI unit of time equal to 10⁻³ seconds. Symbol: ms.",),
+                ("An SI unit of time equal to 10^{-3} seconds. Symbol: ms.",),
             ): ("Q2",),
+            sense_id(
+                lemma_id("synonym", POS.NOUN),
+                "",
+                ("A name for a taxon.",),
+            ): ("Q3",),
         }
 
     def test_rejects_unfetched_dump(
@@ -836,8 +994,11 @@ def test_collects_published_archive(
         "".join(f"{json.dumps(record)}\n" for record in records).encode(),
     )
     archive_path = dump_path.with_name(cache.ARCHIVE_NAME)
-    _ = dump_path.with_name(cache.OFF_PAGE_TRANSLATIONS_NAME).write_text("{}")
-    _ = dump_path.with_name(cache.WIKIDATA_IDS_NAME).write_text("{}")
+    resource_dir = cache.resource_dir(dump_path.parent)
+    resource_dir.mkdir(parents=True, exist_ok=True)
+    _ = (resource_dir / cache.OFF_PAGE_TRANSLATIONS_NAME).write_text("{}")
+    _ = (resource_dir / cache.WIKIDATA_IDS_NAME).write_text("{}")
+    _ = (resource_dir / cache.MARKUP_INDEX_NAME).write_text("{}")
 
     if cached:
         _ = archive_path.write_bytes(archive_bytes)
@@ -897,6 +1058,8 @@ def test_collects_only_explicit_dump_wikidata_ids(
                 + "## A white bird.\n"
                 + "# {{senseid|en|Q14}} A creature.\n"
                 + "## A small creature.\n"
+                + "# {{senseid|en|Q15}} {{non-gloss|Bird-related senses.}}\n"
+                + "## A winged animal.\n"
                 + "===Etymology 2===\n====Noun====\n"
                 + "# {{senseid|en|Q12}} A bird.\n"
                 + "# {{senseid|en|Q13}} A bird.\n"
@@ -906,6 +1069,11 @@ def test_collects_only_explicit_dump_wikidata_ids(
                 "Paris",
                 "==English==\n===Proper noun===\n"
                 + "# {{senseid|en|Q90}} {{place|en|city|in|France}}.",
+            ),
+            page(
+                "Nova",
+                "==English==\n===Proper noun===\n"
+                + "# {{senseid|en|Q200<!--given name-->}} A given name.",
             ),
         ],
     )
@@ -920,6 +1088,10 @@ def test_collects_only_explicit_dump_wikidata_ids(
                 {"glosses": ["A bird.", "A black bird."], "wikidata": ["Q10", "Q11"]},
                 {"glosses": ["A bird.", "A white bird."], "wikidata": ["Q10"]},
                 {"glosses": ["A creature.", "A small creature."], "wikidata": ["Q14"]},
+                {
+                    "glosses": ["Bird-related senses.", "A winged animal."],
+                    "wikidata": ["Q15"],
+                },
             ],
         },
         {
@@ -940,13 +1112,22 @@ def test_collects_only_explicit_dump_wikidata_ids(
                 {"glosses": ["A city in France."]},
             ],
         },
+        {
+            "word": "Nova",
+            "pos": "name",
+            "lang_code": "en",
+            "etymology_number": "2",
+            "senses": [
+                {"glosses": ["A given name."], "wikidata": ["Q200"]},
+            ],
+        },
     ]
     _ = write_entries(dump_path.with_name(cache.WIKTEXTRACT_NAME), entries)
 
     parsed = cli("parse", cache_dir=tmp_path)
 
     assert parsed.exit_code == 0, parsed.output
-    identifiers_path = dump_path.with_name(cache.WIKIDATA_IDS_NAME)
+    identifiers_path = cache.resource_dir(dump_path.parent) / cache.WIKIDATA_IDS_NAME
     assert identifiers_path.exists()
 
     identifiers_path.unlink()
@@ -979,10 +1160,13 @@ def test_collects_only_explicit_dump_wikidata_ids(
         ("1", ("A bird.",)): ("Q10",),
         ("1", ("A bird.", "A black bird.")): ("Q11",),
         ("1", ("A bird.", "A white bird.")): (),
+        ("1", ("A creature.",)): ("Q14",),
         ("1", ("A creature.", "A small creature.")): (),
+        ("1", ("Bird-related senses.", "A winged animal.")): (),
         ("2", ("A bird.",)): ("Q12", "Q13"),
     }
     assert entries_by_id["Paris.propn"].senses[0].wikidata_ids == ("Q90",)
+    assert entries_by_id["Nova.propn"].senses[0].wikidata_ids == ("Q200",)
 
 
 class TestCollect:

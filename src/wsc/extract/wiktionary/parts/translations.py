@@ -6,7 +6,8 @@ from collections import defaultdict
 from itertools import chain
 
 from ....identifiers import translation_table_id
-from ....models import TranslationTable
+from ....models import Attestation, TranslationTable
+from ...dump.source_markup import MathSource, restore_mathematics
 from ...translations import clean_translations, normalize_translation_gloss
 from ..schema import RawTranslation
 
@@ -15,6 +16,8 @@ def parse_translations(
     raw_translations: list[RawTranslation],
     off_page_translations: tuple[TranslationTable, ...] | None = None,
     lemma_id: str = "",
+    *,
+    mathematics: tuple[MathSource, ...] = (),
 ) -> tuple[TranslationTable, ...]:
     """
     Gather clean translations from both sources under their meaning headings.
@@ -23,6 +26,7 @@ def parse_translations(
         raw_translations: What Wiktextract listed under the entry.
         off_page_translations: Optional translations from linked pages.
         lemma_id: The entry identifier used to name tables.
+        mathematics: Original formulae and their source contexts.
 
     Returns:
         The words each language offers for each usable definition.
@@ -32,7 +36,11 @@ def parse_translations(
     )
 
     source_translations = (
-        (item.get("sense", ""), item.get("lang_code", ""), item.get("word", ""))
+        (
+            restore_mathematics(Attestation(item.get("sense", "")), mathematics).text,
+            item.get("lang_code", ""),
+            item.get("word", ""),
+        )
         for item in raw_translations
     )
 
@@ -47,7 +55,11 @@ def parse_translations(
         source_translations,
         supplementary_translations,
     ):
-        gloss = normalize_translation_gloss(heading)
+        gloss = normalize_translation_gloss(
+            heading,
+            mathematical_sources=tuple(formula.source for formula in mathematics),
+        )
+
         translation = clean_translations(code, written)
 
         if gloss and translation is not None:

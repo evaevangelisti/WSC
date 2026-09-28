@@ -6,6 +6,7 @@ Generators cover Unicode text, empty collections, and source-format boundaries.
 
 import string
 from datetime import date
+from unicodedata import name
 
 from hypothesis import strategies as st
 
@@ -43,7 +44,7 @@ One written form, whether a headword or an inflection of one.
 """
 
 _LEXICAL_CHARACTERS = st.characters(
-    categories=("L", "M", "N", "P", "S"),
+    categories=("L", "M", "Nd", "Nl", "P", "Sc", "Sk", "So"),
     exclude_characters="'&<>{}[]\\`\ufffd",
 )
 
@@ -55,11 +56,27 @@ texts = (
     )
     .map(" ".join)
     .filter(
-        lambda text: not any(marker in text for marker in ("Ã©", "â€¢", "â€“")),
+        lambda text: (
+            any(character.isalpha() for character in text)
+            and not any(marker in text for marker in ("Ã©", "â€¢", "â€“"))
+            and not any(
+                name(character, "").startswith(
+                    (
+                        "MATHEMATICAL ",
+                        "DOUBLE-STRUCK ",
+                        "SCRIPT ",
+                        "BLACK-LETTER ",
+                        "SUPERSCRIPT ",
+                        "SUBSCRIPT ",
+                    )
+                )
+                for character in text
+            )
+        ),
     )
 )
 """
-Visible Unicode prose; cleanup properties generate damaged strings separately.
+Visible nonmathematical prose; notation and damaged strings have separate tests.
 """
 
 glosses = texts

@@ -14,6 +14,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from wsc.export import Writer, open_writer
+from wsc.files import COMPRESSED_SUFFIXES
 from wsc.models import Lemma
 
 _KNOWN = [".jsonl"]
@@ -28,7 +29,7 @@ _CASES = st.lists(st.booleans(), min_size=5, max_size=5).map(
 )
 
 _UNKNOWN = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=6).filter(
-    lambda suffix: f".{suffix}" not in _KNOWN,
+    lambda suffix: f".{suffix}" not in (*_KNOWN, *COMPRESSED_SUFFIXES, ".part"),
 )
 
 
@@ -80,12 +81,14 @@ class TestOpenWriter:
         assert suffix in str(refusal.value)
         assert all(known in str(refusal.value) for known in _KNOWN)
 
+    @pytest.mark.parametrize("name", ["senses", "senses.zst", "senses.part"])
     def test_rejects_missing_suffix(
         self,
         workspace: Callable[[], Path],
+        name: str,
     ) -> None:
         """
-        A name with no suffix names no format.
+        A name without a format suffix names no writer.
         """
         with pytest.raises(ValueError, match="Unknown format"):
-            _: Writer[Lemma] = open_writer(workspace() / "senses")
+            _: Writer[Lemma] = open_writer(workspace() / name)

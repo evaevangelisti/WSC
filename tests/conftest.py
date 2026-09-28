@@ -21,6 +21,7 @@ from kwic import Locator
 from strategies import RawJson
 
 from wsc.extract import write_off_page_translations
+from wsc.extract.dump.source_markup import write_markup_index
 from wsc.extract.dump.wikidata import write_wikidata_ids
 from wsc.upstream import cache
 
@@ -176,8 +177,10 @@ def parse_dump(
         _ = fetch_dump(cache_dir, date)
 
         dump_dir = cache.dump_dir(cache_dir, date)
-        write_off_page_translations(dump_dir / cache.OFF_PAGE_TRANSLATIONS_NAME, {})
-        write_wikidata_ids(dump_dir / cache.WIKIDATA_IDS_NAME, {})
+        resource_dir = cache.resource_dir(dump_dir)
+        write_off_page_translations(resource_dir / cache.OFF_PAGE_TRANSLATIONS_NAME, {})
+        write_wikidata_ids(resource_dir / cache.WIKIDATA_IDS_NAME, {})
+        write_markup_index(resource_dir / cache.MARKUP_INDEX_NAME, {})
 
         return write_entries(dump_dir / cache.WIKTEXTRACT_NAME, entries)
 

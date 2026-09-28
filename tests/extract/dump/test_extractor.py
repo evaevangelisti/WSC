@@ -92,6 +92,53 @@ def test_respects_translation_boundaries(
     assert not records[POS.VERB].pointers
 
 
+def test_keeps_original_math_in_supplemental_table_gloss(
+    tmp_path: Path,
+) -> None:
+    """
+    A table read directly from Wikitext retains the formula's source.
+    """
+    source = tmp_path / "dump.xml"
+    _ = source.write_text(
+        dump(
+            page(
+                "ratio/translations",
+                "==English==\n===Noun===\n"
+                + "{{trans-top|A ratio of <math>\\left(\\frac{1}{2}\\right)</math>}}\n"
+                + "{{t|fr|moitié}}\n{{trans-bottom}}",
+            ),
+        ),
+        encoding="utf-8",
+    )
+
+    (entry,) = DumpExtractor("English").extract(source)
+
+    assert [table.gloss for table in entry.translations] == [
+        r"A ratio of \left(\frac{1}{2}\right).",
+    ]
+
+
+def test_does_not_duplicate_a_rendered_math_table() -> None:
+    """
+    Source TeX and its Wiktextract rendering identify the same table.
+    """
+    markup = (
+        "==English==\n===Noun===\n"
+        + "{{trans-top|A ratio of <math>\\left(\\frac{1}{2}\\right)</math>}}\n"
+        + "{{t|fr|moitié}}\n{{trans-bottom}}"
+    )
+    parsed_glosses = {
+        "ratio.noun": frozenset({"a ratio of (1/2)"}),
+    }
+
+    pages = DumpExtractor("English").extract_pages(
+        [("ratio", markup)],
+        parsed_glosses,
+    )
+
+    assert list(pages) == []
+
+
 @given(
     translations=st.lists(words, min_size=1, max_size=15),
     template=st.sampled_from(("trans-see", "trans-top-see")),
@@ -396,7 +443,7 @@ def test_reads_nested_arguments_in_document_order(
     (record,) = DumpExtractor("English").extract(source)
     (table,) = record.translations
 
-    assert table.gloss == f"To produce {first} and 10¹⁵."
+    assert table.gloss == f"To produce {first} and 10^{{15}}."
     assert table.id.startswith("sample_entry.noun.tr.")
     assert table.translations == {"fr": frozenset({second})}
 

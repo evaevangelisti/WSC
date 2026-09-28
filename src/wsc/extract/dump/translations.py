@@ -12,6 +12,7 @@ from ...identifiers import lemma_id, translation_table_id
 from ...models import POS, TranslationTable
 from ..translations import clean_translations, normalize_translation_gloss, templates
 from .markup import plain, section_lines
+from .source_markup import unwrap_mathematics
 
 SUBPAGE_SUFFIX = "/translations"
 
@@ -83,8 +84,15 @@ def read_page(
 
         for name, parameters in templates(section):
             if name in {"trans-see", "trans-top-see"}:
-                raw_heading = plain(parameters.get("1", ""))
-                heading = normalize_translation_gloss(raw_heading)
+                raw_heading, sources = unwrap_mathematics(
+                    plain(parameters.get("1", ""))
+                )
+
+                heading = normalize_translation_gloss(
+                    raw_heading,
+                    mathematical_sources=sources,
+                )
+
                 targets = tuple(
                     plain(value)
                     for key, value in parameters.items()
@@ -95,7 +103,12 @@ def read_page(
                     pointers[pos][heading] = targets or (raw_heading,)
 
             elif name in {"trans-top", "trans-top-also"}:
-                gloss = normalize_translation_gloss(parameters.get("1", ""))
+                raw_heading, sources = unwrap_mathematics(parameters.get("1", ""))
+
+                gloss = normalize_translation_gloss(
+                    raw_heading,
+                    mathematical_sources=sources,
+                )
 
             elif name == "trans-bottom":
                 gloss = ""

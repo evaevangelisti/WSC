@@ -225,7 +225,9 @@ class _Grammar(Protocol):
     """
 
     @staticmethod
-    def from_json_schema(schema: dict[str, object]) -> object:
+    def from_json_schema(
+        schema: dict[str, object],
+    ) -> object:
         """
         Convert a response schema into a grammar.
 

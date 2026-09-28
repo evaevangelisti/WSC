@@ -9,11 +9,32 @@ from pathlib import Path
 from ...identifiers import lemma_id
 from ..translations import translation_gloss_key
 from .pages import read_pages
+from .source_markup import MathSource, read_page_markup
 from .translations import SUBPAGE_SUFFIX, PageTranslations, read_page
 
 _POINTER = "{{trans-see"
 _POINTER_IN_TABLE = "{{trans-top-see"
 _TABLE = "{{trans-top"
+
+
+def _rendered_gloss(
+    gloss: str,
+    mathematics: tuple[MathSource, ...],
+) -> str:
+    """
+    Compare source TeX with Wiktextract's rendered table heading.
+
+    Args:
+        gloss: Table heading restored from dump markup.
+        mathematics: Original formulae on the same page.
+
+    Returns:
+        The heading as Wiktextract would have rendered its formulae.
+    """
+    for formula in mathematics:
+        gloss = gloss.replace(formula.source, formula.rendered)
+
+    return gloss
 
 
 class DumpExtractor:
@@ -61,6 +82,13 @@ class DumpExtractor:
             ):
                 continue
 
+            page_markup = (
+                read_page_markup(markup, self._language_section)
+                if parsed_glosses is not None and "<math" in markup.casefold()
+                else None
+            )
+            mathematics = page_markup.mathematics if page_markup else ()
+
             for page in read_page(title, markup, self._language_section):
                 extracted_page = page
 
@@ -77,6 +105,10 @@ class DumpExtractor:
                                 table
                                 for table in page.translations
                                 if translation_gloss_key(table.gloss)
+                                not in parsed_table_glosses
+                                and translation_gloss_key(
+                                    _rendered_gloss(table.gloss, mathematics)
+                                )
                                 not in parsed_table_glosses
                             )
                             if parsed_glosses is not None

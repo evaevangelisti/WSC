@@ -198,8 +198,10 @@ _MIDDLE_GENDER = re.compile(
     re.IGNORECASE,
 )
 _SQUARE_OPTIONAL = re.compile(r"\[([^\[\]]+)\]")
-_SPACED_SLASH = re.compile(r"\s+[/\\]\s*|\s*[/\\]\s+")
-_SLASH_OR_BACKSLASH = re.compile(r"[/\\]")
+_SPACED_SLASH = re.compile(
+    r"\s+/\s*|\s*/\s+|\s+\\(?![A-Za-z]+\{)\s*|\s*\\(?![A-Za-z]+\{)\s+"
+)
+_SLASH_OR_BACKSLASH = re.compile(r"/|\\(?![A-Za-z]+\{)")
 
 _SPACE = re.compile(r"\s+")
 
@@ -420,6 +422,8 @@ def clean_translations(
 
 def normalize_translation_gloss(
     gloss: str,
+    *,
+    mathematical_sources: tuple[str, ...] = (),
 ) -> str:
     """
     Normalize a translation gloss for grouping and comparison.
@@ -428,6 +432,7 @@ def normalize_translation_gloss(
 
     Args:
         gloss: Gloss read from Wiktextract or a translation template.
+        mathematical_sources: Complete formulae recovered from source markup.
 
     Returns:
         A normalized definition, or an empty string for an unusable heading.
@@ -438,7 +443,10 @@ def normalize_translation_gloss(
     if not literal:
         text = clean_definition_references(text, table=True)
 
-    if not literal and (is_unrecoverable(text) or "{{" in text or "}}" in text):
+    if not literal and is_unrecoverable(
+        text,
+        mathematical_sources=mathematical_sources,
+    ):
         return ""
 
     if "[[" in text or "]]" in text or BIBLIOGRAPHY.match(text):
