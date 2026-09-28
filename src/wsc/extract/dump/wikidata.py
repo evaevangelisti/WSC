@@ -24,6 +24,7 @@ _DEFINITION = re.compile(r"^(#+)(?![#*:])\s*(.*)$")
 _ETYMOLOGY = re.compile(r"Etymology (\d+)$")
 _TEMPLATE = re.compile(r"\{\{[^{}]*\}\}")
 _HTML = re.compile(r"</?[A-Za-z][^>]*>")
+_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 _TOKEN = re.compile(r"\w+", re.UNICODE)
 _WIKIDATA = re.compile(r"Q[1-9]\d*")
 
@@ -36,6 +37,7 @@ _ANNOTATION_TEMPLATES = frozenset(
         "qualifier",
         "senseid",
         "senseno",
+        "swp",
         "topic",
         "topics",
     }
@@ -176,17 +178,28 @@ def _tokens(
         """
         name, *arguments = found.group()[2:-2].split("|")
 
-        if name.casefold().strip() in _ANNOTATION_TEMPLATES:
+        name = name.casefold().strip()
+
+        if name in _ANNOTATION_TEMPLATES:
             return " "
+
+        if name == "place":
+            return " ".join(
+                argument.split("/", 1)[-1].split("=", 1)[-1]
+                for argument in arguments
+                if argument != LANGUAGE and not argument.startswith("tcl")
+            )
+
+        if name == "si-unit" and len(arguments) >= 4:
+            return f"SI unit of {arguments[3]}"
 
         lexical_arguments = (
             argument for argument in arguments if argument.strip() != LANGUAGE
         )
 
-        return " ".join(
-            (_TEMPLATE_NAMES.get(name.casefold().strip(), ""), *lexical_arguments)
-        )
+        return " ".join((_TEMPLATE_NAMES.get(name, ""), *lexical_arguments))
 
+    text = _HTML_COMMENT.sub(" ", text)
     previous = ""
 
     while previous != text:

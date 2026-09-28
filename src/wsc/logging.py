@@ -18,12 +18,14 @@ def configure_logging() -> Generator[None]:
     logger = logging.getLogger(__package__)
 
     previous_level = logger.level
+    previous_propagation = logger.propagate
 
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
 
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
+    logger.propagate = False
 
     try:
         yield
@@ -32,3 +34,4 @@ def configure_logging() -> Generator[None]:
         handler.close()
 
         logger.setLevel(previous_level)
+        logger.propagate = previous_propagation

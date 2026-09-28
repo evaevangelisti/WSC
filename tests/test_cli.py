@@ -7,11 +7,13 @@ Tests exercise command behavior through its public interface.
 import bz2
 import gzip
 import json
+import logging
 import string
 from collections.abc import Callable, Generator, Iterable
 from compression import zstd
 from contextlib import contextmanager
 from importlib.metadata import version
+from io import StringIO
 from pathlib import Path
 from typing import cast
 
@@ -43,6 +45,7 @@ from wsc.constants import (
     KAIKKI_URL,
     USER_AGENT,
 )
+from wsc.extract.dump.wikidata import read_wikidata_ids
 from wsc.identifiers import lemma_id, sense_id
 from wsc.models import Engine
 from wsc.models.pos import POS
@@ -401,6 +404,33 @@ class TestFetch:
         assert result.exit_code == 0
         assert "Already fetched" in _normalize_output(result)
 
+    def test_does_not_repeat_package_logs_on_root_logger(
+        self,
+        tmp_path: Path,
+        cli: Callable[..., Result],
+        fetch_dump: Callable[..., Path],
+    ) -> None:
+        """
+        An existing root handler does not print package events again.
+        """
+        cache_dir = tmp_path / "cache"
+        _ = fetch_dump(cache_dir)
+
+        root = logging.getLogger()
+        stream = StringIO()
+        handler = logging.StreamHandler(stream)
+        root.addHandler(handler)
+
+        try:
+            result = cli("fetch", "--dump-date", "20260801", cache_dir=cache_dir)
+        finally:
+            root.removeHandler(handler)
+            handler.close()
+
+        assert result.exit_code == 0
+        assert _normalize_output(result).count("Already fetched") == 1
+        assert stream.getvalue() == ""
+
 
 class TestParse:
     """
@@ -621,6 +651,102 @@ class TestParse:
         entry = next(read_lemmas(output_dir / "senses.jsonl"))
 
         assert entry.senses[0].wikidata_ids == ("Q42",)
+
+    def test_builds_only_direct_wikidata_senses(
+        self,
+        tmp_path: Path,
+        cli: Callable[..., Result],
+        fetch_dump: Callable[..., Path],
+        parse_dump: Callable[..., Path],
+        stub_parse: Callable[..., list[tuple[Path, Path, int, Path | None]]],
+    ) -> None:
+        """
+        Expanded templates match direct senses without assigning parent IDs.
+        """
+        mexico_gloss = (
+            "A municipality of the province of Pampanga, "
+            + "Central Luzon, Philippines."
+        )
+        _ = parse_dump(
+            tmp_path,
+            [
+                {
+                    "word": "Mexico",
+                    "pos": "name",
+                    "lang_code": "en",
+                    "senses": [
+                        {"glosses": ["A country in North America."]},
+                        {"glosses": [mexico_gloss]},
+                    ],
+                },
+                {
+                    "word": "millisecond",
+                    "pos": "noun",
+                    "lang_code": "en",
+                    "senses": [
+                        {
+                            "glosses": [
+                                "An SI unit of time equal to 10⁻³ seconds. Symbol: ms."
+                            ]
+                        }
+                    ],
+                },
+                {
+                    "word": "synonym",
+                    "pos": "noun",
+                    "lang_code": "en",
+                    "senses": [
+                        {"glosses": ["A name for a taxon.", "A name used earlier."]},
+                        {"glosses": ["A name for a taxon.", "A name used later."]},
+                    ],
+                },
+            ],
+        )
+        _ = fetch_dump(
+            tmp_path,
+            pages=[
+                page(
+                    "Mexico",
+                    "==English==\n===Proper noun===\n"
+                    + "# {{senseid|en|Q1}} {{place|en|municipality|"
+                    + "p:pref/Pampanga|r/Central Luzon|c/Philippines}}."
+                    + " {{swp|+, Pampanga}}",
+                ),
+                page(
+                    "millisecond",
+                    "==English==\n===Noun===\n"
+                    + "# {{senseid|en|Q2}} {{SI-unit|en|milli|second|time}}",
+                ),
+                page(
+                    "synonym",
+                    "==English==\n===Noun===\n"
+                    + "# {{senseid|en|Q3}} A name for a taxon.\n"
+                    + "## A name used earlier.\n## A name used later.",
+                ),
+            ],
+        )
+        calls = stub_parse()
+        identifiers_path = (
+            cache.dump_dir(tmp_path, "20260801") / cache.WIKIDATA_IDS_NAME
+        )
+        _ = identifiers_path.rename(identifiers_path.with_suffix(".json.backup"))
+
+        result = cli("parse", cache_dir=tmp_path)
+
+        assert result.exit_code == 0
+        assert calls == []
+        assert read_wikidata_ids(identifiers_path) == {
+            sense_id(
+                lemma_id("Mexico", POS.PROPN),
+                "",
+                (mexico_gloss,),
+            ): ("Q1",),
+            sense_id(
+                lemma_id("millisecond", POS.NOUN),
+                "",
+                ("An SI unit of time equal to 10⁻³ seconds. Symbol: ms.",),
+            ): ("Q2",),
+        }
 
     def test_rejects_unfetched_dump(
         self,

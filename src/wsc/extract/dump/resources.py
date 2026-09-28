@@ -98,4 +98,8 @@ def extract_dump_resources(
         )
 
         if unmatched:
-            _LOGGER.warning("Could not match %s dump sense IDs", unmatched)
+            _LOGGER.warning(
+                "Could not match %s of %s dump definitions with Wikidata IDs",
+                unmatched,
+                len(definitions),
+            )
