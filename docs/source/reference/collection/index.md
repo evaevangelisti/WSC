@@ -10,6 +10,6 @@
 writing
 manifest
 statistics
-markdown
+markdown/index
 offsets
 ```

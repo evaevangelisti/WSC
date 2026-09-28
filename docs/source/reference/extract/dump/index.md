@@ -11,5 +11,6 @@ pages
 markup
 source_markup
 translations
+wikidata/index
 extractor
 ```

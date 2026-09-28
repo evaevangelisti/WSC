@@ -7,10 +7,10 @@
 ```{toctree}
 :hidden:
 
-aligner
+aligner/index
 batching
 candidates
-inference
+inference/index
 decisions
 requests
 tasks/index

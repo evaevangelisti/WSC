@@ -10,7 +10,7 @@
 forms
 glosses
 senses
-sentences
+sentences/index
 synonyms
 translations
 variants

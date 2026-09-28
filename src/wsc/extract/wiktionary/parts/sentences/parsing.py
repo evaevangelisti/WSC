@@ -4,7 +4,7 @@ The sentences illustrating one sense of an entry.
 
 import re
 
-from ....models import (
+from .....models import (
     Attestation,
     Example,
     Quotation,
@@ -12,24 +12,29 @@ from ....models import (
     WordOffset,
     WordOffsetSource,
 )
-from ...dump.source_markup import MathSource, restore_mathematics
-from ...markup import (
+from ....dump.source_markup import MathSource, restore_mathematics
+from ....markup import (
     BIBLIOGRAPHY,
     METADATA,
     NAVIGATION,
     is_literal_markup,
     is_unrecoverable,
     normalize_formatting,
-    normalize_statement,
     remove_references,
 )
-from ...offsets import substitute
-from ..schema import RawExample
+from ....offsets import substitute
+from ...schema import RawExample
+from .layout import EXAMPLE_SEPARATOR, split_examples
+from .references import EXAMPLE_KIND, clean_reference, parse_year, read_source
 
-_EXAMPLE = "example"
-_QUOTATION = "quotation"
+__all__ = [
+    "clean_reference",
+    "clean_sentence",
+    "parse_sentences",
+    "parse_year",
+    "read_source",
+]
 
-_YEAR_PATTERN = re.compile(r"\b(1[0-9]{3}|20[0-9]{2})s?\b")
 
 _REFERENCE_LINE = re.compile(
     r"(?:^|\n)[ \t]*(?:[*•#-][ \t]+)?(?:(?:also|but)\s+)?"
@@ -66,88 +71,11 @@ _PARENTHETICAL_CITATION = re.compile(
 )
 _SOURCE_URL = re.compile(r"https?://\S+", re.IGNORECASE)
 
-_EXAMPLE_SEPARATOR = re.compile(r"[ \t]*\u2003+[ \t]*")
 _SPACED_SEMICOLON = re.compile(r";[ \t]{2,}")
-_SEMICOLON_SEPARATOR = re.compile(r";[ \t]+")
-_EXAMPLE_ENDINGS = frozenset(";.?!")
 
 _MUSIC_SCORE = re.compile(r"\{\\(?:key|clef|time)\b[^{}]*\}")
 _TRAILING_SCORE_NUMBER = re.compile(r"\n\s*\d+\s*$")
 _NUMERIC_ONLY = re.compile(r"\d+(?:[\s.,:;/-]\d+)*")
-
-
-def parse_year(
-    reference: str,
-) -> int | None:
-    """
-    Read the year of publication off a reference.
-
-    Args:
-        reference: The source, as Wiktionary formats it.
-
-    Returns:
-        The first year the reference names, or None if it names none.
-    """
-    found_year = _YEAR_PATTERN.search(reference)
-
-    return int(found_year.group(1)) if found_year else None
-
-
-def clean_reference(
-    reference: str,
-) -> str:
-    """
-    Normalize surrounding whitespace and stray reference delimiters.
-
-    Args:
-        reference: The source reference as Wiktionary formats it.
-
-    Returns:
-        The reference without trailing colons or an unmatched opening bracket.
-    """
-    reference = reference.strip()
-
-    if reference.startswith("[") and reference.count("[") > reference.count("]"):
-        reference = reference[1:].lstrip()
-
-    return normalize_statement(reference)
-
-
-def read_source(
-    text: str,
-    raw_example: RawExample,
-) -> tuple[str, str]:
-    """
-    Tell a sentence apart from the source it was taken from.
-
-    Embedded quotation references are separated from the sentence text.
-
-    Args:
-        text: The sentence, as wiktextract wrote it.
-        raw_example: What it listed beside it.
-
-    Returns:
-        The sentence, and the source naming it, empty where there is none.
-    """
-    reference = raw_example.get("ref", "").strip()
-
-    if reference:
-        return text, clean_reference(reference)
-
-    kind = raw_example.get("type", "")
-
-    if kind == _EXAMPLE:
-        return text, ""
-
-    head, separator, tail = text.partition("\n")
-
-    if not separator or not tail.strip():
-        return text, ""
-
-    if kind == _QUOTATION or parse_year(head) is not None:
-        return tail.strip(), clean_reference(head)
-
-    return text, ""
 
 
 def _sentence_start(
@@ -330,106 +258,6 @@ def _remove_example_bibliography(
     return value if any(character.isalnum() for character in value.text) else None
 
 
-def _split_example(
-    value: Attestation,
-) -> tuple[Attestation, ...]:
-    """
-    Split layout-separated examples only when their boundaries are supported.
-
-    Args:
-        value: Cleaned unreferenced example and its known word offsets.
-
-    Returns:
-        Separate examples, or one example with normalized layout spacing.
-    """
-    separators = tuple(_EXAMPLE_SEPARATOR.finditer(value.text))
-
-    if not separators and len(value.word_offsets) > 1:
-        candidates = tuple(_SEMICOLON_SEPARATOR.finditer(value.text))
-        boundaries = [
-            (left, right)
-            for left, right in zip(
-                (0, *(separator.end() for separator in candidates)),
-                (*(separator.start() for separator in candidates), len(value.text)),
-                strict=True,
-            )
-        ]
-
-        if candidates and all(
-            any(
-                left <= offset.offset[0] < offset.offset[1] <= right
-                for offset in value.word_offsets
-            )
-            for left, right in boundaries
-        ):
-            separators = candidates
-
-    if not separators:
-        return (value,)
-
-    boundaries: list[tuple[int, int]] = []
-    start = 0
-
-    for separator in separators:
-        boundaries.append((start, separator.start()))
-        start = separator.end()
-
-    boundaries.append((start, len(value.text)))
-
-    all_segments_have_offsets = all(
-        any(
-            left <= offset.offset[0] < offset.offset[1] <= right
-            for offset in value.word_offsets
-        )
-        for left, right in boundaries
-    )
-
-    all_boundaries_are_punctuated = all(
-        value.text[left:right].rstrip().endswith(tuple(_EXAMPLE_ENDINGS))
-        for left, right in boundaries[:-1]
-    )
-
-    has_repeated_separator = any(match[0].count("\u2003") > 1 for match in separators)
-
-    if not (
-        all_segments_have_offsets
-        or all_boundaries_are_punctuated
-        or has_repeated_separator
-    ):
-        return (substitute(value, _EXAMPLE_SEPARATOR, " "),)
-
-    examples: list[Attestation] = []
-
-    for left, right in boundaries:
-        segment = value.text[left:right]
-        leading_space = len(segment) - len(segment.lstrip())
-        text = segment.strip()
-
-        if text.endswith(";"):
-            text = text[:-1].rstrip()
-
-        segment_start = left + leading_space
-        word_offsets = tuple(
-            WordOffset(
-                (
-                    offset.offset[0] - segment_start,
-                    offset.offset[1] - segment_start,
-                ),
-                offset.sources,
-            )
-            for offset in value.word_offsets
-            if segment_start
-            <= offset.offset[0]
-            < offset.offset[1]
-            <= segment_start + len(text)
-        )
-
-        if text:
-            examples.append(Attestation(text, word_offsets=word_offsets))
-
-    return tuple(examples)
-
-
 def parse_sentences(
     raw_examples: list[RawExample],
     minimum_year: int | None,
@@ -482,7 +310,7 @@ def parse_sentences(
         if (
             cleaned is not None
             and not reference
-            and raw_example.get("type") != _EXAMPLE
+            and raw_example.get("type") != EXAMPLE_KIND
         ):
             cleaned = _remove_example_bibliography(cleaned)
 
@@ -497,14 +325,14 @@ def parse_sentences(
                     example.text,
                     word_offsets=example.word_offsets,
                 )
-                for example in _split_example(
+                for example in split_examples(
                     Attestation(text, word_offsets=word_offsets),
                 )
             )
 
             continue
 
-        cleaned = substitute(cleaned, _EXAMPLE_SEPARATOR, " ")
+        cleaned = substitute(cleaned, EXAMPLE_SEPARATOR, " ")
         text, word_offsets = cleaned.text, cleaned.word_offsets
 
         year = parse_year(reference)

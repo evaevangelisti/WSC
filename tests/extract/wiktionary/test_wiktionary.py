@@ -16,7 +16,6 @@ from strategies import (
     blanks,
     definitions,
     form_tags,
-    glosses,
     languages,
     parts_of_speech,
     raw_entries,
@@ -67,6 +66,10 @@ def _has_lexical_content(
 
 
 _LEXICAL_TEXTS = texts.filter(_has_lexical_content)
+
+_TRANSLATION_GLOSSES = st.lists(words, min_size=1, max_size=4).map(
+    lambda terms: f"A meaning {' '.join(terms)}",
+)
 
 
 def _is_json_entry(
@@ -1768,7 +1771,7 @@ class TestTranslations:
     @given(
         words,
         languages,
-        glosses.filter(lambda gloss: "see also" not in gloss.casefold()),
+        _TRANSLATION_GLOSSES,
         st.data(),
     )
     def test_groups_translation_glosses(
@@ -1802,7 +1805,7 @@ class TestTranslations:
         words,
         words,
         languages,
-        glosses.filter(lambda gloss: "see also" not in gloss.casefold()),
+        _TRANSLATION_GLOSSES,
         st.data(),
     )
     def test_groups_translation_languages(
@@ -1842,7 +1845,7 @@ class TestTranslations:
     @given(
         words,
         words,
-        glosses.filter(lambda gloss: "see also" not in gloss.casefold()),
+        _TRANSLATION_GLOSSES,
         st.data(),
     )
     def test_removes_gloss_references(

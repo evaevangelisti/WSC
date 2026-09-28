@@ -50,7 +50,7 @@ Existing offset provenance is preserved; ambiguous rewritten boundaries are omit
 
 ## API
 
-See the functions documented under [glosses](wiktionary/parts/glosses.md), [sentences](wiktionary/parts/sentences.md), [translations](translations.md), [markup](markup.md), and [offsets](offsets.md).
+See the functions documented under [glosses](wiktionary/parts/glosses.md), [sentences](wiktionary/parts/sentences/index.md), [translations](translations.md), [markup](markup/index.md), and [offsets](offsets.md).
 
 ## Residual editorial references
 

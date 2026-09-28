@@ -10,7 +10,7 @@
 wiktionary/index
 dump/index
 offsets
-markup
+markup/index
 translations
 cleaning
 ```

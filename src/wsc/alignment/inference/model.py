@@ -8,244 +8,26 @@ import json
 from collections.abc import Callable, Sequence
 from importlib import import_module
 from logging import getLogger
-from typing import Protocol, cast
+from typing import cast
 
-from ..models.alignment import (
+from ...models.alignment import (
     LanguageModel,
     ModelOutcome,
     ModelRequest,
     ModelSettings,
 )
+from .protocols import (
+    ChatRequest,
+    Completion,
+    ParserManager,
+    ReasoningParserFactory,
+    RequestOutput,
+    Tokenizer,
+    VllmLanguageModel,
+    XGrammarModule,
+)
 
-_LOGGER = getLogger(__name__)
-
-
-class _ChatRequest(Protocol):
-    """
-    Describe the vLLM chat request fields used during inference.
-    """
-
-    messages: Sequence[dict[str, str]]
-    chat_template_kwargs: dict[str, object] | None
-
-
-class _Completion(Protocol):
-    """
-    Describe one generated completion returned by vLLM.
-    """
-
-    finish_reason: str | None
-    text: str
-    token_ids: Sequence[int]
-
-
-class _RequestOutput(Protocol):
-    """
-    Describe the completion list returned for one request.
-    """
-
-    outputs: Sequence[_Completion]
-
-
-class _Tokenizer(Protocol):
-    """
-    Describe the tokenizer operation used by Harmony parsing.
-    """
-
-    def decode(
-        self,
-        token_ids: list[int],
-        *,
-        skip_special_tokens: bool,
-    ) -> str:
-        """
-        Decode generated token identifiers.
-
-        Args:
-            token_ids: Generated token identifiers in sequence order.
-            skip_special_tokens: Whether decoding omits special tokens.
-
-        Returns:
-            The decoded text.
-        """
-        ...
-
-
-class _ReasoningParser(Protocol):
-    """
-    Describe the reasoning parser operations used by the adapter.
-    """
-
-    def extract_content_ids(
-        self,
-        input_ids: list[int],
-    ) -> list[int]:
-        """
-        Extract Harmony final-channel token identifiers.
-
-        Args:
-            input_ids: Generated token identifiers including channel markers.
-
-        Returns:
-            Token identifiers belonging to the final response channel.
-        """
-        ...
-
-    def extract_reasoning(
-        self,
-        model_output: str,
-        request: _ChatRequest,
-    ) -> tuple[str | None, str | None]:
-        """
-        Separate reasoning from final content.
-
-        Args:
-            model_output: Generated completion containing reasoning and final content.
-            request: Chat context used by the parser.
-
-        Returns:
-            Reasoning and final content, each None when absent.
-        """
-        ...
-
-
-class _ReasoningParserFactory(Protocol):
-    """
-    Construct one reasoning parser for each completion.
-    """
-
-    def __call__(
-        self,
-        *,
-        tokenizer: _Tokenizer,
-        chat_template_kwargs: dict[str, object] | None,
-    ) -> _ReasoningParser:
-        """
-        Build a parser with request-specific context.
-
-        Args:
-            tokenizer: Tokenizer associated with the generation engine.
-            chat_template_kwargs: Request-specific chat template arguments, or None.
-
-        Returns:
-            A reasoning parser configured for the request.
-        """
-        ...
-
-
-class _ParserManager(Protocol):
-    """
-    Resolve the parser registered in the vLLM configuration.
-    """
-
-    @staticmethod
-    def get_reasoning_parser(
-        name: str,
-    ) -> _ReasoningParserFactory:
-        """
-        Return the registered reasoning parser factory.
-
-        Args:
-            name: Parser name registered in the engine configuration.
-
-        Returns:
-            The factory for the named reasoning parser.
-        """
-        ...
-
-
-class _StructuredOutputsConfiguration(Protocol):
-    """
-    Describe the configured reasoning parser name.
-    """
-
-    reasoning_parser: str | None
-
-
-class _VllmConfiguration(Protocol):
-    """
-    Describe the vLLM configuration fields used by the adapter.
-    """
-
-    structured_outputs_config: _StructuredOutputsConfiguration
-
-
-class _Engine(Protocol):
-    """
-    Describe the vLLM engine configuration boundary.
-    """
-
-    vllm_config: _VllmConfiguration
-
-
-class _LanguageModel(Protocol):
-    """
-    Describe the offline vLLM operations used by the adapter.
-    """
-
-    llm_engine: _Engine
-
-    def get_tokenizer(
-        self,
-    ) -> _Tokenizer:
-        """
-        Return the model tokenizer.
-
-        Returns:
-            The tokenizer associated with the loaded model.
-        """
-        ...
-
-    def chat(
-        self,
-        *,
-        messages: Sequence[Sequence[dict[str, str]]],
-        sampling_params: Sequence[object],
-        chat_template_kwargs: dict[str, object] | None,
-        use_tqdm: bool,
-    ) -> Sequence[_RequestOutput]:
-        """
-        Generate a batch of chat completions.
-
-        Args:
-            messages: Conversations submitted in batch order.
-            sampling_params: Generation parameters for each conversation.
-            chat_template_kwargs: Template arguments shared by the batch, or None.
-            use_tqdm: Whether the engine displays a progress bar.
-
-        Returns:
-            Generated request outputs in submission order.
-        """
-        ...
-
-
-class _Grammar(Protocol):
-    """
-    Describe XGrammar's JSON schema parser.
-    """
-
-    @staticmethod
-    def from_json_schema(
-        schema: dict[str, object],
-    ) -> object:
-        """
-        Convert a response schema into a grammar.
-
-        Args:
-            schema: JSON schema submitted to vLLM.
-
-        Returns:
-            The compiled grammar.
-        """
-        ...
-
-
-class _XGrammarModule(Protocol):
-    """
-    Expose the grammar class from the optional vLLM dependency.
-    """
-
-    Grammar: type[_Grammar]
+_LOGGER = getLogger(__package__)
 
 
 class OfflineModel:
@@ -276,9 +58,9 @@ class OfflineModel:
                 "Offline alignment requires vLLM; install the platform backend first"
             ) from error
 
-        model_factory = cast(Callable[..., _LanguageModel], vllm.LLM)
+        model_factory = cast(Callable[..., VllmLanguageModel], vllm.LLM)
         parser_manager = cast(
-            type[_ParserManager],
+            type[ParserManager],
             reasoning.ReasoningParserManager,
         )
 
@@ -287,12 +69,12 @@ class OfflineModel:
         if settings.reasoning_parser is not None:
             engine_options["reasoning_parser"] = settings.reasoning_parser
 
-        self._llm: _LanguageModel = model_factory(
+        self._llm: VllmLanguageModel = model_factory(
             model=settings.model,
             **engine_options,
         )
 
-        self._tokenizer: _Tokenizer = self._llm.get_tokenizer()
+        self._tokenizer: Tokenizer = self._llm.get_tokenizer()
 
         self._chat_template_kwargs: dict[str, object] = dict(
             settings.chat_template_options,
@@ -304,7 +86,7 @@ class OfflineModel:
         configuration = self._llm.llm_engine.vllm_config
         parser_name = configuration.structured_outputs_config.reasoning_parser
 
-        self._reasoning_parser_class: _ReasoningParserFactory | None = (
+        self._reasoning_parser_class: ReasoningParserFactory | None = (
             parser_manager.get_reasoning_parser(parser_name) if parser_name else None
         )
 
@@ -314,8 +96,8 @@ class OfflineModel:
 
     def _parse_reasoning(
         self,
-        completion: _Completion,
-        request: _ChatRequest,
+        completion: Completion,
+        request: ChatRequest,
     ) -> str | None:
         """
         Extract final content using the configured reasoning parser.
@@ -357,7 +139,7 @@ class OfflineModel:
     def _build_chat_request(
         self,
         request: ModelRequest,
-    ) -> _ChatRequest:
+    ) -> ChatRequest:
         """
         Build one chat request from an alignment prompt.
 
@@ -370,7 +152,7 @@ class OfflineModel:
         protocol = import_module("vllm.entrypoints.openai.chat_completion.protocol")
 
         request_factory = cast(
-            Callable[..., _ChatRequest],
+            Callable[..., ChatRequest],
             protocol.ChatCompletionRequest,
         )
 
@@ -385,8 +167,8 @@ class OfflineModel:
 
     def _collect(
         self,
-        output: _RequestOutput,
-        request: _ChatRequest,
+        output: RequestOutput,
+        request: ChatRequest,
     ) -> ModelOutcome:
         """
         Read one generation without failing the remaining batch.
@@ -426,7 +208,7 @@ class OfflineModel:
         Args:
             requests: Submitted prompts and schemas in engine order.
         """
-        xgrammar = cast(_XGrammarModule, cast(object, import_module("xgrammar")))
+        xgrammar = cast(XGrammarModule, cast(object, import_module("xgrammar")))
 
         failures = 0
 

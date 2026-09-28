@@ -1,14 +1,12 @@
 """
-Render collection statistics as readable Markdown tables.
+Build the tables for each collection report section.
 """
 
-from collections.abc import Iterable
-from dataclasses import dataclass
+from ...models import POS
+from ..statistics import Statistics, distribution_median
+from .format import Table, count_table, format_average
 
-from ..models import POS
-from .statistics import Statistics, distribution_median
-
-_LABEL_LIMIT = 10
+LABEL_LIMIT = 10
 
 _PART_NAMES = {
     POS.NOUN: "Noun",
@@ -19,80 +17,7 @@ _PART_NAMES = {
 }
 
 
-@dataclass(frozen=True, slots=True)
-class Table:
-    """
-    A caption, column headings, and formatted rows.
-
-    Attributes:
-        caption: Table title within its report section.
-        columns: Column headings in display order.
-        rows: Formatted cell values in display order.
-    """
-
-    caption: str
-    columns: tuple[str, ...]
-    rows: tuple[tuple[str, ...], ...]
-
-
-def _share(
-    part: int,
-    whole: int,
-) -> str:
-    """
-    Format a percentage when its denominator is nonzero.
-
-    Args:
-        part: Count represented by the percentage.
-        whole: Total defining the percentage denominator.
-
-    Returns:
-        Percentage with one decimal place, or an em dash for a zero total.
-    """
-    return f"{part / whole:.1%}" if whole else "—"
-
-
-def _average(
-    total: int,
-    observations: int,
-) -> str:
-    """
-    Format an average when there are observations.
-
-    Args:
-        total: Sum of the observed values.
-        observations: Number of observations contributing to the sum.
-
-    Returns:
-        Average with one decimal place, or an em dash for no observations.
-    """
-    return f"{total / observations:.1f}" if observations else "—"
-
-
-def _counts(
-    caption: str,
-    values: Iterable[tuple[str, int]],
-    total: int,
-) -> Table:
-    """
-    Build a count table with an explicit percentage denominator.
-
-    Args:
-        caption: Table title within its report section.
-        values: Row labels and their counts in display order.
-        total: Denominator shared by all row percentages.
-
-    Returns:
-        A table containing labels, formatted counts, and percentages.
-    """
-    return Table(
-        caption,
-        ("Figure", "Count", "Share"),
-        tuple((name, f"{value:,}", _share(value, total)) for name, value in values),
-    )
-
-
-def _records(
+def record_tables(
     statistics: Statistics,
 ) -> tuple[Table, ...]:
     """
@@ -132,7 +57,7 @@ def _records(
                 ),
             ),
         ),
-        _counts(
+        count_table(
             "Sentence coverage by sense",
             (
                 ("With sentences", senses - statistics.unattested_senses),
@@ -155,7 +80,7 @@ def _records(
                 if part in statistics.entries
             ),
         ),
-        _counts(
+        count_table(
             "Gloss chain depth",
             (
                 (str(depth), count)
@@ -163,7 +88,7 @@ def _records(
             ),
             senses,
         ),
-        _counts(
+        count_table(
             "Wikidata IDs per sense",
             (
                 ("None", identifiers[0]),
@@ -178,7 +103,7 @@ def _records(
     )
 
 
-def _lexical_links(
+def lexical_link_tables(
     statistics: Statistics,
 ) -> tuple[Table, ...]:
     """
@@ -191,7 +116,7 @@ def _lexical_links(
         Variant and synonym coverage, totals, and averages.
     """
     return (
-        _counts(
+        count_table(
             "Variants by entry",
             (
                 ("With variants", statistics.variant_entries),
@@ -202,7 +127,7 @@ def _lexical_links(
             ),
             statistics.entries.total(),
         ),
-        _counts(
+        count_table(
             "Synonyms by sense",
             (
                 ("With synonyms", statistics.synonym_senses),
@@ -227,18 +152,18 @@ def _lexical_links(
             (
                 (
                     "Variants per entry with variants",
-                    _average(statistics.variants, statistics.variant_entries),
+                    format_average(statistics.variants, statistics.variant_entries),
                 ),
                 (
                     "Synonyms per sense with synonyms",
-                    _average(statistics.synonyms, statistics.synonym_senses),
+                    format_average(statistics.synonyms, statistics.synonym_senses),
                 ),
             ),
         ),
     )
 
 
-def _translations(
+def translation_tables(
     statistics: Statistics,
 ) -> tuple[Table, ...]:
     """
@@ -251,7 +176,7 @@ def _translations(
         Translation coverage, totals, and leading language counts.
     """
     return (
-        _counts(
+        count_table(
             "By entry",
             (
                 ("With translation tables", statistics.translated_entries),
@@ -277,19 +202,21 @@ def _translations(
             (
                 (
                     "Translations per translated entry",
-                    _average(statistics.translations, statistics.translated_entries),
+                    format_average(
+                        statistics.translations, statistics.translated_entries
+                    ),
                 ),
             ),
         ),
-        _counts(
+        count_table(
             "Most frequent translation languages",
-            statistics.translation_languages.most_common(_LABEL_LIMIT),
+            statistics.translation_languages.most_common(LABEL_LIMIT),
             statistics.translations,
         ),
     )
 
 
-def _sentences(
+def sentence_tables(
     statistics: Statistics,
 ) -> tuple[Table, ...]:
     """
@@ -306,12 +233,12 @@ def _sentences(
     year_median = distribution_median(years)
 
     return (
-        _counts(
+        count_table(
             "Sentence kinds",
             statistics.sentence_kinds.most_common(),
             statistics.sentences.total(),
         ),
-        _counts(
+        count_table(
             "Quotation dates",
             (("Dated", dated), ("Undated", statistics.undated_quotations)),
             dated + statistics.undated_quotations,
@@ -328,7 +255,7 @@ def _sentences(
     )
 
 
-def _offsets(
+def offset_tables(
     statistics: Statistics,
 ) -> tuple[Table, ...]:
     """
@@ -344,22 +271,22 @@ def _offsets(
     unlocated = statistics.unlocated_sentences.total()
 
     return (
-        _counts(
+        count_table(
             "By sentence",
             (("With offsets", sentences - unlocated), ("Without offsets", unlocated)),
             sentences,
         ),
-        _counts(
+        count_table(
             "Sources by located sentence",
             statistics.source_relations.most_common(),
             sentences - unlocated,
         ),
-        _counts(
+        count_table(
             "Sources by offset",
             statistics.offset_sources.most_common(),
             statistics.offsets,
         ),
-        _counts(
+        count_table(
             "Candidate offsets per sentence",
             (
                 (str(number), count)
@@ -367,7 +294,7 @@ def _offsets(
             ),
             sentences,
         ),
-        _counts(
+        count_table(
             "Offset surface forms, ignoring case",
             (
                 (
@@ -378,12 +305,12 @@ def _offsets(
             ),
             statistics.offsets,
         ),
-        _counts(
+        count_table(
             "Unlocated headword shapes",
             statistics.unlocated_headwords.most_common(),
             unlocated,
         ),
-        _counts(
+        count_table(
             "Literal matches among unlocated sentences",
             (("Headword present after normalization", statistics.literal_misses),),
             unlocated,
@@ -398,79 +325,3 @@ def _offsets(
             or (("None", "0"),),
         ),
     )
-
-
-def _escape_cell(
-    value: str,
-) -> str:
-    """
-    Preserve table boundaries when a label contains Markdown characters.
-
-    Args:
-        value: Unescaped cell text from a report row.
-
-    Returns:
-        Text with escaped backslashes and pipes, and line breaks replaced by spaces.
-    """
-    return (
-        value.replace("\\", "\\\\")
-        .replace("|", r"\|")
-        .replace("\r", " ")
-        .replace("\n", " ")
-    )
-
-
-def render_markdown(
-    statistics: Statistics,
-) -> str:
-    """
-    Render all report sections from the collected statistics.
-
-    Args:
-        statistics: Complete counts, including empty distributions.
-
-    Returns:
-        A Markdown document describing coverage rather than annotation accuracy.
-    """
-    sections = (
-        ("Records", _records(statistics)),
-        ("Variants and synonyms", _lexical_links(statistics)),
-        ("Translations", _translations(statistics)),
-        ("Sentences and quotations", _sentences(statistics)),
-        ("Word offsets", _offsets(statistics)),
-        (
-            "Tags and topics",
-            (
-                _counts(
-                    "Most common tags",
-                    statistics.tags.most_common(_LABEL_LIMIT),
-                    statistics.tags.total(),
-                ),
-                _counts(
-                    "Most common topics",
-                    statistics.topics.most_common(_LABEL_LIMIT),
-                    statistics.topics.total(),
-                ),
-            ),
-        ),
-    )
-
-    lines = ["# Collection report", ""]
-
-    for title, tables in sections:
-        lines.extend((f"## {title}", ""))
-
-        for table in tables:
-            lines.extend((f"### {table.caption}", ""))
-
-            lines.append(f"| {' | '.join(table.columns)} |")
-            lines.append(f"| {' | '.join('---' for _ in table.columns)} |")
-
-            lines.extend(
-                f"| {' | '.join(_escape_cell(cell) for cell in row)} |"
-                for row in table.rows
-            )
-
-            lines.append("")
-
-    return "\n".join(lines)
