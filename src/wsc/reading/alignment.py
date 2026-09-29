@@ -47,6 +47,7 @@ class QueryRecord(TypedDict):
     pos: str
     source_definitions: list[DefinitionRecord]
     target_definitions: list[DefinitionRecord]
+    stage: NotRequired[str]
 
 
 def parse_query(
@@ -89,6 +90,7 @@ def parse_query(
             )
             for item in record["target_definitions"]
         ),
+        record.get("stage", ""),
     )
 
 

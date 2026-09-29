@@ -1,16 +1,18 @@
 """
-Candidate construction independent of model predictions.
+Index synset candidates and select source evidence for each pass.
 """
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
+from copy import copy
+from urllib.parse import quote
 
-from ..models import POS, Lemma, Synset
+from ..models import POS, Lemma, Synset, SynsetResource
 
 
 class SynsetCandidates:
     """
-    Synset candidates retrieved by lexical form and part of speech.
+    Retrieve synsets by lexical form and select resource evidence.
     """
 
     @staticmethod
@@ -33,27 +35,149 @@ class SynsetCandidates:
         synsets: Iterable[Synset],
     ) -> None:
         """
-        Index synsets under all their lexical members.
+        Index synsets under members from every resource.
 
         Args:
             synsets: Concepts supplied for alignment.
         """
         self._members: defaultdict[tuple[str, POS], dict[str, Synset]] = defaultdict(
-            dict
+            dict,
         )
 
+        self._available_sources: set[str] = set()
+        self._previous_sources: tuple[str, ...] = ()
+
+        self._stage: str = ""
+        self._cache_stage: str = ""
+
+        self._skip_aligned: bool = False
+
         for synset in synsets:
-            for member in synset.members:
-                self._members[self._normalize(member.lemma), synset.pos][synset.id] = (
-                    synset
-                )
+            self._available_sources.update(synset.resources)
+
+            for resource in synset.resources.values():
+                for member in resource.members:
+                    self._members[self._normalize(member), synset.pos][synset.id] = (
+                        synset
+                    )
+
+    @property
+    def available_sources(
+        self,
+    ) -> frozenset[str]:
+        """
+        Return resource names declared by the indexed synsets.
+        """
+        return frozenset(self._available_sources)
+
+    @property
+    def stage(
+        self,
+    ) -> str:
+        """
+        Return the cache and prompt label for this pass.
+        """
+        return self._stage
+
+    @property
+    def cache_stage(
+        self,
+    ) -> str:
+        """
+        Return a query label distinguishing ordered resource selections.
+        """
+        return self._cache_stage
+
+    @property
+    def skip_aligned(
+        self,
+    ) -> bool:
+        """
+        Return whether earlier synset associations exclude source senses.
+        """
+        return self._skip_aligned
+
+    def for_stage(
+        self,
+        stage: str,
+        *,
+        previous_sources: tuple[str, ...] = (),
+        skip_aligned: bool,
+    ) -> SynsetCandidates:
+        """
+        Share the index while selecting one resource or all remaining synsets.
+
+        Args:
+            stage: Resource name, or remaining for untried resources.
+            previous_sources: Earlier resources whose unmatched synsets return.
+            skip_aligned: Exclude senses and synsets mapped by earlier passes.
+
+        Returns:
+            A lightweight candidate view for the requested pass.
+        """
+        selected = copy(self)
+
+        selected._stage = stage
+
+        selected._cache_stage = ":".join(
+            quote(source, safe="") for source in (*previous_sources, stage)
+        )
+
+        if previous_sources:
+            selected._cache_stage += ":source-scoped"
+
+        selected._previous_sources = previous_sources
+        selected._skip_aligned = skip_aligned
+
+        return selected
+
+    def _resources(
+        self,
+        lemma: Lemma,
+        synset: Synset,
+    ) -> Iterator[tuple[str, SynsetResource]]:
+        """
+        Keep reintroduced candidates tied to their first matching resource.
+
+        Args:
+            lemma: Entry whose members determine prior eligibility.
+            synset: Candidate whose evidence is requested.
+
+        Yields:
+            Resource names and lexical evidence visible in this pass.
+        """
+        if not self._stage:
+            yield from synset.resources.items()
+
+            return
+
+        forms = {self._normalize(lemma.lemma)} | {
+            self._normalize(variant) for variant in lemma.variants
+        }
+
+        for name in self._previous_sources:
+            if (resource := synset.resources.get(name)) is not None and any(
+                self._normalize(member) in forms for member in resource.members
+            ):
+                yield name, resource
+
+                return
+
+        if self._stage == "remaining":
+            yield from (
+                (name, resource)
+                for name, resource in synset.resources.items()
+                if name not in self._previous_sources
+            )
+        elif (resource := synset.resources.get(self._stage)) is not None:
+            yield self._stage, resource
 
     def candidates(
         self,
         lemma: Lemma,
     ) -> tuple[Synset, ...]:
         """
-        Retrieve candidates including spelling variants and nominal proper names.
+        Retrieve source-eligible synsets for a lemma and its variants.
 
         Args:
             lemma: Entry whose synsets are requested.
@@ -62,13 +186,34 @@ class SynsetCandidates:
             Unique candidates sorted by synset identifier.
         """
         pos = POS.NOUN if lemma.pos == POS.PROPN else lemma.pos
-
-        found_synsets: dict[str, Synset] = {}
+        matched: dict[str, Synset] = {}
 
         for form in (lemma.lemma, *sorted(lemma.variants)):
-            found_synsets.update(self._members.get((self._normalize(form), pos), {}))
+            matched.update(self._members.get((self._normalize(form), pos), {}))
 
-        return tuple(found_synsets[identifier] for identifier in sorted(found_synsets))
+        mapped: set[str] = set()
+
+        if self._skip_aligned:
+            mapped = {
+                association.synset_id
+                for sense in lemma.senses
+                for association in sense.synsets
+            }
+
+        forms = {self._normalize(lemma.lemma)} | {
+            self._normalize(variant) for variant in lemma.variants
+        }
+
+        return tuple(
+            synset
+            for identifier, synset in sorted(matched.items())
+            if identifier not in mapped
+            and any(
+                self._normalize(member) in forms
+                for _, resource in self._resources(lemma, synset)
+                for member in resource.members
+            )
+        )
 
     def synonyms(
         self,
@@ -76,25 +221,72 @@ class SynsetCandidates:
         synset: Synset,
     ) -> tuple[str, ...]:
         """
-        Return synset members other than the queried lemma.
+        Return distinct selected members other than the queried lemma.
 
         Args:
             lemma: Entry whose candidates are being described.
             synset: Candidate lexical concept.
 
         Returns:
-            Distinct lexical members in their input order.
+            Lexical members in source order.
         """
         normalized_lemma = self._normalize(lemma.lemma)
         synonyms: dict[str, str] = {}
 
-        for member in synset.members:
-            normalized_member = self._normalize(member.lemma)
+        for _, resource in self._resources(lemma, synset):
+            for member in resource.members:
+                normalized_member = self._normalize(member)
 
-            if normalized_member != normalized_lemma:
-                _ = synonyms.setdefault(normalized_member, member.lemma)
+                if normalized_member != normalized_lemma:
+                    _ = synonyms.setdefault(normalized_member, member)
 
         return tuple(synonyms.values())
+
+    def glosses(
+        self,
+        lemma: Lemma,
+        synset: Synset,
+    ) -> tuple[str, ...]:
+        """
+        Return distinct glosses from the selected resources.
+
+        Args:
+            lemma: Entry determining visible source evidence.
+            synset: Candidate lexical concept.
+
+        Returns:
+            Glosses in resource order.
+        """
+        return tuple(
+            dict.fromkeys(
+                gloss
+                for _, resource in self._resources(lemma, synset)
+                for gloss in resource.glosses
+            ),
+        )
+
+    def examples(
+        self,
+        lemma: Lemma,
+        synset: Synset,
+    ) -> tuple[str, ...]:
+        """
+        Return distinct examples from the selected resources.
+
+        Args:
+            lemma: Entry determining visible source evidence.
+            synset: Candidate lexical concept.
+
+        Returns:
+            Examples in resource order.
+        """
+        return tuple(
+            dict.fromkeys(
+                example
+                for _, resource in self._resources(lemma, synset)
+                for example in resource.examples
+            ),
+        )
 
     def sources(
         self,
@@ -102,23 +294,21 @@ class SynsetCandidates:
         synset: Synset,
     ) -> tuple[str, ...]:
         """
-        Return every declared input source for the queried member.
+        Return selected resources that contain the queried member.
 
         Args:
             lemma: Entry whose candidate is being described.
             synset: Candidate lexical concept.
 
         Returns:
-            Distinct declared sources in their input order.
+            Resource names in input order.
         """
         forms = {self._normalize(lemma.lemma)} | {
             self._normalize(variant) for variant in lemma.variants
         }
 
         return tuple(
-            dict.fromkeys(
-                member.source
-                for member in synset.members
-                if member.source and self._normalize(member.lemma) in forms
-            ),
+            name
+            for name, resource in self._resources(lemma, synset)
+            if any(self._normalize(member) in forms for member in resource.members)
         )

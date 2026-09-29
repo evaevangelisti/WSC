@@ -243,8 +243,16 @@ def test_replays_cached_alignment(
             {
                 "id": "synset",
                 "pos": "noun",
-                "glosses": ["meaning"],
-                "members": {"source1": ["word"], "source2": ["word", "different_word"]},
+                "sources": {
+                    "source1": {
+                        "members": ["word"],
+                        "glosses": ["meaning"],
+                    },
+                    "source2": {
+                        "members": ["word", "different_word"],
+                        "glosses": ["meaning"],
+                    },
+                },
             },
         )
         + "\n",
@@ -314,9 +322,16 @@ def test_replays_cached_alignment(
         assert aligned_lemma.senses[0].synsets[0].synset_id == "synset"
         assert aligned_lemma.senses[0].synsets[0].sources == ("source1", "source2")
 
-    cache_paths = list((tmp_path / "cache").glob("alignment/*.tsv"))
+    cache_paths = list((tmp_path / "cache").glob("alignment/**/*.tsv"))
 
-    assert {path.stem for path in cache_paths} == set(tasks)
+    assert {
+        path.relative_to(tmp_path / "cache" / "alignment") for path in cache_paths
+    } == {
+        Path("translations.tsv")
+        if task == AlignmentTask.TRANSLATIONS
+        else Path("synsets/all.tsv")
+        for task in tasks
+    }
     assert all(
         path.read_text(encoding="utf-8").splitlines()[0]
         == "alignment_id\tsource_id\ttarget_id\trelation\treason"
@@ -380,6 +395,360 @@ def test_replays_cached_alignment(
 
     assert incompatible_result.exit_code == 0, incompatible_result.output
     assert next(read_lemmas(output_dir / "senses.jsonl")) == aligned_lemma
+
+
+@pytest.mark.parametrize("second_source", ["other", "remaining"])
+def test_aligns_priority_resource_then_remaining_synsets(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    second_source: str,
+) -> None:
+    """
+    Later passes revisit abstentions without reconsidering accepted synsets.
+
+    Args:
+        tmp_path: Isolated input, cache, and output directories.
+        monkeypatch: Replacement for local model loading.
+        second_source: Explicit next resource or all remaining resources.
+    """
+    input_path = tmp_path / "input.jsonl"
+    _ = input_path.write_text(
+        json.dumps(
+            {
+                "id": "word.noun",
+                "lemma": "word",
+                "pos": "noun",
+                "senses": [
+                    {"id": "s1", "glosses": ["first meaning"]},
+                    {"id": "s2", "glosses": ["second meaning"]},
+                    {"id": "s3", "glosses": ["third meaning"]},
+                ],
+            },
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    synsets_path = tmp_path / "synsets.jsonl"
+    synsets = [
+        {
+            "id": "first",
+            "pos": "noun",
+            "sources": {
+                "wordnet": {
+                    "members": ["word", "first_synonym"],
+                    "glosses": ["WordNet first."],
+                    "examples": ["WordNet first example."],
+                },
+                "other": {
+                    "members": ["word"],
+                    "glosses": ["Other first."],
+                },
+            },
+        },
+        {
+            "id": "unmatched",
+            "pos": "noun",
+            "sources": {
+                "wordnet": {
+                    "members": ["word"],
+                    "glosses": ["WordNet unmatched."],
+                },
+                "other": {
+                    "members": ["word"],
+                    "glosses": ["Other unmatched."],
+                    "examples": ["Other unmatched example."],
+                },
+            },
+        },
+        {
+            "id": "other",
+            "pos": "noun",
+            "sources": {
+                "other": {
+                    "members": ["word", "other_synonym"],
+                    "glosses": ["Other only."],
+                },
+            },
+        },
+    ]
+    _ = synsets_path.write_text(
+        "".join(f"{json.dumps(synset)}\n" for synset in synsets),
+        encoding="utf-8",
+    )
+
+    class StagedModel(Model):
+        """
+        Record both requests and resolve one distinct sense per pass.
+        """
+
+        @override
+        def generate(
+            self,
+            request: ModelRequest,
+        ) -> str:
+            """
+            Match the priority candidate, then the remaining candidate.
+
+            Args:
+                request: Prompt for the current resource pass.
+
+            Returns:
+                Associations and explicit abstentions for that pass.
+            """
+            self.requests.append(request)
+
+            if len(self.requests) == 1:
+                return json.dumps(
+                    {
+                        "s1": [
+                            {
+                                "target_id": "first",
+                                "relation": "equivalent",
+                                "reason": "The first meanings agree.",
+                            },
+                        ],
+                        "s2": None,
+                        "s3": None,
+                    },
+                )
+
+            return json.dumps(
+                {
+                    "s2": [
+                        {
+                            "target_id": "other",
+                            "relation": "equivalent",
+                            "reason": "The second meanings agree.",
+                        },
+                    ],
+                    "s3": None,
+                },
+            )
+
+    model = StagedModel()
+
+    def load_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
+        """
+        Supply one shared model for both passes.
+
+        Args:
+            settings: Inference settings supplied by the command.
+
+        Returns:
+            The model recording both requests.
+        """
+        del settings
+
+        return model
+
+    monkeypatch.setattr(cli, "open_model", load_model)
+    arguments = [
+        "align",
+        str(input_path),
+        "--task",
+        "synsets",
+        "--synsets",
+        str(synsets_path),
+        "--synset-source",
+        "wordnet",
+        "--synset-source",
+        second_source,
+        "--cache-dir",
+        str(tmp_path / "cache"),
+        "--output-dir",
+        str(tmp_path / "output"),
+    ]
+    result = CliRunner().invoke(cli.app, arguments)
+
+    assert result.exit_code == 0, result.output
+    assert len(model.requests) == 2
+    assert model.requests[0].schema["required"] == ["s1", "s2", "s3"]
+    assert model.requests[1].schema["required"] == ["s2", "s3"]
+    assert "WordNet first." in model.requests[0].prompt
+    assert "Other first." not in model.requests[0].prompt
+    assert "Other only." not in model.requests[0].prompt
+    assert '"target_id":"first"' not in model.requests[1].prompt
+    assert "WordNet unmatched." in model.requests[1].prompt
+    assert "Other unmatched." not in model.requests[1].prompt
+    assert "Other unmatched example." not in model.requests[1].prompt
+    assert "Other only." in model.requests[1].prompt
+
+    cache_dir = tmp_path / "cache" / "alignment"
+    first_cache = cache_dir / "synsets" / "wordnet.tsv"
+    remaining_cache = cache_dir / "synsets" / f"{second_source}.tsv"
+    assert first_cache.is_file()
+    assert remaining_cache.is_file()
+    assert len(first_cache.read_text().splitlines()) == 4
+    assert len(remaining_cache.read_text().splitlines()) == 3
+
+    (aligned,) = tuple(read_lemmas(tmp_path / "output" / "senses.jsonl"))
+    assert [
+        tuple(association.synset_id for association in sense.synsets)
+        for sense in aligned.senses
+    ] == [("first",), ("other",), ()]
+    assert aligned.senses[0].synsets[0].sources == ("wordnet",)
+    assert aligned.senses[1].synsets[0].sources == ("other",)
+
+    report = cast(
+        dict[str, object],
+        json.loads((tmp_path / "output" / "reports" / "synsets.json").read_text()),
+    )
+    assert report["senses"] == {"evaluated": 3, "aligned": 2, "unaligned": 1}
+
+    def reject_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
+        """
+        Reject inference when both pass tables are complete.
+
+        Args:
+            settings: Unexpected inference settings.
+
+        Raises:
+            AssertionError: If cached replay starts inference.
+        """
+        raise AssertionError(f"Unexpected model loading: {settings.model}")
+
+    monkeypatch.setattr(cli, "open_model", reject_model)
+    replay = CliRunner().invoke(cli.app, [*arguments, "--reuse"])
+
+    assert replay.exit_code == 0, replay.output
+    assert tuple(read_lemmas(tmp_path / "output" / "senses.jsonl")) == (aligned,)
+
+
+def test_finishes_each_source_across_all_lemmas_before_next_source(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Complete every priority batch before inferring from remaining resources.
+
+    Args:
+        tmp_path: Isolated input, cache, and output directories.
+        monkeypatch: Replacement for local model loading.
+    """
+    input_path = tmp_path / "input.jsonl"
+    synsets_path = tmp_path / "synsets.jsonl"
+
+    _ = input_path.write_text(
+        "".join(
+            json.dumps(
+                {
+                    "id": f"{word}.noun",
+                    "lemma": word,
+                    "pos": "noun",
+                    "senses": [{"id": f"{word}.sense", "glosses": [word]}],
+                },
+            )
+            + "\n"
+            for word in ("first", "second")
+        ),
+        encoding="utf-8",
+    )
+    _ = synsets_path.write_text(
+        "".join(
+            json.dumps(
+                {
+                    "id": f"{word}.{source}",
+                    "pos": "noun",
+                    "sources": {
+                        source: {
+                            "members": [word],
+                            "glosses": [f"{source} meaning for {word}."],
+                        },
+                    },
+                },
+            )
+            + "\n"
+            for word in ("first", "second")
+            for source in ("wordnet", "other")
+        ),
+        encoding="utf-8",
+    )
+
+    class AbstainingModel(Model):
+        """
+        Record query order while leaving candidates for the next source.
+        """
+
+        @override
+        def generate(
+            self,
+            request: ModelRequest,
+        ) -> str:
+            """
+            Abstain for every Wiktionary sense in this request.
+
+            Args:
+                request: Prompt for one lemma and resource.
+
+            Returns:
+                Explicit null decisions for all source senses.
+            """
+            self.requests.append(request)
+
+            return json.dumps(
+                dict.fromkeys(cast(list[str], request.schema["required"])),
+            )
+
+    model = AbstainingModel()
+
+    def load_model(
+        settings: ModelSettings,
+    ) -> LanguageModel:
+        """
+        Supply one shared model for every source.
+
+        Args:
+            settings: Inference settings supplied by the command.
+
+        Returns:
+            The model recording query order.
+        """
+        del settings
+
+        return model
+
+    monkeypatch.setattr(cli, "open_model", load_model)
+
+    result = CliRunner().invoke(
+        cli.app,
+        [
+            "align",
+            str(input_path),
+            "--task",
+            "synsets",
+            "--synsets",
+            str(synsets_path),
+            "--synset-source",
+            "wordnet",
+            "--synset-source",
+            "remaining",
+            "--batch-size",
+            "1",
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--output-dir",
+            str(tmp_path / "output"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert [
+        (
+            cast(list[str], request.schema["required"])[0],
+            "other meaning" in request.prompt,
+        )
+        for request in model.requests
+    ] == [
+        ("first.sense", False),
+        ("second.sense", False),
+        ("first.sense", True),
+        ("second.sense", True),
+    ]
+    assert not list(tmp_path.glob(".alignment-stages-*"))
 
 
 def test_rejects_input_overwrite(

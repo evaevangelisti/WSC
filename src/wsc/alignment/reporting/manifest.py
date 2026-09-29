@@ -23,6 +23,7 @@ def build_manifest(
     mode: GlossMode,
     prompts: AlignmentPrompts,
     tasks: tuple[AlignmentTask, ...],
+    synset_sources: tuple[str, ...] = (),
 ) -> dict[str, object]:
     """
     Describe the source and configuration of an alignment run.
@@ -33,6 +34,7 @@ def build_manifest(
         mode: Wiktionary definition representation.
         prompts: Selected prompt collection.
         tasks: Requested alignment resources.
+        synset_sources: Requested synset resources in alignment order.
 
     Returns:
         Provenance completed after alignment succeeds.
@@ -44,6 +46,7 @@ def build_manifest(
             **asdict(settings),
             "gloss_mode": mode,
             "prompts": prompts.name,
+            **({"synset_sources": list(synset_sources)} if synset_sources else {}),
         },
         "runtime": {
             "python": python_version(),

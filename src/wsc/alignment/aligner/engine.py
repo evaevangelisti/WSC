@@ -49,6 +49,9 @@ class Aligner:
         prompts: AlignmentPrompts = DEFAULT_PROMPTS,
         batch_size: int = ALIGNMENT_BATCH_SIZE,
         model_loader: Callable[[], LanguageModel] | None = None,
+        *,
+        prefetch: bool = True,
+        show_progress: bool = True,
     ) -> None:
         """
         Configure the model and requested alignment tasks.
@@ -61,6 +64,8 @@ class Aligner:
             prompts: Named task prompt templates.
             batch_size: Maximum prompts or entries prepared per batch.
             model_loader: Deferred model construction for partial reuse.
+            prefetch: Prepare the next batch while this one is inferred.
+            show_progress: Display the alignment progress bar.
         """
         self._model: LanguageModel | None = model
 
@@ -74,6 +79,10 @@ class Aligner:
         self._batch_size: int = batch_size
 
         self._model_loader: Callable[[], LanguageModel] | None = model_loader
+
+        self._prefetch: bool = prefetch
+
+        self._show_progress: bool = show_progress
 
     def _report_failure(
         self,
@@ -224,6 +233,12 @@ class Aligner:
             cache,
         )
 
+        if not self._prefetch:
+            while (batch := prepare()) is not None:
+                yield batch
+
+            return
+
         with ThreadPoolExecutor(
             max_workers=1,
             thread_name_prefix="wsc-prompts",
@@ -253,7 +268,11 @@ class Aligner:
         Yields:
             Aligned entries with processed translation tables removed.
         """
-        with tqdm(desc="Aligning senses", unit=" lemma") as progress:
+        with tqdm(
+            desc="Aligning senses",
+            unit=" lemma",
+            disable=not self._show_progress,
+        ) as progress:
             for batch in self._batches(lemmas, cache or {}):
                 self._generate_batch(batch)
 

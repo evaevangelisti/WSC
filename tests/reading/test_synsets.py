@@ -1,19 +1,21 @@
 """
-Exercise JSON Lines input for generic synsets.
+Exercise JSON Lines input for sourced synsets.
 """
 
 import json
 from pathlib import Path
 
-from wsc.models import POS, SynsetMember
+import pytest
+
+from wsc.models import POS, SynsetResource
 from wsc.reading import read_synsets
 
 
-def test_reads_synsets_with_generated_ids_and_member_sources(
+def test_reads_source_evidence_and_generated_ids(
     tmp_path: Path,
 ) -> None:
     """
-    Absent identifiers and member sources survive input normalization.
+    Each resource keeps its own members, glosses, and examples.
 
     Args:
         tmp_path: Isolated directory for the source file.
@@ -25,17 +27,32 @@ def test_reads_synsets_with_generated_ids_and_member_sources(
                 json.dumps(
                     {
                         "pos": "noun",
-                        "members": {"source-a": ["word"], "source-b": ["term"]},
-                        "glosses": ["A lexical concept."],
-                        "examples": ["An example."],
+                        "sources": {
+                            "source-a": {
+                                "members": ["word"],
+                                "glosses": [
+                                    "A lexical concept.",
+                                    "Another description.",
+                                ],
+                                "examples": ["An example."],
+                            },
+                            "source-b": {
+                                "members": ["term"],
+                                "glosses": ["A second description."],
+                            },
+                        },
                     },
                 ),
                 json.dumps(
                     {
                         "id": "provided",
                         "pos": "verb",
-                        "members": ["act", {"lemma": "perform", "source": "lexicon"}],
-                        "glosses": ["Perform an action."],
+                        "sources": {
+                            "lexicon": {
+                                "members": ["act", "perform"],
+                                "glosses": ["Perform an action."],
+                            },
+                        },
                     },
                 ),
             ],
@@ -48,13 +65,70 @@ def test_reads_synsets_with_generated_ids_and_member_sources(
 
     assert first.id == "synset-00000001"
     assert first.pos == POS.NOUN
-    assert first.members == (
-        SynsetMember("word", "source-a"),
-        SynsetMember("term", "source-b"),
-    )
-    assert first.examples == ("An example.",)
+    assert first.resources == {
+        "source-a": SynsetResource(
+            ("word",),
+            ("A lexical concept.", "Another description."),
+            ("An example.",),
+        ),
+        "source-b": SynsetResource(("term",), ("A second description.",)),
+    }
     assert second.id == "provided"
-    assert second.members == (
-        SynsetMember("act"),
-        SynsetMember("perform", "lexicon"),
+    assert second.resources == {
+        "lexicon": SynsetResource(("act", "perform"), ("Perform an action.",)),
+    }
+
+
+@pytest.mark.parametrize(
+    "sources",
+    [
+        {},
+        {"source": {"members": [], "glosses": ["A meaning."]}},
+        {"source": {"members": ["word"], "glosses": []}},
+    ],
+)
+def test_rejects_missing_source_evidence(
+    tmp_path: Path,
+    sources: dict[str, dict[str, list[str]]],
+) -> None:
+    """
+    Every declared resource must identify and describe its concept.
+
+    Args:
+        tmp_path: Isolated directory for the source file.
+        sources: Resource mapping missing essential lexical evidence.
+    """
+    path = tmp_path / "synsets.jsonl"
+    _ = path.write_text(json.dumps({"pos": "noun", "sources": sources}) + "\n")
+
+    with pytest.raises(ValueError, match="needs members and glosses"):
+        _ = tuple(read_synsets(path))
+
+
+@pytest.mark.parametrize("source", ["", "remaining"])
+def test_rejects_unnamed_or_reserved_resources(
+    tmp_path: Path,
+    source: str,
+) -> None:
+    """
+    Source names must identify resources without colliding with pass labels.
+
+    Args:
+        tmp_path: Isolated directory for the source file.
+        source: Empty or reserved resource name.
+    """
+    path = tmp_path / "synsets.jsonl"
+    _ = path.write_text(
+        json.dumps(
+            {
+                "pos": "noun",
+                "sources": {
+                    source: {"members": ["word"], "glosses": ["A meaning."]},
+                },
+            },
+        )
+        + "\n",
     )
+
+    with pytest.raises(ValueError, match="invalid source names"):
+        _ = tuple(read_synsets(path))

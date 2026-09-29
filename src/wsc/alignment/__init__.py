@@ -5,7 +5,7 @@ Expose language model alignment and decision persistence.
 from .aligner import Aligner, align_query
 from .candidates import SynsetCandidates
 from .decisions import parse_response, validate_result
-from .recording import open_alignment_recorder, serialize_alignment
+from .recording import alignment_table_key, open_alignment_recorder, serialize_alignment
 from .requests import (
     build_request,
     render_source_definition,
@@ -17,6 +17,7 @@ __all__ = [
     "Aligner",
     "SynsetCandidates",
     "align_query",
+    "alignment_table_key",
     "build_queries",
     "build_request",
     "open_alignment_recorder",

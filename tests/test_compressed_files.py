@@ -56,10 +56,25 @@ def test_compressed_pipeline_files(
     """
     synsets_path = tmp_path / f"synsets.jsonl{suffix}"
     _ = synsets_path.write_bytes(
-        compress(b'{"pos":"noun","members":["word"],"glosses":["A word."]}\n'),
+        compress(
+            (
+                json.dumps(
+                    {
+                        "pos": "noun",
+                        "sources": {
+                            "source": {
+                                "members": ["word"],
+                                "glosses": ["A word."],
+                            },
+                        },
+                    },
+                )
+                + "\n"
+            ).encode()
+        ),
     )
 
-    assert next(read_synsets(synsets_path)).members[0].lemma == "word"
+    assert next(read_synsets(synsets_path)).resources["source"].members == ("word",)
 
     prompts_path = tmp_path / f"prompts.toml{suffix}"
     _ = prompts_path.write_bytes(compress(PROMPTS_PATH.read_bytes()))

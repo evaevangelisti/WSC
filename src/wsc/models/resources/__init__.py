@@ -2,7 +2,7 @@
 What each source is read into, one module apiece.
 """
 
-from .synsets import Synset, SynsetAlignment, SynsetMember, SynsetRelation
+from .synsets import Synset, SynsetAlignment, SynsetRelation, SynsetResource
 from .wiktionary import (
     Attestation,
     Example,
@@ -26,8 +26,8 @@ __all__ = [
     "Sentence",
     "Synset",
     "SynsetAlignment",
-    "SynsetMember",
     "SynsetRelation",
+    "SynsetResource",
     "TranslationTable",
     "WordOffset",
     "WordOffsetSource",

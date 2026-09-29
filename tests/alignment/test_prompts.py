@@ -103,6 +103,18 @@ def test_renders_distinct_synset_glosses() -> None:
     assert "First source gloss. > Second source gloss." not in prompt
 
 
+def test_synset_prompt_does_not_name_alignment_stage() -> None:
+    """
+    Keep resource selection outside the model instructions.
+    """
+    query = build_query(AlignmentTask.SYNSETS)
+
+    first_prompt = build_request(replace(query, stage="wordnet")).prompt
+    second_prompt = build_request(replace(query, stage="remaining")).prompt
+
+    assert first_prompt == second_prompt
+
+
 @pytest.mark.parametrize("mode", list(GlossMode))
 def test_applies_hierarchy_constraint(
     monkeypatch: pytest.MonkeyPatch,

@@ -105,6 +105,7 @@ class AlignmentQuery:
         pos: Wiktionary part of speech.
         source_definitions: Wiktionary senses.
         target_definitions: Candidate definitions.
+        stage: Synset resource pass, empty for ordinary task queries.
     """
 
     task: AlignmentTask
@@ -114,6 +115,7 @@ class AlignmentQuery:
     pos: POS
     source_definitions: tuple[Definition, ...]
     target_definitions: tuple[Definition, ...]
+    stage: str = ""
 
 
 @dataclass(frozen=True, slots=True)

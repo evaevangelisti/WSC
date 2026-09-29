@@ -24,8 +24,8 @@ from wsc.models import (
     Sense,
     Synset,
     SynsetAlignment,
-    SynsetMember,
     SynsetRelation,
+    SynsetResource,
     TranslationTable,
 )
 from wsc.models.alignment import (
@@ -252,10 +252,13 @@ def test_preserves_directed_relations() -> None:
         Synset(
             "synset-1",
             POS.NOUN,
-            (SynsetMember("word"), SynsetMember("synonym")),
-            ("specific",),
+            {"source": SynsetResource(("word", "synonym"), ("specific",))},
         ),
-        Synset("synset-2", POS.NOUN, (SynsetMember("word"),), ("general",)),
+        Synset(
+            "synset-2",
+            POS.NOUN,
+            {"source": SynsetResource(("word",), ("general",))},
+        ),
     )
 
     response = json.dumps(
@@ -279,8 +282,8 @@ def test_preserves_directed_relations() -> None:
     (aligned,) = aligner.align([lemma])
 
     assert aligned.senses[0].synsets == (
-        SynsetAlignment("synset-1", SynsetRelation.EQUIVALENT),
-        SynsetAlignment("synset-2", SynsetRelation.WIKTIONARY_NARROWER),
+        SynsetAlignment("synset-1", SynsetRelation.EQUIVALENT, ("source",)),
+        SynsetAlignment("synset-2", SynsetRelation.WIKTIONARY_NARROWER, ("source",)),
     )
     expected_target = (
         '"target_id":"synset-1","synonyms":["synonym"],"glosses":["specific"]'
@@ -390,7 +393,13 @@ def test_includes_variant_candidates() -> None:
         senses=[Sense("s", ("sense",), synonyms=("variant",))],
     )
     candidates = SynsetCandidates(
-        [Synset("synset", POS.NOUN, (SynsetMember("a.b"),), ("definition",))],
+        [
+            Synset(
+                "synset",
+                POS.NOUN,
+                {"source": SynsetResource(("a.b",), ("definition",))},
+            ),
+        ],
     )
     (result,) = build_queries(lemma, AlignmentTask.SYNSETS, candidates)
 
@@ -416,13 +425,13 @@ def test_deduplicates_candidate_synonyms() -> None:
             Synset(
                 "synset",
                 POS.NOUN,
-                (
-                    SynsetMember("word"),
-                    SynsetMember("term", "source-1"),
-                    SynsetMember("term", "source-2"),
-                    SynsetMember("word_form"),
-                ),
-                ("definition",),
+                {
+                    "source-1": SynsetResource(
+                        ("word", "term", "word_form"),
+                        ("definition",),
+                    ),
+                    "source-2": SynsetResource(("term",), ("definition",)),
+                },
             ),
         ],
     )
@@ -432,6 +441,44 @@ def test_deduplicates_candidate_synonyms() -> None:
     assert len(result.source_definitions) == 1
     assert result.alignment_id == "synsets:word.noun"
     assert result.target_definitions[0].synonyms == ("term", "word_form")
+
+
+def test_scopes_source_pass_queries_to_prior_resources() -> None:
+    """
+    Cached decisions from a standalone source cannot replay after another pass.
+    """
+    lemma = Lemma("word.noun", "word", POS.NOUN, senses=[Sense("s", ("sense",))])
+    candidates = SynsetCandidates(
+        [
+            Synset(
+                "synset",
+                POS.NOUN,
+                {
+                    "wordnet": SynsetResource(("word",), ("First resource.",)),
+                    "other": SynsetResource(("word",), ("Second resource.",)),
+                },
+            ),
+        ],
+    )
+    (standalone,) = build_queries(
+        lemma,
+        AlignmentTask.SYNSETS,
+        candidates.for_stage("other", skip_aligned=False),
+    )
+    (following,) = build_queries(
+        lemma,
+        AlignmentTask.SYNSETS,
+        candidates.for_stage(
+            "other",
+            previous_sources=("wordnet",),
+            skip_aligned=True,
+        ),
+    )
+
+    assert standalone.alignment_id != following.alignment_id
+    assert following.alignment_id == "synsets:wordnet:other:source-scoped:word.noun"
+    assert standalone.target_definitions[0].glosses == ("Second resource.",)
+    assert following.target_definitions[0].glosses == ("First resource.",)
 
 
 def test_queries_complete_senses() -> None:
@@ -456,8 +503,7 @@ def test_queries_complete_senses() -> None:
                 Synset(
                     "synset",
                     POS.NOUN,
-                    (SynsetMember("word"),),
-                    ("definition",),
+                    {"source": SynsetResource(("word",), ("definition",))},
                 ),
             ],
         ),
@@ -623,7 +669,13 @@ def test_isolates_failed_queries(
     ]
     model = Model(responses)
     candidates = SynsetCandidates(
-        [Synset("synset", POS.NOUN, (SynsetMember("word"),), ("meaning",))],
+        [
+            Synset(
+                "synset",
+                POS.NOUN,
+                {"source": SynsetResource(("word",), ("meaning",))},
+            ),
+        ],
     )
 
     caplog.clear()
@@ -647,7 +699,7 @@ def test_isolates_failed_queries(
             else original.translation_tables[0]
         )
         assert result.senses[0].synsets == (
-            SynsetAlignment("synset", SynsetRelation.EQUIVALENT),
+            SynsetAlignment("synset", SynsetRelation.EQUIVALENT, ("source",)),
         )
         assert original.translation_tables
         assert original.senses[0].translation_table is not None

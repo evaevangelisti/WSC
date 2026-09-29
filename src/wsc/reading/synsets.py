@@ -8,16 +8,17 @@ from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
 from ..files import open_compressed
-from ..models import POS, Synset, SynsetMember
+from ..models import POS, Synset, SynsetResource
 
 
-class SynsetMemberRecord(TypedDict):
+class SynsetResourceRecord(TypedDict):
     """
-    Lexical member with an optional declared source.
+    Serialized lexical evidence from one resource.
     """
 
-    lemma: str
-    source: NotRequired[str]
+    members: list[str]
+    glosses: list[str]
+    examples: NotRequired[list[str]]
 
 
 class SynsetRecord(TypedDict):
@@ -27,36 +28,7 @@ class SynsetRecord(TypedDict):
 
     id: NotRequired[str]
     pos: str
-    members: list[str | SynsetMemberRecord] | dict[str, list[str]]
-    glosses: list[str]
-    examples: NotRequired[list[str]]
-
-
-def _read_members(
-    members: list[str | SynsetMemberRecord] | dict[str, list[str]],
-) -> tuple[SynsetMember, ...]:
-    """
-    Flatten members while retaining any source declared for them.
-
-    Args:
-        members: Plain members or members grouped by their source.
-
-    Returns:
-        Members in their input order.
-    """
-    if isinstance(members, list):
-        return tuple(
-            SynsetMember(member)
-            if isinstance(member, str)
-            else SynsetMember(member["lemma"], member.get("source", ""))
-            for member in members
-        )
-
-    return tuple(
-        SynsetMember(member, source)
-        for source, source_members in members.items()
-        for member in source_members
-    )
+    sources: dict[str, SynsetResourceRecord]
 
 
 def read_synsets(
@@ -72,22 +44,35 @@ def read_synsets(
         Validated synsets with generated identifiers where absent.
 
     Raises:
-        ValueError: If a record has no members or no glosses.
+        ValueError: If a record has no resource or a resource lacks evidence.
     """
     with open_compressed(path, "rt") as stream:
         for line_number, line in enumerate(stream, start=1):
             record = cast(SynsetRecord, json.loads(line))
 
-            members = _read_members(record["members"])
-            glosses = tuple(record["glosses"])
+            resources = {
+                name: SynsetResource(
+                    tuple(source["members"]),
+                    tuple(source["glosses"]),
+                    tuple(source.get("examples", ())),
+                )
+                for name, source in record["sources"].items()
+            }
 
-            if not members or not glosses:
+            if not resources:
+                raise ValueError(f"Synset line {line_number} needs members and glosses")
+
+            if any(not name or name == "remaining" for name in resources):
+                raise ValueError(f"Synset line {line_number} has invalid source names")
+
+            if any(
+                not resource.members or not resource.glosses
+                for resource in resources.values()
+            ):
                 raise ValueError(f"Synset line {line_number} needs members and glosses")
 
             yield Synset(
                 record.get("id", f"synset-{line_number:08d}"),
                 POS(record["pos"]),
-                members,
-                glosses,
-                tuple(record.get("examples", [])),
+                resources,
             )

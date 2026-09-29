@@ -2,7 +2,7 @@
 Record alignment decisions incrementally in resource-specific tables.
 """
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -13,6 +13,28 @@ from ..constants import ALIGNMENT_FIELDS
 from ..export import TSVWriter
 from ..models.alignment import AlignmentDecision, AlignmentResult, AlignmentTask
 from ..reading.alignment import read_alignment_cache
+
+type AlignmentTableKey = AlignmentTask | tuple[AlignmentTask, str]
+"""
+Task key with an optional resource pass.
+"""
+
+
+def alignment_table_key(
+    task: AlignmentTask,
+    stage: str = "",
+) -> AlignmentTableKey:
+    """
+    Distinguish each synset pass from ordinary task tables.
+
+    Args:
+        task: Alignment task owning the decisions.
+        stage: Selected synset resource or remaining pass.
+
+    Returns:
+        Task key with an optional source-stage qualifier.
+    """
+    return (task, stage) if stage else task
 
 
 def _serialize_decision(
@@ -106,7 +128,7 @@ def serialize_alignment(
 
 def open_alignment_recorder(
     stack: ExitStack,
-    paths: dict[AlignmentTask, Path],
+    paths: Mapping[AlignmentTableKey, Path],
 ) -> Callable[[AlignmentResult], None]:
     """
     Open task-specific writers and return their decision recorder.
@@ -133,8 +155,10 @@ def open_alignment_recorder(
             result: Complete alignment result.
         """
         for row in serialize_alignment(result):
-            writers[result.query.task].write(row)
+            writers[alignment_table_key(result.query.task, result.query.stage)].write(
+                row
+            )
 
-        writers[result.query.task].flush()
+        writers[alignment_table_key(result.query.task, result.query.stage)].flush()
 
     return record_decisions

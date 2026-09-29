@@ -4,7 +4,6 @@ Command line for collecting senses out of Wiktionary.
 
 import json
 from contextlib import ExitStack
-from functools import partial
 from importlib.metadata import version
 from logging import DEBUG, getLogger
 from pathlib import Path
@@ -12,15 +11,16 @@ from typing import Annotated, cast
 
 import typer
 
-from .alignment import (
-    Aligner,
-    SynsetCandidates,
-    open_alignment_recorder,
-)
+from .alignment import open_alignment_recorder
 from .alignment.inference import open_model
 from .alignment.reporting import AlignmentStatistics, write_alignment
 from .alignment.reporting import (
     build_manifest as build_alignment_manifest,
+)
+from .alignment.stages import (
+    align_stages,
+    alignment_table_paths,
+    prepare_synset_stages,
 )
 from .archives import archive_path
 from .collection import CollectionSettings, build_manifest, write_collection
@@ -52,12 +52,17 @@ from .extract.dump.wikidata import read_wikidata_ids
 from .files import Compression, compressed_name, existing_file
 from .logging import configure_logging
 from .models import POS, Engine
-from .models.alignment import AlignmentResult, AlignmentTask, GlossMode, ModelSettings
+from .models.alignment import (
+    AlignmentResult,
+    AlignmentTask,
+    GlossMode,
+    LanguageModel,
+    ModelSettings,
+)
 from .reading import (
     read_alignment_cache,
     read_lemmas,
     read_prompts,
-    read_synsets,
 )
 from .upstream import cache, download, repository, wiktextract
 
@@ -443,6 +448,12 @@ def align(
             help="Generic synsets to align, relative to the current directory.",
         ),
     ] = DEFAULT_SYNSETS_PATH,
+    synset_source: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Repeat in priority order; use remaining for all other resources.",
+        ),
+    ] = None,
     model: Annotated[
         str,
         typer.Option(
@@ -543,6 +554,7 @@ def align(
     Align collected senses with language model decisions.
     """
     tasks = tuple(dict.fromkeys(task or AlignmentTask))
+    selected_sources = tuple(synset_source or ("remaining",))
 
     if verbose:
         getLogger("wsc").setLevel(DEBUG)
@@ -588,13 +600,14 @@ def align(
         ),
     )
 
-    candidates = SynsetCandidates(())
-
-    if AlignmentTask.SYNSETS in tasks:
-        if not synsets_path.is_file():
-            raise typer.BadParameter(f"No synsets at {synsets_path}")
-
-        candidates = SynsetCandidates(read_synsets(synsets_path))
+    try:
+        candidates, stages = prepare_synset_stages(
+            synsets_path,
+            synset_source,
+            tasks,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
 
     manifest = build_alignment_manifest(
         input_path,
@@ -602,10 +615,11 @@ def align(
         gloss_mode,
         prompts,
         tasks,
+        selected_sources if AlignmentTask.SYNSETS in tasks else (),
     )
 
     evidence_dir = cache.alignment_dir(cache_dir)
-    evidence_paths = {selected: evidence_dir / f"{selected}.tsv" for selected in tasks}
+    evidence_paths = alignment_table_paths(tasks, stages, evidence_dir)
 
     _LOGGER.info(
         "%s alignment cache: %s",
@@ -614,16 +628,31 @@ def align(
     )
 
     alignment_cache = {
-        selected: read_alignment_cache(existing_file(path))
-        for selected, path in evidence_paths.items()
+        key: read_alignment_cache(existing_file(path))
+        for key, path in evidence_paths.items()
         if reuse
     }
 
     language_model = None if reuse else open_model(settings)
 
-    model_loader = partial(open_model, settings) if reuse else None
+    def load_model() -> LanguageModel:
+        """
+        Load the model once when cached decisions leave pending work.
 
-    statistics = AlignmentStatistics(tasks)
+        Returns:
+            Shared inference model for every resource pass.
+        """
+        nonlocal language_model
+
+        if language_model is None:
+            language_model = open_model(settings)
+
+        return language_model
+
+    statistics = AlignmentStatistics(
+        tasks,
+        count_final_synsets=len(stages) > 1,
+    )
 
     with ExitStack() as stack:
         recorder = open_alignment_recorder(stack, evidence_paths)
@@ -640,21 +669,22 @@ def align(
             recorder(result)
             statistics.add(result)
 
-        aligner = Aligner(
-            language_model,
-            candidates,
-            tasks,
-            gloss_mode,
-            prompts,
-            batch_size,
-            model_loader,
-        )
-
         write_alignment(
-            aligner.align(
-                read_lemmas(input_path),
-                cache=alignment_cache,
-                recorder=record_result,
+            statistics.observe(
+                align_stages(
+                    read_lemmas(input_path),
+                    candidates,
+                    tasks,
+                    stages,
+                    language_model,
+                    gloss_mode,
+                    prompts,
+                    batch_size,
+                    alignment_cache,
+                    record_result,
+                    output_dir.parent,
+                    load_model if reuse else None,
+                ),
             ),
             output_dir,
             statistics,

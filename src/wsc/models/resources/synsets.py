@@ -2,6 +2,7 @@
 Domain models for the generic synsets used in alignment.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -22,6 +23,11 @@ class SynsetRelation(StrEnum):
 class SynsetAlignment:
     """
     Synset associated with a Wiktionary sense.
+
+    Attributes:
+        synset_id: Identifier of the associated synset.
+        relation: Semantic relation directed from Wiktionary.
+        sources: Resources supporting the queried member.
     """
 
     synset_id: str
@@ -30,23 +36,32 @@ class SynsetAlignment:
 
 
 @dataclass(frozen=True, slots=True)
-class SynsetMember:
+class SynsetResource:
     """
-    One lexical member of a synset.
+    Describe one source's evidence for a synset.
+
+    Attributes:
+        members: Lemmas belonging to the synset in this resource.
+        glosses: Descriptions supplied by this resource.
+        examples: Usage examples supplied by this resource.
     """
 
-    lemma: str
-    source: str = ""
+    members: tuple[str, ...]
+    glosses: tuple[str, ...]
+    examples: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
 class Synset:
     """
-    One general lexical concept shared by one or more members.
+    One lexical concept supported by named resources.
+
+    Attributes:
+        id: Stable identifier shared across resources.
+        pos: Part of speech shared by the source records.
+        resources: Lexical evidence indexed by resource name.
     """
 
     id: str
     pos: POS
-    members: tuple[SynsetMember, ...]
-    glosses: tuple[str, ...]
-    examples: tuple[str, ...] = ()
+    resources: Mapping[str, SynsetResource]

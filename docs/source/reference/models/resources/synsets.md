@@ -2,4 +2,5 @@
 
 ```{eval-rst}
 .. automodule:: wsc.models.resources.synsets
+   :members:
 ```

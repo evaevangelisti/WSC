@@ -15,5 +15,6 @@ decisions
 requests
 tasks/index
 recording
+stages
 reporting
 ```

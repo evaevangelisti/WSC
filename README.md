@@ -127,9 +127,10 @@ wsc align collection/senses.jsonl
 | --- | --- | --- |
 | `--task` | both resources | `translations` or `synsets`; repeat to select both |
 | `--synsets` | `synsets.jsonl` | Synsets in JSON Lines format |
+| `--synset-source` | `remaining` | Repeat resources in priority order; put `remaining` last to include all others |
 | `--model` | `openai/gpt-oss-120b` | Local model path or Hugging Face identifier |
 | `--gloss-mode` | `last` | Last gloss or full hierarchy joined with ` > ` |
-| `--prompts` | bundled `prompts.toml` | One customizable template per task |
+| `--prompts` | bundled `prompts.toml` | Task templates |
 | `--temperature` | `0.0` | Sampling temperature |
 | `--maximum-tokens` | `4096` | Generated token limit |
 | `--batch-size` | `32768` | Prompts prepared for one vLLM inference call |
