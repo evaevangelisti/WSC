@@ -13,6 +13,7 @@ from hypothesis import strategies as st
 from wsc.models import (
     POS,
     Example,
+    Language,
     Lemma,
     Quotation,
     Sense,
@@ -488,7 +489,7 @@ lemmas = parts_of_speech.flatmap(
                 TranslationTable(
                     f"lemma.noun.tr.{index}",
                     gloss,
-                    languages,
+                    {Language(code): words for code, words in languages.items()},
                 )
                 for index, (gloss, languages) in enumerate(tables.items())
             ),

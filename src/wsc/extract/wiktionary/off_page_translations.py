@@ -6,13 +6,14 @@ Tables move to a subpage; a shared meaning is pointed at.
 
 import json
 from collections.abc import Iterable
+from dataclasses import replace
 from pathlib import Path
-from typing import cast
+from typing import TypedDict, cast
 
 from ...constants import LANGUAGE
 from ...files import open_compressed
 from ...identifiers import lemma_id
-from ...models import TranslationTable
+from ...models import Language, TranslationTable
 from ..dump.translations import PageTranslations
 from ..translations import clean_translations, translation_gloss_key
 from .merge import add_translations
@@ -28,6 +29,15 @@ type TranslationGlosses = dict[str, frozenset[str]]
 """
 Normalized translation glosses already supplied for each entry.
 """
+
+
+class _TranslationRecord(TypedDict):
+    """
+    Serialized language and its translated words.
+    """
+
+    language: dict[str, str]
+    words: list[str]
 
 
 def index_translation_glosses(
@@ -84,10 +94,39 @@ def index_translation_glosses(
     }
 
 
+def _label_tables(
+    tables: tuple[TranslationTable, ...],
+    language_labels: dict[str, str],
+) -> tuple[TranslationTable, ...]:
+    """
+    Add Wiktextract language labels to dump-only translation tables.
+
+    Args:
+        tables: Tables whose codes may lack a language name.
+        language_labels: Names observed in Wiktextract translations.
+
+    Returns:
+        Tables with available language labels attached.
+    """
+    return tuple(
+        replace(
+            table,
+            translations={
+                Language(
+                    language.code,
+                    language.label or language_labels.get(language.code, ""),
+                ): words
+                for language, words in table.translations.items()
+            },
+        )
+        for table in tables
+    )
+
+
 def _read_pointed_translations(
     entries: Iterable[RawEntry],
     pointed_ids: set[str],
-) -> dict[str, tuple[TranslationTable, ...]]:
+) -> tuple[dict[str, tuple[TranslationTable, ...]], dict[str, str]]:
     """
     Read the translations of the entries some pointer names.
 
@@ -98,13 +137,20 @@ def _read_pointed_translations(
         pointed_ids: What names the entries worth reading.
 
     Returns:
-        Translation tables grouped by the name of the entry.
+        Translation tables by entry and language labels seen in Wiktextract.
     """
     pointed_translations: dict[str, tuple[TranslationTable, ...]] = {}
+    language_labels: dict[str, str] = {}
 
     for entry in entries:
         if entry.get("lang_code") != LANGUAGE:
             continue
+
+        for translation in entry.get("translations", []):
+            if (code := translation.get("lang_code")) and (
+                label := translation.get("lang")
+            ):
+                _ = language_labels.setdefault(code, label)
 
         try:
             pos = parse_pos(entry.get("pos", ""))
@@ -127,7 +173,13 @@ def _read_pointed_translations(
             pointed_id,
         )
 
-    return pointed_translations
+    return (
+        {
+            entry_id: _label_tables(tables, language_labels)
+            for entry_id, tables in pointed_translations.items()
+        },
+        language_labels,
+    )
 
 
 def build_off_page_translations(
@@ -155,7 +207,18 @@ def build_off_page_translations(
         for pointed_lemma in pointed_lemmas
     }
 
-    pointed_translations = _read_pointed_translations(entries, pointed_ids)
+    pointed_translations, language_labels = _read_pointed_translations(
+        entries,
+        pointed_ids,
+    )
+
+    translated_pages = [
+        replace(
+            page,
+            translations=_label_tables(page.translations, language_labels),
+        )
+        for page in translated_pages
+    ]
 
     for page in translated_pages:
         pointed_id = lemma_id(page.lemma, page.pos)
@@ -230,10 +293,16 @@ def write_off_page_translations(
             {
                 "id": table.id,
                 "gloss": table.gloss,
-                "translations": {
-                    language: sorted(words)
+                "translations": [
+                    {
+                        "language": {
+                            "code": language.code,
+                            "label": language.label,
+                        },
+                        "words": sorted(words),
+                    }
                     for language, words in table.translations.items()
-                },
+                ],
             }
             for table in tables
         ]
@@ -242,6 +311,40 @@ def write_off_page_translations(
 
     with open_compressed(output_path, "wt") as stream:
         _ = stream.write(json.dumps(written, ensure_ascii=False))
+
+
+def _read_table_translations(
+    table: dict[str, object],
+) -> dict[Language, frozenset[str]]:
+    """
+    Read labeled translations or the preceding code-indexed cache format.
+
+    Args:
+        table: Serialized supplemental translation table.
+
+    Returns:
+        Words grouped by their language objects.
+    """
+    serialized = table["translations"]
+
+    if isinstance(serialized, dict):
+        labels = {
+            language["code"]: language["label"]
+            for language in cast(list[dict[str, str]], table.get("languages", []))
+        }
+
+        return {
+            Language(code, labels.get(code, "")): frozenset(words)
+            for code, words in cast(dict[str, list[str]], serialized).items()
+        }
+
+    return {
+        Language(
+            record["language"]["code"],
+            record["language"].get("label", ""),
+        ): frozenset(record["words"])
+        for record in cast(list[_TranslationRecord], serialized)
+    }
 
 
 def read_off_page_translations(
@@ -264,12 +367,7 @@ def read_off_page_translations(
             TranslationTable(
                 str(table["id"]),
                 str(table["gloss"]),
-                {
-                    language: frozenset(words)
-                    for language, words in cast(
-                        dict[str, list[str]], table["translations"]
-                    ).items()
-                },
+                _read_table_translations(table),
             )
             for table in tables
         )

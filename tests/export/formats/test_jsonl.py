@@ -16,6 +16,7 @@ from strategies import RawJson, lemmas, words
 from wsc.export import Writer, open_writer
 from wsc.models import (
     POS,
+    Language,
     Lemma,
     Quotation,
     Sense,
@@ -78,10 +79,16 @@ def _serialize_sense(
         record["translation_table"] = {
             "id": sense.translation_table.id,
             "gloss": sense.translation_table.gloss,
-            "translations": {
-                language: sorted(words)
+            "translations": [
+                {
+                    "language": {
+                        "code": language.code,
+                        **({"label": language.label} if language.label else {}),
+                    },
+                    "words": sorted(words),
+                }
                 for language, words in sense.translation_table.translations.items()
-            },
+            ],
         }
 
     if sense.etymology:
@@ -143,10 +150,16 @@ def _serialize_lemma(
                 for key, value in {
                     "id": table.id,
                     "gloss": table.gloss,
-                    "translations": {
-                        language: sorted(words)
+                    "translations": [
+                        {
+                            "language": {
+                                "code": language.code,
+                                **({"label": language.label} if language.label else {}),
+                            },
+                            "words": sorted(words),
+                        }
                         for language, words in table.translations.items()
-                    },
+                    ],
                 }.items()
                 if value not in ("", {})
             }
@@ -253,7 +266,7 @@ class TestJSONLWriter:
             translation_table=TranslationTable(
                 "bank.noun.tr.1",
                 "Financial institution.",
-                {"it": frozenset({"banca"})},
+                {Language("it"): frozenset({"banca"})},
             ),
             synsets=(
                 SynsetAlignment(
@@ -273,7 +286,9 @@ class TestJSONLWriter:
                 "translation_table": {
                     "id": "bank.noun.tr.1",
                     "gloss": "Financial institution.",
-                    "translations": {"it": ["banca"]},
+                    "translations": [
+                        {"language": {"code": "it"}, "words": ["banca"]},
+                    ],
                 },
                 "synsets": [
                     {

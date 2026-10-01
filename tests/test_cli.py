@@ -47,7 +47,7 @@ from wsc.constants import (
 )
 from wsc.extract.dump.wikidata import read_wikidata_ids
 from wsc.identifiers import lemma_id, sense_id
-from wsc.models import Engine
+from wsc.models import Engine, Language
 from wsc.models.pos import POS
 from wsc.reading import read_lemmas
 from wsc.upstream import cache, wiktextract
@@ -731,7 +731,6 @@ class TestParse:
             r"\alpha is a symbol.",
             r"Choose \binom{n}{k} options.",
             r"I consequently define n!!=n\cdot (n-2)!!. Starting with 1.",
-            "A chord on ratio:",
             "Chapter:\n3",
         ]
         assert [table.gloss for table in entry.translation_tables] == [
@@ -1035,7 +1034,9 @@ def test_collects_published_archive(
 
     assert offset.offset == (0, 4)
     assert offset.sources == ("bold", "lemmatizer")
-    assert entry.translation_tables[0].translations == {"it": frozenset({"Roma"})}
+    assert entry.translation_tables[0].translations == {
+        Language("it"): frozenset({"Roma"}),
+    }
 
 
 def test_collects_only_explicit_dump_wikidata_ids(

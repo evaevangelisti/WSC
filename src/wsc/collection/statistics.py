@@ -188,7 +188,7 @@ class Statistics:
 
         for table in entry.translation_tables:
             for language, words in table.translations.items():
-                self.translation_languages[language] += len(words)
+                self.translation_languages[language.code] += len(words)
                 self.translations += len(words)
 
         for sense in entry.senses:

@@ -20,6 +20,7 @@ from .pos import POS
 from .resources import (
     Attestation,
     Example,
+    Language,
     Lemma,
     Offset,
     Quotation,
@@ -47,6 +48,7 @@ __all__ = [
     "Engine",
     "Example",
     "GlossMode",
+    "Language",
     "LanguageModel",
     "Lemma",
     "ModelRequest",

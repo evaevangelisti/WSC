@@ -17,6 +17,7 @@ from wsc.extract.wiktionary.parts.glosses import clean_gloss
 from wsc.extract.wiktionary.parts.sentences import clean_sentence
 from wsc.models import (
     Attestation,
+    Language,
     Lemma,
     TranslationTable,
     WordOffset,
@@ -493,7 +494,7 @@ def test_excludes_navigation_across_fields(
                 {"sense": "A meaning.", "lang_code": "fr", "word": written},
             ],
         },
-        (TranslationTable("old", written, {"fr": frozenset({"mot"})}),),
+        (TranslationTable("old", written, {Language("fr"): frozenset({"mot"})}),),
     )
 
     assert result[0].senses[0].glosses == ("A meaning.",)
@@ -554,7 +555,7 @@ def test_cleans_both_translation_sources(
     """
     heading = "A '''meaning''' (see other)."
     supplementary = (
-        TranslationTable("old", heading, {language: frozenset({written})}),
+        TranslationTable("old", heading, {Language(language): frozenset({written})}),
     )
     records = [{"sense": heading, "lang_code": language, "word": written}]
     raw = extract({"translations": records})[0]
@@ -567,7 +568,9 @@ def test_cleans_both_translation_sources(
     else:
         code, word = expected
         assert raw.translation_tables[0].gloss == "A meaning."
-        assert raw.translation_tables[0].translations == {code: frozenset({word})}
+        assert raw.translation_tables[0].translations == {
+            Language(code): frozenset({word}),
+        }
 
 
 @pytest.mark.parametrize(
@@ -589,7 +592,11 @@ def test_removes_editorial_translation_tails(
     heading = "cognate translations of hydrargyrum"
     written = f"{heading} — {reference}"
     supplementary = (
-        TranslationTable("old", written, {"la": frozenset({"hydrargyrum"})}),
+        TranslationTable(
+            "old",
+            written,
+            {Language("la"): frozenset({"hydrargyrum"})},
+        ),
     )
     records = [{"sense": written, "lang_code": "la", "word": "hydrargyrum"}]
     raw = extract({"translations": records})[0]
@@ -638,7 +645,14 @@ def test_excludes_supplementary_placeholders(
     A supplementary table must carry a definition before semantic alignment.
     """
     result = extract(
-        {}, (TranslationTable("old", heading, {"it": frozenset({"parola"})}),)
+        {},
+        (
+            TranslationTable(
+                "old",
+                heading,
+                {Language("it"): frozenset({"parola"})},
+            ),
+        ),
     )
 
     assert result[0].translation_tables == ()
@@ -774,6 +788,8 @@ def test_keeps_lexical_translation_alternatives(
         ("wal", "Inggilizettuwa sg or", "Inggilizettuwa"),
         ("sv", "grönt uncountable", "grönt"),
         ("ru", "сзыва́ть impf", "сзыва́ть"),
+        ("la", "Āram gender unattested", "Āram"),
+        ("la", "Āram gender unknown", "Āram"),
         ("de", "plural", "plural"),
         ("pt", "primeira pessoa do singular", "primeira pessoa do singular"),
         ("uk", "приско́рювати impf прискорити", "приско́рювати impf прискорити"),
@@ -805,7 +821,7 @@ def test_removes_unambiguous_translation_grammar(
     )
 
     assert result[0].translation_tables[0].translations == {
-        language: frozenset({expected}),
+        Language(language): frozenset({expected}),
     }
 
 
@@ -853,7 +869,84 @@ def test_separates_explicit_translation_alternatives(
         },
     )
 
-    assert result[0].translation_tables[0].translations == {language: expected}
+    assert result[0].translation_tables[0].translations == {
+        Language(language): expected,
+    }
+
+
+@pytest.mark.parametrize(
+    ("language", "written", "expected"),
+    [
+        (
+            "fr",
+            "Cayes, Les Cayes, Aux Cayes",
+            frozenset({"Cayes", "Les Cayes", "Aux Cayes"}),
+        ),
+        (
+            "eo",
+            "fanarioto, fanariano, fenerano",
+            frozenset({"fanarioto", "fanariano", "fenerano"}),
+        ),
+        (
+            "de",
+            "grußloser Abschied, heimliche Abfahrt etc.",
+            frozenset({"grußloser Abschied", "heimliche Abfahrt"}),
+        ),
+        ("pl", "możliwe, że", frozenset({"możliwe, że"})),
+    ],
+)
+def test_separates_supported_comma_translation_lists(
+    extract: Callable[..., list[Lemma]],
+    language: str,
+    written: str,
+    expected: frozenset[str],
+) -> None:
+    """
+    Distinct translations are separated without breaking lexical commas.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+        language: Translation language code.
+        written: Raw translation containing a possible comma list.
+        expected: Lexical alternatives retained after cleanup.
+    """
+    result = extract(
+        {
+            "translations": [
+                {"sense": "A meaning.", "lang_code": language, "word": written}
+            ]
+        },
+    )
+
+    assert result[0].translation_tables[0].translations == {
+        Language(language): expected,
+    }
+
+
+@pytest.mark.parametrize(
+    "written",
+    [
+        "often mistakenly called förkörsrätt",
+        "Thesaurus:isoisä",
+        "see Thesaurus:käppiä",
+    ],
+)
+def test_discards_editorial_translation_labels(
+    extract: Callable[..., list[Lemma]],
+    written: str,
+) -> None:
+    """
+    An editorial pointer cannot serve as a translated lemma.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+        written: Editorial translation text.
+    """
+    result = extract(
+        {"translations": [{"sense": "A meaning.", "lang_code": "sv", "word": written}]},
+    )
+
+    assert result[0].translation_tables == ()
 
 
 def test_discards_ambiguous_middle_gender(

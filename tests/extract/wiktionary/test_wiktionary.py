@@ -35,11 +35,13 @@ from strategies import (
 
 from wsc.constants import LANGUAGE
 from wsc.extract import WiktionaryExtractor
-from wsc.extract.markup import normalize_statement
-from wsc.extract.wiktionary.parts.sentences import clean_reference
+from wsc.extract.markup import normalize_formatting, normalize_statement
+from wsc.extract.wiktionary.parts.sentences import clean_reference, clean_sentence
 from wsc.models import (
     POS,
+    Attestation,
     Example,
+    Language,
     Lemma,
     Quotation,
     Sentence,
@@ -527,13 +529,19 @@ class TestSenses:
         data: st.DataObject,
     ) -> None:
         """
-        The chain is what lets a sub-sense be read on its own, whitespace aside.
+        Each gloss in a hierarchy retains its standalone cleaned meaning.
         """
         senses: list[RawJson] = [{"glosses": chain}]
         entry = data.draw(raw_entries(senses=st.just(senses)))
 
         expected_glosses = tuple(
-            normalize_statement(gloss) for gloss in chain if gloss.strip()
+            sense.gloss
+            for gloss in chain
+            if gloss.strip()
+            for lemma in extract(
+                [{**entry, "senses": [{"glosses": [gloss]}]}],
+            )
+            for sense in lemma.senses
         )
 
         assert [
@@ -785,11 +793,11 @@ class TestSentences:
         """
         Separate examples flattened by Wiktextract when both name the lemma.
         """
-        text = "she helped the blind man across; the river is half a mile across"
+        text = "she helped the blind man across;  the river is half a mile across"
         sentences = attest(
             {
                 "text": text,
-                "bold_text_offsets": [[25, 31], [58, 64]],
+                "bold_text_offsets": [[25, 31], [59, 65]],
                 "type": "example",
             },
             headword="across",
@@ -820,20 +828,270 @@ class TestSentences:
             "second bank",
         ]
 
-    def test_excludes_audio_scores_and_keeps_their_prose(
+    @pytest.mark.parametrize(
+        ("written", "offsets", "expected"),
+        [
+            (
+                "Time stops for nobody.  the ebb and flow of time",
+                [[0, 4], [44, 48]],
+                ["Time stops for nobody.", "the ebb and flow of time"],
+            ),
+            (
+                "He ate a third of the pie.  Divided by two-thirds.",
+                [[9, 14], [43, 48]],
+                ["He ate a third of the pie.", "Divided by two-thirds."],
+            ),
+        ],
+    )
+    def test_splits_period_separated_examples_with_bold_evidence(
+        self,
+        attest: Callable[..., list[Sentence]],
+        written: str,
+        offsets: list[list[int]],
+        expected: list[str],
+    ) -> None:
+        """
+        Separate usage sentences retain their own located headword ranges.
+
+        Args:
+            attest: Runs extraction for example records.
+            written: Combined example text.
+            offsets: Bold ranges identifying each occurrence.
+            expected: Separately retained examples.
+        """
+        headword = "Time" if written.startswith("Time") else "third"
+        sentences = attest(
+            {"text": written, "bold_text_offsets": offsets, "type": "example"},
+            headword=headword,
+        )
+
+        assert [sentence.text for sentence in sentences] == expected
+        assert all(sentence.word_offsets for sentence in sentences)
+
+    def test_preserves_connected_sentences_with_single_spacing(
         self,
         attest: Callable[..., list[Sentence]],
     ) -> None:
         """
-        Score renderings supply neither words nor usable example notation.
+        Ordinary punctuation does not prove two examples were combined.
+
+        Args:
+            attest: Runs extraction for example records.
+        """
+        written = "My English is weak. I wish my English were better."
+        sentences = attest(
+            {"text": written, "bold_text_offsets": [[3, 10], [30, 37]]},
+            headword="English",
+        )
+
+        assert [sentence.text for sentence in sentences] == [written]
+
+    def test_preserves_abbreviations_inside_one_example(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        A short abbreviation does not delimit two examples.
+
+        Args:
+            attest: Runs extraction for example records.
+        """
+        written = "The bank met Dr. Bank at the bank."
+        sentences = attest(
+            {"text": written, "bold_text_offsets": [[4, 8], [21, 25]]},
+        )
+
+        assert [sentence.text for sentence in sentences] == [written]
+
+    def test_preserves_continuing_alternatives_inside_one_example(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        A continuation introduced by 'or' remains in its example.
+
+        Args:
+            attest: Runs extraction for example records.
+        """
+        written = "It looks like rain. or It looks like snow."
+        first = written.index("looks")
+        second = written.rindex("looks")
+        sentences = attest(
+            {
+                "text": written,
+                "bold_text_offsets": [[first, first + 5], [second, second + 5]],
+            },
+            headword="look",
+        )
+
+        assert [sentence.text for sentence in sentences] == [written]
+
+    def test_excludes_audio_and_score_examples(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Score renderings and their captions do not illustrate word usage.
         """
         sentences = attest(
             {"text": "1"},
             {"text": r"{\key a \major a' b' cis d e fis gis a2}"},
-            {"text": "A chord on bank:\n2"},
+            {"text": "The bank motif:\n{bes'a'cb'}"},
+            {"text": "The bank is open."},
         )
 
-        assert [sentence.text for sentence in sentences] == ["A chord on bank:"]
+        assert [sentence.text for sentence in sentences] == ["The bank is open."]
+
+    def test_excludes_score_prefixes_from_source_markup(self) -> None:
+        """
+        Dump score provenance excludes a rendering even without LilyPond text.
+        """
+        sentence = clean_sentence(
+            Attestation("The bank motif:\n7"),
+            quoted=False,
+            score_prefixes=("{{ux|en|The bank motif:<br>",),
+        )
+
+        assert sentence is None
+
+    def test_excludes_editorial_examples(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Editorial links and labels are not usage examples.
+        """
+        sentences = attest(
+            {"text": "Coordinate term: riverbank"},
+            {"text": "Related terms (former names): old bank"},
+            {"text": "Alternative forms: banke, banque"},
+            {"text": "Synonym: riverbank"},
+            {"text": "(initialisms)"},
+            {"text": "The bank is open."},
+        )
+
+        assert [sentence.text for sentence in sentences] == ["The bank is open."]
+
+    @pytest.mark.parametrize(
+        ("written", "headword", "expected", "reference", "year"),
+        [
+            (
+                "Jim Taylor (2000), DVD demystified, page 388: "
+                + "“Because MiniDiscs are in a shell.”",
+                "MiniDisc",
+                "Because MiniDiscs are in a shell.",
+                "Jim Taylor (2000), DVD demystified, page 388.",
+                2000,
+            ),
+            (
+                "Federal Writers Project (1952), West Virginia: A Guide to the "
+                + "Mountain State, page 485: “Wellsburg thrived as a Gretna Green”",
+                "Gretna Green",
+                "Wellsburg thrived as a Gretna Green",
+                "Federal Writers Project (1952), West Virginia: A Guide to the "
+                + "Mountain State, page 485.",
+                1952,
+            ),
+            (
+                'William Morris, The Life and Death of Jason (1867), Book iv: "'
+                + "I know a little garden-close",
+                "garden",
+                "I know a little garden-close",
+                "William Morris, The Life and Death of Jason (1867), Book iv.",
+                1867,
+            ),
+        ],
+    )
+    def test_recovers_inline_quotation_reference(
+        self,
+        attest: Callable[..., list[Sentence]],
+        written: str,
+        headword: str,
+        expected: str,
+        reference: str,
+        year: int,
+    ) -> None:
+        """
+        Inline source details become a reference without losing quoted text.
+
+        Args:
+            attest: Runs extraction for example records.
+            written: Source citation followed by quoted content.
+            headword: Word expected in the quoted content.
+            expected: Quotation text after source removal.
+            reference: Normalized source citation.
+            year: Publication year parsed from the citation.
+        """
+        start = written.rfind(headword)
+        sentences = attest(
+            {"text": written, "bold_text_offsets": [[start, start + len(headword)]]},
+            headword=headword,
+        )
+
+        (sentence,) = sentences
+
+        assert isinstance(sentence, Quotation)
+        assert sentence.text == expected
+        assert sentence.reference == reference
+        assert sentence.year == year
+        assert (
+            sentence.text[
+                sentence.word_offsets[0].offset[0] : sentence.word_offsets[0].offset[1]
+            ]
+            == headword
+        )
+
+    def test_discards_standalone_bibliography(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Bibliographic shorthand without usage text is not an example.
+
+        Args:
+            attest: Runs extraction for example records.
+        """
+        sentences = attest(
+            {"text": "〃, § 8.38.3, page 489"},
+            {"text": "1823, in Crabb, Technol. Dict."},
+            {"text": "The bank is open."},
+        )
+
+        assert [sentence.text for sentence in sentences] == ["The bank is open."]
+
+    def test_removes_bibliography_identifiers_from_unquoted_examples(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Source identifiers delimit citations, while ambiguous titles are discarded.
+
+        Args:
+            attest: Runs extraction for example records.
+        """
+        sentences = attest(
+            {
+                "text": (
+                    "An Albanologist wrote a study. "
+                    "Jane Smith, John Doe, A Book, 2004, →ISBN."
+                ),
+                "bold_text_offsets": [[3, 15]],
+            },
+            {"text": "How to Brickle: A Book (1977, →ISBN"},
+            headword="Albanologist",
+        )
+
+        assert [sentence.text for sentence in sentences] == [
+            "An Albanologist wrote a study.",
+        ]
+        assert sentences[0].word_offsets[0].offset == (3, 15)
+
+        dated = attest(
+            {"text": "The dikkop is a bird. 1983 Birds of Africa. →ISBN."},
+            headword="dikkop",
+        )
+
+        assert [sentence.text for sentence in dated] == ["The dikkop is a bird."]
 
     def test_preserves_ambiguous_layout_spacing(
         self,
@@ -1224,7 +1482,9 @@ class TestPointers:
 
         sentences = attest({"text": written}, headword=headword)
 
-        assert [sentence.text for sentence in sentences] == [written.strip()]
+        expected = normalize_formatting(Attestation(written)).text
+
+        assert [sentence.text for sentence in sentences] == [expected]
 
 
 class TestYears:
@@ -1798,7 +2058,7 @@ class TestTranslations:
 
         assert lemma.translation_tables[0].gloss == normalize_statement(gloss)
         assert lemma.translation_tables[0].translations == {
-            language: frozenset({translation}),
+            Language(language): frozenset({translation}),
         }
 
     @given(
@@ -1840,7 +2100,55 @@ class TestTranslations:
             if table.gloss == normalize_statement(gloss)
         )
 
-        assert table.translations[language] == frozenset({first, second})
+        assert table.translations[Language(language)] == frozenset({first, second})
+
+    def test_preserves_wiktextract_language_label(
+        self,
+        extract: Callable[..., list[Lemma]],
+    ) -> None:
+        """
+        Collected tables retain the language name without changing word groups.
+
+        Args:
+            extract: Runs extraction for raw Wiktextract entries.
+        """
+        (lemma,) = extract(
+            [
+                {
+                    "word": "bank",
+                    "pos": "noun",
+                    "lang_code": LANGUAGE,
+                    "senses": [{"glosses": ["A financial institution."]}],
+                    "translations": [
+                        {
+                            "word": "banca",
+                            "lang_code": "it",
+                            "lang": "Italian",
+                            "sense": "A financial institution.",
+                        },
+                    ],
+                },
+                {
+                    "word": "bank",
+                    "pos": "noun",
+                    "lang_code": LANGUAGE,
+                    "senses": [{"glosses": ["A financial institution."]}],
+                    "translations": [
+                        {
+                            "word": "istituto di credito",
+                            "lang_code": "it",
+                            "sense": "A financial institution.",
+                        },
+                    ],
+                },
+            ],
+        )
+
+        (table,) = lemma.translation_tables
+
+        assert table.translations == {
+            Language("it", "Italian"): frozenset({"banca", "istituto di credito"}),
+        }
 
     @given(
         words,
@@ -1883,8 +2191,8 @@ class TestTranslations:
 
         assert table.gloss == normalize_statement(gloss)
         assert table.translations == {
-            "it": frozenset({first}),
-            "fr": frozenset({second}),
+            Language("it"): frozenset({first}),
+            Language("fr"): frozenset({second}),
         }
 
     @given(st.sampled_from(("word", "lang_code", "sense")), st.data())

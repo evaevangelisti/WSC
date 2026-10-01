@@ -10,6 +10,10 @@ from ...schema import RawExample
 EXAMPLE_KIND = "example"
 _QUOTATION = "quotation"
 _YEAR_PATTERN = re.compile(r"\b(1[0-9]{3}|20[0-9]{2})s?\b")
+_INLINE_QUOTATION = re.compile(
+    r"^(?P<reference>.+\b(?:18|19|20)\d{2}\b.+):[ \t]*[“\"]" + r"(?P<text>.+)$",
+    re.DOTALL,
+)
 
 
 def parse_year(
@@ -74,6 +78,11 @@ def read_source(
 
     if kind == EXAMPLE_KIND:
         return text, ""
+
+    if inline_quotation := _INLINE_QUOTATION.fullmatch(text):
+        return inline_quotation["text"].rstrip('”"').rstrip(), clean_reference(
+            inline_quotation["reference"]
+        )
 
     head, separator, tail = text.partition("\n")
 

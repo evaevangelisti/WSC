@@ -92,11 +92,13 @@ class RawTranslation(TypedDict, total=False):
     Attributes:
         word: The translation itself.
         lang_code: The language it belongs to, by code.
+        lang: The language label printed by Wiktextract.
         sense: The gloss it translates, as the translation table heads it.
     """
 
     word: str
     lang_code: str
+    lang: str
     sense: str
 
 

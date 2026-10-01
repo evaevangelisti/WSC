@@ -6,7 +6,7 @@ from collections import defaultdict
 from itertools import chain
 
 from ....identifiers import translation_table_id
-from ....models import Attestation, TranslationTable
+from ....models import Attestation, Language, TranslationTable
 from ...dump.source_markup import MathSource, restore_mathematics
 from ...translations import clean_translations, normalize_translation_gloss
 from ..schema import RawTranslation
@@ -34,24 +34,31 @@ def parse_translations(
     gathered_translation_tables: defaultdict[str, defaultdict[str, set[str]]] = (
         defaultdict(lambda: defaultdict(set))
     )
+    language_labels: defaultdict[str, dict[str, str]] = defaultdict(dict)
 
     source_translations = (
         (
             restore_mathematics(Attestation(item.get("sense", "")), mathematics).text,
             item.get("lang_code", ""),
+            item.get("lang", ""),
             item.get("word", ""),
         )
         for item in raw_translations
     )
 
     supplementary_translations = (
-        (table.gloss, language, word)
+        (
+            table.gloss,
+            language.code,
+            language.label,
+            word,
+        )
         for table in off_page_translations or ()
         for language, words in table.translations.items()
         for word in words
     )
 
-    for heading, code, written in chain(
+    for heading, code, label, written in chain(
         source_translations,
         supplementary_translations,
     ):
@@ -66,11 +73,19 @@ def parse_translations(
             language, words = translation
             gathered_translation_tables[gloss][language].update(words)
 
+            if label:
+                language_labels[gloss][language] = label
+
     return tuple(
         TranslationTable(
             translation_table_id(lemma_id, gloss),
             gloss,
-            {language: frozenset(words) for language, words in translated.items()},
+            {
+                Language(language, language_labels[gloss].get(language, "")): frozenset(
+                    words
+                )
+                for language, words in translated.items()
+            },
         )
         for gloss, translated in gathered_translation_tables.items()
     )

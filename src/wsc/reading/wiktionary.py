@@ -12,6 +12,7 @@ from ..files import open_compressed
 from ..models import (
     POS,
     Example,
+    Language,
     Lemma,
     Quotation,
     Sense,
@@ -54,6 +55,24 @@ class SynsetAlignmentRecord(TypedDict):
     sources: NotRequired[list[str]]
 
 
+class LanguageRecord(TypedDict):
+    """
+    Serialized translation language.
+    """
+
+    code: str
+    label: NotRequired[str]
+
+
+class TranslationRecord(TypedDict):
+    """
+    Serialized language and the words translated into it.
+    """
+
+    language: LanguageRecord
+    words: list[str]
+
+
 class TranslationTableRecord(TypedDict):
     """
     Serialized collected translation table.
@@ -61,7 +80,8 @@ class TranslationTableRecord(TypedDict):
 
     id: str
     gloss: str
-    translations: dict[str, list[str]]
+    translations: list[TranslationRecord] | dict[str, list[str]]
+    languages: NotRequired[list[LanguageRecord]]
 
 
 class SenseRecord(TypedDict):
@@ -128,6 +148,42 @@ def _parse_sentence(
     )
 
 
+def _parse_translation_table(
+    record: TranslationTableRecord,
+) -> TranslationTable:
+    """
+    Restore translations from labeled or earlier code-indexed records.
+
+    Args:
+        record: Serialized translation table.
+
+    Returns:
+        Table indexed internally by language objects.
+    """
+    serialized = record["translations"]
+
+    if isinstance(serialized, dict):
+        labels = {
+            language["code"]: language.get("label", "")
+            for language in record.get("languages", [])
+        }
+
+        translations = {
+            Language(code, labels.get(code, "")): frozenset(words)
+            for code, words in serialized.items()
+        }
+    else:
+        translations = {
+            Language(
+                item["language"]["code"],
+                item["language"].get("label", ""),
+            ): frozenset(item["words"])
+            for item in serialized
+        }
+
+    return TranslationTable(record["id"], record["gloss"], translations)
+
+
 def parse_lemma(
     record: LemmaRecord,
 ) -> Lemma:
@@ -157,14 +213,7 @@ def parse_lemma(
                     _parse_sentence(item) for item in sense.get("sentences", [])
                 ],
                 translation_table=(
-                    TranslationTable(
-                        table["id"],
-                        table["gloss"],
-                        {
-                            language: frozenset(words)
-                            for language, words in table["translations"].items()
-                        },
-                    )
+                    _parse_translation_table(table)
                     if (table := sense.get("translation_table")) is not None
                     else None
                 ),
@@ -181,14 +230,7 @@ def parse_lemma(
             for sense in record.get("senses", [])
         ],
         translation_tables=tuple(
-            TranslationTable(
-                table["id"],
-                table["gloss"],
-                {
-                    language: frozenset(words)
-                    for language, words in table["translations"].items()
-                },
-            )
+            _parse_translation_table(table)
             for table in record.get("translation_tables", [])
         ),
     )

@@ -17,7 +17,7 @@ from wsc.collection import write_collection
 from wsc.constants import ALIGNMENT_FIELDS
 from wsc.files import Compression
 from wsc.identifiers import translation_table_id
-from wsc.models import POS, Lemma, Sense, TranslationTable
+from wsc.models import POS, Language, Lemma, Sense, TranslationTable
 from wsc.models.alignment import (
     AlignmentTask,
     LanguageModel,
@@ -112,7 +112,7 @@ def test_aligns_compressed_collection_into_one_archive(
     table = TranslationTable(
         translation_table_id("word.noun", "gloss"),
         "gloss",
-        {"it": frozenset({"parola"})},
+        {Language("it"): frozenset({"parola"})},
     )
     lemma = Lemma(
         "word.noun",
@@ -314,7 +314,7 @@ def test_replays_cached_alignment(
     assert aligned_lemma.senses[0].translation_table == TranslationTable(
         translation_table_id("word.noun", "gloss"),
         "gloss",
-        {"it": frozenset({"parola"})},
+        {Language("it"): frozenset({"parola"})},
     )
     assert not aligned_lemma.translation_tables
 
@@ -404,7 +404,7 @@ def test_aligns_priority_resource_then_remaining_synsets(
     second_source: str,
 ) -> None:
     """
-    Later passes revisit abstentions without reconsidering accepted synsets.
+    Later passes consider only synsets without earlier resources.
 
     Args:
         tmp_path: Isolated input, cache, and output directories.
@@ -570,7 +570,7 @@ def test_aligns_priority_resource_then_remaining_synsets(
     assert "Other first." not in model.requests[0].prompt
     assert "Other only." not in model.requests[0].prompt
     assert '"target_id":"first"' not in model.requests[1].prompt
-    assert "WordNet unmatched." in model.requests[1].prompt
+    assert "WordNet unmatched." not in model.requests[1].prompt
     assert "Other unmatched." not in model.requests[1].prompt
     assert "Other unmatched example." not in model.requests[1].prompt
     assert "Other only." in model.requests[1].prompt
@@ -880,12 +880,12 @@ def test_reuses_partial_alignment_cache(
     assert aligned.senses[0].translation_table == TranslationTable(
         first_target,
         "first",
-        {"it": frozenset({"uno"})},
+        {Language("it"): frozenset({"uno"})},
     )
     assert aligned.senses[1].translation_table == TranslationTable(
         second_target,
         "second",
-        {"it": frozenset({"due"})},
+        {Language("it"): frozenset({"due"})},
     )
     assert len(cache_path.read_text().splitlines()) == 3
 

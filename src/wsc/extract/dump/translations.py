@@ -9,7 +9,7 @@ from itertools import groupby
 
 from ...constants.extraction import TRANSLATION_TEMPLATES
 from ...identifiers import lemma_id, translation_table_id
-from ...models import POS, TranslationTable
+from ...models import POS, Language, TranslationTable
 from ..translations import clean_translations, normalize_translation_gloss, templates
 from .markup import plain, section_lines
 from .source_markup import unwrap_mathematics
@@ -136,7 +136,7 @@ def read_page(
                         gloss,
                     ),
                     gloss,
-                    translations,
+                    {Language(code): words for code, words in translations.items()},
                 )
                 for gloss, translations in tables.get(part_of_speech, {}).items()
                 if translations

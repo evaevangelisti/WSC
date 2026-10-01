@@ -9,6 +9,7 @@ from kwic import Query
 
 from ...identifiers import translation_table_id
 from ...models import (
+    Language,
     Lemma,
     Offset,
     Sense,
@@ -36,22 +37,35 @@ def add_translations(
     """
     gathered_translation_tables = {
         table.gloss: {
-            language: set(words) for language, words in table.translations.items()
+            language.code: set(words) for language, words in table.translations.items()
         }
         for table in kept_translations
     }
+    language_labels: dict[str, dict[str, str]] = {}
+
+    for table in (*kept_translations, *added_translations):
+        language_labels.setdefault(table.gloss, {}).update(
+            (language.code, language.label)
+            for language in table.translations
+            if language.label
+        )
 
     for table in added_translations:
         kept_words = gathered_translation_tables.setdefault(table.gloss, {})
 
         for language, words in table.translations.items():
-            kept_words.setdefault(language, set()).update(words)
+            kept_words.setdefault(language.code, set()).update(words)
 
     return tuple(
         TranslationTable(
             translation_table_id(lemma_id, gloss),
             gloss,
-            {language: frozenset(words) for language, words in translated.items()},
+            {
+                Language(language, language_labels.get(gloss, {}).get(language, "")): (
+                    frozenset(words)
+                )
+                for language, words in translated.items()
+            },
         )
         for gloss, translated in gathered_translation_tables.items()
     )

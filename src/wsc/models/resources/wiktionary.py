@@ -83,6 +83,20 @@ Either kind of attestation.
 
 
 @dataclass(frozen=True, slots=True)
+class Language:
+    """
+    Language code and label supplied with a translation.
+
+    Attributes:
+        code: Wiktionary language code.
+        label: Human-readable language name.
+    """
+
+    code: str
+    label: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class TranslationTable:
     """
     One Wiktionary translation table.
@@ -95,7 +109,7 @@ class TranslationTable:
 
     id: str
     gloss: str
-    translations: dict[str, frozenset[str]]
+    translations: dict[Language, frozenset[str]]
 
 
 @dataclass(slots=True)

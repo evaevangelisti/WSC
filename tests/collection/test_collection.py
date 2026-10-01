@@ -17,6 +17,7 @@ from wsc.collection import write_collection
 from wsc.models import (
     POS,
     Example,
+    Language,
     Lemma,
     Quotation,
     Sense,
@@ -158,12 +159,17 @@ def test_reports_lexical_evidence(
         ],
         translation_tables=(
             TranslationTable(
-                "bank.noun.tr.1", "institution", {"fr": frozenset({"banque"})}
+                "bank.noun.tr.1",
+                "institution",
+                {Language("fr"): frozenset({"banque"})},
             ),
             TranslationTable(
                 "bank.noun.tr.2",
                 "institution",
-                {"fr": frozenset({"banque"}), "it": frozenset({"banca"})},
+                {
+                    Language("fr"): frozenset({"banque"}),
+                    Language("it"): frozenset({"banca"}),
+                },
             ),
         ),
     )

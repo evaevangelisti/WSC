@@ -3,6 +3,7 @@ Exercise off-page translations through complete source documents.
 """
 
 import bz2
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -21,7 +22,7 @@ from wsc.extract import (
 )
 from wsc.extract.wiktionary.schema import RawEntry
 from wsc.identifiers import translation_table_id
-from wsc.models import POS
+from wsc.models import POS, Language, TranslationTable
 
 
 @given(
@@ -87,8 +88,12 @@ def test_respects_translation_boundaries(
     assert not noun.pointers
     assert len(noun.translations) == 1
     assert noun.translations[0].id == translation_table_id("entry.noun", "Meaning.")
-    assert noun.translations[0].translations == {"it": frozenset(translations)}
-    assert records[POS.VERB].translations[0].translations == {"fr": frozenset({"agir"})}
+    assert noun.translations[0].translations == {
+        Language("it"): frozenset(translations),
+    }
+    assert records[POS.VERB].translations[0].translations == {
+        Language("fr"): frozenset({"agir"}),
+    }
     assert not records[POS.VERB].pointers
 
 
@@ -187,6 +192,7 @@ def test_resolves_translation_pointers(
                 {
                     "word": word,
                     "lang_code": "it",
+                    "lang": "Italian",
                     "sense": "meaning — see also alternative",
                 },
             ],
@@ -246,16 +252,57 @@ def test_resolves_translation_pointers(
 
     assert set(tables) == {"Meaning.", "Target.", "Spaced gloss."}
     assert tables["Meaning."].translations == {
-        "it": frozenset(translations),
-        "fr": frozenset({"mot"}),
-        "de": frozenset({"Wort"}),
+        Language("it", "Italian"): frozenset(translations),
+        Language("fr"): frozenset({"mot"}),
+        Language("de"): frozenset({"Wort"}),
     }
-    assert tables["Target."].translations == {"it": frozenset({"single"})}
-    assert tables["Spaced gloss."].translations == {"it": frozenset({"spacing"})}
+    assert tables["Target."].translations == {
+        Language("it", "Italian"): frozenset({"single"}),
+    }
+    assert tables["Spaced gloss."].translations == {
+        Language("it", "Italian"): frozenset({"spacing"}),
+    }
     assert all(
         table.id == translation_table_id("entry.noun", gloss)
         for gloss, table in tables.items()
     )
+
+
+def test_reads_code_indexed_supplemental_cache(
+    workspace: Callable[[], Path],
+) -> None:
+    """
+    A cache created before language keys remains usable for collection.
+
+    Args:
+        workspace: Sets aside a directory for the cache file.
+    """
+    path = workspace() / "translations.json"
+    _ = path.write_text(
+        json.dumps(
+            {
+                "entry.noun": [
+                    {
+                        "id": "t",
+                        "gloss": "Meaning.",
+                        "translations": {"it": ["banca"]},
+                        "languages": [{"code": "it", "label": "Italian"}],
+                    },
+                ],
+            },
+        ),
+        encoding="utf-8",
+    )
+
+    assert read_off_page_translations(path) == {
+        "entry.noun": (
+            TranslationTable(
+                "t",
+                "Meaning.",
+                {Language("it", "Italian"): frozenset({"banca"})},
+            ),
+        ),
+    }
 
 
 def test_resolves_name_pointers(
@@ -295,7 +342,7 @@ def test_resolves_name_pointers(
     )
 
     assert result["entry.propn"][0].translations == {
-        "it": frozenset({"nome"}),
+        Language("it"): frozenset({"nome"}),
     }
 
 
@@ -352,7 +399,7 @@ def test_fills_missing_english_tables(
 
     assert [table.gloss for table in result["entry.noun"]] == ["Missing."]
     assert result["entry.noun"][0].translations == {
-        "fr": frozenset({"mot"}),
+        Language("fr"): frozenset({"mot"}),
     }
 
 
@@ -402,8 +449,8 @@ def test_isolates_translation_sections(
     assert record.pos == POS.NOUN
     assert not record.pointers
     assert {table.gloss: table.translations for table in record.translations} == {
-        "Kept.": {"it": frozenset({"prima"})},
-        "Retained.": {"it": frozenset({"seconda"})},
+        "Kept.": {Language("it"): frozenset({"prima"})},
+        "Retained.": {Language("it"): frozenset({"seconda"})},
     }
 
 
@@ -445,7 +492,7 @@ def test_reads_nested_arguments_in_document_order(
 
     assert table.gloss == f"To produce {first} and 10^{{15}}."
     assert table.id.startswith("sample_entry.noun.tr.")
-    assert table.translations == {"fr": frozenset({second})}
+    assert table.translations == {Language("fr"): frozenset({second})}
 
 
 @pytest.mark.parametrize(
@@ -473,7 +520,9 @@ def test_uses_last_parameter_assignment(
 
     (record,) = DumpExtractor("English").extract(source)
 
-    assert record.translations[0].translations == {expected: frozenset({"parola"})}
+    assert record.translations[0].translations == {
+        Language(expected): frozenset({"parola"}),
+    }
 
 
 def test_recovers_partially_damaged_parsed_tables(
@@ -505,6 +554,6 @@ def test_recovers_partially_damaged_parsed_tables(
     )
 
     assert record.translations[0].translations == {
-        "fr": frozenset({"feuille"}),
-        "it": frozenset({"foglia"}),
+        Language("fr"): frozenset({"feuille"}),
+        Language("it"): frozenset({"foglia"}),
     }

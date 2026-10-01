@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import IO, TYPE_CHECKING, cast, override
 
 from ...files import open_compressed
+from ...models import Language
 from ..base import Writer
 
 if TYPE_CHECKING:
@@ -81,6 +82,20 @@ class JSONLWriter[T: "DataclassInstance"](Writer[T]):
                 return [cls._record(item) for item in cast(Sequence[object], value)]
 
             case Mapping():
+                mapped = cast(Mapping[object, object], value)
+
+                if mapped and all(isinstance(key, Language) for key in mapped):
+                    return [
+                        {
+                            "language": cls._record(language),
+                            "words": cls._record(words),
+                        }
+                        for language, words in cast(
+                            Mapping[Language, object],
+                            value,
+                        ).items()
+                    ]
+
                 return {
                     key: cls._record(carried)
                     for key, carried in cast(Mapping[str, object], value).items()

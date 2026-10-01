@@ -20,6 +20,7 @@ from wsc.alignment import (
 from wsc.identifiers import translation_table_id
 from wsc.models import (
     POS,
+    Language,
     Lemma,
     Sense,
     Synset,
@@ -106,7 +107,7 @@ def test_aligns_resource_ids_in_a_batch() -> None:
     table = TranslationTable(
         'word_"quoted".noun.tr.12345678',
         "heading",
-        {"it": frozenset({"parola"})},
+        {Language("it"): frozenset({"parola"})},
     )
     lemma = Lemma(
         'word_"quoted".noun',
@@ -209,12 +210,12 @@ def test_aligns_collection_copies() -> None:
             TranslationTable(
                 translation_table_id("word.noun", "first heading"),
                 "first heading",
-                {"it": frozenset({"uno"})},
+                {Language("it"): frozenset({"uno"})},
             ),
             TranslationTable(
                 translation_table_id("word.noun", "second heading"),
                 "second heading",
-                {"it": frozenset({"due"})},
+                {Language("it"): frozenset({"due"})},
             ),
         ),
     )
@@ -443,7 +444,7 @@ def test_deduplicates_candidate_synonyms() -> None:
     assert result.target_definitions[0].synonyms == ("term", "word_form")
 
 
-def test_scopes_source_pass_queries_to_prior_resources() -> None:
+def test_excludes_prior_resource_synsets_from_later_passes() -> None:
     """
     Cached decisions from a standalone source cannot replay after another pass.
     """
@@ -465,20 +466,56 @@ def test_scopes_source_pass_queries_to_prior_resources() -> None:
         AlignmentTask.SYNSETS,
         candidates.for_stage("other", skip_aligned=False),
     )
-    (following,) = build_queries(
+    following = tuple(
+        build_queries(
+            lemma,
+            AlignmentTask.SYNSETS,
+            candidates.for_stage(
+                "other",
+                previous_sources=("wordnet",),
+                skip_aligned=True,
+            ),
+        ),
+    )
+
+    assert standalone.target_definitions[0].glosses == ("Second resource.",)
+    assert following == ()
+
+
+def test_excludes_synsets_with_prior_resources_even_without_matching_members() -> None:
+    """
+    A prior resource makes the whole synset ineligible for later passes.
+    """
+    lemma = Lemma("word.noun", "word", POS.NOUN, senses=[Sense("s", ("sense",))])
+    candidates = SynsetCandidates(
+        [
+            Synset(
+                "mixed",
+                POS.NOUN,
+                {
+                    "wordnet": SynsetResource(("other_word",), ("Earlier.",)),
+                    "other": SynsetResource(("word",), ("Later.",)),
+                },
+            ),
+            Synset(
+                "other_only",
+                POS.NOUN,
+                {"other": SynsetResource(("word",), ("Eligible.",))},
+            ),
+        ],
+    )
+
+    (query,) = build_queries(
         lemma,
         AlignmentTask.SYNSETS,
         candidates.for_stage(
-            "other",
+            "remaining",
             previous_sources=("wordnet",),
             skip_aligned=True,
         ),
     )
 
-    assert standalone.alignment_id != following.alignment_id
-    assert following.alignment_id == "synsets:wordnet:other:source-scoped:word.noun"
-    assert standalone.target_definitions[0].glosses == ("Second resource.",)
-    assert following.target_definitions[0].glosses == ("First resource.",)
+    assert tuple(target.id for target in query.target_definitions) == ("other_only",)
 
 
 def test_queries_complete_senses() -> None:
@@ -532,7 +569,9 @@ def test_reuses_available_source_decisions(
         senses=[Sense(f"s{index}", (f"meaning {index}",)) for index in assigned],
         translation_tables=tuple(
             TranslationTable(
-                f"t{index}", f"heading {index}", {"it": frozenset({str(index)})}
+                f"t{index}",
+                f"heading {index}",
+                {Language("it"): frozenset({str(index)})},
             )
             for index in assigned
         ),
@@ -647,12 +686,16 @@ def test_isolates_failed_queries(
                     translation_table=TranslationTable(
                         f"old{index}",
                         "old meaning",
-                        {"it": frozenset({"old"})},
+                        {Language("it"): frozenset({"old"})},
                     ),
                 ),
             ],
             translation_tables=(
-                TranslationTable(f"t{index}", "meaning", {"it": frozenset({"new"})}),
+                TranslationTable(
+                    f"t{index}",
+                    "meaning",
+                    {Language("it"): frozenset({"new"})},
+                ),
             ),
         )
         for index in range(len(failures))

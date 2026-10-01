@@ -109,7 +109,7 @@ class SynsetCandidates:
 
         Args:
             stage: Resource name, or remaining for untried resources.
-            previous_sources: Earlier resources whose unmatched synsets return.
+            previous_sources: Earlier resources excluded from this pass.
             skip_aligned: Exclude senses and synsets mapped by earlier passes.
 
         Returns:
@@ -123,9 +123,6 @@ class SynsetCandidates:
             quote(source, safe="") for source in (*previous_sources, stage)
         )
 
-        if previous_sources:
-            selected._cache_stage += ":source-scoped"
-
         selected._previous_sources = previous_sources
         selected._skip_aligned = skip_aligned
 
@@ -133,14 +130,12 @@ class SynsetCandidates:
 
     def _resources(
         self,
-        lemma: Lemma,
         synset: Synset,
     ) -> Iterator[tuple[str, SynsetResource]]:
         """
-        Keep reintroduced candidates tied to their first matching resource.
+        Select evidence only from synsets not used in earlier passes.
 
         Args:
-            lemma: Entry whose members determine prior eligibility.
             synset: Candidate whose evidence is requested.
 
         Yields:
@@ -151,24 +146,11 @@ class SynsetCandidates:
 
             return
 
-        forms = {self._normalize(lemma.lemma)} | {
-            self._normalize(variant) for variant in lemma.variants
-        }
-
-        for name in self._previous_sources:
-            if (resource := synset.resources.get(name)) is not None and any(
-                self._normalize(member) in forms for member in resource.members
-            ):
-                yield name, resource
-
-                return
+        if any(source in synset.resources for source in self._previous_sources):
+            return
 
         if self._stage == "remaining":
-            yield from (
-                (name, resource)
-                for name, resource in synset.resources.items()
-                if name not in self._previous_sources
-            )
+            yield from synset.resources.items()
         elif (resource := synset.resources.get(self._stage)) is not None:
             yield self._stage, resource
 
@@ -210,7 +192,7 @@ class SynsetCandidates:
             if identifier not in mapped
             and any(
                 self._normalize(member) in forms
-                for _, resource in self._resources(lemma, synset)
+                for _, resource in self._resources(synset)
                 for member in resource.members
             )
         )
@@ -233,7 +215,7 @@ class SynsetCandidates:
         normalized_lemma = self._normalize(lemma.lemma)
         synonyms: dict[str, str] = {}
 
-        for _, resource in self._resources(lemma, synset):
+        for _, resource in self._resources(synset):
             for member in resource.members:
                 normalized_member = self._normalize(member)
 
@@ -244,14 +226,12 @@ class SynsetCandidates:
 
     def glosses(
         self,
-        lemma: Lemma,
         synset: Synset,
     ) -> tuple[str, ...]:
         """
         Return distinct glosses from the selected resources.
 
         Args:
-            lemma: Entry determining visible source evidence.
             synset: Candidate lexical concept.
 
         Returns:
@@ -260,21 +240,19 @@ class SynsetCandidates:
         return tuple(
             dict.fromkeys(
                 gloss
-                for _, resource in self._resources(lemma, synset)
+                for _, resource in self._resources(synset)
                 for gloss in resource.glosses
             ),
         )
 
     def examples(
         self,
-        lemma: Lemma,
         synset: Synset,
     ) -> tuple[str, ...]:
         """
         Return distinct examples from the selected resources.
 
         Args:
-            lemma: Entry determining visible source evidence.
             synset: Candidate lexical concept.
 
         Returns:
@@ -283,7 +261,7 @@ class SynsetCandidates:
         return tuple(
             dict.fromkeys(
                 example
-                for _, resource in self._resources(lemma, synset)
+                for _, resource in self._resources(synset)
                 for example in resource.examples
             ),
         )
@@ -309,6 +287,6 @@ class SynsetCandidates:
 
         return tuple(
             name
-            for name, resource in self._resources(lemma, synset)
+            for name, resource in self._resources(synset)
             if any(self._normalize(member) in forms for member in resource.members)
         )

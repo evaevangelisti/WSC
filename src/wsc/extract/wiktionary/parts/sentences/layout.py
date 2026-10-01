@@ -8,7 +8,6 @@ from .....models import Attestation, WordOffset
 from ....offsets import substitute
 
 EXAMPLE_SEPARATOR = re.compile(r"[ \t]*\u2003+[ \t]*")
-_SEMICOLON_SEPARATOR = re.compile(r";[ \t]+")
 _EXAMPLE_ENDINGS = frozenset(";.?!")
 
 
@@ -25,26 +24,6 @@ def split_examples(
         Separate examples, or one example with normalized layout spacing.
     """
     separators = tuple(EXAMPLE_SEPARATOR.finditer(value.text))
-
-    if not separators and len(value.word_offsets) > 1:
-        candidates = tuple(_SEMICOLON_SEPARATOR.finditer(value.text))
-        boundaries = [
-            (left, right)
-            for left, right in zip(
-                (0, *(separator.end() for separator in candidates)),
-                (*(separator.start() for separator in candidates), len(value.text)),
-                strict=True,
-            )
-        ]
-
-        if candidates and all(
-            any(
-                left <= offset.offset[0] < offset.offset[1] <= right
-                for offset in value.word_offsets
-            )
-            for left, right in boundaries
-        ):
-            separators = candidates
 
     if not separators:
         return (value,)

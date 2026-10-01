@@ -6,6 +6,7 @@ from .synsets import Synset, SynsetAlignment, SynsetRelation, SynsetResource
 from .wiktionary import (
     Attestation,
     Example,
+    Language,
     Lemma,
     Offset,
     Quotation,
@@ -19,6 +20,7 @@ from .wiktionary import (
 __all__ = [
     "Attestation",
     "Example",
+    "Language",
     "Lemma",
     "Offset",
     "Quotation",

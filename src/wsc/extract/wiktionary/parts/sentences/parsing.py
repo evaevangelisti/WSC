@@ -72,10 +72,95 @@ _PARENTHETICAL_CITATION = re.compile(
 _SOURCE_URL = re.compile(r"https?://\S+", re.IGNORECASE)
 
 _SPACED_SEMICOLON = re.compile(r";[ \t]{2,}")
+_SPACED_SENTENCE = re.compile(r"(?<=[.!?])[ \t]{2,}(?=\S)")
 
-_MUSIC_SCORE = re.compile(r"\{\\(?:key|clef|time)\b[^{}]*\}")
+_SCORE_LINE = re.compile(r"\n\s*\{")
 _TRAILING_SCORE_NUMBER = re.compile(r"\n\s*\d+\s*$")
+_LILYPOND_SCORE = re.compile(
+    r"\{[^{}]*(?:\\(?:key|clef|time|relative|set)\b|[a-g](?:is|es)?')[^{}]*\}",
+    re.DOTALL,
+)
+_SCORE_TEMPLATE = re.compile(r"^\{\{(?:ux|uxi|usex)\|en\|", re.IGNORECASE)
+_AUDIO_PLACEHOLDER = re.compile(
+    r"audio playback is not supported in your browser", re.IGNORECASE
+)
 _NUMERIC_ONLY = re.compile(r"\d+(?:[\s.,:;/-]\d+)*")
+_EDITORIAL_EXAMPLE = re.compile(
+    r"^(?:(?:alternative forms?|coordinate terms?|related terms?|synonyms?|antonyms?)"
+    + r"(?:\s+\([^)]*\))?:|\(initialisms?\)$)",
+    re.IGNORECASE,
+)
+_BIBLIOGRAPHY_ONLY = re.compile(
+    r"^(?:〃\s*,?\s*§\s*\d+(?:\.\d+)*,?\s*page\s+\d+|"
+    + r"(?:18|19|20)\d{2},?\s+in\s+[A-Z].*)$",
+    re.IGNORECASE,
+)
+_BIBLIOGRAPHIC_IDENTIFIER = re.compile(
+    r"(?:→|\\+to\s+)(?:ISBN|OCLC|ISSN|DOI|JSTOR)\b",
+    re.IGNORECASE,
+)
+_BIBLIOGRAPHIC_START = re.compile(
+    r"(?<=[.!?])[ \t]+(?=(?:(?:18|19|20)\d{2}\b|"
+    + r"[A-Z][\w’-]*(?:\s+[A-Z][\w’-]*){1,3},\s+[A-Z]))",
+)
+
+
+def _preserve_example_boundaries(
+    value: Attestation,
+) -> Attestation:
+    """
+    Keep explicit layout spacing through formatting normalization.
+
+    Args:
+        value: Unquoted example with its source offsets.
+
+    Returns:
+        Example whose potential separators remain distinguishable.
+    """
+    value = substitute(value, _SPACED_SEMICOLON, ";\u2003")
+
+    if len(value.word_offsets) > 1:
+        value = substitute(value, _SPACED_SENTENCE, "\u2003")
+
+    return value
+
+
+def _has_media(
+    text: str,
+    score_prefixes: tuple[str, ...] | None,
+) -> bool:
+    """
+    Identify unquoted examples whose content is an audio or score rendering.
+
+    Args:
+        text: Example text emitted by Wiktextract.
+        score_prefixes: Source text before score tags on the same page.
+
+    Returns:
+        Whether the example contains media rather than lexical usage.
+    """
+    if (
+        _SCORE_LINE.search(text)
+        or _LILYPOND_SCORE.search(text)
+        or _AUDIO_PLACEHOLDER.search(text)
+    ):
+        return True
+
+    for prefix in score_prefixes or ():
+        rendered_prefix = re.split(
+            r"<|[^\x00-\x7f]",
+            _SCORE_TEMPLATE.sub("", prefix),
+            maxsplit=1,
+        )[0].strip()
+
+        if (
+            len(rendered_prefix) >= 12
+            and text.startswith(rendered_prefix)
+            and _TRAILING_SCORE_NUMBER.search(text)
+        ):
+            return True
+
+    return False
 
 
 def _sentence_start(
@@ -96,6 +181,12 @@ def _sentence_start(
 
     if stripped_text == text:
         return 0
+
+    if stripped_text.endswith(text):
+        return len(stripped_text) - len(text)
+
+    if text in stripped_text:
+        return stripped_text.rfind(text)
 
     head, separator, tail = stripped_text.partition("\n")
 
@@ -137,28 +228,28 @@ def _parse_bold_offsets(
 
 def _clean_unquoted_sentence(
     value: Attestation,
-    score_prefixes: tuple[str, ...] | None = None,
 ) -> Attestation | None:
     """
-    Remove metadata and audio-score fragments from an unquoted example.
+    Remove metadata from an unquoted example.
 
     Args:
         value: Example after formatting and reference lines are removed.
-        score_prefixes: Source contexts for examples containing scores.
 
     Returns:
         The remaining example, or None when it contains only metadata.
     """
-    if score_prefixes is None or any(
-        value.text.startswith(prefix) for prefix in score_prefixes
-    ):
-        value = substitute(value, _TRAILING_SCORE_NUMBER, "")
     value = normalize_formatting(value, preserve_markup=True)
 
-    if METADATA.match(value.text) or NAVIGATION.match(value.text):
+    if (
+        METADATA.match(value.text)
+        or NAVIGATION.match(value.text)
+        or _EDITORIAL_EXAMPLE.match(value.text)
+    ):
         return None
 
-    if "\n" not in value.text and BIBLIOGRAPHY.match(value.text):
+    if "\n" not in value.text and (
+        BIBLIOGRAPHY.match(value.text) or _BIBLIOGRAPHY_ONLY.fullmatch(value.text)
+    ):
         return None
 
     value = remove_references(value, explicit=True)
@@ -187,19 +278,19 @@ def clean_sentence(
     """
     literal = is_literal_markup(value.text)
 
+    if not quoted and _has_media(value.text, score_prefixes):
+        return None
+
     value = restore_mathematics(value, mathematics)
 
     if not quoted and not literal:
-        value = substitute(value, _SPACED_SEMICOLON, ";\u2003")
+        value = _preserve_example_boundaries(value)
 
     value = normalize_formatting(value, preserve_markup=literal)
 
     if not literal:
         value = substitute(value, _REFERENCE_LINE, "")
         value = substitute(value, _TITLE_REFERENCE, "")
-
-        if not quoted:
-            value = substitute(value, _MUSIC_SCORE, "")
 
         value = normalize_formatting(value, preserve_markup=True)
 
@@ -216,7 +307,7 @@ def clean_sentence(
         return None
 
     if not quoted and not literal:
-        cleaned = _clean_unquoted_sentence(value, score_prefixes)
+        cleaned = _clean_unquoted_sentence(value)
 
         if cleaned is None:
             return None
@@ -243,6 +334,16 @@ def _remove_example_bibliography(
     """
     if _AUTHOR_CITATION.match(value.text) and _SOURCE_URL.search(value.text):
         return None
+
+    if _BIBLIOGRAPHIC_IDENTIFIER.search(value.text):
+        for boundary in _BIBLIOGRAPHIC_START.finditer(value.text):
+            tail = value.text[boundary.start() :]
+
+            if parse_year(tail) is not None and _BIBLIOGRAPHIC_IDENTIFIER.search(tail):
+                value = substitute(value, re.compile(re.escape(tail) + r"$"), "")
+                break
+        else:
+            return None
 
     head, separator, _ = value.text.partition("\n")
 

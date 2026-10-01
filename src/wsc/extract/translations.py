@@ -170,6 +170,12 @@ _MISSING_TRANSLATION = re.compile(
     re.IGNORECASE,
 )
 _TERM_PLACEHOLDER = re.compile(r"\[Term\?]", re.IGNORECASE)
+_EDITORIAL_TRANSLATION = re.compile(
+    r"^(?:(?:(?:often|sometimes)\s+)?(?:mistakenly|incorrectly)\s+called\b|"
+    + r"(?:see\s+)?thesaurus:)",
+    re.IGNORECASE,
+)
+_TRAILING_ETC = re.compile(r"\s+etc\.?$", re.IGNORECASE)
 
 _PARENTHETICAL = re.compile(r"\s*\([^()]*\)")
 _NOUN_CLASS = re.compile(
@@ -182,7 +188,8 @@ _UNFINISHED_SQUARE_ANNOTATION = re.compile(r"\s+\[[^\[\]]*$")
 
 _GRAMMATICAL_SUFFIX = re.compile(
     r"\s+(?:(?:[cfmn]\s+)?(?:sg|pl)(?:\s+(?:and|or))?|"
-    + r"[cfmn]\s+(?:singular|plural|and|or)|(?:un)?countable|impf|pf)\.?$",
+    + r"[cfmn]\s+(?:singular|plural|and|or)|(?:un)?countable|impf|pf|"
+    + r"gender\s+(?:unattested|unknown|unspecified))\.?$",
     re.IGNORECASE,
 )
 _GENDER_SUFFIX = re.compile(r"\s+[cfmn](?:/[cfmn])*$", re.IGNORECASE)
@@ -308,6 +315,35 @@ def _split_gender_alternatives(
     return ()
 
 
+def _split_comma_alternatives(
+    word: str,
+    *,
+    explicit_list: bool,
+) -> tuple[str, ...]:
+    """
+    Separate comma lists only when their lexical boundaries are clear.
+
+    Args:
+        word: Translation containing possible comma-separated alternatives.
+        explicit_list: Whether a trailing editorial marker identifies a list.
+
+    Returns:
+        Separate terms, or the original phrase when commas may be lexical.
+    """
+    parts = tuple(part.strip() for part in word.split(","))
+
+    if len(parts) == 1:
+        return (word,)
+
+    if not all(parts):
+        return ()
+
+    single_words = all(len(part.split()) == 1 and len(part) >= 3 for part in parts)
+    shared_final_word = len({part.split()[-1].casefold() for part in parts}) == 1
+
+    return parts if explicit_list or single_words or shared_final_word else (word,)
+
+
 def _expand_alternatives(
     word: str,
 ) -> tuple[str, ...]:
@@ -378,7 +414,11 @@ def clean_translations(
     ):
         return None
 
-    if NAVIGATION.match(word) or word.casefold().startswith("etc. see "):
+    if (
+        NAVIGATION.match(word)
+        or word.casefold().startswith("etc. see ")
+        or _EDITORIAL_TRANSLATION.match(word)
+    ):
         return None
 
     if _START.match(word) and not (
@@ -404,13 +444,19 @@ def clean_translations(
     word = _GENDER_BEFORE_SLASH.sub(" ", word)
     word = _LEADING_GENDER.sub("", word)
     word = _SPACE.sub(" ", word).strip(" /,;:")
+    explicit_list = _TRAILING_ETC.search(word) is not None
+    word = _TRAILING_ETC.sub("", word).strip()
 
     if "(" in word or ")" in word:
         return None
 
     alternatives = frozenset(
         cleaned
-        for alternative in _expand_alternatives(word)
+        for comma_alternative in _split_comma_alternatives(
+            word,
+            explicit_list=explicit_list,
+        )
+        for alternative in _expand_alternatives(comma_alternative)
         if (cleaned := alternative.strip(" /,;:"))
         and _INVISIBLE.fullmatch(cleaned) is None
         and "[" not in cleaned

@@ -37,9 +37,9 @@ class SynsetHandler:
         targets = tuple(
             Definition(
                 synset.id,
-                candidates.glosses(lemma, synset),
+                candidates.glosses(synset),
                 synonyms=candidates.synonyms(lemma, synset),
-                examples=candidates.examples(lemma, synset),
+                examples=candidates.examples(synset),
                 sources=candidates.sources(lemma, synset),
             )
             for synset in candidates.candidates(lemma)
@@ -51,7 +51,7 @@ class SynsetHandler:
             aligned = {sense.id for sense in lemma.senses if sense.synsets}
             sources = tuple(source for source in sources if source.id not in aligned)
 
-        if sources:
+        if sources and targets:
             yield AlignmentQuery(
                 AlignmentTask.SYNSETS,
                 (
