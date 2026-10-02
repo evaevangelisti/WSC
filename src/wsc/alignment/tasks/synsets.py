@@ -47,8 +47,15 @@ class SynsetHandler:
 
         sources = build_definitions(lemma)
 
-        if candidates.skip_aligned:
-            aligned = {sense.id for sense in lemma.senses if sense.synsets}
+        if candidates.skip_equivalent:
+            aligned = {
+                sense.id
+                for sense in lemma.senses
+                if any(
+                    association.relation == SynsetRelation.EQUIVALENT
+                    for association in sense.synsets
+                )
+            }
             sources = tuple(source for source in sources if source.id not in aligned)
 
         if sources and targets:
@@ -90,7 +97,7 @@ class SynsetHandler:
         }
 
         for source in query.source_definitions:
-            senses[source.id].synsets = tuple(
+            senses[source.id].synsets += tuple(
                 SynsetAlignment(
                     link.target_id,
                     SynsetRelation(link.relation),

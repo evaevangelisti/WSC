@@ -464,7 +464,7 @@ def test_excludes_prior_resource_synsets_from_later_passes() -> None:
     (standalone,) = build_queries(
         lemma,
         AlignmentTask.SYNSETS,
-        candidates.for_stage("other", skip_aligned=False),
+        candidates.for_stage("other", skip_equivalent=False),
     )
     following = tuple(
         build_queries(
@@ -473,7 +473,7 @@ def test_excludes_prior_resource_synsets_from_later_passes() -> None:
             candidates.for_stage(
                 "other",
                 previous_sources=("wordnet",),
-                skip_aligned=True,
+                skip_equivalent=True,
             ),
         ),
     )
@@ -511,7 +511,7 @@ def test_excludes_synsets_with_prior_resources_even_without_matching_members() -
         candidates.for_stage(
             "remaining",
             previous_sources=("wordnet",),
-            skip_aligned=True,
+            skip_equivalent=True,
         ),
     )
 

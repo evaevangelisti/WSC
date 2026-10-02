@@ -171,7 +171,7 @@ def align_stages(
                 else candidates.for_stage(
                     stage,
                     previous_sources=stages[:index],
-                    skip_aligned=index > 0,
+                    skip_equivalent=index > 0,
                 )
             )
 

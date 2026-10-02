@@ -7,7 +7,7 @@ from collections.abc import Iterable, Iterator
 from copy import copy
 from urllib.parse import quote
 
-from ..models import POS, Lemma, Synset, SynsetResource
+from ..models import POS, Lemma, Synset, SynsetRelation, SynsetResource
 
 
 class SynsetCandidates:
@@ -50,7 +50,7 @@ class SynsetCandidates:
         self._stage: str = ""
         self._cache_stage: str = ""
 
-        self._skip_aligned: bool = False
+        self._skip_equivalent: bool = False
 
         for synset in synsets:
             self._available_sources.update(synset.resources)
@@ -89,20 +89,20 @@ class SynsetCandidates:
         return self._cache_stage
 
     @property
-    def skip_aligned(
+    def skip_equivalent(
         self,
     ) -> bool:
         """
-        Return whether earlier synset associations exclude source senses.
+        Return whether equivalent associations exclude source senses.
         """
-        return self._skip_aligned
+        return self._skip_equivalent
 
     def for_stage(
         self,
         stage: str,
         *,
         previous_sources: tuple[str, ...] = (),
-        skip_aligned: bool,
+        skip_equivalent: bool,
     ) -> SynsetCandidates:
         """
         Share the index while selecting one resource or all remaining synsets.
@@ -110,7 +110,7 @@ class SynsetCandidates:
         Args:
             stage: Resource name, or remaining for untried resources.
             previous_sources: Earlier resources excluded from this pass.
-            skip_aligned: Exclude senses and synsets mapped by earlier passes.
+            skip_equivalent: Exclude equivalent senses and synsets.
 
         Returns:
             A lightweight candidate view for the requested pass.
@@ -124,7 +124,7 @@ class SynsetCandidates:
         )
 
         selected._previous_sources = previous_sources
-        selected._skip_aligned = skip_aligned
+        selected._skip_equivalent = skip_equivalent
 
         return selected
 
@@ -175,11 +175,12 @@ class SynsetCandidates:
 
         mapped: set[str] = set()
 
-        if self._skip_aligned:
+        if self._skip_equivalent:
             mapped = {
                 association.synset_id
                 for sense in lemma.senses
                 for association in sense.synsets
+                if association.relation == SynsetRelation.EQUIVALENT
             }
 
         forms = {self._normalize(lemma.lemma)} | {

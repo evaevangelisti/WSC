@@ -17,7 +17,7 @@ from wsc.collection import write_collection
 from wsc.constants import ALIGNMENT_FIELDS
 from wsc.files import Compression
 from wsc.identifiers import translation_table_id
-from wsc.models import POS, Language, Lemma, Sense, TranslationTable
+from wsc.models import POS, Language, Lemma, Sense, SynsetRelation, TranslationTable
 from wsc.models.alignment import (
     AlignmentTask,
     LanguageModel,
@@ -404,7 +404,7 @@ def test_aligns_priority_resource_then_remaining_synsets(
     second_source: str,
 ) -> None:
     """
-    Later passes consider only synsets without earlier resources.
+    Later passes retain non-equivalent links and exclude earlier resources.
 
     Args:
         tmp_path: Isolated input, cache, and output directories.
@@ -487,7 +487,7 @@ def test_aligns_priority_resource_then_remaining_synsets(
             request: ModelRequest,
         ) -> str:
             """
-            Match the priority candidate, then the remaining candidate.
+            Retain directed priority links while matching the remaining candidate.
 
             Args:
                 request: Prompt for the current resource pass.
@@ -507,8 +507,20 @@ def test_aligns_priority_resource_then_remaining_synsets(
                                 "reason": "The first meanings agree.",
                             },
                         ],
-                        "s2": None,
-                        "s3": None,
+                        "s2": [
+                            {
+                                "target_id": "unmatched",
+                                "relation": "wiktionary_narrower",
+                                "reason": "The Wiktionary sense adds a restriction.",
+                            },
+                        ],
+                        "s3": [
+                            {
+                                "target_id": "first",
+                                "relation": "wiktionary_broader",
+                                "reason": "The Wiktionary sense is more general.",
+                            },
+                        ],
                     },
                 )
 
@@ -587,15 +599,20 @@ def test_aligns_priority_resource_then_remaining_synsets(
     assert [
         tuple(association.synset_id for association in sense.synsets)
         for sense in aligned.senses
-    ] == [("first",), ("other",), ()]
+    ] == [("first",), ("unmatched", "other"), ("first",)]
     assert aligned.senses[0].synsets[0].sources == ("wordnet",)
-    assert aligned.senses[1].synsets[0].sources == ("other",)
+    assert aligned.senses[1].synsets[0].relation == SynsetRelation.WIKTIONARY_NARROWER
+    assert aligned.senses[1].synsets[0].sources == ("wordnet",)
+    assert aligned.senses[1].synsets[1].relation == SynsetRelation.EQUIVALENT
+    assert aligned.senses[1].synsets[1].sources == ("other",)
+    assert aligned.senses[2].synsets[0].relation == SynsetRelation.WIKTIONARY_BROADER
+    assert aligned.senses[2].synsets[0].sources == ("wordnet",)
 
     report = cast(
         dict[str, object],
         json.loads((tmp_path / "output" / "reports" / "synsets.json").read_text()),
     )
-    assert report["senses"] == {"evaluated": 3, "aligned": 2, "unaligned": 1}
+    assert report["senses"] == {"evaluated": 3, "aligned": 3, "unaligned": 0}
 
     def reject_model(
         settings: ModelSettings,
