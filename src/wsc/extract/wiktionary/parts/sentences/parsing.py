@@ -14,7 +14,6 @@ from .....models import (
 )
 from ....dump.source_markup import MathSource, restore_mathematics
 from ....markup import (
-    BIBLIOGRAPHY,
     METADATA,
     NAVIGATION,
     is_literal_markup,
@@ -24,8 +23,13 @@ from ....markup import (
 )
 from ....offsets import substitute
 from ...schema import RawExample
+from .bibliography import (
+    is_standalone_bibliography,
+    remove_example_bibliography,
+    should_clean_bibliography,
+)
 from .layout import EXAMPLE_SEPARATOR, split_examples
-from .references import EXAMPLE_KIND, clean_reference, parse_year, read_source
+from .references import clean_reference, parse_year, read_source
 
 __all__ = [
     "clean_reference",
@@ -55,22 +59,6 @@ _TITLE_ONLY = re.compile(
     re.IGNORECASE,
 )
 
-_AUTHOR_CITATION = re.compile(
-    r"^[A-Z][^\n]*?\b(?:18|19|20)\d{2}\.\s+[\"“][^\"”]+[\"”]\.\s+[^\n]+$"
-)
-_FIRST_LINE = re.compile(r"^[^\n]*\n")
-_DOCUMENT_HEADER = re.compile(
-    r"^[^\n]*\bvolume\s+\d+\s+no\.?\s+\d+\s+\(pdf\)\s+from[^\n]*\n",
-    re.IGNORECASE,
-)
-_TRAILING_CITATION = re.compile(
-    r"[ \t]+[—–-][ \t]+[^—–\n]*https?://\S+[ \t]*$", re.IGNORECASE
-)
-_PARENTHETICAL_CITATION = re.compile(
-    r"[ \t]+\([^()\n]*https?://\S+[ \t]*$", re.IGNORECASE
-)
-_SOURCE_URL = re.compile(r"https?://\S+", re.IGNORECASE)
-
 _SPACED_SEMICOLON = re.compile(r";[ \t]{2,}")
 _SPACED_SENTENCE = re.compile(r"(?<=[.!?])[ \t]{2,}(?=\S)")
 
@@ -89,19 +77,6 @@ _EDITORIAL_EXAMPLE = re.compile(
     r"^(?:(?:alternative forms?|coordinate terms?|related terms?|synonyms?|antonyms?)"
     + r"(?:\s+\([^)]*\))?:|\(initialisms?\)$)",
     re.IGNORECASE,
-)
-_BIBLIOGRAPHY_ONLY = re.compile(
-    r"^(?:〃\s*,?\s*§\s*\d+(?:\.\d+)*,?\s*page\s+\d+|"
-    + r"(?:18|19|20)\d{2},?\s+in\s+[A-Z].*)$",
-    re.IGNORECASE,
-)
-_BIBLIOGRAPHIC_IDENTIFIER = re.compile(
-    r"(?:→|\\+to\s+)(?:ISBN|OCLC|ISSN|DOI|JSTOR)\b",
-    re.IGNORECASE,
-)
-_BIBLIOGRAPHIC_START = re.compile(
-    r"(?<=[.!?])[ \t]+(?=(?:(?:18|19|20)\d{2}\b|"
-    + r"[A-Z][\w’-]*(?:\s+[A-Z][\w’-]*){1,3},\s+[A-Z]))",
 )
 
 
@@ -247,9 +222,7 @@ def _clean_unquoted_sentence(
     ):
         return None
 
-    if "\n" not in value.text and (
-        BIBLIOGRAPHY.match(value.text) or _BIBLIOGRAPHY_ONLY.fullmatch(value.text)
-    ):
+    if is_standalone_bibliography(value.text):
         return None
 
     value = remove_references(value, explicit=True)
@@ -320,45 +293,6 @@ def clean_sentence(
     return value if any(character.isalnum() for character in value.text) else None
 
 
-def _remove_example_bibliography(
-    value: Attestation,
-) -> Attestation | None:
-    """
-    Remove unstructured source details without losing example offsets.
-
-    Args:
-        value: Unreferenced example and its known word offsets.
-
-    Returns:
-        The example without source details, or None if no example remains.
-    """
-    if _AUTHOR_CITATION.match(value.text) and _SOURCE_URL.search(value.text):
-        return None
-
-    if _BIBLIOGRAPHIC_IDENTIFIER.search(value.text):
-        for boundary in _BIBLIOGRAPHIC_START.finditer(value.text):
-            tail = value.text[boundary.start() :]
-
-            if parse_year(tail) is not None and _BIBLIOGRAPHIC_IDENTIFIER.search(tail):
-                value = substitute(value, re.compile(re.escape(tail) + r"$"), "")
-                break
-        else:
-            return None
-
-    head, separator, _ = value.text.partition("\n")
-
-    if separator and (BIBLIOGRAPHY.match(head) or _DOCUMENT_HEADER.match(value.text)):
-        value = substitute(value, _FIRST_LINE, "")
-
-    value = substitute(value, _TRAILING_CITATION, "")
-    value = substitute(value, _PARENTHETICAL_CITATION, "")
-    value = substitute(value, _SOURCE_URL, "")
-
-    value = normalize_formatting(value, preserve_markup=True)
-
-    return value if any(character.isalnum() for character in value.text) else None
-
-
 def parse_sentences(
     raw_examples: list[RawExample],
     minimum_year: int | None,
@@ -411,9 +345,9 @@ def parse_sentences(
         if (
             cleaned is not None
             and not reference
-            and raw_example.get("type") != EXAMPLE_KIND
+            and should_clean_bibliography(raw_example, cleaned)
         ):
-            cleaned = _remove_example_bibliography(cleaned)
+            cleaned = remove_example_bibliography(cleaned)
 
         if cleaned is None:
             continue

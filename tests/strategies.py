@@ -111,7 +111,7 @@ A year a reference may name, from the first century of printing to this one.
 """
 
 undated_references = st.text(alphabet=_UNDATED, min_size=1, max_size=20).filter(
-    lambda reference: bool(reference.strip()),
+    lambda reference: any(character.isalnum() for character in reference),
 )
 """
 A source naming no year, which is a quotation nothing can date.

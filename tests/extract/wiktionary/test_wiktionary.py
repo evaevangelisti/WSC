@@ -1093,6 +1093,91 @@ class TestSentences:
 
         assert [sentence.text for sentence in dated] == ["The dikkop is a bird."]
 
+    def test_recovers_quoted_usage_from_embedded_bibliography(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Publication identifiers delimit citations before and after usage text.
+        """
+        records = (
+            {
+                "text": '"Induration is hard." Jane Smith (1993), isbn 123.',
+                "type": "example",
+                "bold_text_offsets": [[1, 11]],
+            },
+            {
+                "text": 'Jane Smith (2013), doi:10.1/example. "The nasoplasty worked."',
+                "type": "example",
+            },
+            {
+                "text": (
+                    "The term has a meaning. It is used widely. "
+                    "A Study of Words, John Doe (1962), doi:10.1/example"
+                ),
+                "type": "example",
+            },
+            {
+                "text": (
+                    "The rhizophagy works. (2013-C. Author, A Book, doi:10.1/example)"
+                ),
+                "type": "example",
+            },
+            {"text": "1989 (Spring), Jane Smith, A Book, doi:10.1/example"},
+        )
+
+        sentences = attest(*records, headword="induration")
+
+        assert [sentence.text for sentence in sentences] == [
+            "Induration is hard.",
+            "The nasoplasty worked.",
+            "The term has a meaning. It is used widely.",
+            "The rhizophagy works.",
+        ]
+        assert sentences[0].text[slice(*sentences[0].word_offsets[0].offset)] == (
+            "Induration"
+        )
+
+    def test_removes_multiline_bibliographic_headers(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        Clear source headers leave usage text and dialogue intact.
+        """
+        sentences = attest(
+            {"text": "18th century, Jane Smith, A Book\nThe term is used."},
+            {"text": "H. G. Wells, A Book\nThe term occurs."},
+            {"text": "Episode 12, A Series\nThe term appears."},
+            {"text": "Are you ready?\nYes, the term is here."},
+            headword="term",
+        )
+
+        assert [sentence.text for sentence in sentences] == [
+            "The term is used.",
+            "The term occurs.",
+            "The term appears.",
+            "Are you ready?\nYes, the term is here.",
+        ]
+
+    def test_preserves_lexical_mentions_of_identifiers(
+        self,
+        attest: Callable[..., list[Sentence]],
+    ) -> None:
+        """
+        A publication identifier in ordinary prose is not a citation.
+        """
+        sentences = attest(
+            {"text": "In 2020, the book received an ISBN.", "type": "example"},
+            {"text": "Doi Inthanon National Park is in Thailand.", "type": "example"},
+            headword="ISBN",
+        )
+
+        assert [sentence.text for sentence in sentences] == [
+            "In 2020, the book received an ISBN.",
+            "Doi Inthanon National Park is in Thailand.",
+        ]
+
     def test_preserves_ambiguous_layout_spacing(
         self,
         attest: Callable[..., list[Sentence]],
@@ -1359,20 +1444,24 @@ class TestKinds:
 
         quotation = attest({"text": written, "type": "quotation"})[0]
 
-        assert isinstance(quotation, Quotation)
-        assert (quotation.text, quotation.reference) == (
-            sentence_text.strip(),
-            clean_reference(reference),
-        )
+        if cleaned_reference := clean_reference(reference):
+            assert isinstance(quotation, Quotation)
+            assert (quotation.text, quotation.reference) == (
+                sentence_text.strip(),
+                cleaned_reference,
+            )
+        else:
+            assert isinstance(quotation, Example)
+            assert quotation.text == sentence_text.strip()
 
     @given(st.data())
-    def test_preserves_example_lines(
+    def test_removes_embedded_bibliographic_lines(
         self,
         attest: Callable[..., list[Sentence]],
         data: st.DataObject,
     ) -> None:
         """
-        Its own word comes first, whatever its opening line looks like.
+        Explicit examples can still contain a source line before their text.
         """
         year = data.draw(years)
         written = f"{data.draw(references(year))}\n{data.draw(texts)}"
@@ -1380,7 +1469,7 @@ class TestKinds:
         example = attest({"text": written, "type": "example"})[0]
 
         assert isinstance(example, Example)
-        assert example.text == written.strip()
+        assert example.text == written.partition("\n")[2].strip()
 
     @given(st.data())
     def test_excludes_bodyless_quotations(
@@ -2342,6 +2431,42 @@ class TestSynonyms:
         (lemma,) = extract([entry])
 
         assert lemma.senses[0].synonyms == ()
+
+    @pytest.mark.parametrize(
+        "broken",
+        [
+            "Vulgar:",
+            "shmekl (q",
+            "Yiddish)",
+            "interstate[:w:Interstate Highway System|Interstate Highway System]]>",
+        ],
+    )
+    def test_discards_malformed_synonyms(
+        self,
+        extract: Callable[..., list[Lemma]],
+        broken: str,
+    ) -> None:
+        """
+        Parser fragments must not enter the synonym set.
+        """
+        entry: RawJson = {
+            "word": "word",
+            "pos": "noun",
+            "lang_code": "en",
+            "senses": [
+                {
+                    "glosses": ["A meaning."],
+                    "synonyms": [
+                        {"word": broken},
+                        {"word": "make a move (on)"},
+                    ],
+                },
+            ],
+        }
+
+        (lemma,) = extract([entry])
+
+        assert lemma.senses[0].synonyms == ("make a move (on)",)
 
 
 class TestStrayReferences:

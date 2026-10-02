@@ -175,6 +175,7 @@ _EDITORIAL_TRANSLATION = re.compile(
     + r"(?:see\s+)?thesaurus:)",
     re.IGNORECASE,
 )
+_COMPOUND_NOTE = re.compile(r"\b(?:other\s+)?compounds?\s+with\b", re.IGNORECASE)
 _TRAILING_ETC = re.compile(r"\s+etc\.?$", re.IGNORECASE)
 
 _PARENTHETICAL = re.compile(r"\s*\([^()]*\)")
@@ -189,10 +190,10 @@ _UNFINISHED_SQUARE_ANNOTATION = re.compile(r"\s+\[[^\[\]]*$")
 _GRAMMATICAL_SUFFIX = re.compile(
     r"\s+(?:(?:[cfmn]\s+)?(?:sg|pl)(?:\s+(?:and|or))?|"
     + r"[cfmn]\s+(?:singular|plural|and|or)|(?:un)?countable|impf|pf|"
-    + r"gender\s+(?:unattested|unknown|unspecified))\.?$",
+    + r"gender[-\s]+(?:unattested|unknown|unspecified|neutral|inclusive))\.?$",
     re.IGNORECASE,
 )
-_GENDER_SUFFIX = re.compile(r"\s+[cfmn](?:/[cfmn])*$", re.IGNORECASE)
+_GENDER_SUFFIX = re.compile(r"\s+[cfmn](?:/[cfmn])*['’]?$", re.IGNORECASE)
 _GENDER_BEFORE_SLASH = re.compile(r"\s+[cfmn](?=\s*[/\\]|$)", re.IGNORECASE)
 _LEADING_GENDER = re.compile(r"^[cfmn]\s+", re.IGNORECASE)
 
@@ -201,7 +202,7 @@ _GENDER_ALTERNATIVE = re.compile(
     re.IGNORECASE,
 )
 _MIDDLE_GENDER = re.compile(
-    r"\s+([mf])(?:\s+(?:sg|pl))?(?:\s+(?:and|or))?(?=\s+\S)",
+    r"\s+([mfn])(?:\s+(?:sg|pl))?(?:\s+(?:and|or))?(?=\s+\S)",
     re.IGNORECASE,
 )
 _SQUARE_OPTIONAL = re.compile(r"\[([^\[\]]+)\]")
@@ -282,12 +283,12 @@ def _split_gender_alternatives(
     Split gender-marked forms when their boundaries are supported.
 
     Args:
-        word: Translation that may embed masculine or feminine labels.
+        word: Translation that may embed gender labels.
 
     Returns:
         Lexical segments, or none when a label leaves their roles uncertain.
     """
-    markers = tuple(_MIDDLE_GENDER.finditer(word))
+    markers = list(_MIDDLE_GENDER.finditer(word))
 
     if not markers:
         return (word,)
@@ -298,9 +299,23 @@ def _split_gender_alternatives(
         return ()
 
     if len(markers) > 1:
-        return segments
+        return (
+            (word,)
+            if any(marker[1].casefold() == "n" for marker in markers)
+            else segments
+        )
 
     left_words, right_words = segments[0].split(), segments[1].split()
+    neutral_marker = markers[0][1].casefold() == "n"
+
+    if neutral_marker:
+        return (
+            segments
+            if len(left_words) > 1
+            and len(right_words) > 1
+            and left_words[-1].casefold() == right_words[-1].casefold()
+            else (word,)
+        )
 
     if len(left_words) == len(right_words) == 1:
         return (
@@ -418,6 +433,7 @@ def clean_translations(
         NAVIGATION.match(word)
         or word.casefold().startswith("etc. see ")
         or _EDITORIAL_TRANSLATION.match(word)
+        or _COMPOUND_NOTE.search(word)
     ):
         return None
 

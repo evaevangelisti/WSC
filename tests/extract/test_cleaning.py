@@ -84,6 +84,7 @@ def extract(
         ("Compare", "Compare."),
         ("See; see also.", "See; see also."),
         ("A hierarchy heading:", "A hierarchy heading."),
+        ("A tree (Ulmus)).", "A tree (Ulmus)."),
         (
             "A rodent (but see also its synonyms), native to America.",
             "A rodent, native to America.",
@@ -203,6 +204,19 @@ def test_removes_navigation_levels(
     assert result[0].senses[0].glosses == ("A meaning.",)
 
 
+def test_discards_punctuation_only_glosses(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """
+    Removed navigation cannot survive as a punctuation-only sense.
+    """
+    assert extract({"senses": [{"glosses": ["."]}]}) == []
+
+    result = extract({"senses": [{"glosses": ["A parent.", "."]}]})
+
+    assert result[0].senses[0].glosses == ("A parent.",)
+
+
 @pytest.mark.parametrize(
     ("written", "expected"),
     [
@@ -286,6 +300,27 @@ def test_cleans_sentences(
         ),
         (
             "https://example.org/source The sample entry remains.",
+            "The sample entry remains.",
+        ),
+        (
+            ", Book II, Chapter VIII\nThe sample entry remains.",
+            "The sample entry remains.",
+        ),
+        (
+            "a2006: University website\nThe sample entry remains.",
+            "The sample entry remains.",
+        ),
+        (
+            "N. Brit. Rev.\nThe sample entry remains.",
+            "The sample entry remains.",
+        ),
+        (
+            "a1500 The Prose Merlin\u02d0\nThe sample entry remains.",
+            "The sample entry remains.",
+        ),
+        (
+            "a2006: A Magazine, read at on 14 May 2006 - "
+            + "The sample entry remains. [published in USA]",
             "The sample entry remains.",
         ),
         (
@@ -383,6 +418,85 @@ def test_discards_bibliography_without_example_text(
     )
 
     assert result[0].senses[0].sentences == []
+
+
+def test_discards_antedated_source_without_usage(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """
+    A dated book citation alone is not an example.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+    """
+    result = extract(
+        {
+            "senses": [
+                {
+                    "glosses": ["A meaning."],
+                    "examples": [
+                        {"text": "a1968, Upton Sinclair, When I Was a Teener."},
+                    ],
+                },
+            ],
+        },
+    )
+
+    assert result[0].senses[0].sentences == []
+
+
+def test_removes_editorial_footnotes_and_recovers_bracketed_glosses(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """
+    Keep lexical text while discarding Wiktionary editorial footnotes.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+    """
+    result = extract(
+        {
+            "senses": [
+                {
+                    "glosses": ["The [[[w]]] sound ^([sic]) is a consonant."],
+                    "examples": [
+                        {"text": "The sample entry remains.^([Wikipedia])"},
+                    ],
+                },
+            ],
+        },
+    )
+
+    sense = result[0].senses[0]
+
+    assert sense.glosses == ("The [w] sound is a consonant.",)
+    assert sense.sentences[0].text == "The sample entry remains."
+
+
+def test_removes_synonym_source_annotations(
+    extract: Callable[..., list[Lemma]],
+) -> None:
+    """
+    Thesaurus pointers and register labels are not part of the lemma.
+
+    Args:
+        extract: Public extractor for a supplied Wiktextract entry.
+    """
+    result = extract(
+        {
+            "senses": [
+                {
+                    "glosses": ["A meaning."],
+                    "synonyms": [
+                        {"word": "dog [⇒ thesaurus] (slang)"},
+                        {"word": "mountain [⇒ thesaurus]s"},
+                    ],
+                },
+            ],
+        },
+    )
+
+    assert result[0].senses[0].synonyms == ("dog", "mountains")
 
 
 @pytest.mark.parametrize(
@@ -635,6 +749,7 @@ def test_normalizes_translation_gloss_punctuation(
         "translations  to be checked",
         "translation gloss",
         "sense",
+        ".",
     ],
 )
 def test_excludes_supplementary_placeholders(
@@ -790,11 +905,13 @@ def test_keeps_lexical_translation_alternatives(
         ("ru", "сзыва́ть impf", "сзыва́ть"),
         ("la", "Āram gender unattested", "Āram"),
         ("la", "Āram gender unknown", "Āram"),
+        ("de", "Feminist:in gender-neutral", "Feminist:in"),
         ("de", "plural", "plural"),
         ("pt", "primeira pessoa do singular", "primeira pessoa do singular"),
         ("uk", "приско́рювати impf прискорити", "приско́рювати impf прискорити"),
         ("pl", "możliwe, że", "możliwe, że"),
         ("kab", "Iwunak Yeddukklen n Temrikt", "Iwunak Yeddukklen n Temrikt"),
+        ("bg", "глупост f’", "глупост"),
     ],
 )
 def test_removes_unambiguous_translation_grammar(
@@ -844,6 +961,11 @@ def test_removes_unambiguous_translation_grammar(
         ("zh", "詞典 /词典", frozenset({"詞典", "词典"})),
         ("he", "שחור \\ שָׁחֹר", frozenset({"שחור", "שָׁחֹר"})),
         ("de", "Wort m / Begriff", frozenset({"Wort", "Begriff"})),
+        (
+            "sh",
+            "Arabijsko more n Arapsko more",
+            frozenset({"Arabijsko more", "Arapsko more"}),
+        ),
     ],
 )
 def test_separates_explicit_translation_alternatives(
@@ -929,6 +1051,8 @@ def test_separates_supported_comma_translation_lists(
         "often mistakenly called förkörsrätt",
         "Thesaurus:isoisä",
         "see Thesaurus:käppiä",
+        "compounds with materia",
+        "värmeverk n and other compounds with verk",
     ],
 )
 def test_discards_editorial_translation_labels(

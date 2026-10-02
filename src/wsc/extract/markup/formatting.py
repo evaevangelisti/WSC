@@ -19,6 +19,8 @@ _TAG = re.compile(r"</?(?:b|i|em|strong|small|span)\b[^>]*>", re.IGNORECASE)
 _REFERENCE = re.compile(r"<ref\b[^>]*(?:/>|>.*?</ref>)", re.IGNORECASE | re.DOTALL)
 _BREAK = re.compile(r"<br\s*/?>", re.IGNORECASE)
 _LINK = re.compile(r"(?<!\[)\[\[([^\[\]|]+)(?:\|([^\[\]]*))?\]\](?!\])")
+_TRIPLE_LINK = re.compile(r"\[\[\[([^\[\]]+)\]\]\]")
+_EDITORIAL_FOOTNOTE = re.compile(r"[ \t]*\^\(\[(?:sic|wikipedia)\]\)", re.IGNORECASE)
 _EMPHASIS = re.compile(r"'{2,}")
 _LAYOUT = re.compile("[\u00ad\u200b\u2060\ufeff]")
 _EDGES = re.compile(r"^\s+|\s+$")
@@ -163,6 +165,7 @@ def normalize_formatting(
         )
 
     if not preserve_markup:
+        value = substitute(value, _EDITORIAL_FOOTNOTE, "")
         value = substitute(value, _ENTITY, lambda match: unescape(match[0]))
 
         value = substitute(
@@ -175,6 +178,7 @@ def normalize_formatting(
         value = substitute(value, _SCRIPT, _script)
         value = substitute(value, _TAG, "")
         value = substitute(value, _BREAK, "\n")
+        value = substitute(value, _TRIPLE_LINK, lambda match: f"[{match[1]}]")
 
         value = substitute(
             value,
@@ -197,6 +201,35 @@ def normalize_formatting(
 _SENTENCE_ENDINGS = frozenset(".?!…‽")
 
 
+def _trim_unmatched_closing_parentheses(
+    text: str,
+) -> str:
+    """
+    Remove extra closing parentheses after otherwise balanced prose.
+
+    Args:
+        text: Definition or reference before sentence punctuation is normalized.
+
+    Returns:
+        Text without surplus closing parentheses at its end.
+    """
+    while (body := text.rstrip(".?!…‽")).endswith(")") and "(" in body:
+        balance = 0
+
+        for character in body[:-1]:
+            balance += (character == "(") - (character == ")")
+
+            if balance < 0:
+                return text
+
+        if balance != 0:
+            return text
+
+        text = body[:-1] + text[len(body) :]
+
+    return text
+
+
 def normalize_statement(
     text: str,
 ) -> str:
@@ -211,8 +244,10 @@ def normalize_statement(
     """
     text = text.strip()
 
-    if not text:
+    if not any(character.isalnum() for character in text):
         return ""
+
+    text = _trim_unmatched_closing_parentheses(text)
 
     command = _LATEX_COMMAND.search(text)
     mathematical_lead = _LEADING_MATH.match(text) is not None
