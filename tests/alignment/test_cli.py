@@ -4,12 +4,15 @@ Exercise command-level inference and cached decision replay.
 
 import csv
 import json
-from collections.abc import Sequence
+import signal
+from collections.abc import Callable, Sequence
 from compression import zstd
 from pathlib import Path
 from typing import cast, override
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 from typer.testing import CliRunner
 
 from wsc import cli
@@ -907,13 +910,21 @@ def test_reuses_partial_alignment_cache(
     assert len(cache_path.read_text().splitlines()) == 3
 
 
-def test_resumes_after_model_failure(
-    tmp_path: Path,
+@given(
+    interrupt_with_signal=st.booleans(),
+    reuse=st.booleans(),
+)
+def test_resumes_after_interrupted_inference(
+    workspace: Callable[[], Path],
     monkeypatch: pytest.MonkeyPatch,
+    *,
+    interrupt_with_signal: bool,
+    reuse: bool,
 ) -> None:
     """
-    A failed batch leaves earlier decisions in the ordinary TSV cache.
+    Model failure and SIGTERM preserve recorded decisions in either cache mode.
     """
+    tmp_path = workspace()
     input_path = tmp_path / "input.jsonl"
     targets = {
         word: translation_table_id(f"{word}.noun", word) for word in ("first", "second")
@@ -960,10 +971,16 @@ def test_resumes_after_model_failure(
 
             Raises:
                 RuntimeError: When the second batch is submitted.
+                AssertionError: If SIGTERM does not interrupt inference.
             """
             self.requests.extend(requests)
 
             if len(self.requests) > 1:
+                if interrupt_with_signal:
+                    signal.raise_signal(signal.SIGTERM)
+
+                    raise AssertionError("SIGTERM did not interrupt inference")
+
                 raise RuntimeError("engine died")
 
             return (
@@ -1014,11 +1031,27 @@ def test_resumes_after_model_failure(
         str(tmp_path / "output"),
     ]
 
-    failed = CliRunner().invoke(cli.app, arguments)
+    previous_handler = signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+    try:
+        failed = CliRunner().invoke(
+            cli.app,
+            [*arguments, "--reuse"] if reuse else arguments,
+        )
+
+        assert signal.getsignal(signal.SIGTERM) == signal.SIG_IGN
+    finally:
+        _ = signal.signal(signal.SIGTERM, previous_handler)
 
     assert failed.exit_code != 0
-    assert isinstance(failed.exception, RuntimeError)
-    assert str(failed.exception) == "engine died"
+
+    if interrupt_with_signal:
+        assert failed.exit_code == 143
+        assert isinstance(failed.exception, SystemExit)
+    else:
+        assert isinstance(failed.exception, RuntimeError)
+        assert str(failed.exception) == "engine died"
+
     assert failed.exception.__notes__ == [
         "Failed alignment batch (1): translations:second.noun"
     ]
@@ -1088,6 +1121,7 @@ def test_resumes_after_model_failure(
     resumed = CliRunner().invoke(cli.app, [*arguments, "--reuse"])
 
     assert resumed.exit_code == 0, resumed.output
+    assert signal.getsignal(signal.SIGTERM) == previous_handler
     assert len(resume_model.requests) == 1
     assert resume_model.requests[0].schema["required"] == ["second.noun.1"]
     assert set(read_alignment_cache(cache_path)) == {

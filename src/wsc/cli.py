@@ -22,6 +22,7 @@ from .alignment.stages import (
     alignment_table_paths,
     prepare_synset_stages,
 )
+from .alignment.termination import handle_termination
 from .archives import archive_path
 from .collection import CollectionSettings, build_manifest, write_collection
 from .constants import (
@@ -655,6 +656,7 @@ def align(
     )
 
     with ExitStack() as stack:
+        _ = stack.enter_context(handle_termination())
         recorder = open_alignment_recorder(stack, evidence_paths)
 
         def record_result(
@@ -695,4 +697,5 @@ def align(
     published_path = (
         archive_path(output_dir, compression) if compression else output_dir
     )
+
     _LOGGER.info("Aligned %s", published_path)
