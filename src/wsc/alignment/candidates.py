@@ -2,6 +2,8 @@
 Index synset candidates and select source evidence for each pass.
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from copy import copy
